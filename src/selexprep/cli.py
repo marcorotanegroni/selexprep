@@ -72,7 +72,9 @@ def fetch(
 def detect(
     fastq: list[Path] = typer.Argument(..., help="Input FASTQ files."),
     round_map: Path | None = typer.Option(
-        None, "--round-map", help="TSV mapping FASTQ file → round number (required for local FASTQs)."
+        None,
+        "--round-map",
+        help="TSV mapping FASTQ file → round number (required for local FASTQs).",
     ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
 ) -> None:

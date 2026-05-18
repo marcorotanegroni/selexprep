@@ -19,8 +19,11 @@ def _bp(bp_id: str, **kw) -> dict:
 
 
 def _round(srr: str, round_number: int | None, confidence: str = "HIGH") -> dict:
-    return {"srr": srr, "round_number": str(round_number) if round_number is not None else "",
-            "confidence": confidence}
+    return {
+        "srr": srr,
+        "round_number": str(round_number) if round_number is not None else "",
+        "confidence": confidence,
+    }
 
 
 # ----- classify single BP -----
@@ -28,11 +31,16 @@ def _round(srr: str, round_number: int | None, confidence: str = "HIGH") -> dict
 
 def test_classify_all_rounds_when_observed_equals_declared() -> None:
     bp = _bp("PRJ1", n_rounds_declared="3")
-    samples = [{"srr": "SRR1", "bioproject_id": "PRJ1"},
-               {"srr": "SRR2", "bioproject_id": "PRJ1"},
-               {"srr": "SRR3", "bioproject_id": "PRJ1"}]
-    rounds_by_srr = {"SRR1": _round("SRR1", 1), "SRR2": _round("SRR2", 2),
-                     "SRR3": _round("SRR3", 3)}
+    samples = [
+        {"srr": "SRR1", "bioproject_id": "PRJ1"},
+        {"srr": "SRR2", "bioproject_id": "PRJ1"},
+        {"srr": "SRR3", "bioproject_id": "PRJ1"},
+    ]
+    rounds_by_srr = {
+        "SRR1": _round("SRR1", 1),
+        "SRR2": _round("SRR2", 2),
+        "SRR3": _round("SRR3", 3),
+    }
     out = classify_bioproject_round_coverage(bp, samples, rounds_by_srr)
     assert out["round_coverage_status"] == STATUS_ALL
     assert out["n_rounds_assigned"] == 3
@@ -48,8 +56,9 @@ def test_classify_partial_when_observed_fewer_than_declared() -> None:
 
 
 def test_classify_multiplexed_when_hint_present() -> None:
-    bp = _bp("PRJ1", n_rounds_declared="6",
-             manual_curation_notes="A single SRR contains rounds 1-6")
+    bp = _bp(
+        "PRJ1", n_rounds_declared="6", manual_curation_notes="A single SRR contains rounds 1-6"
+    )
     samples = [{"srr": "SRR1"}]
     rounds_by_srr = {"SRR1": _round("SRR1", 1)}
     out = classify_bioproject_round_coverage(bp, samples, rounds_by_srr)
@@ -90,8 +99,7 @@ def test_build_report_default_filter_uses_include_y() -> None:
         _bp("PRJ1", n_rounds_declared="1", include="y"),
         _bp("PRJ2", n_rounds_declared="1", include="n"),
     ]
-    samples = [{"srr": "SRR1", "bioproject_id": "PRJ1"},
-               {"srr": "SRR2", "bioproject_id": "PRJ2"}]
+    samples = [{"srr": "SRR1", "bioproject_id": "PRJ1"}, {"srr": "SRR2", "bioproject_id": "PRJ2"}]
     rounds = [_round("SRR1", 1), _round("SRR2", 1)]
 
     report = build_round_coverage_report(bioprojects, samples, rounds)
@@ -106,8 +114,7 @@ def test_build_report_custom_filter() -> None:
         _bp("PRJ1", n_rounds_declared="1", include="y", library_type_verification="RNA_confirmed"),
         _bp("PRJ2", n_rounds_declared="1", include="y", library_type_verification="DNA_confirmed"),
     ]
-    samples = [{"srr": "SRR1", "bioproject_id": "PRJ1"},
-               {"srr": "SRR2", "bioproject_id": "PRJ2"}]
+    samples = [{"srr": "SRR1", "bioproject_id": "PRJ1"}, {"srr": "SRR2", "bioproject_id": "PRJ2"}]
     rounds = [_round("SRR1", 1), _round("SRR2", 1)]
 
     def rna_only(bp: dict) -> bool:

@@ -11,7 +11,7 @@ Two complementary audits:
   and reports length distribution, positional base frequency over the
   modal-length subset, top sequences, and Illumina TruSeq R1 contamination
   rate. A position with >40% top base is flagged as a constant-residue
-  suspect (a truly random N-region should be 22–30% per base at every
+  suspect (a truly random N-region should be 22-30% per base at every
   position).
 
 Both audits return dataclasses; presentation (logging, HTML, terminal table) is
@@ -120,9 +120,7 @@ def positional_base_freq(seqs: list[str], positions: range) -> list[PositionalBa
     return out
 
 
-def _positional_base_freq_3prime(
-    seqs: list[str], window: int
-) -> list[PositionalBaseFreq]:
+def _positional_base_freq_3prime(seqs: list[str], window: int) -> list[PositionalBaseFreq]:
     """3'-aligned positional base frequencies (handles variable-length reads).
 
     Position 0 corresponds to the last base of each read; position `window-1`
@@ -237,9 +235,7 @@ def audit_trimmed_parquet(parquet_path: Path) -> TrimmedRegionAudit:
 
     mode_seqs = df.loc[df["L"] == mode_L, "sequence"].tolist()
     first10 = positional_base_freq(mode_seqs, range(min(10, mode_L)))
-    last10 = positional_base_freq(
-        mode_seqs, range(max(0, mode_L - 10), mode_L)
-    )
+    last10 = positional_base_freq(mode_seqs, range(max(0, mode_L - 10), mode_L))
 
     top5 = df.nlargest(5, "reads")[["sequence", "reads"]]
     top_5_sequences = [(str(row["sequence"]), int(row["reads"])) for _, row in top5.iterrows()]
@@ -250,7 +246,7 @@ def audit_trimmed_parquet(parquet_path: Path) -> TrimmedRegionAudit:
 
     return TrimmedRegionAudit(
         parquet_path=parquet_path,
-        n_unique=int(len(df)),
+        n_unique=len(df),
         n_reads=total_reads,
         length_distribution_top5={int(L): int(r) for L, r in L_dist.items()},
         mode_length=mode_L,

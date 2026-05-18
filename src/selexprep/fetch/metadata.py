@@ -180,8 +180,7 @@ def parse_round(
     notes = ""
     if n_rounds_abstract is not None:
         notes = (
-            f"abstract declares ~{n_rounds_abstract} rounds total "
-            f"(informative only, not assigned)"
+            f"abstract declares ~{n_rounds_abstract} rounds total (informative only, not assigned)"
         )
 
     # L5 — Unknown → manual review

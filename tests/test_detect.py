@@ -131,9 +131,7 @@ def test_detect_from_parquet(tmp_path: Path) -> None:
         n=1000,
     )
     p = tmp_path / "round_00.counts.parquet"
-    df = pd.DataFrame(
-        {"sequence": seqs, "reads": [1] * len(seqs), "rank": range(1, len(seqs) + 1)}
-    )
+    df = pd.DataFrame({"sequence": seqs, "reads": [1] * len(seqs), "rank": range(1, len(seqs) + 1)})
     df.to_parquet(p, index=False, compression="zstd")
 
     det = detect_from_parquet(p, top_n=1000, min_seqs_for_detection=100)
@@ -153,9 +151,7 @@ def test_detect_from_parquet_default_uses_all_sequences(tmp_path: Path) -> None:
         n=5_000,  # 5x the previous "top 1000" cap
     )
     p = tmp_path / "round_00.counts.parquet"
-    df = pd.DataFrame(
-        {"sequence": seqs, "reads": [1] * len(seqs), "rank": range(1, len(seqs) + 1)}
-    )
+    df = pd.DataFrame({"sequence": seqs, "reads": [1] * len(seqs), "rank": range(1, len(seqs) + 1)})
     df.to_parquet(p, index=False, compression="zstd")
 
     det = detect_from_parquet(p, min_seqs_for_detection=100)  # no top_n

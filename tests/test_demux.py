@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from selexprep.extract.demux import (
-    DemuxJob,
     demux_fastq,
     demux_sample_sheet,
     read_sample_sheet,
@@ -66,9 +65,7 @@ def test_demux_fastq_single_end_routes_by_5p_barcode(tmp_path: Path) -> None:
         ],
     )
     out = tmp_path / "out"
-    report = demux_fastq(
-        r1_path=fq, out_dir=out, barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR1"
-    )
+    report = demux_fastq(r1_path=fq, out_dir=out, barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR1")
 
     assert report.total_reads == 4
     assert report.per_round == {1: 2, 2: 1}
@@ -88,7 +85,10 @@ def test_demux_fastq_preserves_barcode_when_trim_false(tmp_path: Path) -> None:
     _write_fastq_gz(fq, ["AAAAACCCCC"])
     out = tmp_path / "out"
     demux_fastq(
-        r1_path=fq, out_dir=out, barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR2",
+        r1_path=fq,
+        out_dir=out,
+        barcodes={"AAAAA": 1, "TTTTT": 2},
+        srr="SRR2",
         trim_barcode=False,
     )
     seqs = _read_fastq_gz_seqs(out / "round_01" / "SRR2.fastq.gz")
@@ -106,8 +106,11 @@ def test_demux_fastq_paired_end_keeps_pair_sync(tmp_path: Path) -> None:
     out = tmp_path / "out"
 
     report = demux_fastq(
-        r1_path=r1, out_dir=out, r2_path=r2,
-        barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR3",
+        r1_path=r1,
+        out_dir=out,
+        r2_path=r2,
+        barcodes={"AAAAA": 1, "TTTTT": 2},
+        srr="SRR3",
     )
 
     assert report.paired is True
@@ -149,9 +152,7 @@ def test_demux_sample_sheet_writes_per_job_reports(tmp_path: Path) -> None:
     _write_fastq_gz(fq, ["AAAAACCCCC", "TTTTTGGGGG"])
     sheet = tmp_path / "sheet.tsv"
     sheet.write_text(
-        "srr\tr1_path\tr2_path\tround\tbarcode\n"
-        f"SRR1\t{fq}\t\t1\tAAAAA\n"
-        f"SRR1\t{fq}\t\t2\tTTTTT\n",
+        f"srr\tr1_path\tr2_path\tround\tbarcode\nSRR1\t{fq}\t\t1\tAAAAA\nSRR1\t{fq}\t\t2\tTTTTT\n",
         encoding="utf-8",
     )
     out_root = tmp_path / "out"

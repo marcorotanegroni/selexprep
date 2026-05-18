@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
 
 import pandas as pd
@@ -11,12 +10,10 @@ import pytest
 
 from selexprep.qc.readiness import (
     FAIL,
-    INFO,
     PASS,
     TRUSEQ_R1_PREFIX,
     WARN,
     BPReport,
-    CheckResult,
     alphabet_violations,
     gc_content,
     length_distribution,
@@ -27,7 +24,6 @@ from selexprep.qc.readiness import (
     top_kmers,
     truseq_contamination,
 )
-
 
 # ----- pure primitives -----
 
@@ -51,7 +47,7 @@ def test_alphabet_violations_counts_non_acgt() -> None:
 
 
 def test_gc_content_balanced() -> None:
-    mean, std = gc_content(["GCGC", "ATAT", "GCAT"])
+    mean, _std = gc_content(["GCGC", "ATAT", "GCAT"])
     assert mean == pytest.approx(0.5)
 
 
@@ -165,13 +161,9 @@ def _make_fixture_bp(
                 "rank": range(1, n_unique_per_round + 1),
             }
         )
-        df.to_parquet(
-            bp_dir / f"round_{r:02d}.counts.parquet", index=False, compression="zstd"
-        )
+        df.to_parquet(bp_dir / f"round_{r:02d}.counts.parquet", index=False, compression="zstd")
         # Cluster parquet — required by section_pre
-        df.to_parquet(
-            bp_dir / f"round_{r:02d}.clusters.parquet", index=False, compression="zstd"
-        )
+        df.to_parquet(bp_dir / f"round_{r:02d}.clusters.parquet", index=False, compression="zstd")
 
     # Enrich: synthetic log2FC distribution with a clear winner
     n_seqs = 200
@@ -255,6 +247,4 @@ def test_review_bioproject_no_primer_3p_for_multiplexed_origin(tmp_path: Path) -
     )
     pre_checks = [c for c in report.checks if c.section == "pre"]
     # Should NOT fail just because primer_3p is missing
-    assert not any(
-        c.status == FAIL and "incomplete seed" in c.detail for c in pre_checks
-    )
+    assert not any(c.status == FAIL and "incomplete seed" in c.detail for c in pre_checks)

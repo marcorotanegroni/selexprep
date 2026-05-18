@@ -6,7 +6,6 @@ from pathlib import Path
 
 from selexprep._common import iter_srr_files, load_csv, parse_round_number
 
-
 # ----- iter_srr_files -----
 
 

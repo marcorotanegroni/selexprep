@@ -273,9 +273,7 @@ def _find_sra_cache(output_dir: Path, srr: str) -> Path | None:
 # ---------------------------------------------------------------------------
 
 
-def download_srr_ena_direct(
-    srr: str, output_dir: Path, dry_run: bool = False
-) -> bool:
+def download_srr_ena_direct(srr: str, output_dir: Path, dry_run: bool = False) -> bool:
     """Download an SRR via ENA's filereport API + Range-resumable streaming.
 
     Default v0.1 backend: no external tools, MIT-compatible. Verifies bytes
@@ -348,9 +346,7 @@ def download_srr_ena_direct(
             else f"https://{url_path}"
         )
         dest = output_dir / Path(url_path).name
-        if not stream_download(
-            url, dest, expected_md5=expected_md5, timeout=1800, max_attempts=5
-        ):
+        if not stream_download(url, dest, expected_md5=expected_md5, timeout=1800, max_attempts=5):
             ok_all = False
             break
         produced.append(dest)
@@ -363,9 +359,7 @@ def download_srr_ena_direct(
 
     md5_verified_all = bool(md5s) and all(m for m in md5s)
     if md5_verified_all:
-        logger.info(
-            "  ena-direct: all %d file(s) MD5-verified, skipping gzip -t", len(produced)
-        )
+        logger.info("  ena-direct: all %d file(s) MD5-verified, skipping gzip -t", len(produced))
         return True
 
     bad = [fq for fq in produced if not validate_fastq_gz(fq)]
@@ -387,9 +381,7 @@ def download_srr_ena_direct(
 # ---------------------------------------------------------------------------
 
 
-def download_srr_kingfisher(
-    srr: str, output_dir: Path, dry_run: bool = False
-) -> bool:
+def download_srr_kingfisher(srr: str, output_dir: Path, dry_run: bool = False) -> bool:
     """Download an SRR via the ``kingfisher`` subprocess backend (GPL-3.0).
 
     Only used when the binary is installed separately. Tries multiple
@@ -402,9 +394,7 @@ def download_srr_kingfisher(
         logger.info("  [skip] %s already present in %s", srr, output_dir)
         return True
     if fastq:
-        logger.warning(
-            "  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir
-        )
+        logger.warning("  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir)
         for p in fastq:
             p.unlink(missing_ok=True)
 
@@ -414,12 +404,18 @@ def download_srr_kingfisher(
         return False
 
     cmd = [
-        "kingfisher", "get",
-        "-r", srr,
-        "--download-methods", *methods,
-        "--output-directory", str(output_dir),
-        "--output-format-possibilities", "fastq.gz",
-        "--download-threads", "4",
+        "kingfisher",
+        "get",
+        "-r",
+        srr,
+        "--download-methods",
+        *methods,
+        "--output-directory",
+        str(output_dir),
+        "--output-format-possibilities",
+        "fastq.gz",
+        "--download-threads",
+        "4",
         "--check-md5sums",
     ]
     logger.info("  kingfisher %s → %s (methods: %s)", srr, output_dir, ",".join(methods))
@@ -444,7 +440,10 @@ def download_srr_kingfisher(
         logger.warning(
             "  kingfisher output for %s has %d invalid FASTQ(s) (%s); "
             "deleting all %d file(s) to force clean re-download",
-            srr, len(bad), ", ".join(p.name for p in bad), len(produced),
+            srr,
+            len(bad),
+            ", ".join(p.name for p in bad),
+            len(produced),
         )
         for fq in produced:
             fq.unlink(missing_ok=True)
@@ -457,9 +456,7 @@ def download_srr_kingfisher(
 # ---------------------------------------------------------------------------
 
 
-def download_srr_sratoolkit(
-    srr: str, output_dir: Path, dry_run: bool = False
-) -> bool:
+def download_srr_sratoolkit(srr: str, output_dir: Path, dry_run: bool = False) -> bool:
     """Download an SRR via NCBI sra-toolkit (``prefetch`` + ``fasterq-dump``)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     fastq = iter_srr_files(output_dir, srr)
@@ -467,9 +464,7 @@ def download_srr_sratoolkit(
         logger.info("  [skip] %s already present", srr)
         return True
     if fastq:
-        logger.warning(
-            "  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir
-        )
+        logger.warning("  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir)
         for p in fastq:
             p.unlink(missing_ok=True)
 
@@ -480,7 +475,10 @@ def download_srr_sratoolkit(
     try:
         subprocess.run(
             ["prefetch", srr, "-O", str(output_dir)],
-            check=True, capture_output=True, text=True, timeout=3600,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=3600,
         )
         sra_cache = _find_sra_cache(output_dir, srr)
         fasterq_input = str(sra_cache) if sra_cache else srr
@@ -488,13 +486,16 @@ def download_srr_sratoolkit(
             logger.warning(
                 "  prefetch completed for %s but no local .sra under %s; "
                 "trying fasterq-dump via accession",
-                srr, output_dir,
+                srr,
+                output_dir,
             )
 
         subprocess.run(
-            ["fasterq-dump", fasterq_input, "-O", str(output_dir),
-             "--skip-technical", "--split-3"],
-            check=True, capture_output=True, text=True, timeout=3600,
+            ["fasterq-dump", fasterq_input, "-O", str(output_dir), "--skip-technical", "--split-3"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=3600,
         )
         for fq in iter_srr_files(output_dir, srr, suffix=".fastq"):
             subprocess.run(["gzip", str(fq)], check=True)
@@ -503,7 +504,8 @@ def download_srr_sratoolkit(
     except subprocess.CalledProcessError as e:
         logger.error(
             "  sra-toolkit failed for %s: %s",
-            srr, e.stderr[-300:] if e.stderr else str(e),
+            srr,
+            e.stderr[-300:] if e.stderr else str(e),
         )
         return False
 
@@ -515,7 +517,10 @@ def download_srr_sratoolkit(
     if bad:
         logger.warning(
             "  sra-toolkit output for %s has %d invalid FASTQ(s) (%s); deleting all %d file(s)",
-            srr, len(bad), ", ".join(p.name for p in bad), len(produced),
+            srr,
+            len(bad),
+            ", ".join(p.name for p in bad),
+            len(produced),
         )
         for fq in produced:
             fq.unlink(missing_ok=True)
@@ -674,14 +679,13 @@ def download_bioproject(
         if summary.exists():
             missing = _missing_srrs(raw_root, bp_id, samples)
             if not missing:
-                logger.info(
-                    "[%s] already processed and all SRRs present — skipping", bp_id
-                )
+                logger.info("[%s] already processed and all SRRs present — skipping", bp_id)
                 status["skipped"] = True
                 return status
             logger.warning(
                 "[%s] summary.json exists but %d SRR(s) still missing; resuming download",
-                bp_id, len(missing),
+                bp_id,
+                len(missing),
             )
 
     bp_raw_dir = raw_root / safe_dir_name(bp_id)
@@ -693,9 +697,7 @@ def download_bioproject(
         if coverage_info:
             study_info["round_coverage_status"] = coverage_info.get("round_coverage_status")
             study_info["round_coverage"] = coverage_info
-        info_path.write_text(
-            json.dumps(study_info, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        info_path.write_text(json.dumps(study_info, indent=2, ensure_ascii=False), encoding="utf-8")
 
     if source.startswith(("zenodo:", "figshare:")):
         download_external_processed(bp_id, source, bp_raw_dir, dry_run)
@@ -734,7 +736,10 @@ def download_bioproject(
 
     logger.info(
         "[%s] downloaded %d/%d SRRs (%d failed)",
-        bp_id, status["n_downloaded"], status["n_srr"], status["n_failed"],
+        bp_id,
+        status["n_downloaded"],
+        status["n_srr"],
+        status["n_failed"],
     )
     return status
 
@@ -762,9 +767,7 @@ def run_download(
     `coverage_filter` is an optional callable returning the per-BP coverage
     dict (used in study_info.json); pass `None` to skip coverage annotation.
     """
-    logger.info(
-        "Downloading %d BioProject(s)%s", len(bioprojects), " [DRY RUN]" if dry_run else ""
-    )
+    logger.info("Downloading %d BioProject(s)%s", len(bioprojects), " [DRY RUN]" if dry_run else "")
 
     statuses: list[dict] = []
     for bp in bioprojects:
@@ -774,11 +777,7 @@ def run_download(
             "=== %s: %s%s ===",
             bp_id,
             bp.get("protein_target", "?"),
-            (
-                f" [{coverage.get('round_coverage_status', 'unknown')}]"
-                if coverage
-                else ""
-            ),
+            (f" [{coverage.get('round_coverage_status', 'unknown')}]" if coverage else ""),
         )
         bp_samples = samples_by_bp.get(bp_id, [])
         st = download_bioproject(
@@ -799,8 +798,7 @@ def run_download(
     skipped = sum(1 for s in statuses if s["skipped"])
 
     logger.info(
-        "=== DOWNLOAD COMPLETE: %d BioProjects (%d skipped), "
-        "%d/%d SRRs downloaded, %d failed ===",
+        "=== DOWNLOAD COMPLETE: %d BioProjects (%d skipped), %d/%d SRRs downloaded, %d failed ===",
         len(statuses),
         skipped,
         total_ok,

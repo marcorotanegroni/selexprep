@@ -15,7 +15,6 @@ from selexprep.library.audit import (
     positional_base_freq,
 )
 
-
 # ----- positional_base_freq -----
 
 
@@ -110,8 +109,8 @@ def test_audit_trimmed_parquet_basic(tmp_path: Path) -> None:
         p,
         [
             ("AAAACCCCGG", 100),  # L=10, top
-            ("TTTAGGCCAA", 80),   # L=10
-            ("ATCG", 5),          # L=4 (outlier)
+            ("TTTAGGCCAA", 80),  # L=10
+            ("ATCG", 5),  # L=4 (outlier)
         ],
     )
     audit = audit_trimmed_parquet(p)

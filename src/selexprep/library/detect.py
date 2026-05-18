@@ -167,7 +167,7 @@ def detect_primers(
     p5 = detect_flank(sequences, is_prefix=True, **common_kwargs)
     p3 = detect_flank(sequences, is_prefix=False, **common_kwargs)
 
-    mean_len = int(round(pd.Series([len(s) for s in sequences]).mean()))
+    mean_len = round(pd.Series([len(s) for s in sequences]).mean())
     random_len: int | None = None
     if p5.sequence or p3.sequence:
         random_len = mean_len - p5.length - p3.length

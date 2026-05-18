@@ -4,11 +4,8 @@ not exercised here; mark @pytest.mark.network in follow-up integration tests).""
 from __future__ import annotations
 
 import hashlib
-import shutil
 from pathlib import Path
 from unittest import mock
-
-import pytest
 
 from selexprep.fetch.download import (
     download_srr,
@@ -22,7 +19,6 @@ from selexprep.fetch.download import (
     validate_fastq_gz,
     zenodo_expected_md5,
 )
-
 
 # ----- safe_dir_name -----
 
@@ -156,11 +152,17 @@ def test_validate_fastq_gz_rejects_corrupt(tmp_path: Path) -> None:
 
 
 def test_zenodo_md5_strips_prefix() -> None:
-    assert zenodo_expected_md5("md5:abc123def456abc123def456abc123ab") == "abc123def456abc123def456abc123ab"
+    assert (
+        zenodo_expected_md5("md5:abc123def456abc123def456abc123ab")
+        == "abc123def456abc123def456abc123ab"
+    )
 
 
 def test_zenodo_md5_passes_bare_hex() -> None:
-    assert zenodo_expected_md5("abc123def456abc123def456abc123ab") == "abc123def456abc123def456abc123ab"
+    assert (
+        zenodo_expected_md5("abc123def456abc123def456abc123ab")
+        == "abc123def456abc123def456abc123ab"
+    )
 
 
 def test_zenodo_md5_rejects_non_md5() -> None:
@@ -203,13 +205,11 @@ def test_download_srr_tries_ena_direct_first(tmp_path: Path) -> None:
     """Dispatcher MUST try ENA-direct first so the MIT-only default install works
     without kingfisher (GPL-3.0). Regression guard for the licensing-driven
     backend order."""
-    with mock.patch(
-        "selexprep.fetch.download.download_srr_ena_direct", return_value=True
-    ) as ena, mock.patch(
-        "selexprep.fetch.download.download_srr_kingfisher", return_value=True
-    ) as kf, mock.patch(
-        "selexprep.fetch.download.download_srr_sratoolkit", return_value=True
-    ) as sra:
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=True) as ena,
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=True) as kf,
+        mock.patch("selexprep.fetch.download.download_srr_sratoolkit", return_value=True) as sra,
+    ):
         result = download_srr("SRR1", tmp_path)
         assert result is True
         ena.assert_called_once()
@@ -219,14 +219,11 @@ def test_download_srr_tries_ena_direct_first(tmp_path: Path) -> None:
 
 def test_download_srr_falls_back_to_kingfisher_if_ena_fails(tmp_path: Path) -> None:
     """When ENA-direct fails and kingfisher is installed, kingfisher is tried."""
-    with mock.patch(
-        "selexprep.fetch.download.download_srr_ena_direct", return_value=False
-    ), mock.patch(
-        "selexprep.fetch.download.kingfisher_available", return_value=True
-    ), mock.patch(
-        "selexprep.fetch.download.download_srr_kingfisher", return_value=True
-    ) as kf, mock.patch(
-        "selexprep.fetch.download.sratoolkit_available", return_value=False
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),
+        mock.patch("selexprep.fetch.download.kingfisher_available", return_value=True),
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=True) as kf,
+        mock.patch("selexprep.fetch.download.sratoolkit_available", return_value=False),
     ):
         assert download_srr("SRR1", tmp_path)
         kf.assert_called_once()
@@ -234,26 +231,20 @@ def test_download_srr_falls_back_to_kingfisher_if_ena_fails(tmp_path: Path) -> N
 
 def test_download_srr_skips_kingfisher_when_not_available(tmp_path: Path) -> None:
     """Default install (no kingfisher binary) must still produce a clean fall-through."""
-    with mock.patch(
-        "selexprep.fetch.download.download_srr_ena_direct", return_value=False
-    ), mock.patch(
-        "selexprep.fetch.download.kingfisher_available", return_value=False
-    ), mock.patch(
-        "selexprep.fetch.download.sratoolkit_available", return_value=False
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),
+        mock.patch("selexprep.fetch.download.kingfisher_available", return_value=False),
+        mock.patch("selexprep.fetch.download.sratoolkit_available", return_value=False),
     ):
         assert not download_srr("SRR1", tmp_path)
 
 
 def test_download_srr_returns_false_when_all_backends_exhausted(tmp_path: Path) -> None:
-    with mock.patch(
-        "selexprep.fetch.download.download_srr_ena_direct", return_value=False
-    ), mock.patch(
-        "selexprep.fetch.download.kingfisher_available", return_value=True
-    ), mock.patch(
-        "selexprep.fetch.download.download_srr_kingfisher", return_value=False
-    ), mock.patch(
-        "selexprep.fetch.download.sratoolkit_available", return_value=True
-    ), mock.patch(
-        "selexprep.fetch.download.download_srr_sratoolkit", return_value=False
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),
+        mock.patch("selexprep.fetch.download.kingfisher_available", return_value=True),
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=False),
+        mock.patch("selexprep.fetch.download.sratoolkit_available", return_value=True),
+        mock.patch("selexprep.fetch.download.download_srr_sratoolkit", return_value=False),
     ):
         assert not download_srr("SRR1", tmp_path)

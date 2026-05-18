@@ -8,7 +8,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-
 # Canonical per-SRR FASTQ filename conventions produced by kingfisher /
 # sra-toolkit. Single-end runs produce `{srr}.fastq.gz`; paired-end runs
 # produce `{srr}_1.fastq.gz` and `{srr}_2.fastq.gz`. Match EXACTLY to avoid
@@ -74,8 +73,6 @@ def setup_logging(
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         prefix = log_prefix or logger_name
         fh = logging.FileHandler(log_dir / f"{prefix}_{ts}.log", encoding="utf-8")
-        fh.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-        )
+        fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
         root.addHandler(fh)
     return logging.getLogger(logger_name)

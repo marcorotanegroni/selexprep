@@ -65,9 +65,7 @@ def classify_bioproject_round_coverage(
     """
     bp_id = bioproject.get("bioproject_id", "")
     declared = _parse_int(bioproject.get("n_rounds_declared"))
-    sample_srrs = [
-        (s.get("srr") or "").strip() for s in samples if (s.get("srr") or "").strip()
-    ]
+    sample_srrs = [(s.get("srr") or "").strip() for s in samples if (s.get("srr") or "").strip()]
 
     assigned_rounds: list[int] = []
     unknown_srrs: list[str] = []
@@ -174,12 +172,9 @@ def build_round_coverage_report(
 
     status_counts = Counter(entry["round_coverage_status"] for entry in entries)
     included_entries = [
-        entry for entry, bp in zip(entries, bioprojects, strict=True)
-        if include_filter(bp)
+        entry for entry, bp in zip(entries, bioprojects, strict=True) if include_filter(bp)
     ]
-    included_status_counts = Counter(
-        entry["round_coverage_status"] for entry in included_entries
-    )
+    included_status_counts = Counter(entry["round_coverage_status"] for entry in included_entries)
 
     return {
         "generated_at": datetime.now().isoformat(),
