@@ -142,6 +142,43 @@ def test_detect_from_parquet(tmp_path: Path) -> None:
     assert det.primer_5p.sequence is not None
 
 
+def test_detect_from_parquet_default_uses_all_sequences(tmp_path: Path) -> None:
+    """Default `top_n=None` must NOT subsample — every unique sequence is fed
+    to the detection algorithm. This is the user's accuracy requirement: in
+    a naive pool every read carries the primer, so the long tail of rare
+    unique sequences also confirms the consensus."""
+    seqs = _synthetic_pool(
+        primer_5p="GGTAATACGACTCACTATAGGG",
+        primer_3p="CCATGCATGCATGCATGCATGC",
+        n=5_000,  # 5x the previous "top 1000" cap
+    )
+    p = tmp_path / "round_00.counts.parquet"
+    df = pd.DataFrame(
+        {"sequence": seqs, "reads": [1] * len(seqs), "rank": range(1, len(seqs) + 1)}
+    )
+    df.to_parquet(p, index=False, compression="zstd")
+
+    det = detect_from_parquet(p, min_seqs_for_detection=100)  # no top_n
+    assert det is not None
+    assert det.n_sequences_analyzed == 5_000
+    assert det.primer_5p.sequence is not None
+
+
+def test_detect_from_parquet_explicit_top_n_subsamples(tmp_path: Path) -> None:
+    """Passing an explicit positive `top_n` still caps the input — escape hatch
+    for memory-constrained runs."""
+    seqs = _synthetic_pool(primer_5p="GGTAATACG", primer_3p=None, n=2_000)
+    p = tmp_path / "round_00.counts.parquet"
+    df = pd.DataFrame(
+        {"sequence": seqs, "reads": list(range(2_000, 0, -1)), "rank": range(1, 2_001)}
+    )
+    df.to_parquet(p, index=False, compression="zstd")
+
+    det = detect_from_parquet(p, top_n=500, min_seqs_for_detection=100)
+    assert det is not None
+    assert det.n_sequences_analyzed == 500
+
+
 # ----- earliest_round_parquet -----
 
 
