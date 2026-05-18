@@ -39,8 +39,14 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-# Algorithm defaults — empirically tuned on the user's STI-aptamer corpus.
-DEFAULT_TOP_N = 10_000
+# Algorithm defaults.
+# DEFAULT_TOP_N = None means "use every unique sequence in the parquet, no
+# subsampling". In a naive SELEX pool every read carries the primer at the
+# same position, so sampling top-N by read count discards evidence rather
+# than concentrating it — the long tail of rare unique sequences also
+# carries the primer and confirms the consensus. Pass an explicit int to
+# `top_n` only if memory pressure forces it.
+DEFAULT_TOP_N: int | None = None
 DEFAULT_CONFIDENCE = 0.75
 DEFAULT_MIN_LEN = 15
 DEFAULT_MAX_LEN = 30
@@ -183,15 +189,21 @@ def detect_primers(
 
 def detect_from_parquet(
     parquet_path: Path,
-    top_n: int = DEFAULT_TOP_N,
+    top_n: int | None = DEFAULT_TOP_N,
     confidence: float = DEFAULT_CONFIDENCE,
     max_len: int = DEFAULT_MAX_LEN,
     min_len: int = DEFAULT_MIN_LEN,
     min_seqs_for_detection: int = DEFAULT_MIN_SEQS_FOR_DETECTION,
 ) -> PrimerDetection | None:
-    """Load top-N most abundant sequences from a counts parquet, detect primers."""
+    """Detect primers from a counts parquet.
+
+    By default (``top_n=None``) every unique sequence in the parquet is used —
+    no subsampling. Pass an explicit positive integer to cap the input at the
+    top-N most abundant sequences (useful only when memory is constrained).
+    """
     df = pd.read_parquet(parquet_path, columns=["sequence", "reads"])
-    df = df.nlargest(top_n, "reads")
+    if top_n is not None and top_n > 0:
+        df = df.nlargest(top_n, "reads")
     sequences = df["sequence"].tolist()
     return detect_primers(
         sequences,
