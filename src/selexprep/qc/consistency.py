@@ -223,9 +223,7 @@ def check_bioproject(
         "round_numbers": round_nums,
         "k": k,
         "top_n_per_round": top_n,
-        "distance_matrix": {
-            f"R{r1}-R{r2}": round(d, 4) for (r1, r2), d in distance_matrix.items()
-        },
+        "distance_matrix": {f"R{r1}-R{r2}": round(d, 4) for (r1, r2), d in distance_matrix.items()},
         "monotonic": monotonicity["monotonic"],
         "violations": monotonicity["violations"],
         "primer_trim_status": trim_status,
@@ -262,9 +260,7 @@ def run_consistency_check(
         bp_ids = [bioproject_id]
     else:
         bp_ids = sorted(
-            p.name
-            for p in processed_root.iterdir()
-            if p.is_dir() and (p / "summary.json").exists()
+            p.name for p in processed_root.iterdir() if p.is_dir() and (p / "summary.json").exists()
         )
 
     if not bp_ids:
@@ -283,9 +279,7 @@ def run_consistency_check(
 
     n_ok = sum(1 for r in reports.values() if r.get("status") == "ok")
     n_suspicious = sum(1 for r in reports.values() if r.get("status") == "suspicious")
-    n_insufficient = sum(
-        1 for r in reports.values() if "insufficient" in r.get("status", "")
-    )
+    n_insufficient = sum(1 for r in reports.values() if "insufficient" in r.get("status", ""))
     n_primer_trim_flagged = sum(
         1 for r in reports.values() if r.get("primer_trim_status", {}).get("flags")
     )

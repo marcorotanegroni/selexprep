@@ -351,9 +351,7 @@ def count_round_multi(
     counter: collections.Counter = collections.Counter()
     any_trimmed = False
     for fq in fastq_files:
-        if _counter_into(
-            counter, fq, primer_5p, primer_3p, cap_length=expected_random_len
-        ):
+        if _counter_into(counter, fq, primer_5p, primer_3p, cap_length=expected_random_len):
             any_trimmed = True
 
     stats = _counter_to_parquet(counter, output_parquet, expected_random_len)
@@ -389,8 +387,7 @@ def _count_rounds_in_dir(
         # Only count R1 and single-end FASTQs; _2 siblings are handled by cutadapt
         # during paired-mode trimming. Prevents double-counting reads.
         fastq_files = [
-            p for p in sorted(rd.glob("*.fastq.gz"))
-            if not p.name.endswith("_2.fastq.gz")
+            p for p in sorted(rd.glob("*.fastq.gz")) if not p.name.endswith("_2.fastq.gz")
         ]
         if not fastq_files:
             logger.warning("  No FASTQ files in %s", rd)

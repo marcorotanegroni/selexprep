@@ -15,7 +15,6 @@ from selexprep.count.counter import (
     reverse_complement,
 )
 
-
 # ----- reverse_complement -----
 
 

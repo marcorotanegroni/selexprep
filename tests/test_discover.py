@@ -25,7 +25,6 @@ from selexprep.fetch.discover import (
     write_csv,
 )
 
-
 # ----- Schema helpers -----
 
 
@@ -44,8 +43,12 @@ def test_empty_sample_has_all_columns() -> None:
 # ----- SeedAdapter -----
 
 
-def _write_seed(path: Path, entries: list[dict], blacklist: list[dict] | None = None,
-                sm_targets: list[str] | None = None) -> None:
+def _write_seed(
+    path: Path,
+    entries: list[dict],
+    blacklist: list[dict] | None = None,
+    sm_targets: list[str] | None = None,
+) -> None:
     payload = {"entries": entries}
     if blacklist is not None:
         payload["blacklist"] = blacklist
@@ -56,13 +59,20 @@ def _write_seed(path: Path, entries: list[dict], blacklist: list[dict] | None = 
 
 def test_seed_adapter_loads_entries(tmp_path: Path) -> None:
     seed = tmp_path / "seed.yaml"
-    _write_seed(seed, [
-        {"bioproject_id": "PRJ1", "protein_target": "VEGF",
-         "library_type": "RNA_confirmed", "paper_doi": "10.1/x",
-         "n_rounds_expected": 8, "notes": "test"},
-        {"bioproject_id": "PRJ2", "protein_target": "TNF",
-         "library_type": "DNA_confirmed"},
-    ])
+    _write_seed(
+        seed,
+        [
+            {
+                "bioproject_id": "PRJ1",
+                "protein_target": "VEGF",
+                "library_type": "RNA_confirmed",
+                "paper_doi": "10.1/x",
+                "n_rounds_expected": 8,
+                "notes": "test",
+            },
+            {"bioproject_id": "PRJ2", "protein_target": "TNF", "library_type": "DNA_confirmed"},
+        ],
+    )
     bp_rows, sample_rows = SeedAdapter(seed).search()
     assert len(bp_rows) == 2
     assert sample_rows == []
@@ -76,10 +86,13 @@ def test_seed_adapter_loads_entries(tmp_path: Path) -> None:
 
 def test_seed_adapter_filters_by_query(tmp_path: Path) -> None:
     seed = tmp_path / "seed.yaml"
-    _write_seed(seed, [
-        {"bioproject_id": "PRJ1", "library_type": "RNA_confirmed"},
-        {"bioproject_id": "PRJ2", "library_type": "RNA_confirmed"},
-    ])
+    _write_seed(
+        seed,
+        [
+            {"bioproject_id": "PRJ1", "library_type": "RNA_confirmed"},
+            {"bioproject_id": "PRJ2", "library_type": "RNA_confirmed"},
+        ],
+    )
     bp_rows, _ = SeedAdapter(seed).search(query="PRJ1")
     assert len(bp_rows) == 1
     assert bp_rows[0]["bioproject_id"] == "PRJ1"
@@ -161,11 +174,13 @@ def test_sm_context_empty_abstract() -> None:
 
 def test_load_seed_overrides(tmp_path: Path) -> None:
     seed = tmp_path / "seed.yaml"
-    _write_seed(seed, [
-        {"bioproject_id": "PRJ1",
-         "manual_round_mapping": {"SRR1": 0, "SRR2": 1}},
-        {"bioproject_id": "PRJ2"},  # no mapping
-    ])
+    _write_seed(
+        seed,
+        [
+            {"bioproject_id": "PRJ1", "manual_round_mapping": {"SRR1": 0, "SRR2": 1}},
+            {"bioproject_id": "PRJ2"},  # no mapping
+        ],
+    )
     overrides = load_seed_overrides(seed)
     assert overrides == {"PRJ1": {"SRR1": 0, "SRR2": 1}}
 
@@ -179,10 +194,13 @@ def test_load_seed_overrides_missing_file_returns_empty(tmp_path: Path) -> None:
 
 def test_deduplicate_bioprojects_first_wins() -> None:
     rows = [
-        {**empty_bioproject(), "bioproject_id": "PRJ1", "source": "seed",
-         "protein_target": "VEGF"},
-        {**empty_bioproject(), "bioproject_id": "PRJ1", "source": "ena",
-         "study_title": "VEGF aptamers"},
+        {**empty_bioproject(), "bioproject_id": "PRJ1", "source": "seed", "protein_target": "VEGF"},
+        {
+            **empty_bioproject(),
+            "bioproject_id": "PRJ1",
+            "source": "ena",
+            "study_title": "VEGF aptamers",
+        },
     ]
     out = deduplicate_bioprojects(rows)
     assert len(out) == 1

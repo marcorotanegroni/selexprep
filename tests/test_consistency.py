@@ -16,7 +16,6 @@ from selexprep.qc.consistency import (
     jaccard_distance,
 )
 
-
 # ----- canonical_kmer -----
 
 
@@ -100,7 +99,11 @@ def test_monotonicity_swapped_rounds_flagged() -> None:
 
 def _write_round_parquet(path: Path, sequences: list[str], reads_each: int = 100) -> None:
     df = pd.DataFrame(
-        {"sequence": sequences, "reads": [reads_each] * len(sequences), "rank": range(1, len(sequences) + 1)}
+        {
+            "sequence": sequences,
+            "reads": [reads_each] * len(sequences),
+            "rank": range(1, len(sequences) + 1),
+        }
     )
     df.to_parquet(path, index=False, compression="zstd")
 
@@ -118,12 +121,15 @@ def test_check_bioproject_monotonic_progression(tmp_path: Path) -> None:
     bp = tmp_path / "PRJ1"
     bp.mkdir()
     # R0: random-ish pool. R1: half new. R2: mostly new sequences.
-    _write_round_parquet(bp / "round_00.counts.parquet",
-                         ["AAAAAAAA", "CCCCCCCC", "GGGGGGGG", "TTTTTTTT"])
-    _write_round_parquet(bp / "round_01.counts.parquet",
-                         ["AAAAAAAA", "CCCCCCCC", "ACACACAC", "GTGTGTGT"])
-    _write_round_parquet(bp / "round_02.counts.parquet",
-                         ["ACACACAC", "GTGTGTGT", "ATATATAT", "CGCGCGCG"])
+    _write_round_parquet(
+        bp / "round_00.counts.parquet", ["AAAAAAAA", "CCCCCCCC", "GGGGGGGG", "TTTTTTTT"]
+    )
+    _write_round_parquet(
+        bp / "round_01.counts.parquet", ["AAAAAAAA", "CCCCCCCC", "ACACACAC", "GTGTGTGT"]
+    )
+    _write_round_parquet(
+        bp / "round_02.counts.parquet", ["ACACACAC", "GTGTGTGT", "ATATATAT", "CGCGCGCG"]
+    )
     # Write a minimal summary.json so primer_trim_status returns something benign
     (bp / "summary.json").write_text(json.dumps({"primer_unknown": True, "rounds": []}))
 

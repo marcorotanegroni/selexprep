@@ -103,8 +103,7 @@ def validate_barcodes(barcodes: dict[str, int], max_mismatches: int) -> None:
         for bc_j, rn_j in items[i + 1 :]:
             if len(bc_i) != len(bc_j):
                 raise ValueError(
-                    f"barcodes have different lengths: {bc_i} ({len(bc_i)}) vs "
-                    f"{bc_j} ({len(bc_j)})"
+                    f"barcodes have different lengths: {bc_i} ({len(bc_i)}) vs {bc_j} ({len(bc_j)})"
                 )
             d = _hamming(bc_i, bc_j)
             if d < min_allowed:
@@ -142,9 +141,10 @@ def _iter_fastq_pair(
 
     Raises if R1 and R2 diverge in record count (would corrupt pair sync).
     """
-    with gzip.open(r1_path, "rt", encoding="utf-8", errors="replace") as f1, gzip.open(
-        r2_path, "rt", encoding="utf-8", errors="replace"
-    ) as f2:
+    with (
+        gzip.open(r1_path, "rt", encoding="utf-8", errors="replace") as f1,
+        gzip.open(r2_path, "rt", encoding="utf-8", errors="replace") as f2,
+    ):
         while True:
             r1 = (f1.readline(), f1.readline(), f1.readline(), f1.readline())
             r2 = (f2.readline(), f2.readline(), f2.readline(), f2.readline())
@@ -187,12 +187,17 @@ def demux_fastq(
     paired = r2_path is not None
 
     def _open_pair(directory: Path) -> tuple:
+        # Long-lived handles closed in the outer `finally`; SIM115 is a false
+        # positive for this writer-factory pattern.
         directory.mkdir(parents=True, exist_ok=True)
         if paired:
-            w1 = gzip.open(directory / f"{srr}_1.fastq.gz", "wt", encoding="utf-8")
-            w2 = gzip.open(directory / f"{srr}_2.fastq.gz", "wt", encoding="utf-8")
+            w1 = gzip.open(directory / f"{srr}_1.fastq.gz", "wt", encoding="utf-8")  # noqa: SIM115
+            w2 = gzip.open(directory / f"{srr}_2.fastq.gz", "wt", encoding="utf-8")  # noqa: SIM115
             return (w1, w2)
-        return (gzip.open(directory / f"{srr}.fastq.gz", "wt", encoding="utf-8"), None)
+        return (
+            gzip.open(directory / f"{srr}.fastq.gz", "wt", encoding="utf-8"),
+            None,
+        )
 
     writers: dict = {}
     for rn in set(barcodes.values()):
@@ -212,7 +217,8 @@ def demux_fastq(
                 w1, w2 = writers[key]
                 if rn is not None and trim_barcode:
                     bc_len = next(
-                        len(bc) for bc in barcodes
+                        len(bc)
+                        for bc in barcodes
                         if _hamming(s1_stripped[: len(bc)], bc) <= max_mismatches
                     )
                     w1.write(h1)
@@ -220,8 +226,14 @@ def demux_fastq(
                     w1.write(p1)
                     w1.write(q1.rstrip("\n")[bc_len:] + "\n")
                 else:
-                    w1.write(h1); w1.write(s1); w1.write(p1); w1.write(q1)
-                w2.write(h2); w2.write(s2); w2.write(p2); w2.write(q2)
+                    w1.write(h1)
+                    w1.write(s1)
+                    w1.write(p1)
+                    w1.write(q1)
+                w2.write(h2)
+                w2.write(s2)
+                w2.write(p2)
+                w2.write(q2)
                 counts[key] += 1
         else:
             for header, seq, plus, qual in _iter_fastq(r1_path):
@@ -232,7 +244,8 @@ def demux_fastq(
                 w1, _ = writers[key]
                 if rn is not None and trim_barcode:
                     bc_len = next(
-                        len(bc) for bc in barcodes
+                        len(bc)
+                        for bc in barcodes
                         if _hamming(seq_stripped[: len(bc)], bc) <= max_mismatches
                     )
                     w1.write(header)
@@ -240,7 +253,10 @@ def demux_fastq(
                     w1.write(plus)
                     w1.write(qual.rstrip("\n")[bc_len:] + "\n")
                 else:
-                    w1.write(header); w1.write(seq); w1.write(plus); w1.write(qual)
+                    w1.write(header)
+                    w1.write(seq)
+                    w1.write(plus)
+                    w1.write(qual)
                 counts[key] += 1
     finally:
         for w1, w2 in writers.values():
@@ -334,7 +350,5 @@ def demux_sample_sheet(
         )
         reports.append(report)
         if report_dir is not None:
-            (report_dir / f"{job.srr}_demux.json").write_text(
-                json.dumps(asdict(report), indent=2)
-            )
+            (report_dir / f"{job.srr}_demux.json").write_text(json.dumps(asdict(report), indent=2))
     return reports

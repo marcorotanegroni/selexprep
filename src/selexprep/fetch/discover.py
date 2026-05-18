@@ -26,6 +26,7 @@ for testability (each adapter currently makes live HTTP calls in its
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import io
 import json
@@ -35,9 +36,8 @@ import shutil
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import requests
 import yaml
@@ -50,21 +50,45 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 BIOPROJECT_COLS = [
-    "bioproject_id", "source", "study_title", "protein_target", "target_organism",
-    "paper_doi", "paper_pmid", "n_rounds_declared", "library_type_verification",
-    "library_type_evidence", "has_processed_counts", "abstract", "include",
+    "bioproject_id",
+    "source",
+    "study_title",
+    "protein_target",
+    "target_organism",
+    "paper_doi",
+    "paper_pmid",
+    "n_rounds_declared",
+    "library_type_verification",
+    "library_type_evidence",
+    "has_processed_counts",
+    "abstract",
+    "include",
     "manual_curation_notes",
 ]
 
 SAMPLE_COLS = [
-    "srr", "bioproject_id", "sample_title", "library_name", "experiment_title",
-    "design_description", "sample_attributes", "total_bases", "n_reads",
-    "target_hint", "raw_metadata",
+    "srr",
+    "bioproject_id",
+    "sample_title",
+    "library_name",
+    "experiment_title",
+    "design_description",
+    "sample_attributes",
+    "total_bases",
+    "n_reads",
+    "target_hint",
+    "raw_metadata",
 ]
 
 ROUND_COLS = [
-    "srr", "round_number", "confidence", "source_field",
-    "matched_pattern", "round_candidates", "needs_manual_review", "parser_notes",
+    "srr",
+    "round_number",
+    "confidence",
+    "source_field",
+    "matched_pattern",
+    "round_candidates",
+    "needs_manual_review",
+    "parser_notes",
 ]
 
 
@@ -294,7 +318,9 @@ class SRAAdapter(SourceAdapter):
 
             self._db = SRAweb()
         except ImportError:
-            logger.warning("pysradb not installed — SRA adapter disabled (install with `pip install selexprep[ncbi]`)")
+            logger.warning(
+                "pysradb not installed — SRA adapter disabled (install with `pip install selexprep[ncbi]`)"
+            )
             self._db = None
 
     def search(self, query: str | None = None) -> tuple[list[dict], list[dict]]:
@@ -325,9 +351,9 @@ class SRAAdapter(SourceAdapter):
             cols = set(df.columns)
             logger.info("[SRA] %d rows", len(df))
 
-            def _pick(row, *names):
+            def _pick(row, *names, _cols=cols):
                 for n in names:
-                    if n in cols:
+                    if n in _cols:
                         v = row.get(n)
                         if v is not None and str(v).strip() not in ("", "nan"):
                             return str(v).strip()
@@ -372,7 +398,7 @@ class SRAAdapter(SourceAdapter):
 class GEOAdapter(SourceAdapter):
     name = "geo"
 
-    GEO_QUERIES = [
+    GEO_QUERIES: ClassVar[list[str]] = [
         "HT-SELEX RNA aptamer",
         "SELEX-seq RNA aptamer protein",
         "aptamer selection RNA pool high-throughput sequencing",
@@ -461,9 +487,7 @@ class UTexasDBAdapter(SourceAdapter):
             return [], []
 
         files = meta.get("files", [])
-        data_url = next(
-            (f["links"]["self"] for f in files if f["key"].endswith(".csv")), None
-        )
+        data_url = next((f["links"]["self"] for f in files if f["key"].endswith(".csv")), None)
         is_xlsx = False
         if not data_url:
             data_url = next(
@@ -479,9 +503,7 @@ class UTexasDBAdapter(SourceAdapter):
             logger.warning("[UTexasDB] no CSV/XLSX file found in Zenodo record")
             return [], []
 
-        logger.info(
-            "[UTexasDB] downloading %s from %s", "XLSX" if is_xlsx else "CSV", data_url
-        )
+        logger.info("[UTexasDB] downloading %s from %s", "XLSX" if is_xlsx else "CSV", data_url)
         resp = requests.get(data_url, timeout=120)
         if resp.status_code != 200:
             logger.warning("[UTexasDB] failed to download: HTTP %d", resp.status_code)
@@ -547,7 +569,11 @@ ZENODO_API = "https://zenodo.org/api/records"
 class ZenodoAdapter(SourceAdapter):
     name = "zenodo"
 
-    QUERIES = ["HT-SELEX aptamer", "SELEX RNA aptamer round", "aptamer selection sequencing"]
+    QUERIES: ClassVar[list[str]] = [
+        "HT-SELEX aptamer",
+        "SELEX RNA aptamer round",
+        "aptamer selection sequencing",
+    ]
 
     def search(self, query: str | None = None) -> tuple[list[dict], list[dict]]:
         queries = [query] if query else self.QUERIES
@@ -591,7 +617,7 @@ FIGSHARE_API = "https://api.figshare.com/v2/articles/search"
 class FigshareAdapter(SourceAdapter):
     name = "figshare"
 
-    QUERIES = ["HT-SELEX aptamer RNA", "aptamer SELEX rounds sequencing"]
+    QUERIES: ClassVar[list[str]] = ["HT-SELEX aptamer RNA", "aptamer SELEX rounds sequencing"]
 
     def search(self, query: str | None = None) -> tuple[list[dict], list[dict]]:
         queries = [query] if query else self.QUERIES
@@ -658,12 +684,12 @@ class CrossrefAdapter(SourceAdapter):
         return {
             "title": " ".join(msg.get("title", [])),
             "authors": [
-                f"{a.get('family', '')} {a.get('given', '')}".strip()
-                for a in msg.get("author", [])
+                f"{a.get('family', '')} {a.get('given', '')}".strip() for a in msg.get("author", [])
             ],
             "journal": msg.get("container-title", [""])[0] if msg.get("container-title") else "",
-            "year": (msg.get("published-print") or msg.get("published-online") or {})
-            .get("date-parts", [[None]])[0][0],
+            "year": (msg.get("published-print") or msg.get("published-online") or {}).get(
+                "date-parts", [[None]]
+            )[0][0],
             "abstract": msg.get("abstract", ""),
         }
 
@@ -751,11 +777,9 @@ def is_blacklisted(bp: dict, blacklist: set[str], sm_targets: list[str]) -> bool
     if sm_mentioned_in_selex_context(abstract, sm_targets[:5]):
         return True
     abstract_lc = abstract.lower()
-    if ("whole cell" in abstract_lc or "differential cell selex" in abstract_lc) and not bp.get(
+    return ("whole cell" in abstract_lc or "differential cell selex" in abstract_lc) and not bp.get(
         "protein_target"
-    ):
-        return True
-    return False
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -770,8 +794,7 @@ def _classify_all(bp_rows: list[dict]) -> list[dict]:
         from selexprep.library.type_classifier import classify_bioproject  # type: ignore
     except ImportError:
         logger.info(
-            "library_type_classifier not available (v0.2 feature); "
-            "skipping DNA/RNA classification"
+            "library_type_classifier not available (v0.2 feature); skipping DNA/RNA classification"
         )
         return bp_rows
     for bp in bp_rows:
@@ -823,10 +846,8 @@ def _parse_rounds(
         attrs: dict[str, str] = {}
         raw_attrs = s.get("sample_attributes", "")
         if raw_attrs:
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 attrs = json.loads(raw_attrs)
-            except json.JSONDecodeError:
-                pass
 
         bp_id = s.get("bioproject_id", "")
         record = parse_round(
@@ -847,12 +868,10 @@ def _parse_rounds(
         if bp_id not in records_by_bp:
             continue
         records_by_bp[bp_id] = apply_seed_overrides(records_by_bp[bp_id], mapping)
-        logger.info(
-            "[seed] applied manual_round_mapping for %s (%d SRRs)", bp_id, len(mapping)
-        )
+        logger.info("[seed] applied manual_round_mapping for %s (%d SRRs)", bp_id, len(mapping))
 
     round_rows = []
-    for bp_id, recs in records_by_bp.items():
+    for _bp_id, recs in records_by_bp.items():
         for r in recs:
             round_rows.append(r.to_dict())
     return round_rows

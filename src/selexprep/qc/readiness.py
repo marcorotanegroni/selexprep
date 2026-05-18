@@ -200,9 +200,7 @@ def gc_content(seqs: list[str]) -> tuple[float, float]:
     return mean, math.sqrt(var)
 
 
-def positional_top_base(
-    seqs: list[str], from_end: bool, n_pos: int
-) -> list[tuple[str, float]]:
+def positional_top_base(seqs: list[str], from_end: bool, n_pos: int) -> list[tuple[str, float]]:
     """Per-position top base + fraction across `seqs` over `n_pos` positions.
 
     When ``from_end=True``, indexes from the 3' end (variable-length-tolerant).
@@ -260,16 +258,12 @@ def top_kmers(
     return [(km, n / n_total) for km, n in total.most_common(top_n)]
 
 
-def truseq_contamination(
-    seqs: list[str], counts: list[int]
-) -> tuple[float, float, int]:
+def truseq_contamination(seqs: list[str], counts: list[int]) -> tuple[float, float, int]:
     """Return (unique_frac, reads_frac, n_reads_with_truseq)."""
     if not seqs:
         return 0.0, 0.0, 0
     unique_hits = sum(1 for s in seqs if TRUSEQ_R1_PREFIX in s)
-    reads_hits = sum(
-        c for s, c in zip(seqs, counts, strict=False) if TRUSEQ_R1_PREFIX in s
-    )
+    reads_hits = sum(c for s, c in zip(seqs, counts, strict=False) if TRUSEQ_R1_PREFIX in s)
     total_reads = sum(counts)
     return (
         (unique_hits / len(seqs)) if seqs else 0.0,
@@ -366,15 +360,13 @@ def _section_alphabet(
             "alphabet",
             FAIL,
             f"{total_bad:,}/{total:,} ({frac:.3%}) non-ACGT across "
-            f"{len(bad_rounds)} rounds: {details}"
-            + (" …" if len(bad_rounds) > 3 else ""),
+            f"{len(bad_rounds)} rounds: {details}" + (" …" if len(bad_rounds) > 3 else ""),
         )
     elif frac > ALPHABET_BAD_FRAC_WARN:
         report.add(
             "alphabet",
             WARN,
-            f"{total_bad:,}/{total:,} ({frac:.3%}) non-ACGT in "
-            f"{len(bad_rounds)} round(s)",
+            f"{total_bad:,}/{total:,} ({frac:.3%}) non-ACGT in {len(bad_rounds)} round(s)",
         )
     elif total_bad > 0:
         report.add(
@@ -429,13 +421,12 @@ def _section_lengths(
 
         if i == 0 and mode_frac < min_mode_frac_earliest:
             issues.append(
-                f"{p.name} (earliest) mode covers {mode_frac:.0%} "
-                f"(<{min_mode_frac_earliest:.0%})"
+                f"{p.name} (earliest) mode covers {mode_frac:.0%} (<{min_mode_frac_earliest:.0%})"
             )
 
         if rrl:
             for L, f in top5:
-                if L < rrl * 0.5 and f > 0.005:
+                if rrl * 0.5 > L and f > 0.005:
                     issues.append(f"{p.name} short outlier L={L} at {f:.1%}")
                     break
 
@@ -444,9 +435,7 @@ def _section_lengths(
 
     mode_values = [r["mode_L"] for r in per_round]
     if mode_values and max(mode_values) - min(mode_values) > MODE_L_TOLERANCE:
-        issues.append(
-            f"mode_L inconsistent across rounds: {min(mode_values)}-{max(mode_values)}"
-        )
+        issues.append(f"mode_L inconsistent across rounds: {min(mode_values)}-{max(mode_values)}")
 
     if issues:
         report.add(
@@ -567,8 +556,7 @@ def _section_composition(
             report.add(
                 "composition",
                 WARN,
-                f"no_r0; only {len(prefixes_6mer)} distinct top-5 6-mer prefixes — "
-                "residue suspect",
+                f"no_r0; only {len(prefixes_6mer)} distinct top-5 6-mer prefixes — residue suspect",
             )
         return
 
@@ -589,9 +577,7 @@ def _section_composition(
     H_head = positional_entropy(mode_seqs, from_end=False, n_pos=10)
     H_tail = positional_entropy(mode_seqs, from_end=True, n_pos=10)
     H_mean = (
-        (sum(H_head) + sum(H_tail)) / (len(H_head) + len(H_tail))
-        if (H_head or H_tail)
-        else 0.0
+        (sum(H_head) + sum(H_tail)) / (len(H_head) + len(H_tail)) if (H_head or H_tail) else 0.0
     )
     report.stats["composition_entropy_mean_bits"] = round(H_mean, 2)
 
@@ -696,9 +682,7 @@ def _section_selection(
         return
 
     cols = tbl.column_names
-    log2fc_col = next(
-        (c for c in ("log2FC", "log2_fold_change", "log2fc") if c in cols), None
-    )
+    log2fc_col = next((c for c in ("log2FC", "log2_fold_change", "log2fc") if c in cols), None)
     if log2fc_col is None:
         report.add("selection", WARN, f"no log2FC column in {enrich.name}; cols={cols}")
         return
@@ -844,9 +828,7 @@ def review_bioproject(
     # Seed authority quick-check (tag-aware)
     primer_5p_ok = bool(primer_5p) and len(primer_5p) >= PRIMER_MIN_LEN
     primer_3p_required = tag not in NO_PRIMER_3P_TAGS
-    primer_3p_ok = (
-        bool(primer_3p) and len(primer_3p) >= PRIMER_MIN_LEN
-    ) or not primer_3p_required
+    primer_3p_ok = (bool(primer_3p) and len(primer_3p) >= PRIMER_MIN_LEN) or not primer_3p_required
     rrl_ok = bool(random_region_len)
 
     src_ok = (
@@ -860,9 +842,7 @@ def review_bioproject(
         if not primer_5p_ok:
             details.append(f"5p missing or <{PRIMER_MIN_LEN} nt")
         if not primer_3p_ok:
-            details.append(
-                f"3p missing or <{PRIMER_MIN_LEN} nt (and tag={tag!r} requires it)"
-            )
+            details.append(f"3p missing or <{PRIMER_MIN_LEN} nt (and tag={tag!r} requires it)")
         if not rrl_ok:
             details.append("rrl missing")
         report.add("pre", FAIL, "incomplete seed: " + "; ".join(details))

@@ -12,7 +12,6 @@ from selexprep.fetch.metadata import (
     summarise_bioproject,
 )
 
-
 # ----- L1: structured sample_attributes -----
 
 
@@ -134,10 +133,20 @@ def test_target_hint_none_when_no_match() -> None:
 
 def test_apply_seed_overrides_replaces_record() -> None:
     base = [
-        RoundRecord(srr="SRR1", round_number=None, confidence="NONE",
-                    source_field="none", matched_pattern="none"),
-        RoundRecord(srr="SRR2", round_number=5, confidence="HIGH",
-                    source_field="sample_title", matched_pattern="round_word_digit"),
+        RoundRecord(
+            srr="SRR1",
+            round_number=None,
+            confidence="NONE",
+            source_field="none",
+            matched_pattern="none",
+        ),
+        RoundRecord(
+            srr="SRR2",
+            round_number=5,
+            confidence="HIGH",
+            source_field="sample_title",
+            matched_pattern="round_word_digit",
+        ),
     ]
     out = apply_seed_overrides(base, {"SRR1": 3, "SRR2": 4})
     assert out[0].round_number == 3
@@ -149,8 +158,13 @@ def test_apply_seed_overrides_replaces_record() -> None:
 
 def test_apply_seed_overrides_passes_unmapped() -> None:
     base = [
-        RoundRecord(srr="SRR1", round_number=5, confidence="HIGH",
-                    source_field="sample_title", matched_pattern="round_word_digit")
+        RoundRecord(
+            srr="SRR1",
+            round_number=5,
+            confidence="HIGH",
+            source_field="sample_title",
+            matched_pattern="round_word_digit",
+        )
     ]
     out = apply_seed_overrides(base, {"SRR99": 1})
     assert out[0].round_number == 5
@@ -162,10 +176,20 @@ def test_apply_seed_overrides_passes_unmapped() -> None:
 
 def test_summarise_bioproject_flags_inconsistency() -> None:
     records = [
-        RoundRecord(srr="SRR1", round_number=1, confidence="HIGH",
-                    source_field="sample_title", matched_pattern="round_word_digit"),
-        RoundRecord(srr="SRR2", round_number=None, confidence="NONE",
-                    source_field="none", matched_pattern="none"),
+        RoundRecord(
+            srr="SRR1",
+            round_number=1,
+            confidence="HIGH",
+            source_field="sample_title",
+            matched_pattern="round_word_digit",
+        ),
+        RoundRecord(
+            srr="SRR2",
+            round_number=None,
+            confidence="NONE",
+            source_field="none",
+            matched_pattern="none",
+        ),
     ]
     summary = summarise_bioproject("PRJ1", records, abstract="6 rounds of SELEX")
     assert summary.n_high == 1
@@ -176,10 +200,20 @@ def test_summarise_bioproject_flags_inconsistency() -> None:
 
 def test_summarise_bioproject_clean_when_all_assigned() -> None:
     records = [
-        RoundRecord(srr="SRR1", round_number=1, confidence="HIGH",
-                    source_field="sample_title", matched_pattern="round_word_digit"),
-        RoundRecord(srr="SRR2", round_number=2, confidence="HIGH",
-                    source_field="sample_title", matched_pattern="round_word_digit"),
+        RoundRecord(
+            srr="SRR1",
+            round_number=1,
+            confidence="HIGH",
+            source_field="sample_title",
+            matched_pattern="round_word_digit",
+        ),
+        RoundRecord(
+            srr="SRR2",
+            round_number=2,
+            confidence="HIGH",
+            source_field="sample_title",
+            matched_pattern="round_word_digit",
+        ),
     ]
     summary = summarise_bioproject("PRJ1", records)
     assert summary.inconsistent_annotation is False
