@@ -31,13 +31,24 @@ def _not_implemented(name: str) -> None:
     raise typer.Exit(code=2)
 
 
-@app.callback()
-def main(
-    version: bool = typer.Option(False, "--version", "-V", help="Show version and exit."),
-) -> None:
-    if version:
+def _version_callback(value: bool) -> None:
+    if value:
         typer.echo(f"selexprep {__version__}")
         raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        None,
+        "--version",
+        "-V",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+) -> None:
+    """Accession-first preprocessing for public HT-SELEX with primer auto-inference."""
 
 
 @app.command()
