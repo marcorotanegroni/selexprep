@@ -1,0 +1,59 @@
+site_name: selexprep
+site_description: Accession-first preprocessing for public HT-SELEX with primer auto-inference
+site_url: https://marcorotanegroni.github.io/selexprep/
+repo_url: https://github.com/marcorotanegroni/selexprep
+repo_name: marcorotanegroni/selexprep
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+    - search.highlight
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            members_order: source
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quick start: quickstart.md
+  - LibraryReport reference: library-report.md
+  - CLI reference: cli.md
+  - Limitations: limitations.md
+  - v0.2 roadmap: roadmap.md
