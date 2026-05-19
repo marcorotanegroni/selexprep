@@ -36,6 +36,60 @@ These were flagged during the Phase 0/1 peer-review and are **not** blocking Pha
 - **`qc.readiness` requires clusters / enrich parquets.** The module is a faithful port and still expects `round_*.clusters.parquet`, `enrich_*.parquet`, `summary.json`, and `cluster_stats.json` — artifacts that v0.1 does *not* produce (clustering / enrichment are out of v0.1 scope). It remains exposed as a library API so the thesis pipeline can use it, but it is **not** wired into the `selexprep qc` CLI verb. The v0.1 `qc` verb will get a thinner, manifest-driven implementation when `extract`/`count` are fully separated.
 - **Mocked-HTTP coverage gap.** The nine network adapters in `fetch.discover` and `download_srr_*` paths beyond ENA-direct don't yet have offline mocked tests (only their parsing helpers + dispatcher + SeedAdapter are covered). To be addressed before PyPI release.
 
+### Phase 3 — extract: paired-end + strand orientation (2026-05-19)
+
+Turns the Phase 2 `LibraryReport` contract into actual extracted FASTAs.
+Cutadapt is invoked as a subprocess (per locked plan); dnaio is available
+for paired I/O. **No read merging in v0.1** — paired-end split-primer
+mode emits two separate files and flags `READ_MERGING_RECOMMENDED`.
+
+- **NEW: `selexprep.extract.trim`** — cutadapt subprocess wrapper with
+  four public entry points (`trim_single_end_linked` for
+  BOTH_PRIMERS_SINGLE_READ, `trim_single_end_5p` for FIVE_PRIME_ONLY,
+  `trim_single_end_3p` for THREE_PRIME_ONLY, `trim_paired_split` for
+  PAIRED_END_SPLIT_PRIMERS). Each returns a `TrimReport` carrying the
+  exact cutadapt argv + read counts (Phase 4 manifest precursor).
+  Cutadapt writes uncompressed FASTA; this module re-gzips with
+  `_io.open_gzip_text_deterministic` (mtime=0 header) so `output_sha256`
+  is bit-identical across reruns.
+- **NEW: `selexprep.extract.strand`** — strand-orientation handler.
+  `detect_strand_distribution()` counts forward/reverse/ambiguous reads;
+  `reorient_fastq_gz()` reverse-complements every record (sequence +
+  reversed quality string) for `LibraryReport.orientation == "REVERSE"`;
+  `write_strand_report()` emits a sorted TSV for the QC trail.
+- **NEW: `selexprep.extract.runner`** — `run_extract()` orchestrator.
+  Refuses if `LibraryReport.status == "UNABLE_TO_INFER"` or
+  `extraction_mode == "UNABLE_TO_EXTRACT"` (no silent miscalls).
+  Optional sample-sheet pre-step demuxes multiplexed input; strand
+  pre-step rewrites all reads when orientation is `REVERSE` and emits
+  `strand_report.tsv` for `MIXED` or `REVERSE`. Per-mode trim dispatch
+  writes per-round outputs to `<outdir>/round_NN/<filename>.fasta.gz` +
+  `trim_reports.json` (manifest precursor).
+- **Output filename contract** (locked plan lines 321-326):
+  `extracted.fasta.gz` (full insert), `partial_5p_extracted.fasta.gz` /
+  `partial_3p_extracted.fasta.gz` (one-sided), `partial_5p_extracted_R1.fasta.gz`
+  + `partial_3p_extracted_R2.fasta.gz` (paired split). Filenames signal
+  to downstream ML pipelines whether a full insert was recovered;
+  joining R1+R2 by read ID alone is biologically wrong, so
+  `joined_counts.tsv` is **not** emitted in v0.1.
+- **WIRED: `selexprep extract`** — full CLI. Accepts `--library-report`,
+  `--round-map`, `--sample-sheet`, `--paired-r2`, `--rebuild`.
+  `--override-primer-{5p,3p}` emit a Phase-4 informative error (full
+  diff TSV lands in Phase 4). `--rebuild` toggles the no-clobber guard.
+- **Tests added (+37, 274 + 1 xfailed total):** `tests/test_strand.py`
+  (13 — distribution + revcomp + deterministic gzip + TSV sort),
+  `tests/test_trim.py` (7 — per extraction_mode + determinism + temp
+  cleanup, skips if cutadapt absent), `tests/test_extract_runner.py`
+  (13 — happy path per mode + UNABLE refusal + no-clobber + rebuild +
+  strand-report emission + trim_reports JSON + multi-round),
+  `tests/test_cli.py` (+4 — missing-round-map, override Phase-4 error,
+  UNABLE refusal, end-to-end smoke).
+- **CALIBRATION-TODO inventory: 12** (was 11). New tunable:
+  `STRAND_REPORT_PER_READ = False` in `extract/strand.py`. Strand
+  classification thresholds (`ORIENTATION_REVERSED_FORWARD_MAX`,
+  `ORIENTATION_REVERSED_REVERSE_MIN`) stay in Phase 2's
+  `library/detect.py` — no duplication.
+
 ### Phase 2 — LibraryReport schema + cross-round inference (2026-05-19)
 
 Adds the `LibraryReport` pydantic schema and the cross-round primer

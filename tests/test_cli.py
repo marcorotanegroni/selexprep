@@ -115,3 +115,145 @@ def test_detect_fastq_not_in_round_map_exits_with_code_2(tmp_path: Path) -> None
         app, ["detect", str(fq), "--round-map", str(round_map), "--outdir", str(outdir)]
     )
     assert result.exit_code == 2
+
+
+# ===========================================================================
+# Phase 3 - `extract` CLI command
+# ===========================================================================
+
+
+def _write_library_report_json(path: Path, **overrides: object) -> None:
+    """Hand-write a minimal LibraryReport JSON for CLI tests."""
+    import json as _json
+
+    base = {
+        "primer_5p": "GGTAATACGACTCACTATAGGG",
+        "primer_3p": "CCATGCATGCATGCATGCAT",
+        "variants_5p": [],
+        "variants_3p": [],
+        "known_adapter_hits": {},
+        "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+        "full_insert_recovered": True,
+        "read_source": "R1",
+        "required_action": "NONE",
+        "orientation": "FORWARD",
+        "n_length_mode": 30,
+        "n_length_distribution": {"30": 100},
+        "n_length_confidence": 1.0,
+        "match_rate_5p": 0.95,
+        "match_rate_3p": 0.95,
+        "position_consistency_5p": 0.95,
+        "position_consistency_3p": 0.95,
+        "read_fraction_used_for_inference": 1.0,
+        "sampling_seed": 42,
+        "confidence": 0.85,
+        "status": "HIGH",
+        "failure_reason": None,
+    }
+    base.update(overrides)
+    path.write_text(_json.dumps(base, indent=2), encoding="utf-8")
+
+
+def test_extract_without_round_map_or_sample_sheet_errors(tmp_path: Path) -> None:
+    fq = tmp_path / "r0.fastq.gz"
+    _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
+    lr_path = tmp_path / "lr.json"
+    _write_library_report_json(lr_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "extract",
+            str(fq),
+            "--library-report",
+            str(lr_path),
+            "--outdir",
+            str(tmp_path / "out"),
+        ],
+    )
+    assert result.exit_code == 2
+
+
+def test_extract_override_primer_flags_emit_phase4_error(tmp_path: Path) -> None:
+    fq = tmp_path / "r0.fastq.gz"
+    _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
+    lr_path = tmp_path / "lr.json"
+    _write_library_report_json(lr_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "extract",
+            str(fq),
+            "--library-report",
+            str(lr_path),
+            "--override-primer-5p",
+            "AAAA",
+            "--outdir",
+            str(tmp_path / "out"),
+        ],
+    )
+    assert result.exit_code == 2
+    assert "Phase 4" in (result.stderr or result.output)
+
+
+def test_extract_refuses_unable_library_report(tmp_path: Path) -> None:
+    fq = tmp_path / "r0.fastq.gz"
+    _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
+    lr_path = tmp_path / "lr.json"
+    _write_library_report_json(
+        lr_path,
+        status="UNABLE_TO_INFER",
+        extraction_mode="UNABLE_TO_EXTRACT",
+        failure_reason="synthetic test failure",
+    )
+    rm = tmp_path / "rounds.tsv"
+    rm.write_text(f"file\tround_number\n{fq.name}\t0\n", encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        [
+            "extract",
+            str(fq),
+            "--library-report",
+            str(lr_path),
+            "--round-map",
+            str(rm),
+            "--outdir",
+            str(tmp_path / "out"),
+        ],
+    )
+    assert result.exit_code == 2
+
+
+def test_extract_end_to_end_both_primers(tmp_path: Path) -> None:
+    """Smoke test: real cutadapt run via the CLI -> deterministic FASTA on disk."""
+    import shutil as _shutil
+
+    if _shutil.which("cutadapt") is None:
+        return  # silently skip — covered by @pytest.mark.skipif in trim/runner tests
+
+    fq = tmp_path / "r0.fastq.gz"
+    _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
+    lr_path = tmp_path / "lr.json"
+    _write_library_report_json(lr_path)
+    rm = tmp_path / "rounds.tsv"
+    rm.write_text(f"file\tround_number\n{fq.name}\t0\n", encoding="utf-8")
+    outdir = tmp_path / "out"
+
+    result = runner.invoke(
+        app,
+        [
+            "extract",
+            str(fq),
+            "--library-report",
+            str(lr_path),
+            "--round-map",
+            str(rm),
+            "--outdir",
+            str(outdir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (outdir / "round_00" / "extracted.fasta.gz").exists()
+    assert (outdir / "trim_reports.json").exists()
