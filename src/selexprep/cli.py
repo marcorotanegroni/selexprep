@@ -1,19 +1,25 @@
 """Typer CLI dispatcher for selexprep.
 
-Phase 0 scaffold: all subcommands are stubs that exit with code 2 (not yet
-implemented). They exist so `--help` lists the full command surface and so the
-package can be installed and tested end-to-end on TestPyPI before Phase 1
-ports the real logic from `selex_corpus/`.
+Phase 0 scaffold + progressive wiring: subcommands not yet implemented exit
+with code 2. ``catalog`` (Phase 1.5) and ``detect`` (Phase 2) are live;
+``inspect``/``fetch``/``extract``/``count``/``qc``/``run`` arrive in later
+phases.
 """
 
 from __future__ import annotations
 
+import gzip
+import logging
 from pathlib import Path
 
+import pandas as pd
 import typer
 
 from selexprep import __version__
 from selexprep.catalog.cli import app as catalog_app
+from selexprep.library import compute_library_report, write_library_report_json
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer(
     name="selexprep",
@@ -70,6 +76,36 @@ def fetch(
     _not_implemented("fetch")
 
 
+def _load_round_map(path: Path) -> dict[str, int]:
+    """Parse a 2-column TSV (``file<TAB>round_number``) → basename → round.
+
+    Matching is by basename so relative/absolute path differences between the
+    round map and the FASTQ arguments are tolerated. The TSV must have a
+    header row with columns ``file`` and ``round_number``.
+    """
+    df = pd.read_csv(path, sep="\t")
+    if "file" not in df.columns or "round_number" not in df.columns:
+        raise typer.BadParameter(
+            f"round map {path} must have columns 'file' and 'round_number'; "
+            f"found {list(df.columns)}"
+        )
+    out: dict[str, int] = {}
+    for _, row in df.iterrows():
+        out[Path(str(row["file"])).name] = int(row["round_number"])
+    return out
+
+
+def _read_fastq_sequences(path: Path) -> list[str]:
+    """Read sequence lines (every 4th line, offset 1) from a FASTQ(.gz)."""
+    opener = gzip.open if path.suffix == ".gz" else open
+    seqs: list[str] = []
+    with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
+        for i, line in enumerate(fh):
+            if i % 4 == 1:
+                seqs.append(line.strip())
+    return seqs
+
+
 @app.command()
 def detect(
     fastq: list[Path] = typer.Argument(..., help="Input FASTQ files."),
@@ -79,9 +115,57 @@ def detect(
         help="TSV mapping FASTQ file → round number (required for local FASTQs).",
     ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
+    sampling_seed: int = typer.Option(
+        42, "--sampling-seed", help="Seed for primer-inference subsampling RNG."
+    ),
+    max_reads_per_round: int | None = typer.Option(
+        None,
+        "--max-reads-per-round",
+        help="Subsample each round to at most N reads (default: use all).",
+    ),
 ) -> None:
     """Auto-infer primers + library structure from FASTQ; emit LibraryReport JSON."""
-    _not_implemented("detect")
+    if round_map is None:
+        typer.secho(
+            "detect: --round-map is required for local FASTQs (cross-round "
+            "persistence is a core inference signal).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    round_by_basename = _load_round_map(round_map)
+    sequences_by_round: dict[int, list[str]] = {}
+    for fq in fastq:
+        r = round_by_basename.get(fq.name)
+        if r is None:
+            typer.secho(
+                f"detect: FASTQ {fq.name!r} not in round map {round_map}",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=2)
+        sequences_by_round.setdefault(r, []).extend(_read_fastq_sequences(fq))
+
+    # Phase 2 CLI is single-end only; paired-end (R2 stream) arrives in Phase 3.
+    report = compute_library_report(
+        sequences_by_round,
+        read_source="R1",
+        sampling_seed=sampling_seed,
+        max_reads_per_round=max_reads_per_round,
+    )
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    out_path = outdir / "library_report.json"
+    sha = write_library_report_json(report, out_path)
+
+    typer.echo(f"library_report.json -> {out_path}")
+    typer.echo(f"  sha256:          {sha[:12]}...")
+    typer.echo(f"  extraction_mode: {report.extraction_mode}")
+    typer.echo(f"  required_action: {report.required_action}")
+    typer.echo(f"  status:          {report.status}")
+    if report.failure_reason:
+        typer.echo(f"  failure_reason:  {report.failure_reason}")
 
 
 @app.command()
