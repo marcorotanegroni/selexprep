@@ -13,6 +13,7 @@ from pathlib import Path
 import typer
 
 from selexprep import __version__
+from selexprep.catalog.cli import app as catalog_app
 
 app = typer.Typer(
     name="selexprep",
@@ -20,6 +21,7 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=False,
 )
+app.add_typer(catalog_app, name="catalog")
 
 
 def _not_implemented(name: str) -> None:

@@ -1,0 +1,827 @@
+bioproject_id,source,study_title,protein_target,target_organism,paper_doi,paper_pmid,n_rounds_declared,abstract
+PRJNA315881,seed,Interleukin 10 receptor alpha chain (IL-10RA) Raw sequence reads,IL-10RA,,10.1093/nar/gkv308,25870409,5,
+PRJNA321551,seed,,CCR7,,10.1016/j.cels.2016.07.003,27467247,9,
+SRP217092,seed,Novel aptamers selected on live cells for specific recognition of triple-negative breast cancer,TNBC cell-surface (unidentified),,,0,15,
+PRJNA218402,seed,,Thrombin,,10.1371/journal.pone.0082897,24358269,4,
+PRJDB40017,ena,HT-SELEX against recombinant rhNR4A1,,,,,,
+PRJNA615076,ena,HT-SELEX against E. faecalis,,,,,,
+PRJDB9110,ena,HT-SELEX against human transglutaminase 2,,,,,,
+PRJDB19137,ena,HT-SELEX against reombinant mouse ST2,,,,,,
+PRJDB19139,ena,HT-SELEX against reombinant human LH,,,,,,
+PRJDB9111,ena,HT-SELEX against human intergrin alphaV beta3,,,,,,
+PRJDB19098,ena,HT-SELEX against reombinant human FGF-9,,,,,,
+PRJDB40016,ena,HT-SELEX against recombinant RBD-His protein,,,,,,
+PRJEB29730,ena,HT-SELEX dataset of Ciona robusta transcription factors,,,,,,
+PRJDB19141,ena,HT-SELEX against reombinant human LH with 8% doped library,,,,,,
+PRJEB38961,ena,HT-SELEX of recombinant C2H2 zinc finger domain of Sall4,,,,,,
+PRJEB51212,ena,HT-SELEX of recombinant C2H2 zinc finger domains of Sall4,,,,,,
+PRJDB19138,ena,HT-SELEX against reombinant human FGF-9 with 30mer library,,,,,,
+PRJDB19140,ena,HT-SELEX against reombinant human LH with 3% doped library,,,,,,
+PRJEB48966,ena,"HT-SELEX and genomic HT-SELEX rawdata for experiments performed with 4 C2H2 zinc finger transcription factors for the study: "" Alternate binding modes of human C2H2 TFs""",,,,,,
+PRJEB75580,ena,HT-SELEX data for ThPOK (ZBTB7B) target specificity for wild type and K360N mutant,,,,,,
+PRJEB51473,ena,HT-SELEX of wild-type and mutated versions of recombinant DNA binding domain of SALL4,,,,,,
+PRJEB61115,ena,HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors,,,,,,
+PRJNA957781,ena,SELEX-seq of AP1 homodimer,,,,,,
+PRJNA1113703,ena,FOXC2 pH-dependent SELEX-seq,,,,,,
+PRJNA360902,ena,Ciona robusta SELEX-seq dataset,,,,,,
+PRJNA379022,ena,Androgen and glucocorticoid receptor SELEX-seq libraries,,,,,,
+PRJNA741127,ena,"DNA Binding Specificities of Fkh1, Fkh2, Hcm1, and Fhl1 Revealed by SELEX-seq",,,,,,
+PRJNA1244796,ena,DNA bendability regulates transcription factor binding to nucleosomes [PIONEAR-seq and SELEX-seq],,,,,,
+PRJNA210965,ena,An improved SELEX-Seq strategy for characterizing DNA-binding specificity of transcription factor: NF-?B as an example,,,,,,
+PRJNA1061493,ena,Sensing levofloxacin with an RNA aptamer as bioreceptor,,,,,,
+PRJNA1376488,ena,High-throughput sequencing data from four systematic evolution of ligands by exponential enrichment (SELEX) rounds,,,,,,
+PRJNA729962,ena,DNA protein interactome for Nuclear Receptor proteins,,,,,,
+PRJNA1013173,ena,Identify aptamers binding human PD-L1 protein by SELEX,,,,,,
+PRJNA633039,ena,Structure of SRSF1 RRM1 bound to RNA reveals an unexpected pendular/bimodal mode of interaction and explains its involvement in SMN1 exon7 splicing,,,,,,
+PRJNA547810,ena,Systematic profiling of in vitro binding affinity and endonuclease activity of CRISPR enzymes,,,,,,
+PRJNA86771,ena,Homo sapiens High Throughput Sequencing,,,,,,
+PRJNA221564,ena,Overlapping and distinct functions of CstF64 and CstF64t in mammalian mRNA 3’ processing,,,,,,
+PRJNA1091700,ena,PAM-Adjacent DNA Flexibility Tunes CRISPR-Cas12a Off-Target Binding,,,,,,
+PRJNA830749,ena,The use of high-affinity polyhistidine binders as masking probes for the selection of an NDM-1 specific aptamer,,,,,,
+PRJNA1395820,ena,Magnetic field-assisted SELEX for cobalt-binding aptamers,,,,,,
+DRP005780,sra,HT-SELEX against human transglutaminase 2,,,,,,
+DRP005781,sra,HT-SELEX against human intergrin alphaV beta3,,,,,,
+DRP012515,sra,HT-SELEX against reombinant human FGF-9,,,,,,
+DRP012519,sra,HT-SELEX against reombinant mouse ST2,,,,,,
+DRP012520,sra,HT-SELEX against reombinant human FGF-9 with 30mer library,,,,,,
+DRP012521,sra,HT-SELEX against reombinant human LH,,,,,,
+DRP012517,sra,HT-SELEX against reombinant human LH with 3% doped library,,,,,,
+DRP012514,sra,HT-SELEX against reombinant human LH with 8% doped library,,,,,,
+DRP016907,sra,HT-SELEX against recombinant RBD-His protein,,,,,,
+DRP016908,sra,HT-SELEX against recombinant rhNR4A1,,,,,,
+ERP010942,sra,We present the first genome-scale analysis of the effect of CpG methylation on DNA-binding of TFs.,,,,,,
+ERP146211,sra,HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors,,,,,,
+ERP161128,sra,Genomic HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors,,,,,,
+ERP160152,sra,HT-SELEX data for ThPOK (ZBTB7B)  target specificity for wild type and K360N mutant,,,,,,
+ERP016411,sra,"Additional sequencing coverage for the study by Jolma et al 2013, “DNA-binding specificities of human Transcription factors. This new deeper sequencing data has been used in the publication ""Transcription factor family-specific DNA shape readout revealed by quantitative specificity models”",,,,,,
+ERP016603,sra,Multiparameter functional diversity of human C2H2 zinc finger proteins,,,,,,
+ERP022234,sra,Background sequencing data for SELEX,,,,,,
+ERP016196,sra,MODER: Efficient discovery of the modular structure of monomeric and dimeric transcription factor binding motifs,,,,,,
+ERP104384,sra,Analysis of transcription factor binding on nucleosomal DNA,,,,,,
+ERP022823,sra,Here we show how one transcription factor bind to two distinct motifs with similar binding affinities.,,,,,,
+ERP112078,sra,HT-SELEX dataset of Ciona robusta transcription factors,,,,,,
+ERP122421,sra,HT-SELEX of recombinant C2H2 zinc finger domain of Sall4,,,,,,
+ERP133411,sra,"HT-SELEX and genomic HT-SELEX rawdata for experiments performed with 4 C2H2 zinc finger transcription factors for the study: "" Alternate binding modes of human C2H2 TFs""",,,,,,
+ERP133611,sra,"HT-SELEX data for three BEN DNA binding domain transcription factors (NACC1, NACC2, BEND3-BD4) associated with this study.",,,,,,
+ERP135815,sra,HT-SELEX of recombinant C2H2 zinc finger domains of Sall4,,,,,,
+ERP136101,sra,HT-SELEX of wild-type and mutated versions of recombinant DNA binding domain of SALL4,,,,,,
+SRP252144,sra,The Compendium of DNA-Binding Specificities of Transcription Factors in a Pathogenic Bacterium,,,,,,
+SRP253981,sra,HT-SELEX against E. faecalis,,,,,,
+SRP265402,sra,An Atlas of the Binding Specificities of Transcription Factors in Pseudomonas aeruginosa Directs Prediction of Novel Regulators in Virulence,,,,,,
+SRP158289,sra,Systematic Analysis of Transcription Factors Binding to Noncoding Variants,,,,,,
+SRP319847,sra,DNA protein interactome for Nuclear Receptor proteins,,,,,,
+SRP388204,sra,The highly conserved RNA-binding specificity of nucleocapsid protein facilitates the identification of drugs with broad anti-coronavirus activity.,,,,,,
+SRP072180,sra,Interleukin 10 receptor alpha chain (IL-10RA) Raw sequence reads,,,,,,
+SRP097117,sra,Ciona robusta SELEX-seq dataset,,,,,,
+SRP030467,sra,Overlapping and distinct functions of CstF64 and CstF64t in mammalian mRNA 3’ processing,,,,,,
+SRP261784,sra,Structure of SRSF1 RRM1 bound to RNA reveals an unexpected pendular/bimodal mode of interaction and explains its involvement in SMN1 exon7 splicing,,,,,,
+SRP288384,sra,DNA binding specificity for the bHLH-PAS transcription factor family,,,,,,
+SRP322184,sra,Quantifying Biopolymer Sequence Recognition using Biophysically Informed Machine Learning,,,,,,
+SRP325475,sra,"DNA Binding Specificities of Fkh1, Fkh2, Hcm1, and Fhl1 Revealed by SELEX-seq",,,,,,
+SRP337905,sra,Transcription factor paralogs orchestrate alternative gene regulatory networks by context-dependent cooperation with multiple cofactors,,,,,,
+SRP366419,sra,Dual specificity and target gene selection by the MADS domain protein FRUITFULL,,,,,,
+SRP433579,sra,SELEX-seq of AP1 homodimer,,,,,,
+SRP458821,sra,Identify aptamers binding human PD-L1 protein  by SELEX,,,,,,
+SRP498221,sra,PAM-Adjacent DNA Flexibility Tunes CRISPR-Cas12a Off-Target Binding,,,,,,
+SRP509528,sra,FOXC2 pH-dependent SELEX-seq,,,,,,
+SRP511344,sra,A Spatiotemporal Transcriptome Revealed Stalk Development in Pearl Millet,,,,,,
+SRP575814,sra,DNA bendability regulates transcription factor binding to nucleosomes [PIONEAR-seq and SELEX-seq],,,,,,
+SRP011008,sra,Homo sapiens High Throughput Sequencing,,,,,,
+SRP101815,sra,Androgen and glucocorticoid receptor SELEX-seq libraries,,,,,,
+SRP181908,sra,Context-dependent gene regulation by homeodomain transcription factor complexes revealed by shape-readout deficient proteins,,,,,,
+SRP200854,sra,Systematic profiling of in vitro binding affinity and endonuclease activity of CRISPR enzymes,,,,,,
+SRP026681,sra,An improved SELEX-Seq strategy for characterizing DNA-binding specificity of transcription factor: NF-?B as an example,,,,,,
+SRP361073,sra,Selection of RNA aptamers against human islets by SELEX and toggle SELEX,,,,,,
+SRP371696,sra,The use of high-affinity polyhistidine binders as masking probes for the selection of an NDM-1 specific aptamer,,,,,,
+zenodo:15620252,zenodo:15620252,Codebook MEX Supplementary Dataset 2,,,10.5281/zenodo.15620252,,,"<p>Accompanying data for&nbsp;10.5281/zenodo.8327373, Codebook HT-SELEX, subsampled reads.</p>
+<p>&nbsp;</p>
+<p><em>Update 2025:</em> finalized files for TFs whose datasets were partially mislabeled in the original upload.</p>
+<p>Affected TFs: CHCHD3, CPXCR1, MYRFL, PRDM5, TIGD4, TIGD5, TTF1, ZBED5, ZBTB5, ZNF578.</p>"
+zenodo:15619991,zenodo:15619991,Codebook MEX Supplementary Dataset 3,,,10.5281/zenodo.15619991,,,"<p>Accompanying data for&nbsp;10.5281/zenodo.8327373, Codebook GHT-SELEX, genomic peaks and subsampled reads.</p>
+<p>&nbsp;</p>
+<p><em>Update 2025:</em> final update for TFs whose datasets were partially mislabeled in the original upload.</p>
+<p>Affected TFs: CHCHD3, CPXCR1, MYRFL, PRDM5, TIGD4, TIGD5, TTF1, ZBED5, ZBTB5, ZNF578.</p>"
+zenodo:6587005,zenodo:6587005,Combinatorial bZIP dimers display complex DNA-binding specificity landscapes,,,10.7554/eLife.19272,,,"<p>HT-SELEX data for</p>
+
+<p>Jos&eacute; A Rodr&iacute;guez-Mart&iacute;nez, Aaron W Reinke, Devesh Bhimsaria, Amy E Keating, Aseem Z Ansari (2017) Combinatorial bZIP dimers display complex DNA-binding specificity landscapes eLife 6:e19272</p>
+
+<p>https://doi.org/10.7554/eLife.19272<br>
+&nbsp;</p>
+
+<p>How transcription factor dimerization impacts DNA-binding specificity is poorly understood. Guided by protein dimerization properties, we examined DNA binding specificities of 270 human bZIP pairs. DNA interactomes of 80 heterodimers and 22 homodimers revealed that 72% of heterodimer motifs correspond to conjoined half-sites preferred by partnering monomers. Remarkably, the remaining motifs are composed of variably-spaced half-sites (12%) or &lsquo;emergent&rsquo; sites (16%) that cannot be readily inferred from half-site preferences of partnering monomers. These binding sites were biochemically validated by EMSA-FRET analysis and validated in vivo by ChIP-seq data from human cell lines. Focusing on ATF3, we observed distinct cognate site preferences conferred by different bZIP partners, and demonstrated that genome-wide binding of ATF3 is best explained by considering many dimers in which it participates. Importantly, our compendium of bZIP-DNA interactomes predicted bZIP binding to 156 disease associated SNPs, of which only 20 were previously annotated with known bZIP motifs.</p>"
+zenodo:7573218,zenodo:7573218,"Aptamer-based blood profiling for diagnosis, treatment evaluation and disease severity prediction",,,10.5281/zenodo.7573218,,,"<p>The poster was presented at The personalised medicine network, Second Annual Meeting, 8th November 2022.&nbsp;</p>
+
+<p>Abstract:&nbsp;</p>
+
+<p>Daniel Miotto Dupont1, S&oslash;ren Fjelstrup1, <strong>Asger J&oslash;rgensen1</strong>, Claus Bus1, Mikkel Kj&aelig;r4, Henning Gr&oslash;nb&aelig;k4, Christian V&aelig;gter3, Nadia Goncalves3, Thomas Benfield5, Peter Garred6, Maria M&oslash;ller5, Simone Israelsen5, H&aring;kon Sandholdt5, Cecilie Hansen6, Rasmus Thomsen7, Natasha Michaelsen7, Peter Heegaard8 and J&oslash;rgen Kjems1,2.</p>
+
+<p><br>
+1Interdisciplinary Nanoscience Center (iNANO), 2Department of Molecular Biology and Genetics, 3Department of Bio-medicine, Aarhus University, 4Department of Clinical Medicine, Aarhus University Hospital, 5Department of Infectious Diseases, Amager and Hvidovre Hospital, 6Rigshospitalet Copenhagen, 7Diabetes and Cardiovascular Research, Novo Nordisk, 8DTU Health Tech</p>
+
+<p>&nbsp;</p>
+
+<p>The molecular composition of blood is a reflection of our physiology, health state, lifestyle etc., in many ways a highway of biological information difficult to access. We developed a novel technology, APTASHAPE, to translate this &quot;difficult-to-read&quot; language into readable digital information. APTASHAPE involves the use of panels of small biosensor molecules, 2&rsquo;-fluoro protected RNA aptamers, to generate imprints of the protein and metabolite signature in a plasma sample. We applied APTASHAPE to profile different cohorts of samples from patients and animal models, and here we present our results in relation to diagnosis and treatment evaluation within Non-Alcoholic Fatty Liver Disease (NAFLD) as well as prediction of clinical disease severity for patients hospitalised following SARS CoV-2 infection. The technology possesses the potential to measure several disease conditions simultaneously based on a single drop of blood (1 microliter of plasma) and can serve as a health-state measuring and prediction tool. The APTASHAPE technology allows individual evalua-tion of patients and tailors personalised medicine based on the molecular composition of the patient&#39;s blood.</p>
+
+<p>*The poster is a modified version of the poster previously presented (https://doi.org/10.5281/zenodo.7568262).&nbsp;</p>
+
+<p>Contact information:&nbsp;</p>
+
+<p>Asger Givskov J&oslash;rgensen<br>
+asgergivskov@inano.au.dk<br>
+&nbsp;</p>"
+zenodo:15781226,zenodo:15781226,Data for TRAFICA model training and evaluation,,,10.5281/zenodo.15781226,,,<p>The processed datasets used in the TRAFICA paper</p>
+zenodo:18719585,zenodo:18719585,"NGS data of rationally designed, structurally rich DNA aptamer screening libraries",,,10.5281/zenodo.18719585,,,"<p>These DNA libraries were rationally designed by integrating empirical sequence biases and<br>experimentally validated thermodynamic motifs as follows: (1) an Empirical library enriched in guanine<br>and thymine, reflecting nucleotide composition patterns observed in database aptamer sequence<br>entries; (2) a tetraloop library, embedded with known DNA hairpin motifs with high thermodynamic<br>stability; and (3) a standard library composed of conventional random oligonucleotide sequences.</p>"
+zenodo:7572933,zenodo:7572933,Aptamers at work – effective neutralization of SARS-CoV-2 and identifying protein biomarkers in biofluids using highly parallelized RNA aptamer screens.,,,10.5281/zenodo.7572933,,,"<p>J&oslash;rgens kjems presented&nbsp;the APTASHAPE platform at the&nbsp;Gorden Research Conference on RNA Nanotechnology, Ventura CA, USA, January 2023.&nbsp;</p>
+
+<p>The oDIN oLIVER project (https://projects.au.dk/odin/oliver) was presented, and the audience showed great interest in&nbsp;the APTASHAPE technology and the unmet need for early detection&nbsp;of liver diseases (NAFLD).&nbsp;</p>
+
+<p>During 2022 J&oslash;rgen Kjems&nbsp;presented the work at several meetings and international conferences:&nbsp;</p>
+
+<p>&rdquo;Fremtidens Medicin&rdquo;<br>
+&Aring;rhundredets Festival<br>
+3. Marts 2022<br>
+Doc1 Aarhus</p>
+
+<p>RNA therapeutics and diagnostics<br>
+Molekyl&aelig;rbiologi og genetiks studenterr&aring;d (MoGenS)<br>
+4. Maj 2022</p>
+
+<p>The Medicine of the Future<br>
+21. June 2022<br>
+Klifo, Copenhagen</p>
+
+<p>RNA based therapeutics and diagnostics<br>
+EI Nano Conference Chalmers Uiversity<br>
+G&ouml;teburg Sweden</p>
+
+<p>RNA at work &ndash; in diagnosis and therapy<br>
+4th NCCR RNA &amp; Disease Summer School on RNA &amp; Entrepreneurship<br>
+Suss Switzerland</p>
+
+<p>Identifying protein biomarkers in biofluids using highly parallelised RNA aptamer screens<br>
+Next Gen Omics Conference 2022 London,UK<br>
+9-10 Nov 2022</p>
+
+<p>Contact information:&nbsp;</p>
+
+<p>J&oslash;rgen Kjems</p>
+
+<p>Interdisciplinary Nanoscience Center - INANO-MBG, iNANO-huset<br>
+Gustav Wieds Vej 14<br>
+building 1592, 318<br>
+8000 Aarhus C<br>
+Denmark</p>
+
+<p>jk@mbg.au.dk<br>
+Mobile: +4528992086</p>"
+zenodo:17311531,zenodo:17311531,"Disposable electrochemical aptasensor for rapid and selective vancomycin detection in clinical samples: Bridging affinity selection, computational modeling and clinical validation",,,10.17811/ruo_datasets.80707,,,"<p>Experimental data to reproduce the studies performed in the article ""Disposable electrochemical aptasensor for rapid and selective vancomycin<br>detection in clinical samples: Bridging affinity selection, computational modeling and clinical validation"". It comprises information about the SELEX process (evaluation by UV-VIs spectrometry of the target immobilization efficiency, sequences obtained by cloning-sequencing, thermodynamic parameters of these sequences under the operational conditions, characterization of binding affinity by SPR) and optimization of the aptasensor (immobilization procedure, aptamer concentration, blocking agent immobilization time and concentration and target incubation time), analytical performance (calibration, reproducibility, stability, selectivity) and clinical validation in spiked and clinical serum samples and statistics.</p>"
+zenodo:19432013,zenodo:19432013,"Dataset for ""CompELS vs. SELEX: Comparative Aptamer Discovery Integrating Rational Libraries and Enzymatic Elution""",,,10.5281/zenodo.19432013,,,"<p><span><span>This dataset contains the Next-Generation Sequencing (NGS) data supporting the manuscript </span><em><span>""CompELS vs. SELEX: Comparative Aptamer Discovery Integrating Rational Libraries and Enzymatic Elution""</span></em></span><span>. </span><span><span>The uploaded files consist of paired-end reads generated on an Illumina MiSeq system that have been assembled into single </span><code><span>.fastq</span></code><span> files using the PEAR tool at usegalaxy.org</span></span><span>. </span></p>"
+zenodo:6586738,zenodo:6586738,"Software for ""Pantier et al. High-throughput sequencing SELEX (HT-SELEX) for the determination of DNA-binding protein specificities in vitro""",,,10.5281/zenodo.6586738,,,"<p>eme_selex (<em><strong>Every Motif Ever for SELEX Analysis</strong></em>) is a Python package to perform k-mer abundance analysis in DNA sequences. <em><strong>eme_selex</strong></em> is developed to perform fast and efficient analysis of short k-mers (tested with k-mers up to length 10).</p>
+
+<p>While <em><strong>eme_selex</strong></em> can be used for general purpose k-mer analysis, motivation to develop <em><strong>eme_selex</strong></em> is to perform <a href=""https://en.wikipedia.org/wiki/Systematic_evolution_of_ligands_by_exponential_enrichment""><strong>S</strong>ystemic <strong>E</strong>volution of <strong>L</strong>igands by <strong>EX</strong>ponential enrichment coupled with <strong>H</strong>igh <strong>T</strong>hroughput sequencing (HT-SELEX)</a> analysis in a Pythonic way. By default, for every k-mer, <em><strong>eme_selex</strong></em> quantifies the fraction of reads containing that k-mer <em>in a non-redundant manner</em>. After the quantification, a basic position frequency matrix (PFM) for the top 50 k-mers is generated. If the user wants to generate more PFMs, they can change the <em>top</em> keyword argument to a desired number.</p>"
+zenodo:5707360,zenodo:5707360,Nucleic Acids Aptamer Application in Diagnosis and Therapy of Cancer  Based on Cell-SELEX Technology,,,10.36811/ijho.2021.110023,,,"<p>The &quot;labeling&quot; of nucleic acids (cell genetic information such as RNA or DNA) is not a new technology for monitoring them. However, current capabilities do not provide a complete picture of how tumor cells develop. What this platform, known as Clon Mapper, can do that was not possible before, is to go back in time and track how tumor cells change over time. This gives researchers the ability to see which cells &quot;win&quot; over fewer resistant cells, continue to clone themselves, and make the tumor more dangerous. By isolating these cells, researchers can better test which therapies work against them. Monitoring changes over time is the key to successful transmission therapies. Tumor cells adapt and become resistant to therapies, which is why patients can recover but experience a relapse later. This is one of the reasons why cancer treatment is so challenging; we do not have very good methods for early detection of cells sensitive to a drug and measuring their resistance. This resistance is the main cause of treatment failure in many cancer patients. CLL is a low-grade B cancer that is often monitored for months or even years before active treatment is needed. This treatment depends a lot on the patient&#39;s close supervision. In this study, Clon Mapper focuses on identifying cells that mimic themselves, the speed at which this process takes place, and its effect on the growth rate of surrounding cells over time. This allows for a more accurate analysis of the cell population and may lead to more customized treatment plans for patients.</p>
+
+<p><strong>Keywords:</strong>&nbsp;Cancer; Cells; Tissues; Tumors; Prevention; Prognosis; Diagnosis; Imaging; Screening; Treatment; Management</p>
+
+<p><a href=""https://www.raftpubs.com/ijho-hematology-and-oncology/articles/ijho_raft1023.php"">https://www.raftpubs.com/ijho-hematology-and-oncology/articles/ijho_raft1023.php</a></p>"
+zenodo:15555251,zenodo:15555251,MEX-Archipelago data,,,10.5281/zenodo.15555251,,,"<p>This repository contains preprocessed Codebook-MEX data suitable for training&nbsp;<br>and testing advanced models of transcription factor binding sites, see README for details.<br>These data are derived from the ChIP-Seq and genomic HT-SELEX datasets&nbsp;<br>of the primary MEX data release (ZENODO doi:10.5281/zenodo.8327372).&nbsp;</p>
+<p>&nbsp;</p>
+<p><strong>Extra:</strong></p>
+<p>ARCHIPELAGO_models.zip: the ArChIPelago models trained on genomic HT-SELEX and ChIP-Seq data for 139 TFs.&nbsp;</p>
+<p><em>Please refer to 5_Archipelago_sav_models_loading_and_scoring.ipynb in the ArChIPelago GitHub repo (https://github.com/autosome-ru/MEX-ArChIPelago) for details on using the model for scanning arbitrary DNA sequences.</em></p>
+<p>&nbsp;</p>
+<p><em>* Latest update: Archipelago models and underlying data were removed for three TFs (TIGD4, TTF1, ZBED5),&nbsp;</em><em>which were partially affected by mislabeled samples in the original upload.</em></p>"
+zenodo:8387047,zenodo:8387047,UTexas Aptamer Dataset,,,10.5281/zenodo.8387047,,,"<p>The deposited dataset is a snapshot of the data in the active and growing UTexas Aptamer Database, <a href=""https://sites.utexas.edu/aptamerdatabase/"">https://sites.utexas.edu/aptamerdatabase/</a>. This&nbsp;dataset is a collection of aptamer data that has been extracted from the literature every year since the inception of aptamer selections and includes multiple aptamer sequences from a given paper (as opposed to just sequences with the tightest binding). In all, the collection includes 1,415 aptamer sequences from 489 papers published over the last few decades (1990-2022). Since our dataset includes multiple sequences that emerged from a given selection experiment, it of necessity includes sequences that may not have been individually tested for binding activity, similar to the inclusion of all rRNA sequences in a metagenomic analysis of an environmental sample. By taking this metagenomic approach, we provide informaticians with a much wider range of sequences for subsequent analysis while still providing tools to find high-affinity aptamers for future use.</p>
+
+<p>For each aptamer sequence, the dataset includes information about the aptamer publication (i.e., year of publication, DOI, full citation, and corresponding author(s)), the aptamer target, as well as the following information about the specific aptamer: nucleic acid composition, name assigned in the original publication, sequence, GC percentage, sequence length, binding affinity (K<sub>d</sub>), binding/selection buffer, application as quoted in the referenced paper (e.g., drug delivery, biosensor, etc.), original nucleic acid pool used in the aptamer selection, post-selection modifications (if any), additional information, and our internally assigned serial number. We used simple Excel formulas for each aptamer record to calculate the GC content and length of each aptamer sequence.</p>
+
+<p>&nbsp;</p>
+
+<p>1.1.0 Version:</p>
+
+<ul>
+	<li>Added 25+ &nbsp;aptamer sequences.</li>
+	<li>Added the &quot;Parent sequence serial number&quot; data field/column.</li>
+	<li>Fixed &quot;Application as quoted in the referenced paper&quot; data formatting/alignment error.</li>
+</ul>"
+zenodo:7350428,zenodo:7350428,Experimental investigation of aptamer-mycotoxin interaction on graphene field-effect transistor biosensor,,,10.5281/zenodo.7350428,,,"<p>A specific graphene field-effect transistor (GFET)-based aptasensor was developed for the detection of highly toxic Ochratoxin A (OTA), which relies on an array of GFETs integrated on a single silicon chip. We experimentally studied the aptamer reconfiguration process during binding a specific target molecule, i.e. OTA, the interaction of an aptamer with graphene, and how the variation of ionic strength of a solution influences the sensitivity of our biosensor. We suggest that aptamer, when free-standing, is weakly adsorbed on graphene&rsquo;s surface via &pi;-&pi; stacking, which is experimentally confirmed by a left-shift of charge neutrality point in transfer characteristic of GFET (n-doping) compared to PBASE-modified graphene. On the other hand, when the aptamer binds the OTA molecule, it undergoes 3D reconfiguration into G-quadruplex and desorbs from the graphene surface, which initiates the right-shift of charge neutrality point (p-doping). Finally, we&nbsp;showed that, by decreasing ionic strength 10 times, the sensitivity can be improved due to increased electrostatic gating from aptamer G-quadruplex structure, which confirms the idea of aptamer desorption from the graphene surface upon OTA binding.</p>"
+zenodo:6332928,zenodo:6332928,Novel electrochemiluminescent assay for the aptamer-based detection of testosterone,,,10.1016/j.talanta.2021.123121,,,"<p>This work presents a proof-of-concept assay for the detection and quantification of small molecules based on aptamer recognition and&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/electrochemiluminescence"">electrochemiluminescence</a>&nbsp;(ECL) readout. The testosterone-binding (TESS.1) aptamer was used to demonstrate the novel methodology. Upon binding of the target, the TESS.1 aptamer is released from its complementary capture probe &ndash; previously immobilized at the surface of the electrode &ndash; producing a decrease in the ECL signal after a washing step removing the released (labeled) TESS.1 aptamer. The analytical capability of the ECL assay towards&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/testosterone"">testosterone</a>&nbsp;detection was investigated displaying a linear range from 0.39 to 1.56&nbsp;&mu;M with a limit of detection of 0.29&nbsp;&mu;M. The selectivity of the proposed assay was assessed by performing two different negative control experiments;&nbsp;<em>i)</em>&nbsp;detection of testosterone with a randomized ssDNA sequence and&nbsp;<em>ii)</em>&nbsp;detection of two other steroids, i.e.&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/deoxycholic-acid"">deoxycholic acid</a>&nbsp;and hydrocortisone with the TESS.1 aptamer. In parallel, complementary analytical techniques were employed to confirm the suggested mechanism:&nbsp;<em>i)</em>&nbsp;native nano-electrospray ionization mass spectrometry (native nESI-MS) was used to determine the&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/reaction-stoichiometry"">stoichiometry</a>&nbsp;of the binding, and to characterize aptamer-target interactions; and,&nbsp;<em>ii)</em>&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/isothermal-titration-calorimetry"">isothermal titration calorimetry</a>&nbsp;(ITC) was carried out to elucidate the&nbsp;<a href=""https://www.sciencedirect.com/topics/chemistry/dissociation-constant"">dissociation constant</a>&nbsp;(<em>K</em><sub>d</sub>) of the complex of testosterone and the TESS.1 aptamer. The combination of these techniques provided a complete understanding of the aptamer performance, the binding mechanism, affinity and selectivity. Furthermore, this important characterization carried out in parallel validates the real functionality of the aptamer (TESS.1) ensuring its use towards selective testosterone binding in further biosensors. This research will pave the way for the development of new aptamer-based assays coupled with ECL sensing for the detection of relevant small molecules.</p>"
+zenodo:14599255,zenodo:14599255,Comparative Analysis of pH and Target-Induced Conformational Changes of an Oxytetracycline Aptamer in Solution Phase and Surface-Immobilized Form,,,10.3390/biom13091363,,,"<p>To date, numerous aptamer-based biosensing platforms have been developed for sensitive and selective monitoring of target analytes, relying on analyte-induced conformational changes in the aptamer for the quantification of the analyte and the conversion of the binding event into a measurable signal. Despite the impact of these conformational rearrangements on sensor performance, the influence of the environment on the structural conformations of aptamers has rarely been investigated, so the link between parameters directly influencing aptamer folding and the ability of the aptamer to bind to the target analyte remains elusive. Herein, the effect a number of variables have on an aptamer&rsquo;s 3D structure was examined, including the pH of the buffering medium, as well as the anchoring of the aptamer on a solid support, with the use of two label-free techniques. Circular dichroism spectroscopy was utilized to study the conformation of an aptamer in solution along with any changes induced to it by the environment (analyte binding, pH, composition and ionic strength of the buffer solution), while quartz crystal microbalance with dissipation monitoring was employed to investigate the surface-bound aptamer&rsquo;s behavior and performance. Analysis was performed on an aptamer against oxytetracycline, serving as a model system, representative of aptamers selected against small molecule analytes. The obtained results highlight the influence of the environment on the folding and thus analyte-binding capacity of an aptamer and emphasize the need to deploy appropriate surface functionalization protocols in sensor development as a means to minimize the steric obstructions and undesirable interactions of an aptamer with a surface onto which it is tethered.</p>"
+zenodo:53137,zenodo:53137,Surface state of the dopamine RNA aptamer affects specific recognition and binding of dopamine by the aptamer-modified electrodes,,,10.1039/c5an00480b,,,"<p>Specific monitoring of dopamine, in the presence of structurally related neurotransmitters, is critical for&nbsp;diagnosis, treatment and mechanistic understanding of a variety of human neuropathologies, but nevertheless<br />
+the proper tools are scarce. Recently, an electrochemical aptasensor for specific analysis of dopamine,&nbsp;exploiting dopamine biorecognition by the RNA aptamer electrostatically adsorbed onto a&nbsp;cysteamine-modified electrode, has been reported (Analytical Chemistry 85 (2013) 121). However it was&nbsp;not clear which way dopamine biorecognition and binding by such aptamer layers proceed and if they&nbsp;can be improved. Here, we show that the aptamer surface state, in particular the aptamer surface density,&nbsp;in a bell-shaped manner affects the dopamine binding, being maximal for the 3.5 &plusmn; 0.3 pmol cm&minus;2 monolayer&nbsp;coverage of the aptamer molecules lying flat on the surface. Therewith, the aptamer affinity for&nbsp;dopamine increases one order of magnitude due to electrostatically regulated immobilization, with the&nbsp;aptamer&ndash;dopamine dissociation constant of 0.12 &plusmn; 0.01 &mu;M versus 1.6 &plusmn; 0.17 &mu;M shown in solution.&nbsp;Under optimal conditions, 0.1&ndash;2 &mu;M dopamine was specifically and 85.4 nA &mu;M&minus;1 cm&minus;2 sensitively&nbsp;detected, with no interference from structurally related catecholamines. The results allow improvement&nbsp;of the robustness of dopamine monitoring by aptamer-modified electrodes in biological systems, within&nbsp;the 0.01&ndash;1 &mu;M dopamine fluctuation range.</p>"
+zenodo:6958314,zenodo:6958314,DNA aptamers for the recognition of HMGB1 from Plasmodium falciparum,,,10.1371/journal.pone.0211756,,,"<p>Rapid Diagnostic Tests (RDTs) for malaria are restricted to a few biomarkers and antibody-mediated detection. However, the expression of commonly used biomarkers varies geographically and the sensibility of immunodetection can be affected by batch-to-batch differences or limited thermal stability. In this study we aimed to overcome these limitations by identifying a potential biomarker and by developing molecular sensors based on aptamer technology. Using gene expression databases, ribosome profiling analysis, and structural modeling, we find that the High Mobility Group Box 1 protein (HMGB1) of Plasmodium falciparum is highly expressed, structurally stable, and present along all blood-stages of P. falciparum infection. To develop biosensors, we used in vitro evolution techniques to produce DNA aptamers for the recombinantly expressed HMG-box, the conserved domain of HMGB1. An evolutionary approach for evaluating the dynamics of aptamer populations suggested three predominant aptamer motifs. Representatives of the aptamer families were tested for binding parameters to the HMG-box domain using microscale thermophoresis and rapid kinetics. Dissociation constants of the aptamers varied over two orders of magnitude between nano- and micromolar ranges while the aptamer-HMG-box interaction occurred in a few seconds. The specificity of aptamer binding to the HMG-box of P. falciparum compared to its human homolog depended on pH conditions. Altogether, our study proposes HMGB1 as a candidate biomarker and a set of sensing aptamers that can be further developed into rapid diagnostic tests for P. falciparum detection.</p>"
+zenodo:4450582,zenodo:4450582,Cyp33 RNA SELEX,,,10.5281/zenodo.4450582,,,<p>RNA SELEX for Cyp33 RNA binding</p>
+zenodo:7922963,zenodo:7922963,DEEP LEARNING-BASED SEQUENCE GENERATION OF SINGLE-STRANDED DNA APTAMERS,,,10.5281/zenodo.7922963,,,"<p>Aptamers are short single-stranded DNA or RNA sequences that can specifically bind to target molecules, making them useful for various applications such as diagnostics, therapeutics, and biosensors. However, designing aptamers with high binding affinity and specificity is a challenging task due to the complexity and diversity of the target molecules. This project proposes a novel approach for generating novel ssDNA aptamer sequences using a variational autoencoder (VAE) model. The VAE is a deep generative model that can learn the underlying distribution of a given dataset and generate new samples from the learned distribution. The aim is for the VAE model to learn the sequence and structural features of the ssDNA aptamers and generate novel ssDNA sequences. The proposed method consists of three main steps: (1) preprocessing and feature engineering of the ssDNA aptamer sequences, (2) training of the VAE model on the preprocessed sequences, and (3) generation of novel ssDNA aptamer sequences by sampling from the learned latent space of the VAE model. The model is trained on a dataset of ssDNA aptamers targeting various molecules like steroids, toxins, proteins, and drugs. Additionally, several software tools for aptamer sequence design and evaluation are reviewed (NUPACK, Vienna, MFOLD, and MEME). These tools provide informative characteristics on ssDNA sequences that facilitate the design of feature vectors. The model&rsquo;s performance metrics demonstrate that the VAE model could capture the sequence and structural features of the ssDNA aptamers and generate novel sequences. The unsupervised, generative nature, and potential for transfer learning to other aptamer datasets, makes this method promising. The model could serve as a tool for generating novel ssDNA aptamer sequences, which can facilitate the discovery and development of new aptamers for various applications.</p>"
+zenodo:19223322,zenodo:19223322,A review on magnetic beads-based SELEX technologies: Applications from small to large target molecules,,,10.1016/j.aca.2024.342325,,,"<p>This review summarizes the stepwise strategy and key points for magnetic beads (MBs)-based&nbsp;<a href=""https://www.sciencedirect.com/topics/pharmacology-toxicology-and-pharmaceutical-science/aptamer"">aptamer</a>&nbsp;selection which is suitable for isolating aptamers against small and large molecules&nbsp;<em>via</em>&nbsp;<a href=""https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/systematic-evolution-of-ligands-by-exponential-enrichment"">systematic evolution of ligands by exponential enrichment</a>&nbsp;(SELEX). Particularities, if any, are discussed according to the target size. Examples targeting&nbsp;<a href=""https://www.sciencedirect.com/topics/biochemistry-genetics-and-molecular-biology/small-molecule"">small molecules</a>&nbsp;(&lt;1000&nbsp;Da) such as&nbsp;<a href=""https://www.sciencedirect.com/topics/pharmacology-toxicology-and-pharmaceutical-science/xenobiotic-agent"">xenobiotics</a>, toxins, pesticides, herbicides, illegal additives, hormones, and large targets such as proteins (biomarkers, pathogens) are discussed and presented in tabular formats. Of special interest are the latest advances in more efficient alternatives, which are based on novel instrumentation, materials or microelectronics, such as fluorescence MBs-SELEX or microfluidic chip system-assisted MBs-SELEX. Limitations and perspectives of MBs-SELEX are also reviewed. Taken together, this review aims to provide practical insights into MBs-SELEX technologies and their ability to screen multiple potential aptamers against targets from small to large molecules.</p>"
+zenodo:19109198,zenodo:19109198,Bioelectronical devices based on graphene FETs with aptamers for detection of small molecules and peptides,,,10.5281/zenodo.19109198,,,"<p>Bio-nano conjugates of graphene field-effect transistors and specific aptamers are discussed here to address the question of sensing mechanism and signal development on two different analyte examples.<br>First, we used an array of CVD graphene FETs (GFETs) functionalized with aptamer for the selective detection of small molecule Ochratoxin A (OTA), providing fast detection of 10-50 s time response and low detection limit of 1.4 pM [1]. During the assembling, a G-rich aptamer induced a small left shift of the Dirac point, which we hypothesize that aptamers are weakly adsorbed on graphene surface instead of its free-standing form in the absence of OTA (Fig. 1A). Introducing OTA, the right shift is observed due to aptamer 3D reconfiguration and desorption from the graphene suggesting that sensing of small molecules by GFET aptasensor rely on the aptamer direct doping mechanism of the graphene channel.<br>Second, reduced graphene oxide FETs (rGO-FETs) are employed as an aptasensor for the ultrasensitive detection of peptide NT-proBNP with high dynamic range of 100 &ndash; 104 fg/mL [2]. Aptamer assembly on the rGO surface causes the right shift of the Dirac point due to large net negative charge of phosphate backbone and no adsorption because of rGO structure. The peptide with a size about three times smaller than the aptamer brings positive charge, compensating aptamers negative charge to some extent and causing a negative Dirac point shift only observable in highly diluted buffer solution (0.01X PBS) due to ion screening effect decrement (Fig. 1B). On the contrary, transconductance is a function of both doping and charge scatterer accumulation on rGO surface and such signal is found also in 0.1X PBS.<br>Finally, in this work we discuss the major role of aptamer conformational changes when detecting the small molecules or peptides with the size comparable or smaller then apatmer.<br><br>References<br>[1]<br>N. Nekrasov, S. Jaric, D. Kireev, A.V. Emelianov, A.V. Orlov, I. Gadjanski, P.I. Nikitin, D. Akinwande, I. Bobrinetskiy, Biosensors and Bioelectronics, 200 (2022), 113980.<br>[2]<br>S. Jarić, A. Kudriavtseva, N. Nekrasov, A.V. Orlov, I.A. Komarov, L.A. Barshukov, I. Gadjanski, P.I. Nikitin, I. Bobrinetskiy, Microchemical Journal, 196 (2024), 109611.</p>"
+zenodo:7991884,zenodo:7991884,__RNA-aptamer-tetracyclin-binding-site_structure_MD_GEC_31-05-2023.png,,,10.5281/zenodo.7991884,,,"<p><strong>The aptamer was designed by extracting the sequence from the crystal structure of E. coli ribosome (A), adding a U-loop to facilitate pairing of complementary strands, and adding ad-hoc mutations to reproduce the fold in the absence of the rest of the ribosome (B). MD snapshots of the aptamer in water solution, demonstrating the stability of the fold (C).</strong></p>"
+zenodo:19547634,zenodo:19547634,Surface plasmon resonance assay for screening diverse aptamer-target interactions,,,10.5281/zenodo.19547634,,,"<p>Natural aptamers control biological processes in bacteria while synthetic nucleic acid aptamers have been&nbsp;applied to numerous biotechnological applications. Prior to developing aptamer technologies, sequence variants&nbsp;and specificity must be characterized. Here, we present a highly sensitive surface plasmon resonance&nbsp;(SPR) method adapted to rapidly screen aptamer variants against diverse molecules.</p>"
+zenodo:18199595,zenodo:18199595,Assessing Molecular Dynamics in Predicting Aptamer–Ligand Binding Thermodynamics: Insights from the OTA Binding Aptamers,,,10.5281/zenodo.18199595,,,"<p>Files (Gromacs and Gaussian) to reproduce the data obtained in the paper: ""Assessing Molecular Dynamics in Predicting Aptamer&ndash;Ligand Binding Thermodynamics: Insights from the OTA Binding Aptamers""</p>
+<p>&nbsp;</p>
+<p>-----Input files for running MD simulations and analyses divided by system OBA3 (OBA3OTA, OBA3OTB and Ligand free: 5 replicas) and OBA33 (OBA33OTA, OBA33OTB and Ligand free: 5 replicas)-----</p>
+<p>&nbsp;</p>
+<p>- covar.log, eigenvec.trr, eigenval.xvg: results of the covariance analysis for subsequent PCA, performed on the concatenated trajectory of the aptamer atoms of OBA3OTA (1us simulation) and the aptamer atoms of the ligand-free OBA3 (5x1&mu;s simulations, each sampled every 5 frames).&nbsp;</p>
+<p>- covar.log, eigenvec.trr, eigenval.xvg: results of the covariance analysis for subsequent PCA, performed on the concatenated trajectory of the aptamer atoms of OBA33OTA (1us simulation) and the aptamer atoms of the ligand-free OBA33 (5x1&mu;s simulations, each sampled every 5 frames).&nbsp;</p>
+<p>&nbsp;</p>
+<p>Each folder (Ligand-free, OBA3OTA, OBA3OTB, OBA33OTA, OBA33OTB) includes:</p>
+<p>- topol.top: topology used for the MD simulation;<br>- Ochra_A_PhOH_DUM.itp and Ochra_B_PhOH_GMX.itp: acpype-generated topologies for OTA and OTB. For OTA, the dummy atom mimicking the chlorine &sigma;-hole is included;<br>- run.mdp: mdp files for running the MD simulations;<br>- index.ndx: index used for MD simulations;<br>- eq.gro: system coordinates after the equilibration;<br>- md.gro: system coordinates after the 1&mu;s production run;</p>
+<p>- rmsd.xvg: RMSD performed on the phosphorous aptamer atoms with respect to the centroid of the models in PDB;<br>- rmsf.xvg: RMSF performed on the aptamer atoms with respect to the centroid of the models in PDB (OBA3 systems);<br>- 2dproj.xvg: projection of the trajectory of the aptamer atoms onto the first 2 principal components identified during the covariance analysis.</p>
+<p>-----Input and output files for QM calculations with and without the chlorine dummy atom (&sigma;-hole)(OBA3 systems)-----&nbsp;</p>
+<p>-----Input and output files for alchemical free energy calculations: 5 replicas (rep1, rep2, rep3, rep4, rep5)-----</p>
+<p>Rep1 includes:</p>
+<p>-launch_rep.py: python script to perform all the simulations necessary for the free energy estimation;</p>
+<p>-top: folder with the hybrid topology;</p>
+<p>-data_wat and data_dna: folders with the output files of the alchemical free energy calculations;</p>
+<p>-OTA_wat, OTA_dna, OTB_wat, OTB_dna: folders containing all the files to reproduce equilibrium and non-equilibrion simulations for each system necessary to build the thermodynamic cycle).</p>
+<p>Rep2, Rep3, Rep4 and Rep5 contain the obtained results for each replica. These results were obtained using the files in Rep1.&nbsp;</p>
+<p>OBA3 folder contains alchemical files for free energy diagnostics.&nbsp;</p>"
+zenodo:15733619,zenodo:15733619,DEVELOPMENT OF FLUORESCENT METHODS TO DETERMINE DISSOCIATION CONSTANT FOR SINGLE STRANDED DNA BIOSENSORS,,,10.5281/zenodo.15733619,,,"<p>Biosensors are tools designed to encounter a chemical and provide a measurable signal. Recently, there has been research interests in developing single stranded DNA (ssDNA) aptamers as biosensors. The process of identifying an aptamer, is called SELEX (Systematic Evolution of Ligands by Exponential Enrichment). Once several possible aptamers are identified their dissociation constants, ,will be evaluated through fluorescent assay analysis. One of the most accurate testing of aptamers is using the 6-carboxyfluorescein (6-FAM)/DABCYL system. However, this process is expensive and labor intensive. Thus, there is a need for a quick and robust screening fluorescent assay to determine best aptamer candidates. The purpose of our project is to develop a fluorescent assay method by using fluorescent dyes, Thiazole Orange (TO) and Thioflavin T (ThT), to determine the for ssDNA aptamers. We identified DNA-aptamers through the process of an <em>in vitro</em> selection and amplification- SELEX. Through multiple rounds of SELEX, ssDNA sequences which strongly interact with a target kavain will be favored for PCR amplification and would be more likely identified as binders. We completed 14 rounds of SELEX. To determine a method for fluorescent testing, we used aptamers previously tested with 6-FAM/DABCYL. We compared TO and ThT&rsquo;s ability to bind to the ssDNA. From these experiments, we concluded that ThT is a better dye to use when testing preliminary ssDNA aptamer&rsquo;s . We expect that our study will enable development of the more advanced biosensors for detection of challenging small molecules of interest.</p>"
+zenodo:15294875,zenodo:15294875,UltraGen_All_Archives,,,10.5281/zenodo.15294875,,,"<h1>The official repository for the article ""Decoding the RNA binding systems by UltraGen""</h1>
+<h2>Overview</h2>
+<p>We introduce UltraGen, an RNA language model designed to capture RNA binding properties. Utilizing fine-grained self-learning, UltraGen identifies RNA aptamers for a wide range of target sizes, including small molecules, proteins, cells, and tissue. Additionally, UltraGen discerns tissue specificity for millions RNA species across 22 human organs based on their 3&rsquo;-UTR sequences, predicts the tropism of human-pathogenic RNA viruses, and characterizes SARS-CoV-2 replicase RNA binding at single-base resolution.</p>
+<p>--------------------------------------------------------------------------</p>
+<p><strong>This official repository provides comprehensive resources pertaining to the UltraGen model, encompassing datasets (including both pre-training corpora and downstream task-specific fine-tuning datasets), model implementations (containing pre-trained baseline models and task-optimized variants), along with the complete source code for UltraGen.</strong></p>
+<p>In this repository, you will find the following pre-training datasets and model checkpoints:</p>
+<table>
+<tbody>
+<tr>
+<th>Model Name</th>
+<th>Parameters</th>
+<th>Pre-training Data</th>
+<th>RNA Species Number</th>
+<th>Description</th>
+<th>Checkpoint</th>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td>UltraGen</td>
+<td>33.5M</td>
+<td>UltraSelex SiR-B</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>source_SiR</sup></td>
+<td>33.5M</td>
+<td>SELEX SiR</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen_source_SiR.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>source-nsp12</sup></td>
+<td>33.5M</td>
+<td>SELEX nsp12</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen_source_nsp12.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>molecules</sup></td>
+<td>33.5M</td>
+<td>12 SELEX targets&rsquo; training sets</td>
+<td>3.24 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_molecule.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>3UTR</sup></td>
+<td>33.5M</td>
+<td>The preliminary 3&rsquo;-UTR full training datasets</td>
+<td>1.69 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_3UTR.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>plus</sup></td>
+<td>33.5M</td>
+<td>12 SELEX targets&rsquo; training sets and the preliminary 3&rsquo;-UTR full training datasets</td>
+<td>4.93 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_plus.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>RIP</sup></td>
+<td>33.5M</td>
+<td>Human RIP-Seq in ENCODE</td>
+<td>6.88 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_RIP.pkl</td>
+</tr>
+</tbody>
+</table>
+<p>NOTE:</p>
+<ul>
+<li>
+<p>The pretraining data is located in the <code>Dataset Availability\1. Dataset for pre-training</code> folder.</p>
+</li>
+<li>
+<p>The pretrained models can be found in the <code>Model Availability\1. Pre-training models</code> and <code>Model Availability\2. Continued pre-training models</code> folders.</p>
+</li>
+<li>
+<p>The datasets for downstream tasks are in the <code>Dataset Availability\2. Dataset for fine-tuning</code> folder.</p>
+</li>
+</ul>
+<p>Additionally, this official repository provides supervised fine-tuned models based on the base UltraGen for downstream applications, including: RNA aptamer identification models targeting small molecules, proteins, cells, and tissues (12 specialized datasets), and tissue-specificity prediction for human mRNA 3'-UTR regions. These optimized models are archived under <code>Model Availability\3. Fine-tuned model</code>.<br><br>The source code <code>UltraGen_source_code</code> provides implementations for pre-training, inference, and fine-tuning across various downstream tasks.</p>"
+zenodo:15831294,zenodo:15831294,ON THE DEVELOPMENT OF A SSDNA – BASED BIOSENSOR FOR THE DETECTION OF R – (+) – KAVAIN,,,10.5281/zenodo.15831294,,,"<p>Piper methysticum (kava) is a plant indigenous to the Pacific Island region that contains bioactive metabolites known as kavalactones, with one of the most abundant being kavain. With there being little definitely known about their mode of action on the human body, more research is needed to further investigate how these natural products behave at the cellular level. Developing a highly specific and selective biosensor for these metabolites would facilitate any efforts investigating kava and kavalactones. This work sought to develop a ssDNA &ndash; based biosensor to detect the kavalactone R &ndash; (+) &ndash; kavain. Using a ssDNA &ndash; based library containing a N30 random region and R &ndash; (+) &ndash; kavain as the ligand, the isolation of aptamers was conducted through the systemic evolution of ligands by exponential enrichment (SELEX). Gel electrophoresis and Spectrophotometry were used to qualitatively and quantitatively monitor the ssDNA aptamers throughout the SELEX protocol. With a total of 33 rounds of SELEX conducted, the isolated aptamers were then cloned &ndash; resulting in 27 samples being sequenced in order to characterize the random regions. Primary analysis was conducted on valid aptamer sequences to identify any motifs. Secondary analysis was conducted to predict the secondary structures of the aptamers as well as the energies associated with them. Lastly, a fluorescent &ndash; based assay was conducted to investigate the binding affinity of the aptamers with R &ndash; (+) &ndash; kavain, with the ligand concentrations starting at 100 &mu;M and dropping to 0 &mu;M via serial dilution. Aptamers were isolated but were deemed not selective nor specific enough at the concentrations considered. With discussion on how future projects can be optimized, a DNA &ndash; based aptamer can be further developed for kavalactones, significantly facilitating laboratory studies regarding kava.</p>"
+zenodo:17432573,zenodo:17432573,A protocol for in vivo RNA labeling and visualization in tobacco pollen tubes,,,10.1016/j.xpro.2024.103433,,,"<p>In this method article, we describe adaptation of bacteria aptamer RNA labelling system for plant/pollen tube RNA labelling and visualization.</p>"
+zenodo:4938913,zenodo:4938913,Data from: Protein-mediated RNA folding governs sequence-specific interactions between rotavirus genome segments,,,10.5061/dryad.vp312,,,"Segmented RNA viruses are ubiquitous pathogens, which include influenza viruses and rotaviruses. A major challenge in understanding their assembly is the combinatorial problem of a non-random selection of a full genomic set of distinct RNAs. This process involves complex RNA-RNA and protein-RNA interactions, which are often obscured by non-specific binding at concentrations approaching in vivo assembly conditions. Here, we present direct experimental evidence of sequence-specific inter-segment interactions between rotavirus RNAs, taking place in a complex RNA- and protein-rich milieu. We show that binding of the rotavirus-encoded non-structural protein NSP2 to viral ssRNAs results in the remodeling of RNA, which is conducive to formation of stable inter-segment contacts. To identify the sites of these interactions, we have developed an RNA-RNA SELEX approach for mapping the sequences involved in inter-segment base-pairing. Our findings elucidate the molecular basis underlying inter-segment interactions in rotaviruses, paving the way for delineating similar RNA-RNA interactions that govern assembly of other segmented RNA viruses."
+zenodo:13684933,zenodo:13684933,RECENT DEVELOPMENTS IN APTAMER TECHNOLOGY FOR THE TARGETED IDENTIFICATION OF SPECIFIC CANCER BIOMARKERS,,,10.5281/zenodo.13684933,,,"<div>
+<p><em><span>Aptamers are compact single-stranded oligonucleotides that can effectively bind to multiple molecules with high affinity and specificity, establishing themselves as a promising class of molecular recognition elements for the identification of specific <a name=""_Hlk175825568""></a>cancer biomarkers.</span></em><em><span> </span></em><em><span>The distinctive characteristics of these molecules, such as their high specificity and affinity for target entities, stability in physiological environments and straightforward synthesis, render them excellent options for use in cancer diagnostics and treatment.</span></em><em><span> </span></em><em><span>The smaller dimensions of aptamers in contrast to antibodies, facilitate improved penetration into tissues and enable access to regions with dense cellular structures. Due to their limited immunogenic potential, aptamers are less inclined to trigger allergic reactions or adverse immune responses in individuals. Recent</span></em><em><span> </span></em><em><span>innovations in aptamer technology have emphasized the creation of innovative selection methods, including <a name=""_Hlk175927093""></a><a name=""_Hlk175825801""></a><span>SELEX</span><span> (Systematic Evolution of Ligands by Exponential Enrichment)</span>. This advancement has facilitated the discovery of aptamers that exhibit improved binding properties to a range of cancer biomarkers. These biomarkers include proteins, nucleic acids, and small molecules associated with tumor progression and <a name=""_Hlk175825955""></a>metastasis. Furthermore, the association of aptamers with therapeutic agents or imaging probes has opened new pathways for targeted drug delivery and non-invasive imaging in <a name=""_Hlk175825930""></a>oncology. This review presents recent innovations in aptamer design and their application in targeting specific cancer biomarkers, emphasizing their potential to improve early detection and treatment for cancer patients.</span></em></p>
+<p><strong><em><span>Keywords:</span></em></strong><em><span> </span></em><em><span>Aptamers, cancer biomarkers, systematic evolution of ligands by exponential enrichment (SELEX), metastasis, oncology</span></em></p>
+</div>"
+zenodo:14272757,zenodo:14272757,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,,,10.5281/zenodo.14272757,,,"<p>High-throughput next generation sequencing (HT-NGS) data from DL-SELEX guided initial library for testosterone (TES) in the SELEX experiment. The dataset contains the round 3, 5 and 7 sequencing data in fastq format with forward and reverse read, and can be further analyzed using conventional tools like AptaSuite or the article related web server AptaClux for post-analyzing the HT-NGS data.</p>"
+zenodo:14272647,zenodo:14272647,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,,,10.5281/zenodo.14272647,,,"<p>High-throughput next generation sequencing (HT-NGS) data from DL-SELEX designed library for hydrocortisone (CS) in the SELEX experiment. The dataset contains the round 3, 5 and 7 sequencing data in fastq format with forward and reverse read, and can be further analyzed using conventional tools like AptaSuite or the article related web server AptaClux for post-analyzing the HT-NGS data.</p>"
+zenodo:14272347,zenodo:14272347,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,,,10.5281/zenodo.14272347,,,"<p>High-throughput next generation sequencing (HT-NGS) data from manual designed library for hydrocortisone (CS) in the SELEX experiment. The dataset contains the round 7 and 8 sequencing data in fastq format with forward and reverse read, and can be further analyzed using conventional tools like AptaSuite or the article related web server AptaClux for post-analyzing the HT-NGS data.</p>"
+zenodo:6341687,zenodo:6341687,"Data for ""Generative and interpretable machine learning for aptamer design and analysis of in vitro sequence selection""",,,10.5281/zenodo.6341687,,,"<p>Once decompressed, the file contains a folder which contains:</p>
+
+<ul>
+	<li>The files &quot;s100_Nth.fasta&quot; (where &quot;N&quot; is 5, 6, 7 or 8), which are the output of the SELEX experiment described in the paper with DOI:&nbsp;<a href=""https://doi.org/10.1002/cbic.201900265"">10.1002/cbic.201900265</a>. They are standard fasta files, and the descriptor of each sequence is of the form &quot;seqX-Y&quot;, where &quot;X&quot;&nbsp;is an increasing label, and &quot;Y&quot; is the number of times &quot;seqX&quot;&nbsp;has been obtained (number of counts of &quot;seqX&quot;).</li>
+	<li>The file &quot;Aptamer_Exp_Results.csv&quot;, which contains the sequences tested experimentally for the paper &quot;Generative and interpretable machine learning for aptamer design and analysis of in vitro sequence selection&quot; (preprint available at https://doi.org/10.1101/2022.03.12.484094), with the following experimental results for each sequence: (i) whether the sequence was able to bind thrombin (&#39;B&#39; for binders, &#39;NB&#39; for non-binders); (ii) the thrombin exosite used for binding&nbsp;(&#39;I&#39; for exosite I, &#39;II&#39;&nbsp;for exosite II, &#39;n/a&#39; for sequences not tested).</li>
+</ul>
+
+<p>Examples of usage of the data are available at&nbsp;https://github.com/adigioacchino/RBMsForAptamers.</p>"
+zenodo:14689104,zenodo:14689104,"Three Properties of the Hepatitis C Virus RNA Genome Related to Antiviral Strategies Based on RNA-Therapeutics: Variability, Structural Conformation and tRNA Mimicry",,,10.2174/1381612043382675,,,"<p>The concept of using RNA molecules as therapeutic agents is receiving increasing attention by basic science and pharmaceutical research. Over the past five years, a number of clinical trials have been initiated to evaluate the efficacy and safety of several RNA agents for the treatment of a range of conditions from cancer to infectious disease. From a molecular biology perspective, two main factors are implicated in RNA therapeutics against pathogenic RNAs: i/ The activity, stability and delivery of the inactivating agent (ribozyme, RNase P, &ldquo;decoy&rdquo; RNA, aptamer, small interfering-RNA) and its co-localisation with the target; and ii/ The properties of the RNA substrate, which, in the case of an RNA virus, most likely limit the effectiveness of the inactivating agent. The main reasons are the limited size of the viral genome and the restrictions imposed by the RNA structure and variations at the target.<br>In the first section of this article we review three properties of the HCV RNA genome, from primary sequence to tertiary structure, which imply restrictions and opportunities for RNA-based treatment. In the second section, we briefly describe several of the RNA-based therapeutic strategies against HCV now under development.</p>"
+zenodo:1168878,zenodo:1168878,Antibody-Templated Assembly of an RNA Mimic of Green Fluorescent Protein,,,10.1021/acs.analchem.7b02102,,,"<p>One of the most intriguing ways through which nature achieves regulation of biological pathways encompasses the coordination of noncovalent interactions that bring biomolecules to be colocalized in a designated restricted space. Inspired by this mechanism, we have explored the possibility of using antibodies as bivalent biomolecular substrates for the templated assembly of a functional RNA structure. We have developed a biosupramolecular complementation assay by assembling a fluorescent Spinach aptamer, which is a synthetic RNA mimic of the Green Fluorescent Protein, from its split segments. We have employed two antigen-tagged RNA strands that, upon binding to the target antibody, are colocalized in a confined space and can reassemble into the native Spinach conformation, yielding a measurable fluorescence emission as a function of the templating antibody concentration. We have demonstrated the generality of our approach using two different antigen/antibody systems and found that both platforms show high binding affinity, specificity for the target antibody, and enough selectivity to work in crude cellular extracts. This study highlights the potential of biosupramolecular RNA engineering for the development of innovative biomimetic tools for nanobiotechnology and bioanalytical assays.</p>"
+zenodo:10040600,zenodo:10040600,The dynamics of protein-RNA interfaces using all-atom molecular dynamics simulations,,,10.5281/zenodo.10040600,,,"<p>We investigated to characterize the dynamics of protein-RNA complexes and their interfaces at molecular level by performing a more systematic analysis. To get insights on the dynamics of protein-RNA complexes, all-atom MD simulations were generated for the manuscript ""The dynamics of protein-RNA interfaces using all-atom molecular dynamics simulations"". Nine protein-RNA complexes are studied in this work: 1ASY (an aspartyl-tRNA synthase/tRNA), 1JBS (a ribotoxin restrictocin/SRD RNA), 1MMS (a ribosomal protein L11/23S), 1OOA (a nuclear factor NF-kappaB p105 subunit/RNA aptamer), 1RKJ (a nucleolin/pre-rRNA), 2R8S (a FAB/P4-P6 RNA ribozyme domain), 2VPL (a 50S ribosomal protein/mRNA), 2ZM5 (a tRNA delta(2)-isopentenylpyrophosphate transferase/tRNA), 3IEV (a GTP-binding protein era/3' end of 16S rRNA).&nbsp;</p><p>Each folder for a complex is organised as followed:</p><ul><li>in <strong>complex</strong> there are the dry MD simulations for the complex protein-RNA with the starting structure</li><li>in <strong>protein</strong> there are the dry MD simulations for the unbound protein with the starting structure</li><li>in <strong>rna</strong> there are the dry MD simulations for the unbound RNA with the starting structure</li></ul><p>In each folder, all the trajectory files are named : <strong>md_(times of simulations).xtc</strong> and the starting structure called : <strong>start.gro</strong>.</p>"
+zenodo:15065216,zenodo:15065216,UltraGen_All_Archives,,,10.5281/zenodo.15065216,,,"<h1><strong>Decoding the RNA binding systems by UltraGen</strong></h1>
+<p>The official repository for the article ""<strong>Decoding the RNA binding systems by UltraGen</strong>"".&nbsp;</p>
+<h2>Overview</h2>
+<p>We introduce UltraGen, an RNA language model designed to capture RNA binding properties. Utilizing fine-grained self-learning, UltraGen identifies RNA aptamers for a wide range of target sizes, including small molecules, proteins, cells, and tissue. Additionally, UltraGen discerns tissue specificity for millions RNA species across 22 human organs based on their 3&rsquo;-UTR sequences, predicts the tropism of human-pathogenic RNA viruses, and characterizes SARS-CoV-2 replicase RNA binding at single-base resolution.</p>
+<p>&nbsp;</p>
+<h2>UltraGen Archives</h2>
+<h3>1. Pre-training datasets and models</h3>
+<p>In this repository, you will find the following pre-training datasets and pre-trained model checkpoints:</p>
+<table>
+<tbody>
+<tr>
+<th>Model Name</th>
+<th>Parameters</th>
+<th>Pre-training Data</th>
+<th>RNA Species Number</th>
+<th>Description</th>
+<th>Checkpoint</th>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td>UltraGen</td>
+<td>33.5M</td>
+<td>UltraSelex SiR-B</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>source_SiR</sup></td>
+<td>33.5M</td>
+<td>SELEX SiR</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen_source_SiR.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>source-nsp12</sup></td>
+<td>33.5M</td>
+<td>SELEX nsp12</td>
+<td>10 million</td>
+<td>pre-training <em>from scratch</em></td>
+<td>UltraGen_source_nsp12.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>molecules</sup></td>
+<td>33.5M</td>
+<td>12 SELEX targets&rsquo; training sets</td>
+<td>3.24 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_molecule.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>3UTR</sup></td>
+<td>33.5M</td>
+<td>The preliminary 3&rsquo;-UTR full training datasets</td>
+<td>1.69 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_3UTR.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>plus</sup></td>
+<td>33.5M</td>
+<td>12 SELEX targets&rsquo; training sets and the preliminary 3&rsquo;-UTR full training datasets</td>
+<td>4.93 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_plus.pkl</td>
+</tr>
+<tr>
+<td>UltraGen<sup>RIP</sup></td>
+<td>33.5M</td>
+<td>Human RIP-Seq in ENCODE</td>
+<td>6.88 million</td>
+<td>continued pre-training the basic UltraGen model</td>
+<td>UltraGen_RIP.pkl</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NOTE:</strong></p>
+<ul>
+<li>
+<p>The pretraining data is located in the <code>Dataset Availability\1. Dataset for pre-training</code> folder.</p>
+</li>
+<li>
+<p>The pretrained models can be found in the <code>Model Availability\1. Pre-training models</code> and <code>Model Availability\2. Continued pre-training models</code> folders.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<h3>2. Downstream task datasets and fine-tuned models</h3>
+<p>Additionally, this official repository also provides all datasets for downstream tasks and supervised fine-tuned models based on the base UltraGen for downstream applications, including: RNA aptamer identification models targeting small molecules, proteins, cells, and tissues (12 specialized datasets), and tissue-specificity prediction for human mRNA 3'-UTR regions.</p>
+<table>
+<tbody>
+<tr>
+<th>Task Type</th>
+<th>Data Type</th>
+<th>Dataset Number</th>
+<th>Dataset</th>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td>SiR-binding prediction</td>
+<td><em>In vitro</em></td>
+<td>3</td>
+<td>(1) UltraSelex-SiR-B.csv&nbsp; &nbsp; &nbsp; &nbsp;(2) SELEX-SiR-whole.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(3) SELEX-SiR-exclusive.csv</td>
+</tr>
+<tr>
+<td><em>In vitro</em> RNA-target binding prediction</td>
+<td><em>In vitro</em></td>
+<td>12</td>
+<td>
+<p>(1) SELEX-small-molecule-DAse.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(2) SELEX-small-molecule-BC.csv</p>
+<p>(3) SELEX-small-molecule-PR.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(4) SELEX-small-molecule-MI.csv</p>
+<p>(5) SELEX-protein-TARDBP.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(6) SELEX-protein-RT.csv</p>
+<p>(7) SELEX-protein-RBM24.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (8) SELEX-protein-S15.csv</p>
+<p>(9) SELEX-(multi)cellular-ISLETS.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (10) SELEX-(multi)cellular-MDSC.csv</p>
+<p>(11) SELEX-(multi)cellular-CHO-K1.csv&nbsp; &nbsp; &nbsp;(12) SELEX-(multi)cellular-TNBC.csv</p>
+</td>
+</tr>
+<tr>
+<td><em>In vivo</em> RNA-protein interactions prediction (human source)</td>
+<td><em>In vivo</em></td>
+<td>11</td>
+<td>
+<p>(1) 16_ICLIP_hnRNPC_Hela_iCLIP_all_clusters_sequences.csv</p>
+<p>(2) 17_ICLIP_HNRNPC_hg19_sequences.csv</p>
+<p>(3) 18_ICLIP_hnRNPL_Hela_group_3975_all-hnRNPL-Hela-hg19_sum_G_hg19--ensembl59_from_2337-2339-741_bedGraph-cDNA-hits-in-genome_sequences.csv</p>
+<p>(4) 19_ICLIP_hnRNPL_U266_group_3986_all-hnRNPL-U266-hg19_sum_G_hg19--ensembl59_from_2485_bedGraph-cDNA-hits-in-genome_sequences.csv</p>
+<p>(5) 20_ICLIP_hnRNPlike_U266_group_4000_all-hnRNPLlike-U266-hg19_sum_G_hg19--ensembl59_from_2342-2486_bedGraph-cDNA-hits-in-genome_sequences.csv</p>
+<p>(6) 22_ICLIP_NSUN2_293_group_4007_all-NSUN2-293-hg19_sum_G_hg19--ensembl59_from_3137-3202_bedGraph-cDNA-hits-in-genome_sequences.csv</p>
+<p>(7) 27_ICLIP_TDP43_hg19_sequences.csv</p>
+<p>(8) 28_ICLIP_TIA1_hg19_sequences.csv; (9) 29_ICLIP_TIAL1_hg19_sequences.csv</p>
+<p>(10) 30_ICLIP_U2AF65_Hela_iCLIP_ctrl_all_clusters_sequences.csv</p>
+<p>(11) 31_ICLIP_U2AF65_Hela_iCLIP_ctrl+kd_all_clusters_sequences.csv</p>
+</td>
+</tr>
+<tr>
+<td><em>In vivo</em> RNA-protein interactions prediction (mouse source)</td>
+<td><em>In vivo</em></td>
+<td>11</td>
+<td>
+<p>(1) CLIP-mouse-EZH2-sequences.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (2) CLIP-mouse-FUS-sequences.csv</p>
+<p>(3) CLIP-mouse-HNRNPR-sequences.csv&nbsp; &nbsp; (4) CLIP-mouse-LIN28A-sequences.csv</p>
+<p>(5) CLIP-mouse-RBFOX2-sequences.csv&nbsp; &nbsp; &nbsp; (6) CLIP-mouse-RBM10-sequences.csv</p>
+<p>(7) CLIP-mouse-SRSF2-sequences.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(8) CLIP-mouse-SRSF3-sequences.csv</p>
+<p>(9) CLIP-mouse-TARDBP-sequences.csv&nbsp; &nbsp; &nbsp;(10) CLIP-mouse-U2AF2-sequences.csv</p>
+<p>(11) CLIP-mouse-YTHDC2-sequences.csv</p>
+</td>
+</tr>
+<tr>
+<td>m6A methylation prediction</td>
+<td><em>In vivo</em></td>
+<td>9</td>
+<td>
+<p>(1) m6A-A549.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;(2) m6A-CD8T.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (3) m6A-ESC.csv</p>
+<p>(4) m6A-HCT116.csv&nbsp; &nbsp; &nbsp; &nbsp; (5) m6A-HEK293.csv&nbsp; &nbsp; &nbsp; &nbsp;(6) m6A-HEK293T.csv</p>
+<p>(7) m6A-Hela.csv&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (8) m6A-HepG2.csv&nbsp; &nbsp; &nbsp; &nbsp;(9) m6A-MOLM13.csv</p>
+</td>
+</tr>
+<tr>
+<td>3'UTR tissue-specific recognition</td>
+<td><em>In vivo</em></td>
+<td>1</td>
+<td>human_22_tissue_three_terminal_UTR.csv</td>
+</tr>
+<tr>
+<td>Zero-shot RNA mutation effect prediction targeting SARs-CoV-2 replicase nsp12</td>
+<td><em>In vitro</em></td>
+<td>The wild-type sequence and seven mutated sequences</td>
+<td>RNA-mutation.fasta</td>
+</tr>
+</tbody>
+</table>
+<p><strong>NOTE:</strong></p>
+<ul>
+<li>
+<p>The datasets for downstream tasks are in the <code>Dataset Availability\2. Dataset for fine-tuning</code> folder.</p>
+</li>
+<li>
+<p>The fine-tuned models for downstream tasks are available in the <code>Model Availability\3. Fine-tuned models</code> folder.</p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<h2>UltraGen Usage</h2>
+<p><code>UltraGen_source_code.zip</code>&nbsp;contains detailed code for UltraGen's pre-training, inference, and fine-tuning.</p>
+<h3>(1) Environment Setup</h3>
+<p>Our code is written in Python 3.8.5 and CUDA11.2 . You can use the following code to create a Python virtual environment to avoid conflicts with the system's Python environment and install the required dependencies.</p>
+<pre># Create a virtual environment<br>conda create -n ultragen python=3.8<br>conda activate ultragen<br><br># Install dependent packages<br>bash requirements.sh</pre>
+<p>Dependencies can alternatively be installed directly using&nbsp;<code>pip</code>.</p>
+<pre>pip install --user ""hydra-core&gt;=1.2.0""<br>pip install --user numpy scipy<br>pip install --user scikit-learn<br>pip install --user tqdm<br>pip install --user matplotlib==3.4.2<br>pip install --user torch==1.12.1+cu113 torchvision==0.13.1+cu113 torchaudio==0.12.1 --extra-index-url https://download.pytorch.org/whl/cu113<br>pip install --user transformers==4.35<br>pip install --user biopython</pre>
+<p>&nbsp;</p>
+<h3>(2) Pre-training (Skip this section if you're only interested in making predictions.)</h3>
+<p>We provide five pre-training datasets: <code>UltraSelex-SiR-B</code>, <code>UltraSelex-Nsp-B</code>, <code>SELEX-SiR</code>, <code>SELEX-nsp12</code>, and <code>RIP-Seq-ENCODE</code> in the <code>1. Dataset Availability\1. Dataset for pre-training</code> folder. To pre-train with your own data, format it the same way. Then, just set the <code>--training_set</code> and <code>--eval_set</code> parameters in <code>./ultragen/scripts/param_pretraining.py</code> to your datasets.</p>
+<p>Run the script with:</p>
+<pre>bash pretraining.sh</pre>
+<p>&nbsp;</p>
+<h3>(3) Inference</h3>
+<p>Using <code>inference.py</code> with the configuration in <code>ultragen/configs/default.yaml</code> enables the following tasks:</p>
+<ol>
+<li>
+<p><strong>Generate UltraGen Sequence Embeddings</strong></p>
+</li>
+<li>
+<p><strong>Predict Zero-shot Mutation Effects</strong></p>
+</li>
+<li>
+<p><strong>Predict Binding Abilities for RNA Aptamers</strong></p>
+</li>
+<li>
+<p><strong>Tissue-specific Classification of Hallmarks in 3'-untranslated RNA</strong></p>
+</li>
+</ol>
+<p><strong>Setup Instructions:</strong></p>
+<ul>
+<li>
+<p><strong>For Tasks 1 and 2:</strong></p>
+<ul>
+<li>
+<p>Download the UltraGen pretrained model (UltraGen.pkl) to <code>ultragen/checkpoints/</code>.</p>
+</li>
+<li>
+<p>Set <code>predict.extract_embeddings</code> and <code>predict.mutation_effect_prediction</code> to <code>True</code> in <code>default.yaml</code>.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>For Task 3:</strong></p>
+<ul>
+<li>
+<p>Download the appropriate fine-tuned UltraGen model (e.g., UltraGen_System_Ranking_for_BC.pkl for BC ligands) to <code>ultragen/checkpoints/</code>.</p>
+</li>
+<li>
+<p>Configure <code>predict.system_ranking</code> to <code>True</code> in <code>default.yaml</code>.</p>
+</li>
+<li>
+<p>Specify the target by setting <code>system_ranking_ligand.name</code> to <code>BC</code> or your target of interest.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>For Task 4:</strong></p>
+<ul>
+<li>
+<p>Download the fine-tuned UltraGen model (UltraGen_Tissue_Specific_3UTR.pkl) to <code>ultragen/checkpoints/</code>.</p>
+</li>
+<li>
+<p>Set <code>predict.tissue_prediction</code> to <code>True</code> in <code>default.yaml</code>.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Execution:</strong></p>
+<p>Run the following command to perform the specified inferences:</p>
+<pre>python inference.py</pre>
+<p>Note: The UltraGen pre-training and fine-tuning models can be freely downloaded from this repository.</p>
+<p>&nbsp;</p>
+<h3>(4) Fine-tuning</h3>
+<p>We recommend using UltraGen for various RNA-ligand binding tasks. The script <code>fine_tuning.py</code> supports three applications:</p>
+<ol>
+<li>
+<p><strong>Systematic Ranking of Binding Affinity for in vitro RNA Aptamers</strong></p>
+</li>
+<li>
+<p><strong>Classifying Tissue-specific Hallmarks of 3'-untranslated RNA</strong></p>
+</li>
+<li>
+<p><strong>Binary Classification for CLIP dataset and m6A modification</strong></p>
+</li>
+</ol>
+<p>To start, download the UltraGen pretrained model (UltraGen.pkl) into the <code>ultragen/checkpoints/</code> directory. Then, configure <code>fine_tuning.py</code> by selecting either <code>systematic_ranking()</code>, <code>tissue_classification()</code>, or <code>fine_tuning_for_binary_classification()</code> in the main function.</p>
+<p>Run the script with:</p>
+<pre>python fine_tuning.py</pre>
+<p>Note:<span>&nbsp;Further details can be found in the <code>ultragen/examples/README.md</code></span></p>
+<p>&nbsp;</p>
+<p>(UltraGen Website: https://www.ultrarnalab.com/ )</p>"
+zenodo:8330867,zenodo:8330867,Mechanism of ligand binding to theophylline RNA aptamer,,,10.5281/zenodo.8330867,,,"<p>Attached are the input files used for Molecular dynamics simulations for the manuscript.&nbsp;</p>
+
+<p><strong>Equilibration Input file</strong> - md-1.in&nbsp;</p>
+
+<p><strong>Production Input file</strong> - gamd-restart.in and md-restart.in&nbsp;</p>"
+zenodo:13995669,zenodo:13995669,In silico Designed Aptamer for the Detection of Bacteria Leaf Blight Disease in Paddy by Targeting the Virulence Protein,,,10.5281/zenodo.13995669,,,"<p><span>Bacteria Panicle Blight (BPB) is a newly emerging disease of paddy caused by <span>Burkholderia glumae</span>. Its devastating effect to paddy is owed to the pathogenicity of toxoflavin that is produced by the bacterium through the assistance of sequential protein expression event. Usually, the detection is made by manual observation or sending them to the laboratory for testing. These methods are quite laborious and time consuming for immediate action. Usually, real time sensors require antibody for the disease detection which may be costly and produce inconsistent results. In this study, aptamers were used as capturing agent in place of traditional antibody method. Also, the selected aptamers were innovatively designed in silico, unlike the conventional SELEX method that is costly, laborious and time consuming. After screening 33 aptamers through molecular docking, 4 were objected to molecular dynamics simulation and MM-PBSA to predict binding properties. Through computational results, the aptamer candidates exhibited lowest docking energy and best interaction when simulated at 200nanoseconds and when tested experimentally, they give high affinity towards target protein. This innovation may cut short the time needed to develop drugs and sensing agents since it can save millions in terms of research budget and development costs. This innovation also has high commercialization potential as the only material it needs is a high end computer which is comparatively cheaper than many research equipment required in other methods. </span></p>"
+zenodo:14281818,zenodo:14281818,zibin-zhao/DL-SELEX: v1.0.1,,,10.5281/zenodo.14281818,,,"<p>Supplementary code for ""Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids"".</p>"
+zenodo:7629808,zenodo:7629808,"Preliminary  results, oDIN oLIVER project February 2023, Laborotory of Jørgen Kjems, Aarhus University",,,10.5281/zenodo.7629808,,,"<p>Aarhus University, February 2023.&nbsp;</p>
+
+<p>This report presents the most recent discoveries in the oDIN oLIVER project. The report contains the preliminary results obtained during the fall and winter of 2022. The report aims to share our current findings with external partners and the public. We are currently performing and analyzing affinity purifications of human plasma proteins using aptamers identified from the AptaShape profiling of human plasma. The eluate plasma proteins are annotated by LC-MS/MS to identify candidate biomarkers for NAFLD and NASH.&nbsp;</p>
+
+<p>The report is based on the datasets obtained in the oDIN oLIVER project.<br>
+The datasets and R scripts are available here:&nbsp;&nbsp;https://doi.org/10.5281/zenodo.7629726</p>
+
+<p>The following paragraph is copied from the introduction of the report.&nbsp;</p>
+
+<p>oLIVER STATUS</p>
+
+<p><strong>Aim</strong></p>
+
+<p>The aim of the oLIVER project is to apply APTA-SHAPE to identify biomarkers of NAFLD for the development of strategies for:</p>
+
+<p>&bull; Detection of NASH.</p>
+
+<p>&bull; Monitoring of disease progression and treatment response.</p>
+
+<p>&bull; Stratification of fibrosis stage.</p>
+
+<p><strong>Introduction</strong></p>
+
+<p>Initially, a large library of aptamer nano sensors was created capable of broad-scale targeting of plasma components from blood samples of NAFLD patients (termed APTA-SHAPE panel training).</p>
+
+<p>1 uL of plasma from 78 blood samples of NASH patients was subsequently profiled to identify aptamer signals either upregulated or downregulated in correlation to progression of fibrosis stage (termed APTA-SHAPE sample profiling / branched selection). Plasma components for profiling were immobilized on NHS-magnetic beads.</p>
+
+<p>Aptamer signals were obtained by sequencing the RNA sequence and the results of the profiling of each sample. A total of 628 million aptamer reads across the 78 samples were obtained and processed by the software BION by Niels Larsen. These were used for training the computer model.</p>
+
+<p>Separately, 72 samples with a total of 246 million reads from a separate cohort were processed as above as a validation cohort.</p>
+
+<p>&nbsp;</p>
+
+<p>Contact information</p>
+
+<p>Daniel Miotto Dupont</p>
+
+<p><a href=""http://inano.au.dk/""><strong>Interdisciplinary Nanoscience Center - INANO-MBG, iNANO-huset</strong></a><br>
+Gustav Wieds Vej 14<br>
+<a href=""https://www.au.dk/en/map/?b=1590"">building 1590</a>, 316<br>
+8000 Aarhus C<br>
+Denmark<br>
+<a href=""mailto:dmd@inano.au.dk"">dmd@inano.au.dk</a></p>
+
+<p>&nbsp;</p>
+
+<p>&nbsp;</p>"
+zenodo:3634978,zenodo:3634978,bioinform/QBC_Single_Cell_Analysis_NGS: Release for Communications Biology Submission,,,10.5281/zenodo.3634978,,,<p>Initial release for submission to Communications Biology Journal in reference to the paper: &#39;Ultra-high throughput single-cell analysis of proteins and RNAs by split-pool synthesis.&#39;</p>
+zenodo:14598631,zenodo:14598631,Electrochemical Aptasensors for Antibiotics Detection: Recent Achievements and Applications for Monitoring Food Safety,,,10.3390/s22103684,,,"<p>Antibiotics are often used in human and veterinary medicine for the treatment of bacterial diseases. However, extensive use of antibiotics in agriculture can result in the contamination of common food staples such as milk. Consumption of contaminated products can cause serious illness and a rise in antibiotic resistance. Conventional methods of antibiotics detection such are microbiological assays chromatographic and mass spectroscopy methods are sensitive; however, they require qualified personnel, expensive instruments, and sample pretreatment. Biosensor technology can overcome these drawbacks. This review is focused on the recent achievements in the electrochemical biosensors based on nucleic acid aptamers for antibiotic detection. A brief explanation of conventional methods of antibiotic detection is also provided. The methods of the aptamer selection are explained, together with the approach used for the improvement of aptamer affinity by post-SELEX modification and computer modeling. The substantial focus of this review is on the explanation of the principles of the electrochemical detection of antibiotics by aptasensors and on recent achievements in the development of electrochemical aptasensors. The current trends and problems in practical applications of aptasensors are also discussed.</p>"
+zenodo:8106594,zenodo:8106594,Raw data of high-dimensional aptamer selection generated by ProSELEX,,,10.5281/zenodo.8106594,,,<p>This is the raw selection dataset generated by ProSELEX pipeline (https://www.nature.com/articles/s41557-023-01207-z). The target of selection is human myeloperoxidase (MPO). See&nbsp;https://github.com/dwangnu/AptaZ for instructions.</p>
+zenodo:10612073,zenodo:10612073,The Impact of Patterns in Linkage Disequilibrium and Sequencing Quality on the Imprint of Balancing Selection,,,10.5281/zenodo.10612073,,,"<p><span>Regions under balancing selection are characterized by dense polymorphisms and multiple persistent haplotypes, along with other sequence complexities. Successful identification of these patterns depends on both the statistical approach and the quality of sequencing. To address this challenge, at first, a new statistical method called LD-ABF was developed, employing efficient Bayesian techniques to effectively test for balancing selection. LD-ABF demonstrated the most robust detection of selection in a variety of simulation scenarios, compared against a range of existing tests/tools (Tajima&rsquo;s D, HKA, D<sub>ng</sub>, BetaScan, and BalLerMix). Furthermore, the impact of the quality of sequencing on detection of balancing selection was explored, as well, using: 1) SNP genotyping and exome data<span>, 2) </span>targeted high-resolution HLA genotyping (IHIW), <span>and 3) </span>whole-genome long-read sequencing data (Pangenome). In the analysis of SNP genotyping and exome data, we identified known targets and 38 new selection signatures in genes not previously linked to balancing selection. To further investigate the impact of sequencing quality on detection of balancing selection, a detailed investigation of the MHC was performed with high-resolution HLA typing data. Higher quality sequencing revealed the HLA-DQ genes consistently demonstrated strong selection signatures otherwise not observed from the sparser SNP array and exome data. The HLA-DQ selection signature was also replicated in the Pangenome samples using considerably less samples but, with high quality long-read sequence data. The improved statistical method, coupled with higher quality sequencing, leads to more consistent identification of selection and enhanced localization of variants under selection, particularly in complex regions.</span></p>"
+zenodo:17533332,zenodo:17533332,"A Validated suite of tools for assessing fish origin, quality (freshness) and safety, including detection of antibiotics, toxins and pathogens (D4.1)",,,10.5281/zenodo.17533332,,,"<div>
+<div>
+<div>
+<div>
+<p>This report summarizes the work carried out in WP4, including the methods developed, the integration and comparison of data, and the potential applications of the results. The main goal of WP4 was successfully met by testing a range of analytical approaches on seafood samples provided by the Living Labs (LLs), using protocols established and refined in earlier deliverables.</p>
+<p>The findings presented here draw from several technologies&mdash;microbiome analysis, stable isotope profiling, and genetic methods&mdash;and explore how these tools can be applied in practice. For instance, short DNA sequences obtained through untargeted sequencing of seafood-associated microbiota are examined for their potential use alongside the aptamer sensors developed in WP5.</p>
+<p>Untargeted sequencing proved especially valuable, helping to identify microbial markers for origin authentication and assess the presence of antimicrobial resistance genes (the resistome). In terms of microbial safety, results from pathogen screening are included in this report and discussed further in Deliverable D6.3.</p>
+<p>While some of the results have been shared in previous deliverables, they are revisited here to provide a complete overview of the collaborative work conducted across the project&rsquo;s various partners.</p>
+</div>
+</div>
+</div>
+</div>"
+zenodo:8253891,zenodo:8253891,DNA-encoded library enabled discovery of proximity-inducing small molecules,,,10.5281/zenodo.8253891,,,"<p>Raw sequencing data for the manuscript entitled:&nbsp;<em>DNA-encoded library enabled discovery of proximity-inducing small molecules.</em></p>
+
+<p><em>**NOTE: BRD4 sequencing data was generated via MiSeq and is provided as a single fastq file for each selection condition (BeadsOnly; BRD4 (-) VHL; and BRD4 (+) VHL). BRD2 and BRDT sequencing data was generated via HiSeq and each selection condition &nbsp;contains eight fastq files, one for each lane of the HiSeq sequencing chip.</em></p>"
+zenodo:14599416,zenodo:14599416,Developing a Sensitive Method for the Electrochemical Determination of Tetracycline Using MB-Tagged Aptamers on Gold Electrode Substrates,,,10.3390/IECB2023-14597,,,"<p>An electrochemical aptasensor for the detection of tetracycline (TET) is prepared based on a methylene blue (MB)-tagged DNA aptamer, with the sequence 5&prime;-MB-CCC CCG GCA GGC CAC GGC TTG GGTTGG TCC CAC TGC GCG-thiol-3&prime;. The DNA aptamer is chemisorbed on a gold electrode and differential pulse voltammetry (DPV) is utilized for the detection. In particular, upon binding of the TET with the purpose-designed aptamer, there is an increase in the current intensity, as a result of the increased proximity of the MB molecule to the gold surface. The sensor is tested using aqueous samples spiked with TET concentrations between 1 and 1000 nM and a limit of detection (LOD) of 1.2 nM is determined. Furthermore, the dissociation constant is estimated to be 1.4 nM using a Lineweaver&ndash;Burk plot.</p>"
+zenodo:14598734,zenodo:14598734,Smartphone-Addressable Paper-Based Devices for the Colorimetric Detection of Ampicillin Based on Salt-Induced Aggregation of Gold Nanoparticles,,,10.3390/CSAC2023-14875,,,"<p>In this work, we describe the fabrication of paper-based aptasensing devices for ampicillin determination that rely on the salt-induced aggregation of gold nanoparticles (AuNPs) in the presence of the target. Circular paper-based devices were created on paper via pen-plotting (using water-repellent ink to create hydrophobic barriers) and modified with NaCl. The sample was incubated with an ampicillin aptamer and AuNPs and was added to the assay zones of the paper-based devices. In the absence of ampicillin, the aptamer prevented the aggregation of the AuNPs, and the assay zones remained red. When ampicillin was present, it selectively bound with the aptamer and the AuNP aggregate, producing a purple color. The color of the assay zones was monitored via a smartphone, and the color graduation was related to the ampicillin concentration in the sample. Different experimental parameters (type of paper, concentration of reagents) were investigated, and the analytical features of the method for the determination of ampicillin were established.</p>"
+figshare:5430796,figshare:5430796,LAG3 Apt1 enhances T-cell activation in vitro.,,,10.1371/journal.pone.0185169.g006,,,
+figshare:5430784,figshare:5430784,LAG3 Apt1 binds to LAG3-expressing cells.,,,10.1371/journal.pone.0185169.g005,,,
+figshare:5430751,figshare:5430751,Binding affinity and specificity of LAG3 aptamers.,,,10.1371/journal.pone.0185169.g004,,,
+figshare:5430736,figshare:5430736,Analysis of conserved sequence motifs in LAG3 aptamers.,,,10.1371/journal.pone.0185169.g003,,,
+figshare:5430718,figshare:5430718,HT-SELEX Aptamer selection analysis.,,,10.1371/journal.pone.0185169.g002,,,
+figshare:5430703,figshare:5430703,Proposed workflow to identify high affinity aptamers using HT-SELEX combined with Conserved Motif Accumulation (CMA).,,,10.1371/journal.pone.0185169.g001,,,
+figshare:5430670,figshare:5430670,Identification of LAG3 high affinity aptamers by HT-SELEX and Conserved Motif Accumulation (CMA),,,10.1371/journal.pone.0185169,,,
+figshare:2168464,figshare:2168464,"More DNA–Aptamers for Small Drugs: A Capture–SELEX
+Coupled with Surface Plasmon Resonance and High-Throughput Sequencing",,,10.1021/acscombsci.5b00023.s001,,,
+figshare:121169,figshare:121169,"Rapid Identification of Cell-Specific, Internalizing RNA Aptamers with Bioinformatics Analyses of a Cell-Based Aptamer Selection",,,10.1371/journal.pone.0043836,,,
+figshare:31335535,figshare:31335535,"Selection of
+a High-Affinity Aptamer for Phalloidin
+and Application in a Dual-Mode LRET/Colorimetric Aptasensor",,,10.1021/acs.analchem.5c07072.s001,,,
+figshare:31282718,figshare:31282718,"Wet–Dry–Wet
+Experiments Enable Simultaneous
+Aptamer Isolation and Critical Binding Domain Identification",,,10.1021/acs.analchem.5c04084.s001,,,
+figshare:30423278,figshare:30423278,"Baited SELEX: Drug-Directed
+Selection of Aptamers
+to PSMA for <i>In Vivo</i> Targeting of Prostate Cancer
+Xenografts in Mice",,,10.1021/jacs.5c13307.s001,,,
+figshare:29756624,figshare:29756624,Supplementary file 1_Design and development of an aptamer targeting C-type lectin-like molecule-1 as a biomarker for acute myeloid leukemia: a SELEX approach.zip,,,10.3389/fbioe.2025.1601453.s001,,,
+figshare:29595120,figshare:29595120,"Enhanced
+Glioblastoma-Targeted Aptamer Discovery by
+3D Cell-SELEX with Hyaluronic Acid Hydrogel",,,10.1021/acsbiomaterials.5c00504.s001,,,
+figshare:29236055,figshare:29236055,"High-Performance Selection of Small-Molecule Nucleic
+Acid Aptamers and Their Applications",,,10.1021/acs.analchem.4c04603.s001,,,
+figshare:28785430,figshare:28785430,"T5 Exonuclease
+Improves the Identification of Aptamers
+Specific for Small Molecules from the Early Screening Library",,,10.1021/acs.analchem.5c00251.s001,,,
+figshare:28161287,figshare:28161287,"Selection of
+a Fluorinated Aptamer Targeting the Viral
+RNA Frameshift Element with Different Chiralities",,,10.1021/acs.biochem.4c00606.s001,,,
+figshare:27201197,figshare:27201197,"Streamlining RNA Aptamer Selection via Unique Molecular
+Identifiers and High-Throughput Sequencing",,,10.1021/acs.analchem.4c02984.s001,,,
+figshare:26509028,figshare:26509028,"Rapid Nuclease-Assisted
+Selection of High-Affinity
+Small-Molecule Aptamers",,,10.1021/jacs.4c00748.s001,,,
+figshare:24367699,figshare:24367699,Application of a novel in vitro selection technique to isolate and characterise high affinity DNA aptamers binding mammalian prion proteins,,,,,,
+figshare:24969538,figshare:24969538,"Affinity-Guided Coevolution of Aptamers for Guanine,
+Xanthine, Hypoxanthine, and Adenine",,,10.1021/acschembio.3c00660.s001,,,
+figshare:24560508,figshare:24560508,"Functionally
+Enhanced XNA Aptamers Discovered by Parallelized
+Library Screening",,,10.1021/jacs.3c09497.s001,,,
+figshare:22770526,figshare:22770526,"Screening of a High-Affinity Aptamer for Aflatoxin
+M<sub>1</sub> and Development of Its Colorimetric Aptasensor",,,10.1021/acs.jafc.3c01586.s001,,,
+figshare:22339771,figshare:22339771,Novel Strategies for Gold Nanoparticle Based Aptamer Selection,,,10.26686/wgtn.22339771,,,
+figshare:21234402,figshare:21234402,Sketches of the fitness and inferred landscapes.,,,10.1371/journal.pcbi.1010561.g009,,,
+figshare:21234387,figshare:21234387,Schematic view of the SELEX experiment and the RBM-based analysis.,,,10.1371/journal.pcbi.1010561.g001,,,
+figshare:21158899,figshare:21158899,The Study of SELEX Methodology in the Generation of Aptamers for Environmental Contaminant Nonylphenol,,,10.26686/wgtn.21158899,,,
+figshare:19753851,figshare:19753851,"Bio-Layer Interferometry-Based SELEX and Label-Free
+Detection of Patulin Using Generated Aptamer",,,10.1021/acs.jafc.2c01591.s001,,,
+figshare:19376361,figshare:19376361,"Integration of an Expression Platform in the SELEX
+Cycle to Select DNA Aptamer Binding to a Disease Biomarker",,,10.1021/acsomega.2c00769.s001,,,
+figshare:17207110,figshare:17207110,"Investigating the Influences of Random-Region Length
+on Aptamer Selection Efficiency Based on Capillary Electrophoresis–SELEX
+and High-Throughput Sequencing",,,10.1021/acs.analchem.1c03661.s002,,,
+figshare:17207107,figshare:17207107,"Investigating the Influences of Random-Region Length
+on Aptamer Selection Efficiency Based on Capillary Electrophoresis–SELEX
+and High-Throughput Sequencing",,,10.1021/acs.analchem.1c03661.s001,,,
+figshare:17135972,figshare:17135972,Development and identification of candidate aptamers for growth differentiation factor 9,,,10.26686/wgtn.17135972.v1,,,
+figshare:15016342,figshare:15016342,"Competition-Enhanced Ligand Selection to Screen for
+DNA Aptamers for Spherical Gold Nanoparticles",,,10.1021/acs.langmuir.1c01053.s001,,,
+figshare:14057938,figshare:14057938,Selection of DNA Aptamers for Root Exudate l‑Serine Using Multiple Selection Strategies,,,10.1021/acs.jafc.0c06796.s001,,,
+figshare:12850622,figshare:12850622,Development and Evaluation of Novel Aptamers Specific for Human PD1 Using Hybrid Systematic Evolution of Ligands by Exponential Enrichment Approach,,,10.6084/m9.figshare.12850622.v1,,,
+figshare:8118461,figshare:8118461,"High Affinity Aptamer for the Detection of the Biogenic
+Amine Histamine",,,10.1021/acs.analchem.9b00075.s001,,,
+figshare:7972784,figshare:7972784,NGS allows the identification of aptamer motifs and their evolution during SELEX.,,,10.1371/journal.pone.0211756.g002,,,
+figshare:7228433,figshare:7228433,"In Vitro Selection and Characterization of a Single-Stranded
+DNA Aptamer Against the Herbicide Atrazine",,,10.1021/acsomega.8b01859.s001,,,
+figshare:7146335,figshare:7146335,"Competition-Enhanced Ligand Selection to Identify
+DNA Aptamers",,,10.1021/acscombsci.8b00048.s001,,,
+figshare:7069022,figshare:7069022,"Magnetic Separation-Based Multiple SELEX for Effectively
+Selecting Aptamers against Saxitoxin, Domoic Acid, and Tetrodotoxin",,,10.1021/acs.jafc.8b02771.s001,,,
+figshare:7018646,figshare:7018646,"Novel Method for Structure–Activity Relationship
+of Aptamer Sequences for Human Prostate Cancer",,,10.1021/acsomega.8b01464.s001,,,
+figshare:6023456,figshare:6023456,Genomic SELEX RNA Pol II binding RNAs.,,,10.1371/journal.pone.0194438.g001,,,
+figshare:5195515,figshare:5195515,"Multiplex Aptamer Discovery through Apta-Seq and Its
+Application to ATP Aptamers Derived from Human-Genomic SELEX",,,10.1021/acschembio.7b00001.s001,,,
+figshare:4675996,figshare:4675996,"Selection and Application of ssDNA Aptamers against
+Clenbuterol Hydrochloride Based on ssDNA Library Immobilized SELEX",,,10.1021/acs.jafc.6b04951.s001,,,
+figshare:3353293,figshare:3353293,In Vitro Evolution of Functional DNA Using Capillary Electrophoresis,,,10.1021/ja037832s.s001,,,
+figshare:3239092,figshare:3239092,Non-SELEX Selection of Aptamers,,,10.1021/ja056943j.s001,,,
+figshare:3188482,figshare:3188482,"Selection and Characterization of Aptamers Using a
+Modified Whole Cell Bacterium SELEX for the Detection of <i>Salmonella
+enterica</i> Serovar Typhimurium",,,10.1021/acscombsci.5b00123.s001,,,
+figshare:3155101,figshare:3155101,Monitoring the aptamer enrichment.,,,10.1371/journal.pone.0153001.g001,,,
+figshare:2482003,figshare:2482003,"Aptamer-Based Impedimetric
+Sensor for Bacterial Typing",,,10.1021/ac302217u.s001,,,
+figshare:2481958,figshare:2481958,"In Vitro Selection of
+Highly Efficient G‑Quadruplex-Based DNAzymes",,,10.1021/ac301899h.s001,,,
+figshare:2471755,figshare:2471755,"Aptamer-Based Viability
+Impedimetric Sensor for Bacteria",,,10.1021/ac302902s.s001,,,
+figshare:2428999,figshare:2428999,"Selection and Characterization of Aptamers against Salmonella typhimurium Using Whole-Bacterium Systemic
+Evolution of Ligands by Exponential Enrichment (SELEX)",,,10.1021/jf400767d.s001,,,
+figshare:2351575,figshare:2351575,"Tracking the Emergence of High Affinity Aptamers for
+rhVEGF<sub>165</sub> During Capillary Electrophoresis-Systematic Evolution
+of Ligands by Exponential Enrichment Using High Throughput Sequencing",,,10.1021/ac401875h.s001,,,
+figshare:2242786,figshare:2242786,"Screening
+and Identification of DNA Aptamers against
+T‑2 Toxin Assisted by Graphene Oxide",,,10.1021/jf5032058.s001,,,
+figshare:2216530,figshare:2216530,"Screening
+of Single-Stranded DNA (ssDNA) Aptamers
+against a Zearalenone Monoclonal Antibody and Development of a ssDNA-Based
+Enzyme-Linked Oligonucleotide Assay for Determination of Zearalenone
+in Corn",,,10.1021/jf503733g.s001,,,
+figshare:2169673,figshare:2169673,"Evolution of DNA Aptamers through in Vitro Metastatic-Cell-Based
+Systematic Evolution of Ligands by Exponential Enrichment for Metastatic
+Cancer Recognition and Imaging",,,10.1021/acs.analchem.5b00637.s001,,,
+figshare:2161948,figshare:2161948,"Selection
+of HBsAg-Specific DNA Aptamers Based on Carboxylated Magnetic Nanoparticles
+and Their Application in the Rapid and Simple Detection of Hepatitis
+B Virus Infection",,,10.1021/acsami.5b01180.s001,,,
+figshare:1286507,figshare:1286507,Sequence of monoclonal aptamers obtained at Round 21 TESA SELEx and binding to <i>T. cruzi</i> TESA preparations.,,,10.1371/journal.pntd.0003451.g002,,,
+figshare:1278496,figshare:1278496,Repeat DNA sequences and number of clones from sequenced aptamer pool<sup>a</sup>.,,,10.1371/journal.pone.0114622.t001,,,
+figshare:1163744,figshare:1163744,"Aptamer sequences obtained from 4<sup>th</sup>, 7<sup>th</sup> and 9<sup>th</sup> round of SELEX for SMV.",,,10.1371/journal.pone.0106805.t001,,,
+figshare:1085380,figshare:1085380,Selection of ssDNA aptamers targeting DNA-bound cJun.,,,10.1371/journal.pone.0101015.g001,,,
+figshare:1088113,figshare:1088113,Single-Step Selection of Bivalent Aptamers Validated by Comparison with SELEX Using High-Throughput Sequencing,,,10.1371/journal.pone.0100572,,,
+figshare:1057388,figshare:1057388,Support Vector Machine Classification of Streptavidin-Binding Aptamers,,,10.1371/journal.pone.0099964,,,
+figshare:1029831,figshare:1029831,RNA library for SELEX and RNA aptamer sequences.,,,10.1371/journal.pone.0097574.g002,,,
+figshare:986154,figshare:986154,Systematic Evolution of Ligands by Exponential Enrichment (SELEX).,,,10.1371/journal.pone.0093173.g002,,,
+figshare:976460,figshare:976460,Cell-SELEX procedure implemented by ectopic expression of human soluble growth factors on yeast cell surface.,,,10.1371/journal.pone.0093052.g001,,,
+figshare:902248,figshare:902248,Sequence of TESA binding aptamers.,,,10.1371/journal.pntd.0002650.g002,,,
+figshare:771228,figshare:771228,The STACS procedure.,,,10.1371/journal.pone.0071798.g001,,,
+figshare:771239,figshare:771239,Development of an Efficient Targeted Cell-SELEX Procedure for DNA Aptamer Reagents,,,10.1371/journal.pone.0071798,,,
+figshare:237466,figshare:237466,Schematics of systematic evolution of DNA aptamers against AGR2.,,,10.1371/journal.pone.0046393.g001,,,
+figshare:121661,figshare:121661,A Novel Approach for Transcription Factor Analysis Using SELEX with High-Throughput Sequencing (TFAST),,,10.1371/journal.pone.0042761,,,
+figshare:126214,figshare:126214,DNA Aptamers against the Lup an 1 Food Allergen,,,10.1371/journal.pone.0035253,,,
+figshare:130054,figshare:130054,Probing the SELEX Process with Next-Generation Sequencing,,,10.1371/journal.pone.0029604,,,
+figshare:131490,figshare:131490,Probing the Limits of Aptamer Affinity with a Microfluidic SELEX Platform,,,10.1371/journal.pone.0027051,,,
