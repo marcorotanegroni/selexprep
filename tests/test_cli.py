@@ -15,10 +15,11 @@ def test_version_flag_emits_version_string() -> None:
     assert "selexprep" in result.stdout
 
 
-def test_help_lists_all_six_subcommands() -> None:
+def test_help_lists_all_subcommands() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    for cmd in ("inspect", "fetch", "detect", "extract", "count", "qc", "run"):
+    # Stub processing verbs + the Phase 1.5 catalog subapp
+    for cmd in ("inspect", "fetch", "detect", "extract", "count", "qc", "run", "catalog"):
         assert cmd in result.stdout
 
 

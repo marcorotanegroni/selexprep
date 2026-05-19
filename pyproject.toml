@@ -64,6 +64,10 @@ selexprep = "selexprep.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/selexprep"]
 
+# Ensure the bundled discovery catalog CSV ships inside the wheel.
+[tool.hatch.build.targets.wheel.force-include]
+"src/selexprep/catalog/data/bioprojects.csv" = "selexprep/catalog/data/bioprojects.csv"
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
