@@ -36,6 +36,77 @@ These were flagged during the Phase 0/1 peer-review and are **not** blocking Pha
 - **`qc.readiness` requires clusters / enrich parquets.** The module is a faithful port and still expects `round_*.clusters.parquet`, `enrich_*.parquet`, `summary.json`, and `cluster_stats.json` — artifacts that v0.1 does *not* produce (clustering / enrichment are out of v0.1 scope). It remains exposed as a library API so the thesis pipeline can use it, but it is **not** wired into the `selexprep qc` CLI verb. The v0.1 `qc` verb will get a thinner, manifest-driven implementation when `extract`/`count` are fully separated.
 - **Mocked-HTTP coverage gap.** The nine network adapters in `fetch.discover` and `download_srr_*` paths beyond ENA-direct don't yet have offline mocked tests (only their parsing helpers + dispatcher + SeedAdapter are covered). To be addressed before PyPI release.
 
+### Phase 2 — LibraryReport schema + cross-round inference (2026-05-19)
+
+Adds the `LibraryReport` pydantic schema and the cross-round primer
+inference pipeline that turns Phase 1's single-pool flank detector into
+the typed contract every downstream stage (`extract`, `count`, `qc`,
+`manifest`) consumes.
+
+- **NEW: `selexprep.library.report`** — `LibraryReport(BaseModel)`
+  with the locked schema (plan lines 233-285), `Literal` aliases for the
+  five categorical fields (`ExtractionMode`, `ReadSource`,
+  `RequiredAction`, `Orientation`, `Status`), the `_classify` pure
+  function implementing the locked decision table (plan lines 300-309)
+  with the no-round-map status cap (line 289), and deterministic JSON
+  I/O (`write_library_report_json` / `read_library_report_json` —
+  bit-identical output across reruns, numeric ordering for int-keyed
+  dicts). Strict-mypy clean (pydantic plugin enabled).
+- **NEW: `selexprep.library.adapters`** — conservative v0.1 blacklist
+  (TruSeq R1 + Nextera) with auto-computed reverse complements,
+  `reverse_complement()` helper (rejects IUPAC ambiguity in v0.1), and
+  `count_adapter_hits()` substring scanner (records hits; does NOT
+  filter reads).
+- **EXTENDED: `selexprep.library.detect`** — `compute_library_report()`
+  orchestrator. Cross-round persistence as `1 - clip(stdev/mean, 0, 1)`,
+  position consistency with ±2 nt tolerance, U→T normalization of RNA
+  primers, paired-end split detection (R1 5' + R2 5' = revcomp(3'
+  primer)), MIXED/FORWARD/REVERSE orientation diagnostic, composite
+  confidence via weighted sum (two regimes: with vs without round map).
+  Phase 1 functions (`detect_flank`, `detect_primers`,
+  `detect_from_parquet`, `earliest_round_parquet`) are unchanged and
+  remain the algorithmic primitives the new orchestrator consumes.
+- **WIRED: `selexprep detect`** — CLI command parses `--round-map` TSV
+  (columns `file<TAB>round_number`), groups FASTQs by round, runs
+  `compute_library_report`, writes `library_report.json` to `--outdir`.
+  Refuses to run without `--round-map` (cross-round persistence is a
+  core inference signal). Single-end only in Phase 2; paired-end via
+  `compute_library_report`'s `paired_mate_streams` kwarg awaits CLI
+  surface in Phase 3.
+- **INFRASTRUCTURE:** `pyproject.toml` declares
+  `plugins = ["pydantic.mypy"]` under `[tool.mypy]` (required for
+  strict-mypy to resolve `BaseModel` field types — without it every
+  field decays to `Any`).
+- **Tests added (32 new, 234 + 1 xfailed total):** `tests/test_adapters.py`
+  (14 tests covering revcomp + blacklist + substring scan);
+  `tests/test_report.py` (19 tests covering every row of the locked
+  classification table plus edge cases — status cap, adapter
+  demotion, orientation, U→T, deterministic serialization, schema
+  immutability, numeric int-key ordering, empty input, sub-floor
+  input); `tests/test_cli.py` (3 new tests for `detect` CLI:
+  missing-round-map, end-to-end round-trip, FASTQ-not-in-map).
+
+#### Calibration status — placeholder pending Codex peer review
+
+Codex usage was rate-limited 2026-05-19 → 2026-05-26 when Phase 2
+shipped, so calibration numbers ship as locked-plan literals (match
+rates `> 0.7`, n_length confidence `> 0.8`, UNABLE floor `< 0.4`) plus
+placeholders for everything the locked plan does not pin down
+(composite weights, status cutoffs, position-consistency tolerance,
+adapter list exact composition, persistence formula). Every numeric
+placeholder carries a `# CALIBRATION-TODO` comment naming the locked
+plan line (where applicable) or "not in locked plan - placeholder
+pending Codex" otherwise.
+
+Test discipline: **all tests assert on behavior, never on threshold
+values** — e.g. `assert report.extraction_mode == "BOTH_PRIMERS_SINGLE_READ"`,
+never `assert HIGH_CONFIDENCE_CUTOFF == 0.80`. So when Codex tuning
+lands (or Phase 6 benchmark numbers update the constants), the test
+suite stays green by construction.
+
+Recovery list: `grep -rn "CALIBRATION-TODO" src/` returns the full
+inventory.
+
 ### Phase 1.5.1 — catalog refresh against broad ENA queries
 
 A Codex / sanity-check pass after Phase 1.5 revealed that the initial
