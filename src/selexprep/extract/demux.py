@@ -33,6 +33,8 @@ from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from selexprep._io import open_gzip_text_deterministic
+
 logger = logging.getLogger(__name__)
 
 
@@ -187,17 +189,16 @@ def demux_fastq(
     paired = r2_path is not None
 
     def _open_pair(directory: Path) -> tuple:
-        # Long-lived handles closed in the outer `finally`; SIM115 is a false
-        # positive for this writer-factory pattern.
+        # Long-lived handles closed in the outer `finally` (writer-factory
+        # pattern). All `.gz` outputs go through the deterministic-mtime writer
+        # from `selexprep._io` so reruns produce bit-identical bytes and the
+        # manifest SHA256 hashes are reproducible.
         directory.mkdir(parents=True, exist_ok=True)
         if paired:
-            w1 = gzip.open(directory / f"{srr}_1.fastq.gz", "wt", encoding="utf-8")  # noqa: SIM115
-            w2 = gzip.open(directory / f"{srr}_2.fastq.gz", "wt", encoding="utf-8")  # noqa: SIM115
+            w1 = open_gzip_text_deterministic(directory / f"{srr}_1.fastq.gz")
+            w2 = open_gzip_text_deterministic(directory / f"{srr}_2.fastq.gz")
             return (w1, w2)
-        return (
-            gzip.open(directory / f"{srr}.fastq.gz", "wt", encoding="utf-8"),
-            None,
-        )
+        return (open_gzip_text_deterministic(directory / f"{srr}.fastq.gz"), None)
 
     writers: dict = {}
     for rn in set(barcodes.values()):

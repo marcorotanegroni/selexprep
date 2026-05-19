@@ -10,9 +10,11 @@ import yaml
 
 from selexprep.fetch.discover import (
     BIOPROJECT_COLS,
+    NOT_ASSESSED_V0_1,
     ROUND_COLS,
     SAMPLE_COLS,
     SeedAdapter,
+    _classify_all,
     deduplicate_bioprojects,
     deduplicate_samples,
     empty_bioproject,
@@ -258,6 +260,29 @@ def test_write_csv_extras_action_ignore(tmp_path: Path) -> None:
         first = next(csv.DictReader(f))
     assert "extra_column" not in first
     assert first["srr"] == "SRR1"
+
+
+# ----- Sentinel for deferred library-type classifier -----
+
+
+def test_classify_all_writes_sentinel_when_classifier_absent() -> None:
+    """When library_type_classifier is not importable (v0.2 deferred), every
+    unclassified BioProject must get the `not_assessed_v0.1` sentinel + an
+    evidence JSON — not an empty string that downstream callers would treat
+    as a successful 'unclassified' verdict."""
+    rows = [
+        {**empty_bioproject(), "bioproject_id": "PRJ1"},
+        {
+            **empty_bioproject(),
+            "bioproject_id": "PRJ2",
+            "library_type_verification": "RNA_confirmed",
+        },
+    ]
+    out = _classify_all(rows)
+    assert out[0]["library_type_verification"] == NOT_ASSESSED_V0_1
+    assert "no_classifier" in out[0]["library_type_evidence"]
+    # Pre-existing verdict (e.g. from seed) is preserved
+    assert out[1]["library_type_verification"] == "RNA_confirmed"
 
 
 # ----- Round columns sanity -----

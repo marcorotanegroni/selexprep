@@ -36,6 +36,7 @@ set, kept stable so thesis-side callers can reuse them as-is):
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 from collections import Counter
@@ -44,6 +45,8 @@ from pathlib import Path
 from typing import Any
 
 import pyarrow.parquet as pq
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -803,7 +806,7 @@ def review_bioproject(
     primer_5p: str = "",
     primer_3p: str = "",
     random_region_len: int | None = None,
-    tag: str = "untagged",
+    tag: str | None = None,
     rrl_source: str = "",
 ) -> BPReport:
     """Run all eight readiness sections on a single processed BP directory.
@@ -815,10 +818,21 @@ def review_bioproject(
     `primer_5p`, `primer_3p`, `random_region_len`, `tag` and `rrl_source` are
     seed-derived configuration; the function never reads YAML files itself.
     `tag` drives the composition/diversity thresholds (see module docstring
-    for accepted values).
+    for accepted values). When ``tag`` is left ``None`` we default to
+    ``"untagged"`` AND emit a WARNING — silently selecting the wrong
+    threshold profile is the most likely call-site bug here, so it must be
+    visible in logs.
     """
     if bp_id is None:
         bp_id = bp_dir.name
+    if tag is None:
+        logger.warning(
+            "review_bioproject called without an explicit `tag`; defaulting "
+            "to 'untagged'. Pass tag explicitly (e.g. 'standard', 'undoped', "
+            "'doped_3pct', 'multiplexed_origin', 'no_r0_post_selection') to "
+            "match the library's composition/diversity profile."
+        )
+        tag = "untagged"
     report = BPReport(bp_id=bp_id, tag=tag)
     rounds_data: dict[Path, tuple[list[str], list[int]]] = {}
 

@@ -31,13 +31,16 @@ import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import requests
 
 from selexprep._common import iter_srr_files
 
 logger = logging.getLogger(__name__)
+
+# Public type alias for the dispatcher's `backend` parameter.
+DownloadBackend = Literal["auto", "ena", "kingfisher", "sra"]
 
 
 # ---------------------------------------------------------------------------
@@ -533,22 +536,61 @@ def download_srr_sratoolkit(srr: str, output_dir: Path, dry_run: bool = False) -
 # ---------------------------------------------------------------------------
 
 
-def download_srr(srr: str, output_dir: Path, dry_run: bool = False) -> bool:
-    """Download one SRR. Tries backends in MIT-compatible-first order.
+_KINGFISHER_GPL_WARNING = (
+    "Using kingfisher backend (GPL-3.0). kingfisher is NOT bundled with "
+    "selexprep's MIT install; it was invoked because it is present on PATH. "
+    "If you redistribute selexprep outputs alongside kingfisher binaries you "
+    "must respect GPL-3.0 terms."
+)
 
-    Order:
-      1. ENA-direct (always tried first — no external deps required)
-      2. kingfisher (only if `kingfisher_available()`; GPL-3.0)
-      3. sra-toolkit (only if `sratoolkit_available()`)
 
-    Returns True on success, False after exhausting all available backends.
+def download_srr(
+    srr: str,
+    output_dir: Path,
+    dry_run: bool = False,
+    backend: DownloadBackend = "auto",
+) -> bool:
+    """Download one SRR via the selected backend.
+
+    Parameters
+    ----------
+    backend
+        - ``"auto"`` (default): ENA-direct → kingfisher (if installed) →
+          sra-toolkit. MIT-compatible without external tools.
+        - ``"ena"``: ENA-direct only. Fail fast if ENA can't serve. Use
+          this in CI / paper benchmarks where GPL fallback would change
+          the experiment.
+        - ``"kingfisher"``: force kingfisher. **Emits a GPL-3.0 license
+          notice via WARNING log.** Requires the binary on PATH.
+        - ``"sra"``: force sra-toolkit (``prefetch`` + ``fasterq-dump``).
+
+    Returns True on success, False after exhausting available backends.
     """
+    if backend == "ena":
+        logger.info("  ENA-direct (forced) for %s", srr)
+        return download_srr_ena_direct(srr, output_dir, dry_run)
+
+    if backend == "kingfisher":
+        logger.warning(_KINGFISHER_GPL_WARNING)
+        if not kingfisher_available():
+            logger.error("  kingfisher backend requested but binary not on PATH")
+            return False
+        return download_srr_kingfisher(srr, output_dir, dry_run)
+
+    if backend == "sra":
+        if not sratoolkit_available():
+            logger.error("  sra backend requested but prefetch+fasterq-dump not on PATH")
+            return False
+        return download_srr_sratoolkit(srr, output_dir, dry_run)
+
+    # backend == "auto"
     logger.info("  trying ENA-direct for %s", srr)
     if download_srr_ena_direct(srr, output_dir, dry_run):
         return True
     logger.warning("  ENA-direct failed for %s", srr)
 
     if kingfisher_available():
+        logger.warning(_KINGFISHER_GPL_WARNING)
         logger.info("  trying kingfisher fallback for %s", srr)
         if download_srr_kingfisher(srr, output_dir, dry_run):
             return True
