@@ -17,7 +17,12 @@ import typer
 
 from selexprep import __version__
 from selexprep.catalog.cli import app as catalog_app
-from selexprep.library import compute_library_report, write_library_report_json
+from selexprep.extract import run_extract
+from selexprep.library import (
+    compute_library_report,
+    read_library_report_json,
+    write_library_report_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -170,20 +175,104 @@ def detect(
 
 @app.command()
 def extract(
-    fastq: list[Path] = typer.Argument(..., help="Input FASTQ files."),
+    fastq: list[Path] = typer.Argument(..., help="Input FASTQ files (R1 or single-end)."),
     library_report: Path = typer.Option(
         ..., "--library-report", help="Path to LibraryReport JSON from `detect`."
+    ),
+    round_map: Path | None = typer.Option(
+        None,
+        "--round-map",
+        help="TSV mapping FASTQ file -> round number (required unless --sample-sheet).",
     ),
     sample_sheet: Path | None = typer.Option(
         None, "--sample-sheet", help="Optional sample sheet for demultiplexing."
     ),
+    paired_r2: list[Path] | None = typer.Option(
+        None,
+        "--paired-r2",
+        help="R2 FASTQ files (one per R1 in --fastq); required for PAIRED_END_SPLIT_PRIMERS.",
+    ),
     override_primer_5p: str | None = typer.Option(None, "--override-primer-5p"),
     override_primer_3p: str | None = typer.Option(None, "--override-primer-3p"),
-    rebuild: bool = typer.Option(False, "--rebuild", help="Force re-extraction; emit diff report."),
+    rebuild: bool = typer.Option(
+        False, "--rebuild", help="Force re-extraction; overwrite existing outputs."
+    ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
 ) -> None:
-    """Trim primers + extract random region per round."""
-    _not_implemented("extract")
+    """Trim primers + extract random region per round (Phase 3)."""
+    if override_primer_5p is not None or override_primer_3p is not None:
+        typer.secho(
+            "extract: --override-primer-{5p,3p} arrives in Phase 4 with extract_diff.tsv. "
+            "For Phase 3, hand-edit the LibraryReport JSON to override primers.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    if sample_sheet is None and round_map is None:
+        typer.secho(
+            "extract: either --round-map or --sample-sheet is required "
+            "(per-round routing of input FASTQs).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    lr = read_library_report_json(library_report)
+
+    # Round-map assignment when not using sample-sheet demux.
+    rm: dict[str, int] = {}
+    if round_map is not None:
+        rm = _load_round_map(round_map)
+        # Sanity-check inputs are covered.
+        for fq in fastq:
+            if fq.name not in rm:
+                typer.secho(
+                    f"extract: FASTQ {fq.name!r} not in round map {round_map}",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=2)
+
+    # Paired R2 grouping.
+    paired_r2_inputs: dict[int, list[Path]] | None = None
+    if paired_r2:
+        if not round_map:
+            typer.secho(
+                "extract: --paired-r2 requires --round-map for round assignment.",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(code=2)
+        paired_r2_inputs = {}
+        for r2_fq in paired_r2:
+            r = rm.get(r2_fq.name)
+            if r is None:
+                typer.secho(
+                    f"extract: R2 FASTQ {r2_fq.name!r} not in round map.",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=2)
+            paired_r2_inputs.setdefault(r, []).append(r2_fq)
+
+    result = run_extract(
+        lr,
+        fastq,
+        outdir,
+        round_map=rm,
+        sample_sheet=sample_sheet,
+        rebuild=rebuild,
+        paired_r2_inputs=paired_r2_inputs,
+    )
+
+    if result.skipped:
+        typer.secho(f"extract: skipped - {result.skipped_reason}", fg=typer.colors.YELLOW, err=True)
+        raise typer.Exit(code=2)
+
+    typer.echo(f"extract: wrote {len(result.outputs)} files under {outdir}")
+    for p in result.outputs:
+        typer.echo(f"  {p}")
 
 
 @app.command()
