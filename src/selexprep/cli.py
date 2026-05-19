@@ -67,9 +67,40 @@ def main(
 @app.command()
 def inspect(
     accession: str = typer.Argument(..., help="ENA / SRA / DDBJ accession."),
+    outdir: Path | None = typer.Option(
+        None, "--outdir", help="If given, also write inspect.json to this directory."
+    ),
+    timeout_s: int = typer.Option(30, "--timeout-s", help="HTTP timeout (seconds)."),
 ) -> None:
     """Preview accession metadata (round count, library_strategy, files) without downloading."""
-    _not_implemented("inspect")
+    from selexprep.fetch.inspect import inspect_accession, write_inspect_json
+
+    try:
+        report = inspect_accession(accession, timeout_s=timeout_s)
+    except ValueError as e:
+        typer.secho(f"inspect: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from e
+
+    typer.echo(f"Accession:        {report.accession}")
+    typer.echo(f"BioProject:       {report.bioproject_id or '-'}")
+    typer.echo(f"Study title:      {report.study_title or '-'}")
+    typer.echo(
+        f"library_strategy: {report.library_strategy or '-'}  (SRA verbatim; not classified)"
+    )
+    typer.echo(f"library_source:   {report.library_source or '-'}")
+    typer.echo(f"Runs ({len(report.runs)}):")
+    for run in report.runs:
+        size_str = ", ".join(f"{n} B" for n in run.fastq_size_bytes) or "-"
+        typer.echo(
+            f"  {run.run_accession}  reads={run.read_count}  bases={run.base_count}  "
+            f"files=[{size_str}]"
+        )
+
+    if outdir is not None:
+        outdir.mkdir(parents=True, exist_ok=True)
+        out_path = outdir / "inspect.json"
+        write_inspect_json(report, out_path)
+        typer.echo(f"\nwrote {out_path}")
 
 
 @app.command()
@@ -199,16 +230,13 @@ def extract(
     ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
 ) -> None:
-    """Trim primers + extract random region per round (Phase 3)."""
-    if override_primer_5p is not None or override_primer_3p is not None:
-        typer.secho(
-            "extract: --override-primer-{5p,3p} arrives in Phase 4 with extract_diff.tsv. "
-            "For Phase 3, hand-edit the LibraryReport JSON to override primers.",
-            fg=typer.colors.RED,
-            err=True,
-        )
-        raise typer.Exit(code=2)
+    """Trim primers + extract random region per round.
 
+    Phase 4: ``--override-primer-{5p,3p}`` now applies primer overrides
+    via ``LibraryReport.model_copy``. Pair with ``--rebuild`` to overwrite
+    the baseline outputs in place AND emit ``extract_diff.tsv`` comparing
+    baseline vs override per-round read counts.
+    """
     if sample_sheet is None and round_map is None:
         typer.secho(
             "extract: either --round-map or --sample-sheet is required "
@@ -256,6 +284,19 @@ def extract(
                 raise typer.Exit(code=2)
             paired_r2_inputs.setdefault(r, []).append(r2_fq)
 
+    # Capture argv into the manifest's `parameters` field.
+    parameters: dict[str, str] = {
+        "fastq": ",".join(str(p) for p in fastq),
+        "library_report": str(library_report),
+        "round_map": str(round_map) if round_map else "",
+        "sample_sheet": str(sample_sheet) if sample_sheet else "",
+        "paired_r2": ",".join(str(p) for p in (paired_r2 or [])),
+        "override_primer_5p": override_primer_5p or "",
+        "override_primer_3p": override_primer_3p or "",
+        "rebuild": str(rebuild),
+        "outdir": str(outdir),
+    }
+
     result = run_extract(
         lr,
         fastq,
@@ -264,6 +305,9 @@ def extract(
         sample_sheet=sample_sheet,
         rebuild=rebuild,
         paired_r2_inputs=paired_r2_inputs,
+        override_primer_5p=override_primer_5p,
+        override_primer_3p=override_primer_3p,
+        parameters=parameters,
     )
 
     if result.skipped:

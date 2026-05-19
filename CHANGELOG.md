@@ -36,6 +36,61 @@ These were flagged during the Phase 0/1 peer-review and are **not** blocking Pha
 - **`qc.readiness` requires clusters / enrich parquets.** The module is a faithful port and still expects `round_*.clusters.parquet`, `enrich_*.parquet`, `summary.json`, and `cluster_stats.json` — artifacts that v0.1 does *not* produce (clustering / enrichment are out of v0.1 scope). It remains exposed as a library API so the thesis pipeline can use it, but it is **not** wired into the `selexprep qc` CLI verb. The v0.1 `qc` verb will get a thinner, manifest-driven implementation when `extract`/`count` are fully separated.
 - **Mocked-HTTP coverage gap.** The nine network adapters in `fetch.discover` and `download_srr_*` paths beyond ENA-direct don't yet have offline mocked tests (only their parsing helpers + dispatcher + SeedAdapter are covered). To be addressed before PyPI release.
 
+### Phase 4 — Manifest + inspect + extract override/rebuild (2026-05-19)
+
+Closes the v0.1 CLI surface (except QC, Phase 5). Every `extract` run
+now emits a `selexprep_manifest.json` — the reproducibility anchor that
+Phase 5 `qc` and future v0.2 AnnData export will consume.
+
+- **NEW: `selexprep.manifest`** — `SelexprepManifestV1` pydantic model
+  (frozen, extra=forbid) with the locked schema (plan lines 162-175):
+  `manifest_version`, dep versions (selexprep / python / cutadapt /
+  dnaio / pyarrow), provenance (accession / bioproject_id / runs),
+  `input_sha256` + `output_sha256` (FASTA/TSV/JSON only — Parquet
+  hashes intentionally absent per locked plan line 28), nested
+  `LibraryReport` + denormalized scan fields, CLI argv capture in
+  `parameters`, runtime/flags/sampling_seed. Helpers: `compute_sha256s`,
+  `write_manifest_json` / `read_manifest_json` with deterministic JSON
+  (same numeric-int-key + alphabetical-sha256-keys discipline as
+  `library/report.py`), `build_manifest_from_extract_result`.
+- **NEW: `selexprep.fetch.inspect`** — `inspect_accession()` hits ENA
+  Portal filereport REST (`https://www.ebi.ac.uk/ena/portal/api/filereport`);
+  parses run/study metadata into `InspectReport` + `RunFileInfo`
+  dataclasses; tolerant of missing fields. Reports
+  `library_strategy` / `library_source` **verbatim from SRA** — NOT a
+  DNA/RNA classification (locked plan line 332 explicit on this;
+  classification deferred to v0.2's library-type-classifier).
+- **EXTENDED: `selexprep.extract.runner`** — `run_extract()` now accepts
+  `override_primer_{5p,3p}` (cloned via `LibraryReport.model_copy`),
+  plus provenance kwargs (`accession`, `bioproject_id`, `runs`,
+  `parameters`) for the auto-emitted manifest. Override without
+  `--rebuild` routes outputs to `<outdir>/overridden/` (preserves
+  baseline). Override + `--rebuild` overwrites baseline AND emits
+  `extract_diff.tsv` comparing baseline vs override per-round read
+  counts. The diff TSV is read from the baseline `selexprep_manifest.json`
+  + `trim_reports.json` BEFORE overwrite; gracefully degrades if either
+  baseline artifact is missing/malformed.
+- **WIRED: `selexprep inspect <accession>`** — full CLI. Prints a
+  human-readable metadata summary; `--outdir` also writes a sorted-keys
+  `inspect.json`. `--timeout-s` controls the HTTP timeout (default 30s).
+- **EXTENDED: `selexprep extract`** — `--override-primer-{5p,3p}` now
+  works (lifts the Phase-3 informative error); CLI argv is captured
+  into the emitted manifest's `parameters` field.
+- **Tests added (+28, 302 + 1 xfailed total):** `tests/test_manifest.py`
+  (12 — schema fields + frozen + extra-forbid + deterministic JSON +
+  int-key sort + sha256 helper FASTA/TSV/JSON-only behavior),
+  `tests/test_inspect.py` (8 — mocked ENA REST: single run / paired
+  semicolon lists / multi-run study / missing-field tolerance / empty
+  response → ValueError / HTTP error propagation / timeout pass-through
+  / JSON sort-keys),  `tests/test_extract_override.py` (7 — override 5p
+  + 3p without rebuild → subtree, override + rebuild → diff TSV + in-
+  place overwrite, rebuild alone → no diff, manifest emission, override
+  primer recorded in manifest), `tests/test_cli.py` (+2 — inspect smoke
+  with mocked REST + override smoke). The old "Phase 4 error" test
+  replaced with a real override-works smoke test.
+- **CALIBRATION-TODO inventory: 12** (unchanged — Phase 4 is
+  serialization + REST + I/O wiring, no new heuristic thresholds).
+
 ### Phase 3 — extract: paired-end + strand orientation (2026-05-19)
 
 Turns the Phase 2 `LibraryReport` contract into actual extracted FASTAs.

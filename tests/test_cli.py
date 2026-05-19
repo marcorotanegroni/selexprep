@@ -49,8 +49,52 @@ def test_help_lists_all_subcommands() -> None:
         assert cmd in result.stdout
 
 
-def test_inspect_stub_exits_with_code_2() -> None:
-    result = runner.invoke(app, ["inspect", "SRR000000"])
+def test_inspect_emits_summary_when_ena_returns_data(tmp_path: Path) -> None:
+    """Phase 4: inspect now hits ENA (mocked) and prints metadata to stdout."""
+    from unittest.mock import MagicMock, patch
+
+    import requests as _requests
+
+    fake_resp = MagicMock(spec=_requests.Response)
+    fake_resp.status_code = 200
+    fake_resp.raise_for_status.return_value = None
+    fake_resp.json.return_value = [
+        {
+            "run_accession": "SRR000000",
+            "study_accession": "PRJEB00000",
+            "study_title": "Mocked SELEX study",
+            "library_strategy": "OTHER",
+            "library_source": "OTHER",
+            "read_count": "1000",
+            "base_count": "75000",
+            "fastq_md5": "abc",
+            "fastq_bytes": "1000",
+        }
+    ]
+    outdir = tmp_path / "out"
+    with patch("selexprep.fetch.inspect.requests.get", return_value=fake_resp):
+        result = runner.invoke(app, ["inspect", "SRR000000", "--outdir", str(outdir)])
+
+    assert result.exit_code == 0, result.output
+    assert "SRR000000" in result.output
+    assert "Mocked SELEX study" in result.output
+    assert "library_strategy" in result.output
+    assert (outdir / "inspect.json").exists()
+
+
+def test_inspect_exits_with_code_2_when_accession_unknown() -> None:
+    """ValueError on empty ENA response -> CLI exits 2."""
+    from unittest.mock import MagicMock, patch
+
+    import requests as _requests
+
+    fake_resp = MagicMock(spec=_requests.Response)
+    fake_resp.status_code = 200
+    fake_resp.raise_for_status.return_value = None
+    fake_resp.json.return_value = []  # empty -> inspect_accession raises
+    with patch("selexprep.fetch.inspect.requests.get", return_value=fake_resp):
+        result = runner.invoke(app, ["inspect", "SRR_DOES_NOT_EXIST"])
+
     assert result.exit_code == 2
 
 
@@ -174,12 +218,26 @@ def test_extract_without_round_map_or_sample_sheet_errors(tmp_path: Path) -> Non
     assert result.exit_code == 2
 
 
-def test_extract_override_primer_flags_emit_phase4_error(tmp_path: Path) -> None:
+def test_extract_override_primer_writes_overridden_subtree(tmp_path: Path) -> None:
+    """Phase 4: --override-primer-5p without --rebuild writes to outdir/overridden/."""
+    import shutil as _shutil
+
+    if _shutil.which("cutadapt") is None:
+        return  # cutadapt not available; this test needs a real trim run
+
+    primer_5p = "GGTAATACGACTCACTATAGGG"
+    primer_3p = "CCATGCATGCATGCATGCAT"
     fq = tmp_path / "r0.fastq.gz"
-    _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
+    _write_fastq_gz(fq, _synthetic_pool(primer_5p, primer_3p, n=500))
+
     lr_path = tmp_path / "lr.json"
     _write_library_report_json(lr_path)
+    rm = tmp_path / "rounds.tsv"
+    rm.write_text(f"file\tround_number\n{fq.name}\t0\n", encoding="utf-8")
+    outdir = tmp_path / "out"
 
+    # Override the 5' primer (still using the same FASTQ; cutadapt will
+    # discard untrimmed reads since the new "primer" is not present).
     result = runner.invoke(
         app,
         [
@@ -187,14 +245,18 @@ def test_extract_override_primer_flags_emit_phase4_error(tmp_path: Path) -> None
             str(fq),
             "--library-report",
             str(lr_path),
+            "--round-map",
+            str(rm),
             "--override-primer-5p",
-            "AAAA",
+            "AAAAAAAAAAAAAAA",  # 15 nt junk primer to force divergence
             "--outdir",
-            str(tmp_path / "out"),
+            str(outdir),
         ],
     )
-    assert result.exit_code == 2
-    assert "Phase 4" in (result.stderr or result.output)
+    assert result.exit_code == 0, result.output
+    # Override outputs land in the overridden/ subtree (baseline outdir is untouched).
+    assert (outdir / "overridden" / "selexprep_manifest.json").exists()
+    assert (outdir / "overridden" / "round_00" / "extracted.fasta.gz").exists()
 
 
 def test_extract_refuses_unable_library_report(tmp_path: Path) -> None:
