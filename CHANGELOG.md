@@ -36,6 +36,38 @@ These were flagged during the Phase 0/1 peer-review and are **not** blocking Pha
 - **`qc.readiness` requires clusters / enrich parquets.** The module is a faithful port and still expects `round_*.clusters.parquet`, `enrich_*.parquet`, `summary.json`, and `cluster_stats.json` — artifacts that v0.1 does *not* produce (clustering / enrichment are out of v0.1 scope). It remains exposed as a library API so the thesis pipeline can use it, but it is **not** wired into the `selexprep qc` CLI verb. The v0.1 `qc` verb will get a thinner, manifest-driven implementation when `extract`/`count` are fully separated.
 - **Mocked-HTTP coverage gap.** The nine network adapters in `fetch.discover` and `download_srr_*` paths beyond ENA-direct don't yet have offline mocked tests (only their parsing helpers + dispatcher + SeedAdapter are covered). To be addressed before PyPI release.
 
+### Phase 1.5.1 — catalog refresh against broad ENA queries
+
+A Codex / sanity-check pass after Phase 1.5 revealed that the initial
+bundled catalog (219 rows, sourced from the thesis-specific
+`selex_corpus.discover` run) under-counted INSDC studies by ~50%: 94
+INSDC accessions vs ~120 unique studies surfaced by broader keyword
+queries against ENA. The thesis queries combined keywords with AND
+clauses to maximize precision; a generic-tool catalog wants the
+broader OR-style net.
+
+- **NEW: `selexprep.catalog.rebuild`** — reproducible refresh script
+  that runs 13 broad ENA queries (HT-SELEX, SELEX-seq, SELEX, aptamer,
+  Cell-SELEX, RNA aptamer, DNA aptamer, systematic evolution, SELEX
+  rounds, …), unions the studies, merges hand-enriched fields
+  (`protein_target` / `paper_doi` / `paper_pmid` /
+  `n_rounds_declared`) forward from the previous catalog when an
+  accession is still upstream, and carries non-INSDC deposits
+  (zenodo/figshare/utexas processed-data entries) across refreshes
+  unchanged.
+- **NEW: `selexprep catalog refresh [--out PATH --no-preserve-enrichment]`**
+  — CLI verb that wraps `rebuild_catalog`. Lets users (or CI) refresh
+  the catalog on demand without touching the package source.
+- **Catalog refreshed in-place** for v0.1.5: 273 bioprojects (148
+  ENA-discovered INSDC studies + 125 carried-forward
+  Zenodo/Figshare deposits). Snapshot bumped to
+  `v0.1.5-snapshot-2026-05-19`. The 4 seed entries (Hoinka IL-10RA,
+  Dao CCR7, …) keep their hand-curated enrichment.
+- **No curation flags.** Confirmed with the PI: the package never
+  ships `include` / `manual_curation_notes` columns. Curation is the
+  user's downstream job; the catalog reflects the public archives
+  only.
+
 ### Phase 1.5 — discovery catalog (new)
 
 The biggest "where do I even start?" UX gap in v0.1 was: a user installs the
