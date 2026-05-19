@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
 from selexprep.catalog.filter import filter_catalog
@@ -95,3 +97,47 @@ def show_bp(
 def version() -> None:
     """Print the catalog snapshot identifier."""
     typer.echo(catalog_version())
+
+
+@app.command("refresh")
+def refresh(
+    out: Path = typer.Option(
+        None,
+        "--out",
+        help="Output CSV path. Defaults to the bundled package data file (in-place refresh).",
+    ),
+    preserve_enrichment: bool = typer.Option(
+        True,
+        "--preserve-enrichment/--no-preserve-enrichment",
+        help=(
+            "Carry hand-enriched fields (protein_target, paper_doi, "
+            "paper_pmid, n_rounds_declared) forward from the existing "
+            "catalog when an accession is still found upstream."
+        ),
+    ),
+) -> None:
+    """Refresh the catalog by re-running broad ENA queries.
+
+    Hits ENA's public Portal API with ~13 broad SELEX/aptamer keyword
+    queries (see `selexprep.catalog.rebuild.ENA_QUERIES`), unions the
+    resulting INSDC studies, merges hand-enriched fields forward from the
+    current catalog (when `--preserve-enrichment` is on), and writes the
+    result to `--out` (or the bundled package data file by default).
+
+    Takes ~30-60 seconds depending on ENA latency. No NCBI / Zenodo /
+    Figshare calls here — ENA mirrors INSDC, so SRA + DDBJ deposits are
+    already covered.
+    """
+    from selexprep.catalog.reader import catalog_path
+    from selexprep.catalog.rebuild import rebuild_catalog
+
+    current = catalog_path()
+    out_path = out if out is not None else current
+    preserve = current if preserve_enrichment else None
+
+    typer.echo(f"Refreshing catalog → {out_path}")
+    if preserve:
+        typer.echo(f"  preserving enrichment from {preserve}")
+
+    n = rebuild_catalog(out_path=out_path, preserve_from=preserve)
+    typer.echo(f"Wrote {n} bioprojects.")

@@ -10,7 +10,7 @@ import pandas as pd
 #: Snapshot identifier for the bundled catalog. Bump this on every refresh.
 #: Persona-1 users (ML researchers / atlas builders) rely on this to know
 #: how stale the catalog is vs the upstream archives.
-CATALOG_VERSION = "v0.1.0-snapshot-2026-05"
+CATALOG_VERSION = "v0.1.5-snapshot-2026-05-19"
 
 _CATALOG_FILENAME = "bioprojects.csv"
 

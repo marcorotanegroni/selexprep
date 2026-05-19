@@ -82,6 +82,7 @@ ignore = ["E501"]
 # Typer's documented idiom calls typer.Option/typer.Argument as defaults;
 # B008 is a false positive for Typer-style CLI definitions.
 "src/selexprep/cli.py" = ["B008"]
+"src/selexprep/catalog/cli.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.10"
