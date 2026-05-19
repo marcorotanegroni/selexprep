@@ -787,15 +787,39 @@ def is_blacklisted(bp: dict, blacklist: set[str], sm_targets: list[str]) -> bool
 # ---------------------------------------------------------------------------
 
 
+#: Sentinel written to `library_type_verification` when the v0.2 classifier
+#: is not installed. Distinguishes "deliberately not assessed in v0.1" from a
+#: bona fide empty string that would let downstream callers silently skip the
+#: filter. Phase 2 will replace it with a real verdict when the classifier
+#: lands.
+NOT_ASSESSED_V0_1 = "not_assessed_v0.1"
+
+
 def _classify_all(bp_rows: list[dict]) -> list[dict]:
     """Apply DNA/RNA library-type classification if the v0.2 classifier is
-    available. If not, leave `library_type_verification` untouched and log."""
+    available. If not, write the `not_assessed_v0.1` sentinel into every
+    unclassified row's ``library_type_verification`` (plus an evidence JSON)
+    so callers can detect the deferred-classifier path explicitly rather
+    than treating empty cells as a successful "unclassified" outcome.
+    """
     try:
         from selexprep.library.type_classifier import classify_bioproject  # type: ignore
     except ImportError:
         logger.info(
-            "library_type_classifier not available (v0.2 feature); skipping DNA/RNA classification"
+            "library_type_classifier not available (v0.2 feature); marking "
+            "unclassified BioProjects with sentinel '%s'",
+            NOT_ASSESSED_V0_1,
         )
+        sentinel_evidence = json.dumps(
+            {
+                "source": "no_classifier",
+                "reason": "library.type_classifier deferred to v0.2",
+            }
+        )
+        for bp in bp_rows:
+            if not bp.get("library_type_verification"):
+                bp["library_type_verification"] = NOT_ASSESSED_V0_1
+                bp["library_type_evidence"] = sentinel_evidence
         return bp_rows
     for bp in bp_rows:
         if bp.get("library_type_verification"):

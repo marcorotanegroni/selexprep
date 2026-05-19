@@ -147,6 +147,28 @@ def test_read_sample_sheet_groups_barcodes_per_srr(tmp_path: Path) -> None:
     assert srr2.barcodes == {"GGGGG": 1}
 
 
+def test_demux_output_is_deterministic_across_reruns(tmp_path: Path) -> None:
+    """Two independent demux runs over the same input must produce byte-for-byte
+    identical .gz files. Regression guard for the deterministic-gzip writer
+    in `selexprep._io` (without it, the gzip header's mtime would differ
+    across runs and break manifest SHA256 reproducibility)."""
+    fq = tmp_path / "SRR1.fastq.gz"
+    _write_fastq_gz(fq, ["AAAAACCCCC", "AAAAAGGGGG", "TTTTTGGGGG"])
+
+    out_a = tmp_path / "out_a"
+    out_b = tmp_path / "out_b"
+    demux_fastq(r1_path=fq, out_dir=out_a, barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR1")
+    demux_fastq(r1_path=fq, out_dir=out_b, barcodes={"AAAAA": 1, "TTTTT": 2}, srr="SRR1")
+
+    for relative in (
+        "round_01/SRR1.fastq.gz",
+        "round_02/SRR1.fastq.gz",
+    ):
+        assert (out_a / relative).read_bytes() == (out_b / relative).read_bytes(), (
+            f"non-deterministic demux output at {relative}"
+        )
+
+
 def test_demux_sample_sheet_writes_per_job_reports(tmp_path: Path) -> None:
     fq = tmp_path / "SRR1.fastq.gz"
     _write_fastq_gz(fq, ["AAAAACCCCC", "TTTTTGGGGG"])

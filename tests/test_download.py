@@ -239,6 +239,57 @@ def test_download_srr_skips_kingfisher_when_not_available(tmp_path: Path) -> Non
         assert not download_srr("SRR1", tmp_path)
 
 
+def test_download_srr_backend_ena_skips_other_backends(tmp_path: Path) -> None:
+    """`backend='ena'` MUST NOT touch kingfisher / sra-toolkit even on failure.
+
+    Use case: CI runs and paper benchmarks where the GPL fallback would
+    silently change the experiment.
+    """
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=True) as kf,
+        mock.patch("selexprep.fetch.download.download_srr_sratoolkit", return_value=True) as sra,
+    ):
+        result = download_srr("SRR1", tmp_path, backend="ena")
+        assert result is False
+        kf.assert_not_called()
+        sra.assert_not_called()
+
+
+def test_download_srr_backend_kingfisher_logs_gpl_warning(tmp_path: Path, caplog) -> None:
+    """`backend='kingfisher'` must emit a visible GPL-3.0 warning."""
+    import logging
+
+    with (
+        mock.patch("selexprep.fetch.download.kingfisher_available", return_value=True),
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=True),
+        caplog.at_level(logging.WARNING, logger="selexprep.fetch.download"),
+    ):
+        download_srr("SRR1", tmp_path, backend="kingfisher")
+    assert any("GPL-3.0" in r.getMessage() for r in caplog.records)
+
+
+def test_download_srr_auto_logs_gpl_warning_on_kingfisher_fallback(tmp_path: Path, caplog) -> None:
+    """When `backend='auto'` falls back to kingfisher, the GPL notice must fire."""
+    import logging
+
+    with (
+        mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),
+        mock.patch("selexprep.fetch.download.kingfisher_available", return_value=True),
+        mock.patch("selexprep.fetch.download.download_srr_kingfisher", return_value=True),
+        mock.patch("selexprep.fetch.download.sratoolkit_available", return_value=False),
+        caplog.at_level(logging.WARNING, logger="selexprep.fetch.download"),
+    ):
+        download_srr("SRR1", tmp_path)  # backend defaults to "auto"
+    assert any("GPL-3.0" in r.getMessage() for r in caplog.records)
+
+
+def test_download_srr_backend_kingfisher_missing_returns_false(tmp_path: Path) -> None:
+    """Forcing `backend='kingfisher'` when the binary is absent fails fast."""
+    with mock.patch("selexprep.fetch.download.kingfisher_available", return_value=False):
+        assert not download_srr("SRR1", tmp_path, backend="kingfisher")
+
+
 def test_download_srr_returns_false_when_all_backends_exhausted(tmp_path: Path) -> None:
     with (
         mock.patch("selexprep.fetch.download.download_srr_ena_direct", return_value=False),

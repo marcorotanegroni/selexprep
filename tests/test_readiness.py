@@ -234,6 +234,41 @@ def test_review_bioproject_flags_short_primer(tmp_path: Path) -> None:
     assert any("incomplete seed" in c.detail for c in pre_checks)
 
 
+def test_review_bioproject_warns_when_tag_default(tmp_path: Path, caplog) -> None:
+    """Calling without an explicit `tag` MUST log a WARNING — silently selecting
+    'untagged' thresholds is the most likely call-site bug here."""
+    import logging
+
+    bp = tmp_path / "PRJWARN"
+    _make_fixture_bp(bp)
+    with caplog.at_level(logging.WARNING, logger="selexprep.qc.readiness"):
+        review_bioproject(
+            bp,
+            primer_5p="GGTAATACGACTCACTATAGGG",
+            primer_3p="CCATGCATGCATGCATGCATGC",
+            random_region_len=30,
+            # tag omitted — should warn
+        )
+    assert any("explicit `tag`" in r.getMessage() for r in caplog.records)
+
+
+def test_review_bioproject_no_warning_when_tag_explicit(tmp_path: Path, caplog) -> None:
+    """Passing tag explicitly (even 'untagged') silences the warning."""
+    import logging
+
+    bp = tmp_path / "PRJOK"
+    _make_fixture_bp(bp)
+    with caplog.at_level(logging.WARNING, logger="selexprep.qc.readiness"):
+        review_bioproject(
+            bp,
+            primer_5p="GGTAATACGACTCACTATAGGG",
+            primer_3p="CCATGCATGCATGCATGC",
+            random_region_len=30,
+            tag="standard",
+        )
+    assert not any("explicit `tag`" in r.getMessage() for r in caplog.records)
+
+
 def test_review_bioproject_no_primer_3p_for_multiplexed_origin(tmp_path: Path) -> None:
     """Multiplexed-origin tag accepts missing primer_3p (5p-only by design)."""
     bp = tmp_path / "PRJMULTI"
