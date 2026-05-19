@@ -42,6 +42,11 @@ from selexprep.extract import trim as trim_module
 from selexprep.extract.demux import demux_sample_sheet
 from selexprep.library.adapters import reverse_complement
 from selexprep.library.report import LibraryReport
+from selexprep.manifest import (
+    build_manifest_from_extract_result,
+    read_manifest_json,
+    write_manifest_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +69,8 @@ class ExtractResult:
     outputs: list[Path] = field(default_factory=list)
     strand_report_path: Path | None = None
     trim_reports_path: Path | None = None
+    manifest_path: Path | None = None
+    extract_diff_path: Path | None = None
     skipped_reason: str | None = None
     trim_reports: list[trim_module.TrimReport] = field(default_factory=list)
 
@@ -188,6 +195,101 @@ def _write_trim_reports(reports: list[trim_module.TrimReport], path: Path) -> No
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def _trim_reports_by_round_from_objects(
+    reports: list[trim_module.TrimReport],
+) -> dict[int, dict[str, int]]:
+    """Aggregate live TrimReport objects by round (read from output path's parent)."""
+    by_round: dict[int, dict[str, int]] = {}
+    for r in reports:
+        if not r.output_paths:
+            continue
+        round_dir = r.output_paths[0].parent.name
+        if not round_dir.startswith("round_"):
+            continue
+        round_num = int(round_dir.split("_")[1])
+        agg = by_round.setdefault(round_num, {"n_in": 0, "n_out": 0})
+        agg["n_in"] += r.n_in
+        agg["n_out"] += r.n_out
+    return by_round
+
+
+def _trim_reports_by_round_from_json(payload: list[dict]) -> dict[int, dict[str, int]]:
+    """Aggregate trim_reports.json entries by round."""
+    by_round: dict[int, dict[str, int]] = {}
+    for entry in payload:
+        paths = entry.get("output_paths") or []
+        if not paths:
+            continue
+        round_dir = Path(paths[0]).parent.name
+        if not round_dir.startswith("round_"):
+            continue
+        round_num = int(round_dir.split("_")[1])
+        agg = by_round.setdefault(round_num, {"n_in": 0, "n_out": 0})
+        agg["n_in"] += int(entry.get("n_in", 0))
+        agg["n_out"] += int(entry.get("n_out", 0))
+    return by_round
+
+
+def _read_baseline_for_diff(
+    outdir: Path,
+) -> tuple[LibraryReport, dict[int, dict[str, int]]] | None:
+    """Read the previous run's manifest + trim_reports.json from `outdir`.
+
+    Returns ``(baseline_library_report, baseline_by_round)`` or ``None``
+    if either artifact is missing or unparseable (caller skips diff
+    emission in that case).
+    """
+    manifest_path = outdir / "selexprep_manifest.json"
+    trim_path = outdir / "trim_reports.json"
+    if not (manifest_path.exists() and trim_path.exists()):
+        return None
+    try:
+        baseline_manifest = read_manifest_json(manifest_path)
+        baseline_lr = baseline_manifest.library_report
+        baseline_payload = json.loads(trim_path.read_text(encoding="utf-8"))
+        baseline_by_round = _trim_reports_by_round_from_json(baseline_payload)
+    except Exception as e:
+        # Defensive: baseline artifacts may be corrupt in many ways; the
+        # diff is informational, so we degrade gracefully rather than fail
+        # the whole rebuild on a malformed baseline.
+        logger.warning("Could not read baseline for diff: %s", e)
+        return None
+    return baseline_lr, baseline_by_round
+
+
+def _write_extract_diff(
+    *,
+    baseline_lr: LibraryReport,
+    baseline_by_round: dict[int, dict[str, int]],
+    new_lr: LibraryReport,
+    new_by_round: dict[int, dict[str, int]],
+    path: Path,
+) -> None:
+    """Write per-round comparison TSV (locked plan line 333).
+
+    Columns: ``round\\tprimer_5p_baseline\\tprimer_5p_new\\tprimer_3p_baseline\\t
+    primer_3p_new\\tn_in\\tn_out_baseline\\tn_out_new\\tdelta_n_out``.
+    Sorted by round.
+    """
+    rounds_all = sorted(set(baseline_by_round) | set(new_by_round))
+    header = (
+        "round\tprimer_5p_baseline\tprimer_5p_new\tprimer_3p_baseline\t"
+        "primer_3p_new\tn_in\tn_out_baseline\tn_out_new\tdelta_n_out\n"
+    )
+    lines = [header]
+    for r in rounds_all:
+        b = baseline_by_round.get(r, {"n_in": 0, "n_out": 0})
+        n = new_by_round.get(r, {"n_in": 0, "n_out": 0})
+        delta = n["n_out"] - b["n_out"]
+        lines.append(
+            f"{r}\t"
+            f"{baseline_lr.primer_5p or ''}\t{new_lr.primer_5p or ''}\t"
+            f"{baseline_lr.primer_3p or ''}\t{new_lr.primer_3p or ''}\t"
+            f"{n['n_in']}\t{b['n_out']}\t{n['n_out']}\t{delta}\n"
+        )
+    path.write_text("".join(lines), encoding="utf-8")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -202,24 +304,39 @@ def run_extract(
     sample_sheet: Path | None = None,
     rebuild: bool = False,
     paired_r2_inputs: dict[int, list[Path]] | None = None,
+    override_primer_5p: str | None = None,
+    override_primer_3p: str | None = None,
+    accession: str | None = None,
+    bioproject_id: str | None = None,
+    runs: list[str] | None = None,
+    parameters: dict[str, str] | None = None,
 ) -> ExtractResult:
-    """Run the Phase 3 extraction pipeline for one dataset.
+    """Run the extraction pipeline for one dataset.
+
+    Phase 3 owns the cutadapt-driven trimming. Phase 4 adds:
+
+    - ``override_primer_{5p,3p}``: clone the LibraryReport with swapped
+      primer fields. Without ``rebuild`` the override outputs go to a
+      separate ``<outdir>/overridden/`` subtree (avoids clobbering
+      baseline). With ``rebuild`` the baseline is overwritten and an
+      ``extract_diff.tsv`` is emitted comparing baseline vs new
+      per-round read counts (locked plan line 333).
+    - ``selexprep_manifest.json`` is now emitted automatically (locked
+      plan lines 162-175 / 334).
 
     Args:
         library_report: typed contract from Phase 2's ``compute_library_report``.
         fastq_inputs: R1 FASTQ(.gz) files (or single-end inputs).
-        outdir: where ``round_NN/*.fasta.gz`` + ``strand_report.tsv`` +
-            ``trim_reports.json`` are written.
-        round_map: basename -> round number (same shape as ``detect`` CLI).
-        sample_sheet: optional TSV for demux pre-step (multiplexed input).
-        rebuild: overwrite existing outputs (default: refuse if any exist).
-        paired_r2_inputs: optional ``{round: [r2_fastq, ...]}``; required
-            when ``library_report.extraction_mode ==
-            "PAIRED_END_SPLIT_PRIMERS"``.
-
-    Returns:
-        :class:`ExtractResult` with the list of files emitted plus the
-        skipped_reason when the runner refused.
+        outdir: where outputs are written. Override-only path routes
+            outputs to ``<outdir>/overridden/``.
+        round_map: basename -> round number.
+        sample_sheet: optional TSV for demux pre-step.
+        rebuild: overwrite existing outputs.
+        paired_r2_inputs: optional ``{round: [r2_fastq, ...]}``.
+        override_primer_5p / override_primer_3p: optional primer
+            overrides applied via ``LibraryReport.model_copy``.
+        accession / bioproject_id / runs / parameters: provenance fields
+            captured into the emitted ``selexprep_manifest.json``.
     """
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -227,6 +344,34 @@ def run_extract(
     if refusal is not None:
         logger.warning("Refusing to extract: %s", refusal)
         return ExtractResult(skipped_reason=refusal)
+
+    # Phase 4: optional primer override. Clone the LR with swapped fields.
+    has_override = override_primer_5p is not None or override_primer_3p is not None
+    if has_override:
+        updates: dict[str, str | None] = {}
+        if override_primer_5p is not None:
+            updates["primer_5p"] = override_primer_5p
+        if override_primer_3p is not None:
+            updates["primer_3p"] = override_primer_3p
+        library_report = library_report.model_copy(update=updates)
+        logger.info(
+            "Applied primer overrides: 5p=%r 3p=%r",
+            override_primer_5p,
+            override_primer_3p,
+        )
+
+    # When override is set but rebuild is NOT, redirect outputs to a
+    # subtree to avoid clobbering the baseline (locked plan: rebuild
+    # required to overwrite).
+    if has_override and not rebuild:
+        outdir = outdir / "overridden"
+        outdir.mkdir(parents=True, exist_ok=True)
+
+    # When rebuild + override: read baseline manifest + trim_reports BEFORE
+    # the per-round outputs get overwritten, so we can emit extract_diff.tsv.
+    baseline_for_diff: tuple[LibraryReport, dict[int, dict[str, int]]] | None = None
+    if rebuild and has_override:
+        baseline_for_diff = _read_baseline_for_diff(outdir)
 
     # Optional demux pre-step (multiplexed input).
     if sample_sheet is not None:
@@ -357,15 +502,52 @@ def run_extract(
         strand_module.write_strand_report(strand_distributions, strand_report_path)
         all_outputs.append(strand_report_path)
 
-    # Emit trim reports JSON (Phase 4 manifest precursor).
+    # Emit trim reports JSON (Phase 3; the manifest builder hashes it too).
     trim_reports_path = outdir / "trim_reports.json"
     _write_trim_reports(trim_reports, trim_reports_path)
     all_outputs.append(trim_reports_path)
+
+    # Phase 4: emit extract_diff.tsv when we have a baseline to compare against.
+    extract_diff_path: Path | None = None
+    if baseline_for_diff is not None:
+        baseline_lr, baseline_by_round = baseline_for_diff
+        new_by_round = _trim_reports_by_round_from_objects(trim_reports)
+        extract_diff_path = outdir / "extract_diff.tsv"
+        _write_extract_diff(
+            baseline_lr=baseline_lr,
+            baseline_by_round=baseline_by_round,
+            new_lr=library_report,
+            new_by_round=new_by_round,
+            path=extract_diff_path,
+        )
+        all_outputs.append(extract_diff_path)
+
+    # Phase 4: emit the reproducibility manifest.
+    # Collate input paths (R1 + R2 if paired).
+    input_paths: list[Path] = list(fastq_inputs)
+    if paired_r2_inputs is not None:
+        for paths in paired_r2_inputs.values():
+            input_paths.extend(paths)
+
+    manifest = build_manifest_from_extract_result(
+        library_report=library_report,
+        input_paths=input_paths,
+        output_paths=all_outputs,
+        accession=accession,
+        bioproject_id=bioproject_id,
+        runs=runs or [],
+        parameters=parameters or {},
+    )
+    manifest_path = outdir / "selexprep_manifest.json"
+    write_manifest_json(manifest, manifest_path)
+    all_outputs.append(manifest_path)
 
     return ExtractResult(
         outputs=all_outputs,
         strand_report_path=strand_report_path,
         trim_reports_path=trim_reports_path,
+        manifest_path=manifest_path,
+        extract_diff_path=extract_diff_path,
         skipped_reason=None,
         trim_reports=trim_reports,
     )
