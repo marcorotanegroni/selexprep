@@ -180,11 +180,23 @@ def test_paired_end_split_no_overlap() -> None:
     assert report.required_action == "READ_MERGING_RECOMMENDED"
 
 
-@pytest.mark.xfail(reason="Row 7: paired-end overlap detection requires read merging (v0.2)")
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "v0.2: read merging not yet implemented — when this test starts "
+        "passing, the feature is ready, remove this marker"
+    ),
+)
 def test_paired_end_split_with_overlap_v02() -> None:
-    """Row 7: paired-end with detectable overlap — full insert recoverable.
+    """Row 7 of the locked classification table: paired-end with detectable
+    overlap → ``full_insert_recovered=True``, ``required_action=NONE``.
 
-    Deferred to v0.2; v0.1 always treats paired-end as no-overlap.
+    Pinned via ``strict=True`` xfail: v0.1 cannot satisfy this assertion
+    (always falls back to Row 6 — split-primer with no overlap), so the
+    test currently fails as expected. When v0.2 ships read merging, this
+    test will start passing → strict mode promotes XPASS to a CI failure,
+    forcing the marker to be removed. Prevents the classic "xfail marker
+    rotting after the feature lands" pitfall.
     """
     r1_pools = _three_round_pool(PRIMER_5P_T7, primer_3p=None, random_len=80)
     rc_3p = reverse_complement(PRIMER_3P_CCAT)
