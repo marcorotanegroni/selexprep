@@ -2,7 +2,7 @@
 
 **Accession-first preprocessing for public HT-SELEX, with primer auto-inference and safe failure modes.**
 
-> *`selexprep` is not another aptamer-analysis suite. It is the missing accession-to-clean-library preprocessing layer, with primer inference, uncertainty reporting, random-region extraction, and reproducible outputs.*
+> *`selexprep` fills the missing preprocessing layer for public datasets by starting from accessions and empirically inferring primer/constant regions, extracting random regions, and emitting confidence-aware, reproducible count tables and manifests.*
 >
 > — Codex-frozen value proposition
 
