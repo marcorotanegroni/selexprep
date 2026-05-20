@@ -98,6 +98,140 @@ def test_inspect_exits_with_code_2_when_accession_unknown() -> None:
     assert result.exit_code == 2
 
 
+# ===========================================================================
+# Phase 5 — `count` + `qc` CLI commands
+# ===========================================================================
+
+
+def _write_fasta_gz(path: Path, seqs: list[str]) -> None:
+    import gzip as _gzip
+
+    with _gzip.open(path, "wt", encoding="utf-8") as fh:
+        for i, s in enumerate(seqs):
+            fh.write(f">read_{i}\n{s}\n")
+
+
+def test_count_produces_counts_parquet(tmp_path: Path) -> None:
+    """selexprep count <extracted.fasta.gz> --round R0 --outdir OUT
+    writes OUT/round_00/counts.parquet."""
+    fa = tmp_path / "extracted.fasta.gz"
+    _write_fasta_gz(fa, ["AAAA", "AAAA", "CCCC", "GGGG"])
+    outdir = tmp_path / "out"
+
+    result = runner.invoke(
+        app,
+        ["count", str(fa), "--round", "R0", "--outdir", str(outdir)],
+    )
+    assert result.exit_code == 0, result.output
+    parquet = outdir / "round_00" / "counts.parquet"
+    assert parquet.exists()
+
+
+def test_count_accepts_integer_round_label(tmp_path: Path) -> None:
+    fa = tmp_path / "extracted.fasta.gz"
+    _write_fasta_gz(fa, ["AAAA", "CCCC"])
+    outdir = tmp_path / "out"
+
+    result = runner.invoke(app, ["count", str(fa), "--round", "1", "--outdir", str(outdir)])
+    assert result.exit_code == 0, result.output
+    assert (outdir / "round_01" / "counts.parquet").exists()
+
+
+def test_count_rejects_invalid_round_label(tmp_path: Path) -> None:
+    fa = tmp_path / "extracted.fasta.gz"
+    _write_fasta_gz(fa, ["AAAA"])
+
+    result = runner.invoke(
+        app,
+        ["count", str(fa), "--round", "notanumber", "--outdir", str(tmp_path / "out")],
+    )
+    assert result.exit_code != 0
+
+
+def test_qc_emits_flags_yaml_and_plots(tmp_path: Path) -> None:
+    """End-to-end smoke: synthetic outdir -> selexprep qc -> flags.yaml + 4 PNGs."""
+    import json as _json
+
+    import pandas as _pd
+
+    from selexprep.library.report import LibraryReport
+    from selexprep.manifest import build_manifest_from_extract_result, write_manifest_json
+
+    outdir = tmp_path / "ds"
+    outdir.mkdir()
+    for r in range(2):
+        round_dir = outdir / f"round_{r:02d}"
+        round_dir.mkdir()
+        _pd.DataFrame(
+            {
+                "sequence": [f"s{i}" for i in range(20)],
+                "reads": [(20 - i) for i in range(20)],
+                "rank": list(range(1, 21)),
+                "rpm": [(20 - i) * 1000.0 for i in range(20)],
+            }
+        ).to_parquet(round_dir / "counts.parquet", index=False)
+
+    (outdir / "trim_reports.json").write_text(
+        _json.dumps(
+            [
+                {
+                    "cutadapt_cmd": ["cutadapt", "..."],
+                    "n_in": 1000,
+                    "n_out": 950,
+                    "return_code": 0,
+                    "output_paths": [str(outdir / f"round_{r:02d}" / "extracted.fasta.gz")],
+                }
+                for r in range(2)
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    lr = LibraryReport(
+        primer_5p="GGTAATACGACTCACTATAGGG",
+        primer_3p="CCATGCATGCATGCATGCAT",
+        variants_5p=[],
+        variants_3p=[],
+        known_adapter_hits={},
+        extraction_mode="BOTH_PRIMERS_SINGLE_READ",
+        full_insert_recovered=True,
+        read_source="R1",
+        required_action="NONE",
+        orientation="FORWARD",
+        n_length_mode=30,
+        n_length_distribution={30: 100},
+        n_length_confidence=1.0,
+        match_rate_5p=0.95,
+        match_rate_3p=0.92,
+        position_consistency_5p=0.95,
+        position_consistency_3p=0.92,
+        read_fraction_used_for_inference=1.0,
+        sampling_seed=42,
+        confidence=0.85,
+        status="HIGH",
+        failure_reason=None,
+    )
+    manifest = build_manifest_from_extract_result(
+        library_report=lr,
+        input_paths=[],
+        output_paths=[],
+        accession=None,
+        bioproject_id=None,
+        runs=[],
+        parameters={},
+    )
+    manifest_path = outdir / "selexprep_manifest.json"
+    write_manifest_json(manifest, manifest_path)
+
+    result = runner.invoke(app, ["qc", str(manifest_path)])
+    assert result.exit_code == 0, result.output
+    assert (outdir / "qc" / "flags.yaml").exists()
+    assert (outdir / "qc" / "read_retention.png").exists()
+    assert (outdir / "qc" / "primer_match_per_round.png").exists()
+    assert (outdir / "qc" / "n_length_distribution.png").exists()
+    assert (outdir / "qc" / "per_round_panel.png").exists()
+
+
 def test_fetch_stub_exits_with_code_2() -> None:
     result = runner.invoke(app, ["fetch", "SRR000000", "--outdir", "/tmp/sx"])
     assert result.exit_code == 2
