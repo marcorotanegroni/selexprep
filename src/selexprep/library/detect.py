@@ -251,60 +251,91 @@ def earliest_round_parquet(processed_bp_dir: Path) -> Path | None:
 # algorithmic core that Phase 2 wraps with calibration, persistence, and
 # classification. Phase 1 callers (tests, future ad-hoc tools) keep working.
 #
-# All calibration constants below are PLACEHOLDERS pending Codex review
-# (rate-limited 2026-05-19 → 2026-05-26). Behavior-based tests mean tuning
-# numbers does NOT break the test suite. Search for `CALIBRATION-TODO` to
-# find every pending value.
+# Phase 2 calibration constants were peer-reviewed by Codex on 2026-05-20
+# (pass 1). 6 confirmed, 4 revised (POSITION_CONSISTENCY_TOLERANCE,
+# STATUS_HIGH_CUTOFF, COMPOSITE_WEIGHTS, COMPOSITE_WEIGHTS_NO_ROUND_MAP).
+# Behavior-based tests mean any future tuning will not break the test
+# suite. Search `CALIBRATION-REVIEWED` for the post-Codex values;
+# `CALIBRATION-TODO` for what still awaits review (Phase 5 qc flags,
+# adapter blacklist composition).
 
 # ---------------------------------------------------------------------------
-# Calibration constants — CALIBRATION-TODO
+# Calibration constants — Codex pass 1 (2026-05-20)
 # ---------------------------------------------------------------------------
+# All Phase 2 numbers below were peer-reviewed by Codex on 2026-05-20.
+# CONFIRMED values keep their locked-plan default; REVISED values cite
+# the new evidence in their comment. Phase 6 benchmark recovery numbers
+# will provide empirical ground truth for a future tuning pass.
 
-# CALIBRATION-TODO: locked plan line 302 ("> 0.7"); Codex sanity-checks
-# against published HT-SELEX figures (Tolle 2014, Hoinka 2015, AptaSUITE
-# 2017, EasyDIVER+ 2025).
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.70.
+# Locked plan line 302. AptaPLEX tracks primer errors per read but does
+# not publish a dataset-level threshold (AptaSUITE import docs), so 0.70
+# is a reasonable pre-benchmark default.
 PRIMER_FOUND_MATCH_RATE_THRESHOLD = 0.7
 
-# CALIBRATION-TODO: locked plan lines 303, 305 (n_length_confidence > 0.8).
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.80.
+# Locked plan lines 303, 305. AptaPLEX supports randomized-region length
+# bounds rather than exact modal fractions; 0.80 is an internal safety
+# proxy for "sharply peaked" N-region length.
 N_LENGTH_CONFIDENT_FRACTION = 0.8
 
-# CALIBRATION-TODO: locked plan line 309 ("Both match rates < 0.4").
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.40.
+# Locked plan line 309. Existing tools assume supplied primers and
+# discard primer-failure reads rather than inferring from weak evidence,
+# so refusing-to-extract at <40% on both sides is the safe default
+# (AptaTools / AptaPLEX).
 UNABLE_TO_EXTRACT_MATCH_RATE = 0.4
 
-# CALIBRATION-TODO: not in locked plan; absorbs residual adapter readthrough
-# that survived upstream trimming. Codex confirms the ±2 nt window.
-POSITION_CONSISTENCY_TOLERANCE = 2
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): REVISED 2 → 3.
+# AptaPLEX's default primer mismatch tolerance is 3; small public-data
+# offset noise should not over-penalize an otherwise stable flank.
+POSITION_CONSISTENCY_TOLERANCE = 3
 
-# CALIBRATION-TODO: not in locked plan; Codex sets cutoffs after benchmark
-# recovery numbers are in.
-STATUS_HIGH_CUTOFF = 0.80
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1):
+#   STATUS_HIGH_CUTOFF: REVISED 0.80 → 0.85 — "HIGH" should mean
+#     paper-grade high-confidence, harder to reach via additive
+#     secondary signals before benchmark calibration.
+#   STATUS_MEDIUM_CUTOFF: CONFIRMED at 0.60 — "usable with caution"
+#     boundary, without claiming benchmark-grade primer recovery.
+#   STATUS_LOW_CUTOFF: CONFIRMED at 0.30 — below this → UNABLE_TO_INFER;
+#     the separate <0.40 match-rate rule already blocks unsafe extraction.
+STATUS_HIGH_CUTOFF = 0.85
 STATUS_MEDIUM_CUTOFF = 0.60
 STATUS_LOW_CUTOFF = 0.30
 
-# CALIBRATION-TODO: not in locked plan. Weighted sum, weights sum to 1.0.
-# Two regimes: with vs without a round map. Persistence weight gets
-# redistributed to the other terms when no round map is available.
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): REVISED weights.
+# Rationale: position_consistency deserves parity with raw match rate;
+# cross-round persistence is the unique SELEX-specific signal and
+# deserves the largest weight when available; adapter_clean is already
+# enforced upstream as a blacklist so it should be a small confidence
+# bonus, not a driver (Hoinka et al. 2015; AptaTRACE / AptaTools).
 COMPOSITE_WEIGHTS = {
-    "match_5p": 0.20,
-    "match_3p": 0.20,
-    "pos_5p": 0.10,
-    "pos_3p": 0.10,
-    "persistence": 0.20,
-    "n_len": 0.10,
-    "adapter_clean": 0.10,
-}
-COMPOSITE_WEIGHTS_NO_ROUND_MAP = {
-    "match_5p": 0.30,
-    "match_3p": 0.30,
+    "match_5p": 0.15,
+    "match_3p": 0.15,
     "pos_5p": 0.15,
     "pos_3p": 0.15,
+    "persistence": 0.25,
+    "n_len": 0.10,
+    "adapter_clean": 0.05,
+}
+# Rationale: with persistence absent and status already capped at MEDIUM
+# (locked plan line 289), within-round evidence (match + position) gets
+# equal parity weight; n_len and adapter_clean remain supporting signals.
+COMPOSITE_WEIGHTS_NO_ROUND_MAP = {
+    "match_5p": 0.225,
+    "match_3p": 0.225,
+    "pos_5p": 0.225,
+    "pos_3p": 0.225,
     "persistence": 0.0,
     "n_len": 0.05,
     "adapter_clean": 0.05,
 }
 
-# CALIBRATION-TODO: not in locked plan. < 5% reads reversed → FORWARD,
-# 5-95% → MIXED, > 95% → REVERSE.
+# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED.
+# < 5% reads reversed → FORWARD; 5-95% → MIXED; > 95% → REVERSE.
+# No published benchmark; conservative defaults that avoid overreacting
+# to contamination/index bleed and require near-unanimous reverse
+# evidence before auto-flipping every read.
 ORIENTATION_REVERSED_FORWARD_MAX = 0.05
 ORIENTATION_REVERSED_REVERSE_MIN = 0.95
 
@@ -388,19 +419,54 @@ def _position_consistency(
     return hits / total if total else 0.0
 
 
+def _substring_match_rate(seqs: list[str], primer: str | None) -> float:
+    """Fraction of reads where ``primer`` appears anywhere as a substring,
+    with Hamming distance ≤ 1.
+
+    Distinct from :func:`_position_consistency`, which requires the primer
+    at the expected flank position ± tolerance. The two signals contribute
+    independently to the composite confidence:
+
+    - ``match_rate_*`` (this function) = primer is detectable in the read
+      anywhere (loose; informative about presence).
+    - ``position_consistency_*`` (:func:`_position_consistency`) = primer
+      sits at the expected flank position (strict; informative about
+      structural integrity).
+
+    Returns 0.0 when ``primer`` is None or no read is long enough.
+    """
+    if not primer:
+        return 0.0
+    L = len(primer)
+    hits, total = 0, 0
+    for s in seqs:
+        if len(s) < L:
+            continue
+        total += 1
+        # Slide a length-L window across the read; first Hamming-≤1 hit wins.
+        for i in range(len(s) - L + 1):
+            if _hamming_le1(s[i : i + L], primer):
+                hits += 1
+                break
+    return hits / total if total else 0.0
+
+
 def _persistence_score(match_rates_per_round: list[float]) -> float | None:
     """Cross-round persistence as ``1 - clip(stdev/mean, 0, 1)``.
 
-    Returns ``None`` if fewer than 2 rounds are available (caller falls
-    back to no-round-map composite weights and caps ``status`` at MEDIUM).
-    Returns ``0.0`` if the mean rate is below 10% (no signal to be
-    persistent about).
+    Returns ``None`` if fewer than 2 rounds are available, OR if the
+    mean rate is below 10% (in both cases persistence is NOT computable
+    in a meaningful sense). The composite-confidence formula treats
+    ``None`` as "not evaluable" and redistributes weight implicitly via
+    the `if v is None: continue` short-circuit. Returning ``None`` here
+    instead of ``0.0`` preserves the semantic distinction between "no
+    signal to evaluate" and "evaluated and bad".
     """
     if len(match_rates_per_round) < 2:
         return None
     mean = statistics.mean(match_rates_per_round)
     if mean < 0.1:
-        return 0.0
+        return None
     cv = statistics.stdev(match_rates_per_round) / mean
     return max(0.0, min(1.0, 1.0 - cv))
 
@@ -672,59 +738,112 @@ def compute_library_report(
     primer_3p_seq = primer_detection.primer_3p.sequence
 
     # Drop primers that match known sequencing adapters (locked plan line 291:
-    # "Exclude from primer candidates").
+    # "Exclude from primer candidates"). Track which side was dropped so the
+    # adapter_clean signal can faithfully report adapter-trap events even when
+    # the OTHER primer survived (Codex pass 1 fix: previously the signal was
+    # 1.0 as long as ANY primer survived, hiding the trap).
+    adapter_drop_5p = False
+    adapter_drop_3p = False
     if _matches_known_adapter(primer_5p_seq):
         logger.info("Dropping 5' primer candidate %r: matches known adapter", primer_5p_seq)
         primer_5p_seq = None
+        adapter_drop_5p = True
     if _matches_known_adapter(primer_3p_seq):
         logger.info("Dropping 3' primer candidate %r: matches known adapter", primer_3p_seq)
         primer_3p_seq = None
+        adapter_drop_3p = True
 
     # Paired-end split detection (overrides 3' from R1 with revcomp of R2's 5').
+    # For paired-split, all 3p signals (match_rate, position_consistency,
+    # variants, per-round persistence) must be measured against R2 reads at
+    # R2's 5' end using ``revcomp(primer_3p)`` as the lookup — that's where the
+    # 3' adapter actually appears (Codex pass 1 fix: previously these were
+    # measured against R1's 3' end, where the primer cannot exist in a split
+    # library by construction, giving a misleading match_rate_3p ≈ 0).
     has_paired_split = False
+    r2_normalized_by_round: dict[int, list[str]] = {}
+    primer_3p_lookup: str | None = primer_3p_seq
+    threep_is_prefix = False  # default: 3p sits at the 3' end of R1
     if paired_mate_streams:
-        # Use the earliest round's R2 stream; normalize first.
-        r2_earliest = _normalize_pool(paired_mate_streams.get(earliest_round, []))
-        r2_sampled, _ = _subsample(r2_earliest, max_reads_per_round, rng)
+        # Normalize + subsample all R2 streams up-front so the per-round
+        # persistence input has full coverage.
+        for r in rounds_sorted:
+            r2_norm = _normalize_pool(paired_mate_streams.get(r, []))
+            r2_sampled, _ = _subsample(r2_norm, max_reads_per_round, rng)
+            r2_normalized_by_round[r] = r2_sampled
         has_paired_split, primer_3p_from_r2 = _detect_paired_split_signals(
-            earliest_seqs, r2_sampled
+            earliest_seqs, r2_normalized_by_round.get(earliest_round, [])
         )
         if has_paired_split and primer_3p_from_r2 is not None:
             primer_3p_seq = primer_3p_from_r2
+            # In split mode the 3' adapter appears as revcomp(primer_3p) at the
+            # 5' end of R2.
+            primer_3p_lookup = reverse_complement(primer_3p_seq)
+            threep_is_prefix = True
 
-    # Per-round match rates → persistence (uses the detected primer; does NOT
-    # re-detect per round, which is what makes this a true cross-round signal).
-    match_rates_5p_by_round = [
+    # 3p signal context: which reads + which orientation to use.
+    # Normal mode: R1 reads, suffix (3' end).
+    # Paired-split: R2 reads, prefix (5' end) using revcomp(primer_3p).
+    threep_seqs_by_round: dict[int, list[str]] = (
+        r2_normalized_by_round if has_paired_split else normalized
+    )
+    threep_seqs_earliest = threep_seqs_by_round[earliest_round]
+
+    # Per-round POSITION-ANCHORED rates → persistence. Position-anchored
+    # (not substring) because a true primer appears AT the flank in every
+    # round — substring presence might survive aptamer enrichment.
+    position_rates_5p_by_round = [
         _position_consistency(normalized[r], primer_5p_seq, is_prefix=True) for r in rounds_sorted
     ]
-    match_rates_3p_by_round = [
-        _position_consistency(normalized[r], primer_3p_seq, is_prefix=False) for r in rounds_sorted
+    position_rates_3p_by_round = [
+        _position_consistency(threep_seqs_by_round[r], primer_3p_lookup, is_prefix=threep_is_prefix)
+        for r in rounds_sorted
     ]
-    persistence_5p = _persistence_score(match_rates_5p_by_round)
-    persistence_3p = _persistence_score(match_rates_3p_by_round)
+    persistence_5p = _persistence_score(position_rates_5p_by_round)
+    persistence_3p = _persistence_score(position_rates_3p_by_round)
     persistence = _combine_persistence(persistence_5p, persistence_3p, primer_5p_seq, primer_3p_seq)
 
-    # Earliest-round signals for the report.
-    match_rate_5p = match_rates_5p_by_round[0] if match_rates_5p_by_round else 0.0
-    match_rate_3p = match_rates_3p_by_round[0] if match_rates_3p_by_round else 0.0
-    position_consistency_5p = match_rate_5p
-    position_consistency_3p = match_rate_3p
+    # Earliest-round signals for the report — TWO DISTINCT MEASUREMENTS
+    # (Codex pass 1 fix: previously match_rate_* was aliased to
+    # position_consistency_*, double-counting the same evidence in the
+    # composite confidence):
+    #   match_rate_*           = primer appears anywhere as substring (Hamming ≤ 1)
+    #   position_consistency_* = primer appears at the expected flank ± tolerance
+    match_rate_5p = _substring_match_rate(earliest_seqs, primer_5p_seq)
+    match_rate_3p = _substring_match_rate(threep_seqs_earliest, primer_3p_lookup)
+    position_consistency_5p = position_rates_5p_by_round[0] if position_rates_5p_by_round else 0.0
+    position_consistency_3p = position_rates_3p_by_round[0] if position_rates_3p_by_round else 0.0
 
-    # Variants — top-K prefixes/suffixes at the detected primer's length.
+    # Variants — top-K flank fragments. For paired-split, 3p variants come
+    # from R2's 5' end (using the revcomp-lookup length).
     p5_len = len(primer_5p_seq) if primer_5p_seq else 0
     p3_len = len(primer_3p_seq) if primer_3p_seq else 0
+    p3_lookup_len = len(primer_3p_lookup) if primer_3p_lookup else 0
     variants_5p = _top_k_variants(earliest_seqs, p5_len, is_prefix=True) if p5_len else []
-    variants_3p = _top_k_variants(earliest_seqs, p3_len, is_prefix=False) if p3_len else []
+    variants_3p = (
+        _top_k_variants(threep_seqs_earliest, p3_lookup_len, is_prefix=threep_is_prefix)
+        if p3_lookup_len
+        else []
+    )
 
-    # N-length distribution.
-    n_mode, n_dist, n_conf = _n_length_stats(earliest_seqs, p5_len, p3_len)
+    # N-length distribution. Only meaningful in single-read modes — in
+    # paired-end split the full insert spans R1+R2 and cannot be measured
+    # from either read alone, so we surface no n-length signal.
+    if has_paired_split:
+        n_mode, n_dist, n_conf = None, {}, 0.0
+    else:
+        n_mode, n_dist, n_conf = _n_length_stats(earliest_seqs, p5_len, p3_len)
 
-    # Orientation.
+    # Orientation (always measured on R1 reads — R1's 5' end is where forward
+    # vs reverse-strand inversion would appear).
     orientation = _detect_orientation(earliest_seqs, primer_5p_seq, primer_3p_seq)
 
     # Composite confidence.
     has_round_map = len(normalized) >= 2
-    adapter_clean_signal = 1.0 if (primer_5p_seq is not None or primer_3p_seq is not None) else 0.0
+    # adapter_clean = 1.0 only if NO detected candidate was dropped as an
+    # adapter (Codex pass 1 fix: previously this was "we have at least one
+    # primer", which hid the adapter trap whenever the other side survived).
+    adapter_clean_signal = 0.0 if (adapter_drop_5p or adapter_drop_3p) else 1.0
     signals: dict[str, float | None] = {
         "match_5p": match_rate_5p,
         "match_3p": match_rate_3p,

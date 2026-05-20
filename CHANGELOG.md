@@ -6,6 +6,102 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+**Phase 2 Codex pass 1 semantic bugs (2026-05-20)** — surfaced during
+the calibration review and folded into the same commit:
+
+- **`match_rate_*` and `position_consistency_*` were aliased.** The
+  orchestrator was setting `position_consistency_5p = match_rate_5p`
+  literally, double-counting the same evidence in the composite
+  confidence formula (which weights them as 4 distinct signals).
+  Added `_substring_match_rate()` (substring-anywhere with Hamming ≤
+  1), and now `match_rate_*` comes from substring scan while
+  `position_consistency_*` comes from `_position_consistency()`
+  (flank-anchored ± tolerance). They diverge by construction.
+- **`adapter_clean` ignored the drop flag.** Previously the signal was
+  `1.0 if (primer_5p_seq is not None or primer_3p_seq is not None)
+  else 0.0` — true whenever ANY primer survived, hiding the adapter
+  trap. Now tracks per-side `adapter_drop_{5p,3p}` flags at the drop
+  site; the signal is `0.0` if either side was dropped as an adapter
+  match.
+- **Paired-split 3p signals were measured against R1.** In
+  `PAIRED_END_SPLIT_PRIMERS` mode, `match_rate_3p`,
+  `position_consistency_3p`, and `variants_3p` were computed by
+  looking for the (R2-derived) `primer_3p_seq` at R1's 3' end — where
+  it cannot exist by construction (that's why it's a split). Refactored
+  the orchestrator to toggle a 3p-signal context (R1/3'-end normally,
+  R2/5'-end-using-revcomp for paired-split). Per-round persistence
+  input for the 3p side now uses the R2 stream in split mode.
+- **`_persistence_score` returned `0.0` instead of `None` when mean <
+  0.1.** Semantically: `None = "not evaluable"` vs `0.0 = "evaluated
+  and zero"`. The composite-confidence formula treats both the same
+  numerically (None contributes 0 via `if v is None: continue`; 0.0
+  contributes 0 via 0.0 × weight), so the user-visible composite is
+  unchanged. The semantic alignment matters for the manifest's
+  audit trail.
+
+In `PAIRED_END_SPLIT_PRIMERS` mode the `n_length_*` fields are now set
+to `None` / `{}` / `0.0` rather than computed from R1 alone — the full
+insert spans R1+R2 and cannot be measured from either read.
+
+Three new regression tests in `tests/test_report.py`:
+- `test_match_rate_distinct_from_position_consistency`
+- `test_adapter_clean_flag_demotes_confidence_when_primer_dropped`
+- `test_paired_split_match_rate_3p_reflects_r2_not_r1`
+
+Behavior-based classification tests stay green throughout (361 passed
++ 1 xfailed; +3 vs previous baseline) — the LR's classification
+fields (`extraction_mode`, `required_action`, `status`) are unchanged
+for clean inputs; only the numeric signal fields change.
+
+### Calibration
+
+**Phase 2 Codex peer-review, pass 1 (2026-05-20).** Eight constants in
+`library/detect.py` were reviewed; six confirmed at locked-plan
+defaults, four revised:
+
+| Constant | Before | After | Rationale (Codex) |
+|---|---|---|---|
+| `POSITION_CONSISTENCY_TOLERANCE` | 2 nt | **3 nt** | AptaPLEX default mismatch tolerance is 3; small public-data offset noise should not over-penalize an otherwise stable flank. |
+| `STATUS_HIGH_CUTOFF` | 0.80 | **0.85** | "HIGH" should mean paper-grade high-confidence, harder to reach via additive secondary signals before benchmark calibration. |
+| `COMPOSITE_WEIGHTS` (with round map) | match 0.20/0.20 · pos 0.10/0.10 · persistence 0.20 · n_len 0.10 · adapter_clean 0.10 | **match 0.15/0.15 · pos 0.15/0.15 · persistence 0.25 · n_len 0.10 · adapter_clean 0.05** | Position consistency deserves parity with raw match rate; cross-round persistence is the unique SELEX-specific signal (Hoinka et al. 2015, AptaTRACE / AptaTools); adapter_clean is already enforced upstream as a blacklist, so it should be a small confidence bonus, not a driver. |
+| `COMPOSITE_WEIGHTS_NO_ROUND_MAP` | match 0.30/0.30 · pos 0.15/0.15 · persistence 0.00 · n_len 0.05 · adapter_clean 0.05 | **match 0.225/0.225 · pos 0.225/0.225 · persistence 0.00 · n_len 0.05 · adapter_clean 0.05** | With persistence absent and status already capped at MEDIUM, within-round evidence (match + position) should carry equal parity weight; n_len and adapter_clean remain supporting signals, not drivers. |
+
+Confirmed as-is: `PRIMER_FOUND_MATCH_RATE_THRESHOLD = 0.70`,
+`N_LENGTH_CONFIDENT_FRACTION = 0.80`, `UNABLE_TO_EXTRACT_MATCH_RATE =
+0.40`, `STATUS_MEDIUM_CUTOFF = 0.60`, `STATUS_LOW_CUTOFF = 0.30`,
+`ORIENTATION_REVERSED_FORWARD_MAX = 0.05`,
+`ORIENTATION_REVERSED_REVERSE_MIN = 0.95`.
+
+Tests stayed green across the threshold flip (358 + 1 xfailed) because
+they assert on `extraction_mode` / `required_action` / `status`, never
+on the threshold numbers themselves. Marker convention shifted:
+`CALIBRATION-TODO` → `CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1)`
+for the 8 reviewed entries. Eleven `CALIBRATION-TODO` markers still
+pending (Phase 5 qc flags, adapter blacklist composition, strand
+report granularity).
+
+**Phase 6 benchmark inputs (structural flags Codex raised, read-only).**
+These are NOT actionable in Phase 2 calibration; they inform the Phase
+6 benchmark dataset selection so empirical ground truth covers the
+known edge cases:
+
+1. **Inline-barcoded / messy round-map cases**: earliest-round
+   consensus can fail when demux/round-map assumptions are wrong. The
+   `--round-map` requirement (locked plan line 289) mitigates the
+   common case, but the benchmark should include at least one messy-
+   barcode dataset to stress the failure mode.
+2. **One-sided primer detection vs partial homology**: orientation
+   classification based solely on `primer_5p` vs `revcomp(primer_3p)`
+   can be ambiguous if only one primer is inferred, or if the primers
+   share local homology. Benchmark should include a dataset with
+   homologous flanking regions.
+3. **First-13-nt adapter blacklist** is appropriately conservative,
+   but rare real primers sharing an Illumina-like prefix would be
+   dropped. Acceptable trade-off; just documented for the methods
+   section.
+
 ### Added
 
 **Phase 1 — library modules ported (166 tests, all green):**
