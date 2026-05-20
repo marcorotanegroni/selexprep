@@ -274,13 +274,7 @@ MIT. See [`LICENSE`](LICENSE).
 
 ## Citation
 
-Publication pending — Bioinformatics Advances Application Note for
-v0.1 (tool); NAR Database Issue for v0.2 (catalog +
-LibraryReport-annotated corpus). DOI placeholders to follow.
 
 ## Acknowledgments
 
-Built with Claude Code (Anthropic) under the four-round
-Codex-frozen implementation plan at
-`~/.claude/plans/unified-seeking-treehouse.md`. The full development
-log is in [`CHANGELOG.md`](CHANGELOG.md).
+The full development log is in [`CHANGELOG.md`](CHANGELOG.md).
