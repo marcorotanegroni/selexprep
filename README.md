@@ -202,23 +202,34 @@ By design — these are handled by mature existing tools that consume
 | Aptamer design | MAWS · RNAtranslator |
 | Read merging (paired-end full-insert recovery) | bbmerge · vsearch · pear (v0.2 hook) |
 
-## Calibration status (v0.1 placeholder values)
-
-Nineteen heuristic thresholds across `library/detect.py`,
-`qc/flags.py`, and `extract/strand.py` are documented v0.1
-placeholders. Each carries a `# CALIBRATION-TODO` comment citing the
-locked plan line it came from (or "no locked default" otherwise). The
-full inventory:
-
-```bash
-grep -rn "CALIBRATION-TODO" src/
-```
+## Calibration status
 
 Tests assert on **behavior**, never on threshold values (e.g.
 `assert report.status == "HIGH"` for high-match-rate inputs, never
-`assert HIGH_CUTOFF == 0.80`). When Codex peer-review tunes the
-numbers — together with Phase 6 benchmark recovery numbers — the test
-suite stays green by construction.
+`assert HIGH_CUTOFF == 0.85`). Tuning the numbers is therefore safe
+under the existing test suite.
+
+**Phase 2 (LibraryReport inference)** — peer-reviewed by Codex on
+2026-05-20, pass 1. Eight `CALIBRATION-REVIEWED` markers in
+`library/detect.py`: six confirmed at locked-plan defaults, four
+revised with cited rationale (`POSITION_CONSISTENCY_TOLERANCE` 2 → 3
+per AptaPLEX default; `STATUS_HIGH_CUTOFF` 0.80 → 0.85; both
+`COMPOSITE_WEIGHTS` regimes rebalanced to give parity to match-rate +
+position-consistency and weight the SELEX-specific cross-round
+persistence highest). See `CHANGELOG.md` for the full diff.
+
+**Phase 5 (QC suspicion flags) + adapter blacklist composition** —
+still pending. Six `CALIBRATION-TODO` markers in `qc/flags.py`, plus
+one in `library/adapters.py` (TruSeq + Nextera vs full Illumina set)
+and one in `extract/strand.py`. Inventory:
+
+```bash
+grep -rn "CALIBRATION-TODO" src/      # what's left to review
+grep -rn "CALIBRATION-REVIEWED" src/  # what Codex has already vetted
+```
+
+Final calibration tuning will use Phase 6 benchmark recovery numbers
+(15+ known-primer datasets) as empirical ground truth.
 
 ## Architecture
 

@@ -396,3 +396,94 @@ def test_below_detection_floor_returns_unable() -> None:
     assert report.extraction_mode == "UNABLE_TO_EXTRACT"
     assert report.failure_reason is not None
     assert "below detection floor" in report.failure_reason
+
+
+# ===========================================================================
+# Codex pass 1 regressions (2026-05-20)
+# ===========================================================================
+# Three bug fixes that survived to v0.1 RC and were caught in the second
+# Codex review of Phase 2:
+#   1. match_rate_* was aliased to position_consistency_* (double-count).
+#   2. adapter_clean_signal ignored the drop flag (hid the adapter trap).
+#   3. paired-split mode measured 3p signals against R1 instead of R2.
+# These tests assert the post-fix behavior so the bugs cannot regress.
+
+
+def test_match_rate_distinct_from_position_consistency() -> None:
+    """Codex pass 1 regression #1: match_rate (substring anywhere, Hamming ≤ 1)
+    and position_consistency (substring at flank ± tolerance) must NOT be
+    aliased. Place the primer 10 nt past the read start; with tolerance=3
+    the flank check fails but the substring check passes."""
+    from selexprep.library.detect import (
+        POSITION_CONSISTENCY_TOLERANCE,
+        _position_consistency,
+        _substring_match_rate,
+    )
+
+    primer = PRIMER_5P_T7  # 22 nt
+    # Each read = 10 nt offset + primer + 4 nt tail. Primer starts at position 10.
+    seqs = [f"ACGTACGTAC{primer}TTTT" for _ in range(100)]
+
+    pos = _position_consistency(
+        seqs, primer, is_prefix=True, tolerance=POSITION_CONSISTENCY_TOLERANCE
+    )
+    match = _substring_match_rate(seqs, primer)
+
+    # Position-anchored fails: primer at position 10 > tolerance (3).
+    assert pos < 0.05, f"position_consistency should be ~0, got {pos}"
+    # Substring-anywhere passes: primer present in every read.
+    assert match > 0.95, f"match_rate should be ~1, got {match}"
+
+
+def test_adapter_clean_flag_demotes_confidence_when_primer_dropped() -> None:
+    """Codex pass 1 regression #2: when a detected primer matches a known
+    sequencing adapter and gets dropped, adapter_clean must register the
+    event (0.0) even if the OTHER primer survived. Previously the signal
+    was "1.0 if any primer survived", which hid the adapter trap."""
+    truseq = KNOWN_ADAPTERS["TRUSEQ_R1"]  # "AGATCGGAAGAGC", 13 nt
+    # Pool A: clean primers (no adapter trap).
+    clean_pools = _three_round_pool(PRIMER_5P_T7, PRIMER_3P_CCAT)
+    clean = compute_library_report(clean_pools, read_source="R1")
+
+    # Pool B: 5' primer's first 13 nt match TruSeq R1 → adapter-drop fires
+    # on the 5' side; 3' primer survives.
+    truseq_primer = truseq + "AGGGGGT"  # 13 + 7 = 20 nt
+    trap_pools = _three_round_pool(truseq_primer, PRIMER_3P_CCAT)
+    trap = compute_library_report(trap_pools, read_source="R1")
+
+    # 5' candidate dropped + recorded.
+    assert trap.primer_5p is None
+    assert trap.known_adapter_hits["TRUSEQ_R1"] > 0
+    # The 3' primer survives — but adapter_clean still registers the trap,
+    # so the trap report has strictly lower composite confidence than the
+    # clean report (the bug would have produced equal confidence here).
+    assert trap.confidence < clean.confidence, (
+        f"trap confidence ({trap.confidence:.3f}) should be lower than clean "
+        f"({clean.confidence:.3f}) — adapter drop must demote adapter_clean"
+    )
+
+
+def test_paired_split_match_rate_3p_reflects_r2_not_r1() -> None:
+    """Codex pass 1 regression #3: in paired-end split mode, match_rate_3p
+    + position_consistency_3p + variants_3p must reflect R2 evidence
+    (where ``revcomp(primer_3p)`` actually appears at R2's 5' end) — NOT
+    R1's 3' end, where the 3' adapter cannot exist by construction."""
+    # R1: only 5' primer at start, long random tail (no 3' primer in R1).
+    r1_pools = _three_round_pool(PRIMER_5P_T7, primer_3p=None, random_len=80)
+    # R2: revcomp(3' primer) at start + long random tail.
+    rc_3p = reverse_complement(PRIMER_3P_CCAT)
+    r2_pools = _three_round_pool(rc_3p, primer_3p=None, random_len=80)
+
+    report = compute_library_report(r1_pools, read_source="R1_AND_R2", paired_mate_streams=r2_pools)
+
+    assert report.extraction_mode == "PAIRED_END_SPLIT_PRIMERS"
+    # Bug would have made these ≈ 0 (measured against R1 where they can't
+    # appear). Fix makes them ≈ 1 (measured against R2's 5' end).
+    assert report.match_rate_3p > 0.5, (
+        f"match_rate_3p should be high (R2-measured), got {report.match_rate_3p:.3f}"
+    )
+    assert report.position_consistency_3p > 0.5, (
+        f"position_consistency_3p should be high (R2-measured), "
+        f"got {report.position_consistency_3p:.3f}"
+    )
+    assert report.variants_3p, "variants_3p should be non-empty (R2's 5' fragments)"
