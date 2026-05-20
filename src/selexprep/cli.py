@@ -17,12 +17,14 @@ import typer
 
 from selexprep import __version__
 from selexprep.catalog.cli import app as catalog_app
+from selexprep.count.counter import count_fasta
 from selexprep.extract import run_extract
 from selexprep.library import (
     compute_library_report,
     read_library_report_json,
     write_library_report_json,
 )
+from selexprep.qc.runner import run_qc
 
 logger = logging.getLogger(__name__)
 
@@ -319,22 +321,73 @@ def extract(
         typer.echo(f"  {p}")
 
 
+def _parse_round_label(label: str) -> int:
+    """Parse ``--round R0`` / ``--round 0`` / ``--round 00`` -> integer 0.
+
+    Accepts an optional leading ``R``/``r``/``round_`` prefix. Raises
+    ``typer.BadParameter`` on anything else.
+    """
+    s = label.strip()
+    for prefix in ("round_", "Round_", "R", "r"):
+        if s.startswith(prefix):
+            s = s[len(prefix) :]
+            break
+    try:
+        return int(s)
+    except ValueError as e:
+        raise typer.BadParameter(
+            f"--round expects an integer (optionally R-prefixed); got {label!r}"
+        ) from e
+
+
 @app.command()
 def count(
-    extracted: Path = typer.Argument(..., help="Extracted FASTA file."),
-    round: str = typer.Option(..., "--round", help="Round label (e.g. R1)."),
-    outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
+    extracted: Path = typer.Argument(..., help="Extracted FASTA(.gz) file (output of `extract`)."),
+    round_label: str = typer.Option(..., "--round", help="Round label, e.g. R0 or 0."),
+    outdir: Path = typer.Option(..., "--outdir", help="Output directory (round_NN/ subdir)."),
 ) -> None:
-    """Count unique sequences per round (raw + RPM/frequency)."""
-    _not_implemented("count")
+    """Count unique sequences from an extracted FASTA -> counts.parquet."""
+    r = _parse_round_label(round_label)
+    round_dir = outdir / f"round_{r:02d}"
+    round_dir.mkdir(parents=True, exist_ok=True)
+    out_parquet = round_dir / "counts.parquet"
+
+    stats = count_fasta(extracted, out_parquet)
+
+    typer.echo(f"counts.parquet -> {out_parquet}")
+    typer.echo(f"  unique sequences: {stats['n_unique']:,}")
+    typer.echo(f"  total reads:      {stats['n_reads']:,}")
+    typer.echo(
+        f"  top sequence:     {stats['top_seq_reads']:,} reads ({stats['top_seq_rpm']:.0f} RPM)"
+    )
+    typer.echo(f"  Shannon entropy:  {stats['shannon_entropy_bits']:.2f} bits")
 
 
 @app.command()
 def qc(
-    manifest: Path = typer.Argument(..., help="Path to selexprep manifest JSON."),
+    manifest: Path = typer.Argument(..., help="Path to selexprep_manifest.json."),
+    counts_dir: Path | None = typer.Option(
+        None,
+        "--counts-dir",
+        help="Directory containing round_*/counts.parquet (default: manifest's parent).",
+    ),
+    outdir: Path | None = typer.Option(
+        None,
+        "--outdir",
+        help="Where to write flags.yaml + PNG plots (default: <manifest_parent>/qc/).",
+    ),
 ) -> None:
     """Produce QC plots + depth-aware suspicion flags from a manifest."""
-    _not_implemented("qc")
+    result = run_qc(manifest, counts_dir=counts_dir, outdir=outdir)
+    typer.echo(
+        f"qc: {result.n_flags_raised} flag(s) raised; {len(result.plot_paths)} plot(s) written"
+    )
+    if result.flags_yaml_path is not None:
+        typer.echo(f"  flags.yaml: {result.flags_yaml_path}")
+    for p in result.plot_paths:
+        typer.echo(f"  plot: {p}")
+    for f in result.flags:
+        typer.echo(f"  [{f.severity.upper()}] {f.name}")
 
 
 @app.command()

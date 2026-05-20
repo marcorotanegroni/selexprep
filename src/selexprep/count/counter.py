@@ -300,6 +300,49 @@ def _counter_to_parquet(
     }
 
 
+def _iter_fasta_sequences(fasta_gz: Path) -> Iterator[str]:
+    """Yield sequence lines from a (gzipped) FASTA file.
+
+    Phase-3 outputs are FASTA (cutadapt's ``--fasta`` mode); ``count_fasta``
+    consumes them. Multi-line FASTAs are not produced by selexprep but are
+    tolerated (concatenates wrapped lines per record).
+    """
+    current: list[str] = []
+    with gzip.open(fasta_gz, "rt", encoding="utf-8", errors="replace") as fh:
+        for raw in fh:
+            line = raw.rstrip("\n")
+            if line.startswith(">"):
+                if current:
+                    yield "".join(current)
+                    current = []
+                continue
+            if line:
+                current.append(line)
+        if current:
+            yield "".join(current)
+
+
+def count_fasta(
+    fasta_gz: Path,
+    output_parquet: Path,
+    expected_random_len: int | None = None,
+) -> dict:
+    """Count unique sequences from a primer-stripped FASTA.gz -> per-round parquet.
+
+    Phase 5 entry point: consumes the output of ``selexprep extract``
+    (Phase 3 / locked plan line 322). Output schema matches
+    :func:`count_round`: columns ``sequence``, ``reads``, ``rank``, ``rpm``.
+
+    Unlike ``count_round``, no cutadapt invocation - the input is already
+    primer-stripped by ``extract``. Pure aggregation: read FASTA, build
+    Counter, emit parquet.
+    """
+    counter: collections.Counter[str] = collections.Counter()
+    for seq in _iter_fasta_sequences(fasta_gz):
+        counter[seq] += 1
+    return _counter_to_parquet(counter, output_parquet, expected_random_len)
+
+
 def count_round(
     fastq_gz: Path,
     output_parquet: Path,

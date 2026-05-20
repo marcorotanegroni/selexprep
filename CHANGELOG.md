@@ -36,6 +36,72 @@ These were flagged during the Phase 0/1 peer-review and are **not** blocking Pha
 - **`qc.readiness` requires clusters / enrich parquets.** The module is a faithful port and still expects `round_*.clusters.parquet`, `enrich_*.parquet`, `summary.json`, and `cluster_stats.json` — artifacts that v0.1 does *not* produce (clustering / enrichment are out of v0.1 scope). It remains exposed as a library API so the thesis pipeline can use it, but it is **not** wired into the `selexprep qc` CLI verb. The v0.1 `qc` verb will get a thinner, manifest-driven implementation when `extract`/`count` are fully separated.
 - **Mocked-HTTP coverage gap.** The nine network adapters in `fetch.discover` and `download_srr_*` paths beyond ENA-direct don't yet have offline mocked tests (only their parsing helpers + dispatcher + SeedAdapter are covered). To be addressed before PyPI release.
 
+### Phase 5 — QC plots + flags + count CLI (2026-05-20)
+
+Closes the v0.1 single-dataset CLI surface. The workflow is now
+feature-complete end-to-end: ``detect`` -> ``extract`` -> ``count`` ->
+``qc``. ``selexprep run`` (batch driver) and ``selexprep fetch``
+(accession download) are deferred to Phase 6 / v0.2.
+
+- **NEW: `selexprep.qc.diversity`** — `rarefy()` (deterministic
+  multivariate hypergeometric subsampling via numpy default RNG;
+  seeded for reproducibility), `shannon_entropy()` (base-2),
+  `unique_count()`, `top_n_coverage()`. Used by both `flags.py` and
+  `plots.py`.
+- **NEW: `selexprep.qc.flags`** — eight depth-aware suspicion flags
+  per locked plan lines 350-358:
+  `unexpected_rarefied_diversity_increase` (rarefied uniques per
+  round; not raw counts),
+  `low_primer_match` (threshold imported from
+  `library.detect.UNABLE_TO_EXTRACT_MATCH_RATE` — single source of
+  truth),
+  `n_length_variation_across_rounds`,
+  `strand_mix` (from Phase 3 strand_report.tsv),
+  `low_total_reads`,
+  `adapter_contamination_high`,
+  `extraction_mode_changed_across_rounds` (v0.1 inert — placeholder
+  for Phase 6 `selexprep run` batch driver),
+  `requires_read_merging_for_full_insert` (informational).
+  `compute_all_flags()` aggregator + `write_flags_yaml()` deterministic
+  emitter (sorted by flag name; float-rounded for cross-platform
+  stability).
+- **NEW: `selexprep.qc.plots`** — four per-dataset matplotlib plots
+  (PNG, 150 DPI, Agg backend, tight bbox): read_retention.png,
+  primer_match_per_round.png, n_length_distribution.png,
+  per_round_panel.png. **Plots are informational only** — matplotlib
+  PNG output is not byte-deterministic across versions; they do not
+  contribute to `output_sha256`.
+- **NEW: `selexprep.qc.runner`** — `run_qc(manifest_path, ...)`
+  orchestrator. Auto-discovers `round_*/counts.parquet` under the
+  manifest's directory; reads `trim_reports.json` for read-retention
+  plot data; optionally reads `strand_report.tsv` for the strand-mix
+  flag. Returns `QcResult` with the list of flags raised, the
+  flags.yaml path, and the four plot paths.
+- **NEW: `selexprep.count.counter.count_fasta`** — FASTA-aware
+  per-round counter (the Phase 3 extract pipeline emits FASTA, not
+  FASTQ). Reuses `_counter_to_parquet` so the output schema matches
+  `count_round`: `sequence`, `reads`, `rank`, `rpm`.
+- **WIRED: `selexprep count <extracted-fasta> --round R0 --outdir OUT`**
+  — accepts `R0`, `r0`, `round_0`, or just `0` for the round label;
+  writes to `OUT/round_NN/counts.parquet`.
+- **WIRED: `selexprep qc <manifest> [--counts-dir DIR] [--outdir OUT]`**
+  — prints a one-line summary plus per-flag severity to stdout;
+  emits `flags.yaml` and the four PNG plots.
+- **Tests added (+56, 358 + 1 xfailed total):**
+  `tests/test_diversity.py` (20 — rarefy determinism + edge cases,
+  Shannon entropy, top-N coverage monotonicity, depth-aware sanity
+  check), `tests/test_flags.py` (21 — positive + negative case per
+  flag + aggregator + YAML determinism), `tests/test_plots.py` (5 —
+  PNG smoke), `tests/test_qc_runner.py` (6 — end-to-end manifest ->
+  flags.yaml + 4 PNGs with realistic synthetic data), `tests/test_cli.py`
+  (+4 — count + qc smoke).
+- **CALIBRATION-TODO inventory: 19** (was 12). New tunables in
+  `qc/flags.py`: rarefaction depth, max modal lengths, strand-mix
+  max reverse fraction, low-total-reads minimum, adapter-contamination
+  max fraction; in `qc/plots.py`: top-N coverage N. The match-rate
+  threshold is **imported** from `library.detect` (not redeclared)
+  so a single Codex pass tunes both QC and classifier.
+
 ### Phase 4 — Manifest + inspect + extract override/rebuild (2026-05-19)
 
 Closes the v0.1 CLI surface (except QC, Phase 5). Every `extract` run
