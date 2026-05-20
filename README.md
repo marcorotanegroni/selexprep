@@ -4,7 +4,6 @@
 
 > *`selexprep` fills the missing preprocessing layer for public datasets by starting from accessions and empirically inferring primer/constant regions, extracting random regions, and emitting confidence-aware, reproducible count tables and manifests.*
 >
-> — Codex-frozen value proposition
 
 ## Status
 
