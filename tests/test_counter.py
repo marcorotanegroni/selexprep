@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from selexprep.count.counter import (
+    count_fastq_pretrimmed,
     count_round,
     pair_sibling,
     pool_diversity_stats,
@@ -123,3 +124,57 @@ def test_count_round_empty_fastq(tmp_path: Path) -> None:
 
     assert stats["n_reads"] == 0
     assert stats["n_unique"] == 0
+
+
+# ---------------------------------------------------------------------------
+# count_fastq_pretrimmed (Phase 5 Codex pass 1 follow-up)
+# ---------------------------------------------------------------------------
+
+
+def test_count_fastq_pretrimmed_basic(tmp_path: Path) -> None:
+    """Pre-trimmed FASTQ -> per-round parquet with the standard schema."""
+    fq = tmp_path / "pre.fastq.gz"
+    _write_fastq_gz(fq, ["ACGT", "ACGT", "ACGT", "GCAT", "GCAT", "TTTT"])
+    out = tmp_path / "pre.counts.parquet"
+
+    stats = count_fastq_pretrimmed(fq, out)
+
+    assert stats["n_reads"] == 6
+    assert stats["n_unique"] == 3
+
+    df = pd.read_parquet(out)
+    # Schema parity with count_fasta / count_round.
+    assert set(df.columns) >= {"sequence", "reads", "rank", "rpm"}
+    counts = dict(zip(df["sequence"], df["reads"], strict=True))
+    assert counts["ACGT"] == 3
+    assert counts["GCAT"] == 2
+    assert counts["TTTT"] == 1
+
+
+def test_count_fastq_pretrimmed_raises_on_truncated_record(tmp_path: Path) -> None:
+    """Truncated FASTQ -> ValueError (same policy as
+    extract/strand.py:reorient_fastq_gz). selexprep does not silently
+    produce partial counts."""
+    fq = tmp_path / "trunc.fastq.gz"
+    with gzip.open(fq, "wt", encoding="utf-8") as fh:
+        fh.write("@r0\nACGT\n+\nIIII\n")  # complete
+        fh.write("@r1\n")  # truncated
+    out = tmp_path / "trunc.counts.parquet"
+
+    with pytest.raises(ValueError, match="truncated FASTQ record"):
+        count_fastq_pretrimmed(fq, out)
+
+
+def test_count_fastq_pretrimmed_handles_uncompressed(tmp_path: Path) -> None:
+    """Plain .fastq (no .gz) is also supported."""
+    fq = tmp_path / "plain.fastq"
+    fq.write_text(
+        "@r0\nACGT\n+\nIIII\n@r1\nACGT\n+\nIIII\n@r2\nGCAT\n+\nIIII\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "plain.counts.parquet"
+
+    stats = count_fastq_pretrimmed(fq, out)
+
+    assert stats["n_reads"] == 3
+    assert stats["n_unique"] == 2

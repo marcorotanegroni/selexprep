@@ -151,17 +151,52 @@ def test_low_total_reads_positive() -> None:
 
 
 def test_adapter_contamination_negative() -> None:
-    lr = _make_library_report(known_adapter_hits={"TRUSEQ_R1": 100, "NEXTERA": 0})
-    pools = {0: {f"s{i}": 100 for i in range(1000)}}  # 100k reads -> 100 hits is 0.1%
-    assert check_adapter_contamination_high(lr, pools) is None
+    """100 adapter hits / 100k inference-universe reads = 0.1% -> below threshold."""
+    lr = _make_library_report(
+        known_adapter_hits={"TRUSEQ_R1": 100, "NEXTERA": 0},
+        read_fraction_used_for_inference=1.0,
+    )
+    trim_reports = {0: {"n_in": 100_000, "n_out": 95_000}}
+    assert check_adapter_contamination_high(lr, trim_reports) is None
 
 
 def test_adapter_contamination_positive() -> None:
-    lr = _make_library_report(known_adapter_hits={"TRUSEQ_R1": 1000, "NEXTERA": 0})
-    pools = {0: {f"s{i}": 1 for i in range(1000)}}  # 1k reads -> 1000 hits = 100%
-    flag = check_adapter_contamination_high(lr, pools)
+    """1000 adapter hits / 1k inference-universe reads = 100% -> above threshold."""
+    lr = _make_library_report(
+        known_adapter_hits={"TRUSEQ_R1": 1000, "NEXTERA": 0},
+        read_fraction_used_for_inference=1.0,
+    )
+    trim_reports = {0: {"n_in": 1_000, "n_out": 900}}
+    flag = check_adapter_contamination_high(lr, trim_reports)
     assert flag is not None
     assert flag.name == "adapter_contamination_high"
+    assert flag.severity == "warn"
+
+
+def test_adapter_contamination_denominator_unavailable() -> None:
+    """When trim_reports is missing, surface flag as 'info' with reason."""
+    lr = _make_library_report(known_adapter_hits={"TRUSEQ_R1": 50})
+    flag = check_adapter_contamination_high(lr, None)
+    assert flag is not None
+    assert flag.severity == "info"
+    assert flag.evidence["reason"] == "denominator_unavailable"
+
+
+def test_adapter_contamination_honors_read_fraction_used_for_inference() -> None:
+    """If Phase 2 inference subsampled (e.g., used 50% of reads), the
+    denominator must scale down to match — otherwise the fraction is
+    understated by 2x."""
+    lr = _make_library_report(
+        known_adapter_hits={"TRUSEQ_R1": 100},
+        read_fraction_used_for_inference=0.5,
+    )
+    # n_in=10000, fraction=0.5 → denominator should be 5000
+    # hits=100, frac = 100/5000 = 0.02 (below 0.05 threshold)
+    trim_reports = {0: {"n_in": 10_000, "n_out": 9_000}}
+    assert check_adapter_contamination_high(lr, trim_reports) is None
+    # If the same hit count were measured against the FULL n_in (no
+    # subsampling correction), frac = 100/10000 = 0.01 — different number,
+    # confirming the read_fraction adjustment matters.
 
 
 # ---------------------------------------------------------------------------
@@ -219,6 +254,65 @@ def test_diversity_increase_positive() -> None:
     flag = check_unexpected_rarefied_diversity_increase(pools)
     assert flag is not None
     assert flag.name == "unexpected_rarefied_diversity_increase"
+
+
+def test_diversity_increase_clamps_depth_to_min_total(tmp_path: Path) -> None:
+    """Phase 5 Codex pass 1 BLOCKING regression: rarefaction depth must
+    clamp to ``min(RAREFACTION_DEPTH, min_total_reads_per_round)``. The
+    previous bug let a 2k-read round skip rarefaction entirely (the
+    ``rarefy`` helper returns the original pool when ``depth >= total``)
+    while a 100k-read round got actually rarefied to 10k — comparing
+    unique counts across those two pools was exactly the depth-
+    confounding the flag was meant to prevent."""
+    # round_0: 2_000 total reads (below default RAREFACTION_DEPTH of 10_000)
+    # round_1: 100_000 total reads (above default)
+    pool_0 = {f"s{i}": 2 for i in range(1_000)}  # 1000 uniques * 2 reads = 2k
+    pool_1 = {f"t{i}": 100 for i in range(1_000)}  # 1000 uniques * 100 = 100k
+    pools = {0: pool_0, 1: pool_1}
+
+    # Even though the raw unique counts are equal (1000 each), the flag
+    # must rarefy both to the SAME depth (min_total = 2000) so the
+    # comparison is depth-fair. Result should not fire (diversity equal
+    # at common depth).
+    flag = check_unexpected_rarefied_diversity_increase(pools)
+
+    # If flag did fire, evidence must at least document the effective_depth.
+    if flag is not None:
+        assert "effective_depth" in flag.evidence
+        assert "configured_depth" in flag.evidence
+        # And effective_depth must be clamped to min_total (2000), not 10000.
+        assert flag.evidence["effective_depth"] == 2_000, (
+            f"effective_depth should clamp to min_total (2_000); "
+            f"got {flag.evidence['effective_depth']}"
+        )
+    # The KEY property: rarefy(pool_0, 2000) returns pool_0 unchanged
+    # (sums to 2000); rarefy(pool_1, 2000) subsamples to 2k reads.
+    # Both pools have the same uniques (1000) so flag should NOT fire.
+    assert flag is None, "flag should not fire when both rarefied pools have equal uniques"
+
+
+def test_diversity_increase_records_effective_depth_in_evidence() -> None:
+    """When the flag DOES fire, evidence must include both configured_depth
+    and effective_depth so users can audit the rarefaction decision.
+
+    Designed so the smaller round caps effective_depth below
+    RAREFACTION_DEPTH and rarefaction-fair comparison still surfaces an
+    increase (pool_1 has much more diversity per common read)."""
+    # pool_0: 1000 uniques * 5 reads each = 5_000 total reads (sets min_total)
+    # pool_1: 5000 uniques * 100 reads each = 500_000 total reads (higher diversity)
+    pool_0 = {f"a{i}": 5 for i in range(1_000)}
+    pool_1 = {f"b{i}": 100 for i in range(5_000)}
+    pools = {0: pool_0, 1: pool_1}
+
+    flag = check_unexpected_rarefied_diversity_increase(pools)
+    assert flag is not None, "expected flag to fire (pool_1 has higher diversity at common depth)"
+    assert "configured_depth" in flag.evidence
+    assert "effective_depth" in flag.evidence
+    assert flag.evidence["effective_depth"] <= flag.evidence["configured_depth"]
+    # min_total = 5000, so effective_depth = min(10000, 5000) = 5000.
+    assert flag.evidence["effective_depth"] == 5_000
+    assert flag.evidence["configured_depth"] == 10_000
+    assert flag.evidence["min_total_reads"] == 5_000
 
 
 # ---------------------------------------------------------------------------
@@ -296,3 +390,40 @@ def test_write_flags_yaml_empty_list_emits_empty_array(tmp_path: Path) -> None:
     path = tmp_path / "flags.yaml"
     write_flags_yaml([], path)
     assert path.read_text() == "[]\n"
+
+
+def test_write_flags_yaml_deterministic_with_nested_evidence(tmp_path: Path) -> None:
+    """Phase 5 Codex pass 1 NB: nested dicts + lists inside `evidence`
+    must be deterministic under YAML serialization (`safe_dump` already
+    sorts top-level keys; verify the guarantee holds for nested
+    structures like the ones produced by `unexpected_rarefied_diversity_increase`
+    and `adapter_contamination_high`)."""
+    # Build the same flag twice with intentionally different insertion
+    # orders for the nested dicts/lists.
+    evidence_a = {
+        "max_fraction": 0.05,
+        "adapters_above_threshold": [
+            {"adapter": "TRUSEQ_R1", "hits": 500, "fraction_of_reads": 0.12345},
+            {"adapter": "NEXTERA", "hits": 100, "fraction_of_reads": 0.024},
+        ],
+        "rounds_seen": {2: 10, 0: 5, 1: 8},
+    }
+    evidence_b = {
+        "rounds_seen": {0: 5, 1: 8, 2: 10},  # same data, different insertion order
+        "adapters_above_threshold": [
+            {"fraction_of_reads": 0.12345, "hits": 500, "adapter": "TRUSEQ_R1"},
+            {"hits": 100, "adapter": "NEXTERA", "fraction_of_reads": 0.024},
+        ],
+        "max_fraction": 0.05,
+    }
+    flag_a = Flag(name="adapter_contamination_high", severity="warn", evidence=evidence_a)
+    flag_b = Flag(name="adapter_contamination_high", severity="warn", evidence=evidence_b)
+
+    path_a = tmp_path / "a.yaml"
+    path_b = tmp_path / "b.yaml"
+    write_flags_yaml([flag_a], path_a)
+    write_flags_yaml([flag_b], path_b)
+
+    assert path_a.read_bytes() == path_b.read_bytes(), (
+        "nested evidence dicts/lists must serialize deterministically regardless of insertion order"
+    )

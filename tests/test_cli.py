@@ -148,6 +148,151 @@ def test_count_rejects_invalid_round_label(tmp_path: Path) -> None:
     assert result.exit_code != 0
 
 
+def test_count_rejects_negative_round_label(tmp_path: Path) -> None:
+    """Phase 5 Codex pass 1 NB: negative integers like ``R-1`` would
+    create ``round_-1/`` directories; CLI must reject."""
+    fa = tmp_path / "extracted.fasta.gz"
+    _write_fasta_gz(fa, ["AAAA"])
+
+    result = runner.invoke(
+        app,
+        ["count", str(fa), "--round", "R-1", "--outdir", str(tmp_path / "out")],
+    )
+    assert result.exit_code != 0
+
+
+def test_count_rejects_fastq_input(tmp_path: Path) -> None:
+    """Phase 5 Codex pass 1 BLOCKING: selexprep count accepts only the
+    extracted FASTA from `selexprep extract` (primer-stripped). FASTQ
+    inputs would silently mis-parse, so the CLI rejects them by default
+    with a clear error pointing the user at `selexprep extract` OR the
+    `--from-pretrimmed-fastq` opt-in flag."""
+    import gzip as _gzip
+
+    fq = tmp_path / "raw.fastq.gz"
+    with _gzip.open(fq, "wt", encoding="utf-8") as fh:
+        fh.write("@r0\nACGT\n+\nIIII\n")
+
+    result = runner.invoke(
+        app,
+        ["count", str(fq), "--round", "R0", "--outdir", str(tmp_path / "out")],
+    )
+    assert result.exit_code == 2
+    output = result.stderr or result.output
+    assert "FASTQ" in output
+    assert "selexprep extract" in output
+    # Error must also mention the explicit opt-in escape hatch.
+    assert "--from-pretrimmed-fastq" in output
+
+
+def test_count_with_from_pretrimmed_fastq_succeeds(tmp_path: Path) -> None:
+    """Opt-in path: --from-pretrimmed-fastq routes FASTQ input through
+    count_fastq_pretrimmed and produces a counts.parquet."""
+    import gzip as _gzip
+
+    fq = tmp_path / "pretrimmed.fastq.gz"
+    # Three reads, two unique sequences.
+    with _gzip.open(fq, "wt", encoding="utf-8") as fh:
+        fh.write("@r0\nACGTACGT\n+\nIIIIIIII\n")
+        fh.write("@r1\nACGTACGT\n+\nIIIIIIII\n")
+        fh.write("@r2\nGCATGCAT\n+\nIIIIIIII\n")
+
+    outdir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "count",
+            str(fq),
+            "--round",
+            "R0",
+            "--outdir",
+            str(outdir),
+            "--from-pretrimmed-fastq",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    parquet = outdir / "round_00" / "counts.parquet"
+    assert parquet.exists()
+
+    import pandas as pd
+
+    df = pd.read_parquet(parquet)
+    assert set(df["sequence"]) == {"ACGTACGT", "GCATGCAT"}
+    # ACGTACGT has 2 reads, GCATGCAT has 1.
+    counts_by_seq = dict(zip(df["sequence"], df["reads"], strict=True))
+    assert counts_by_seq["ACGTACGT"] == 2
+    assert counts_by_seq["GCATGCAT"] == 1
+
+
+def test_count_from_pretrimmed_fastq_logs_unverified_warning(
+    tmp_path: Path,
+) -> None:
+    """Opt-in path emits a loud warning that selexprep cannot verify the
+    trimming state."""
+    import gzip as _gzip
+    import logging
+
+    fq = tmp_path / "pretrimmed.fastq.gz"
+    with _gzip.open(fq, "wt", encoding="utf-8") as fh:
+        fh.write("@r0\nACGT\n+\nIIII\n")
+
+    # CliRunner uses a separate logging context; we route the runner's
+    # stderr through a handler to capture the warning.
+    handler_records: list[logging.LogRecord] = []
+
+    class _Capture(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            handler_records.append(record)
+
+    cli_logger = logging.getLogger("selexprep.cli")
+    handler = _Capture(level=logging.WARNING)
+    cli_logger.addHandler(handler)
+    try:
+        result = runner.invoke(
+            app,
+            [
+                "count",
+                str(fq),
+                "--round",
+                "R0",
+                "--outdir",
+                str(tmp_path / "out"),
+                "--from-pretrimmed-fastq",
+            ],
+        )
+    finally:
+        cli_logger.removeHandler(handler)
+
+    assert result.exit_code == 0, result.output
+    pretrimmed_warnings = [
+        rec for rec in handler_records if "pre-trimmed FASTQ" in rec.getMessage()
+    ]
+    assert pretrimmed_warnings, "expected a 'cannot verify trimming' warning"
+
+
+def test_count_from_pretrimmed_fastq_flag_rejects_fasta_input(tmp_path: Path) -> None:
+    """Symmetry: --from-pretrimmed-fastq passed with a FASTA input is a
+    user error (flag/extension mismatch). Rejects with exit 2."""
+    fa = tmp_path / "extracted.fasta.gz"
+    _write_fasta_gz(fa, ["AAAA", "CCCC"])
+
+    result = runner.invoke(
+        app,
+        [
+            "count",
+            str(fa),
+            "--round",
+            "R0",
+            "--outdir",
+            str(tmp_path / "out"),
+            "--from-pretrimmed-fastq",
+        ],
+    )
+    assert result.exit_code == 2
+    output = result.stderr or result.output
+    assert "not FASTQ" in output
+
+
 def test_qc_emits_flags_yaml_and_plots(tmp_path: Path) -> None:
     """End-to-end smoke: synthetic outdir -> selexprep qc -> flags.yaml + 4 PNGs."""
     import json as _json

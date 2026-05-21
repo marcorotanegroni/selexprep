@@ -17,7 +17,7 @@ import typer
 
 from selexprep import __version__
 from selexprep.catalog.cli import app as catalog_app
-from selexprep.count.counter import count_fasta
+from selexprep.count.counter import count_fasta, count_fastq_pretrimmed
 from selexprep.extract import run_extract
 from selexprep.library import (
     compute_library_report,
@@ -352,11 +352,14 @@ def _parse_round_label(label: str) -> int:
             s = s[len(prefix) :]
             break
     try:
-        return int(s)
+        r = int(s)
     except ValueError as e:
         raise typer.BadParameter(
-            f"--round expects an integer (optionally R-prefixed); got {label!r}"
+            f"--round expects a non-negative integer (optionally R-prefixed); got {label!r}"
         ) from e
+    if r < 0:
+        raise typer.BadParameter(f"--round must be >= 0; got {label!r} (parsed as {r})")
+    return r
 
 
 @app.command()
@@ -364,14 +367,85 @@ def count(
     extracted: Path = typer.Argument(..., help="Extracted FASTA(.gz) file (output of `extract`)."),
     round_label: str = typer.Option(..., "--round", help="Round label, e.g. R0 or 0."),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory (round_NN/ subdir)."),
+    from_pretrimmed_fastq: bool = typer.Option(
+        False,
+        "--from-pretrimmed-fastq",
+        help=(
+            "Opt-in: count a pre-trimmed FASTQ (primers already stripped, "
+            "e.g. by AptaPLEX / EasyDIVER+ / external cutadapt). selexprep "
+            "cannot verify the trimming state and will warn at invocation. "
+            "Default behavior (no flag) hard-rejects FASTQ inputs to keep "
+            "the v0.1 pipeline contract `extract -> count` unambiguous."
+        ),
+    ),
 ) -> None:
     """Count unique sequences from an extracted FASTA -> counts.parquet."""
+    # Phase 5 Codex pass 1: hard-reject FASTQ by default (selexprep count
+    # accepts only EXTRACTED FASTA from `selexprep extract`, primer-stripped
+    # and random-region-only). FASTQ inputs would silently get parsed as if
+    # every other line is a sequence header. Power users with externally
+    # pre-trimmed FASTQ can opt in via --from-pretrimmed-fastq, which routes
+    # to count_fastq_pretrimmed and surfaces a loud "cannot verify trimming"
+    # warning. FASTQ counting otherwise stays a library API
+    # (selexprep.count.counter.count_round, used in the thesis pipeline).
+    name_lower = extracted.name.lower()
+    is_fastq = name_lower.endswith((".fastq", ".fq", ".fastq.gz", ".fq.gz"))
+
+    if is_fastq and not from_pretrimmed_fastq:
+        typer.secho(
+            "count: expected extracted FASTA(.gz) from `selexprep extract`, "
+            "got FASTQ.\n"
+            "  - If you want selexprep's primer-aware extraction, run "
+            "`selexprep extract` first, then count the emitted "
+            "extracted.fasta.gz / partial_*_extracted.fasta.gz file.\n"
+            "  - If your FASTQ is ALREADY primer-stripped by another tool "
+            "(AptaPLEX, EasyDIVER+, external cutadapt), pass "
+            "--from-pretrimmed-fastq to opt in. selexprep will not verify "
+            "the trimming state.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    if from_pretrimmed_fastq and not is_fastq:
+        typer.secho(
+            f"count: --from-pretrimmed-fastq passed but input is not FASTQ. got: {extracted.name}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
     r = _parse_round_label(round_label)
     round_dir = outdir / f"round_{r:02d}"
     round_dir.mkdir(parents=True, exist_ok=True)
     out_parquet = round_dir / "counts.parquet"
 
-    stats = count_fasta(extracted, out_parquet)
+    if from_pretrimmed_fastq:
+        # Print AND log: the typer.secho is the user-facing safety footnote
+        # (Typer apps don't configure stdlib logging by default, so a bare
+        # logger.warning would be invisible to most CLI users). The
+        # logger.warning still goes out for downstream tooling that captures
+        # the selexprep.cli logger explicitly (e.g., qc/runner audit trails).
+        typer.secho(
+            "WARNING: --from-pretrimmed-fastq accepts the input as-is. "
+            "selexprep cannot verify that primers/adapters have been "
+            "stripped; if they remain in the input, unique-sequence "
+            "counts will be inflated. For primer-aware extraction, run "
+            "`selexprep extract` first and count the emitted FASTA.",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+        logger.warning(
+            "Counting pre-trimmed FASTQ %s via --from-pretrimmed-fastq. "
+            "selexprep cannot verify that primers/adapters have been stripped; "
+            "if they remain in the input, unique-sequence counts will be "
+            "inflated. For selexprep's primer-aware extraction, use "
+            "`selexprep extract` then count the emitted FASTA.",
+            extracted,
+        )
+        stats = count_fastq_pretrimmed(extracted, out_parquet)
+    else:
+        stats = count_fasta(extracted, out_parquet)
 
     typer.echo(f"counts.parquet -> {out_parquet}")
     typer.echo(f"  unique sequences: {stats['n_unique']:,}")

@@ -8,6 +8,129 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+**Phase 5 Codex pass 1 (2026-05-21)** — three blocking semantic bugs +
+three non-blocking polish items. Calibration verdict: all six v0.1
+qc constants ✅ confirmed against published HT-SELEX conventions
+(RAPID-SELEX, AptaPLEX, Hoinka 2015, EasyDIVER+, FASTAptamer).
+
+Blocking:
+
+- **`rarefy()` returned the original pool unchanged when `depth >=
+  total`, reintroducing the depth-confounding the flag was meant to
+  avoid (qc/flags.py).** A round with 2k reads was being compared
+  against a round with 100k reads rarefied to 10k — exactly the trap
+  the locked plan flagged at line 351. Fix: clamp to
+  `effective_depth = min(RAREFACTION_DEPTH, min_total_reads_per_round)`.
+  Rarefy all rounds to that common depth. Evidence dict now includes
+  both `configured_depth` and `effective_depth` for audit. When a
+  round is empty (`min_total == 0`), return None (the `low_total_reads`
+  flag handles that separately).
+- **`check_adapter_contamination_high` mixed measurement universes
+  (qc/flags.py).** Numerator was `LR.known_adapter_hits` (Phase 2
+  inference on earliest-round subsampled reads); denominator was
+  `sum(counts_by_round)` (post-extraction reads across all rounds).
+  Apples-to-oranges → fraction could be inflated or deflated by an
+  arbitrary factor. Fix: switched the denominator to
+  `trim_reports_by_round[earliest_round]["n_in"] *
+  lr.read_fraction_used_for_inference`, matching the Phase 2
+  inference universe. When `trim_reports.json` is unavailable, surface
+  the flag as `severity="info"` with `evidence={"reason":
+  "denominator_unavailable"}` rather than guessing. Threaded a
+  `trim_reports_by_round` kwarg through `compute_all_flags`; the qc
+  runner already aggregates the JSON via `_load_trim_reports_by_round`
+  and now passes it down.
+- **`selexprep count` silently parsed FASTQ as FASTA (cli.py).** The
+  CLI called `count_fasta` unconditionally; a `.fastq.gz` input would
+  be misparsed (every other line treated as a sequence header). Fix:
+  hard-reject FASTQ extensions by default with a clear error pointing
+  the user at `selexprep extract` first OR at the new
+  `--from-pretrimmed-fastq` opt-in flag. The v0.1 contract is "`count`
+  accepts only extracted FASTA from `extract`"; users with externally
+  pre-trimmed FASTQ (e.g., from AptaPLEX, EasyDIVER+, external
+  cutadapt) can opt in via `--from-pretrimmed-fastq`, which routes
+  through a new `count_fastq_pretrimmed()` library function and emits
+  a loud "cannot verify trimming state" `logger.warning`. The legacy
+  Phase-1 `count_round` (inline cutadapt trimming) stays a library-
+  only API.
+
+Non-blocking:
+
+- **`flags.yaml` was promised to contribute to `output_sha256` but
+  didn't (qc/plots.py + manifest.py).** Phase 4's manifest is sealed
+  by `extract` before `qc` runs, so the QC artifacts are outside the
+  extract manifest lifecycle by construction. Added `.yaml` to
+  `_HASHABLE_SUFFIXES` (so future `selexprep qc-amend` could append
+  the hash) and rewrote the qc/plots.py docstring to clarify the
+  current lifecycle and the optional hash path.
+- **`_parse_round_label` accepted negative integers (cli.py).** `R-1`
+  produced `round_-1/`. Fix: explicit `r < 0` rejection with
+  `typer.BadParameter`.
+- **YAML emission lacked a regression test for nested-dict evidence
+  (tests/test_flags.py).** `safe_dump(sort_keys=True)` does sort
+  nested dict keys recursively, but the determinism guarantee for
+  nested LIST-of-DICT evidence (as in
+  `adapter_contamination_high`'s `adapters_above_threshold` field)
+  wasn't exercised. Added
+  `test_write_flags_yaml_deterministic_with_nested_evidence` —
+  builds the same flag twice with intentionally-different insertion
+  orders and asserts byte-identical output.
+
+### Carry-forward to v0.2 (documented now, not yet implemented)
+
+- **`check_adapter_contamination_high` assumes `min(trim_reports_by_round)`
+  is the same round Phase 2 used for primer inference.** Holds for the
+  documented v0.1 CLI flow (same FASTQ set passed to detect + extract).
+  Could break for partial extract runs, manually-stitched
+  ``trim_reports.json``, or the v0.2 batch driver. v0.2 fix: add
+  ``LibraryReport.earliest_inference_round`` (set in
+  ``compute_library_report``) and key the denominator off that. Schema
+  bump is disproportionate for v0.1 since the bug is unreachable through
+  the documented CLI flow. Inline comment in
+  ``qc/flags.py:check_adapter_contamination_high`` flags the assumption
+  for the v0.2 implementor.
+- **`_iter_fastq_sequences` only validates record completeness, not
+  per-line format conformance** (no ``@`` header check, no ``+``
+  separator check, no ``len(seq) == len(qual)``). Acceptable for the
+  ``--from-pretrimmed-fastq`` power-user opt-in; if this path is
+  promoted to a first-class advertised workflow in v0.2, add the
+  validators here matching the truncation ValueError policy.
+
+### Added
+
+**`selexprep.count.counter.count_fastq_pretrimmed`** — library function
+for the `--from-pretrimmed-fastq` CLI opt-in. Parses FASTQ records,
+extracts the sequence line, builds a Counter, emits the standard
+counts.parquet schema (`sequence`, `reads`, `rank`, `rpm`). Same
+truncation policy as `extract/strand.py:reorient_fastq_gz` — raises
+`ValueError` on incomplete records rather than silently producing
+partial output. Used for the external-tool interop story (AptaPLEX +
+EasyDIVER+ produce pre-trimmed FASTQ that doesn't need selexprep's
+extraction).
+
+Ten new regression tests:
+- `test_diversity_increase_clamps_depth_to_min_total`
+- `test_diversity_increase_records_effective_depth_in_evidence`
+- `test_adapter_contamination_denominator_unavailable`
+- `test_adapter_contamination_honors_read_fraction_used_for_inference`
+- `test_count_rejects_negative_round_label`
+- `test_count_rejects_fastq_input` (default reject path)
+- `test_count_with_from_pretrimmed_fastq_succeeds`
+- `test_count_from_pretrimmed_fastq_logs_unverified_warning`
+- `test_count_from_pretrimmed_fastq_flag_rejects_fasta_input`
+- `test_write_flags_yaml_deterministic_with_nested_evidence`
+
+Plus three library-level regressions for `count_fastq_pretrimmed`:
+- `test_count_fastq_pretrimmed_basic`
+- `test_count_fastq_pretrimmed_raises_on_truncated_record`
+- `test_count_fastq_pretrimmed_handles_uncompressed`
+
+Two existing tests updated to reflect the new
+`check_adapter_contamination_high` signature (now takes
+`trim_reports_by_round`, not `counts_by_round`).
+
+CI: 385 passed + 1 xfailed (was 372; +13 new tests). All four
+pre-existing CI gates stay green.
+
 **Phase 4 Codex pass 1 (2026-05-21)** — one blocking semantic bug +
 three non-blocking polish items. Calibration verdict: N/A (Phase 4
 introduces no calibration constants).

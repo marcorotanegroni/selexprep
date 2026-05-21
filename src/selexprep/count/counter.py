@@ -343,6 +343,75 @@ def count_fasta(
     return _counter_to_parquet(counter, output_parquet, expected_random_len)
 
 
+def _iter_fastq_sequences(fastq_gz: Path) -> Iterator[str]:
+    """Yield sequence lines (line 2 of each 4-line record) from a FASTQ(.gz).
+
+    Companion to :func:`_iter_fasta_sequences` for the
+    ``--from-pretrimmed-fastq`` opt-in path. Truncated records (incomplete
+    final 4-block) raise ``ValueError`` rather than silently producing
+    partial output - same policy as ``extract/strand.py:reorient_fastq_gz``.
+
+    **v0.1 validation scope (deliberate; harden in v0.2 if this path
+    becomes a publicly advertised workflow).** This iterator only checks
+    record completeness (4 lines per record). It does NOT enforce:
+
+    - Header line begins with ``@`` (a malformed FASTQ missing the
+      header sigil would silently use whatever is on that line as the
+      header, then yield the next line as the sequence).
+    - Separator line begins with ``+``.
+    - ``len(sequence) == len(quality_string)`` per record.
+
+    These checks would catch hand-corrupted or wrongly-formatted FASTQ
+    inputs. They're deferred because the ``--from-pretrimmed-fastq`` flag
+    is explicitly a power-user opt-in: the user is asserting they've
+    pre-trimmed the FASTQ with a real tool (AptaPLEX, EasyDIVER+,
+    cutadapt), which by construction produces well-formed FASTQ. If
+    selexprep promotes this path to a first-class workflow in v0.2, add
+    those validators here (and surface them as ``ValueError`` matching
+    the truncation policy).
+    """
+    opener = gzip.open if fastq_gz.suffix == ".gz" else open
+    with opener(fastq_gz, "rt", encoding="utf-8", errors="replace") as fh:
+        record_idx = 0
+        while True:
+            header = fh.readline()
+            if not header:
+                return
+            seq = fh.readline()
+            plus = fh.readline()
+            qual = fh.readline()
+            if not (header and seq and plus and qual):
+                raise ValueError(
+                    f"_iter_fastq_sequences: truncated FASTQ record at index "
+                    f"{record_idx} in {fastq_gz}"
+                )
+            yield seq.rstrip("\n")
+            record_idx += 1
+
+
+def count_fastq_pretrimmed(
+    fastq_gz: Path,
+    output_parquet: Path,
+    expected_random_len: int | None = None,
+) -> dict:
+    """Count unique sequences from a pre-trimmed FASTQ(.gz) -> per-round parquet.
+
+    Opt-in path for users who have already primer-stripped their FASTQ
+    via an external tool (AptaPLEX, EasyDIVER+, manual cutadapt, ...).
+    The caller is responsible for the trimming state - selexprep cannot
+    verify it. If primers/adapters remain in the input, unique-sequence
+    counts will be inflated. See the CLI ``--from-pretrimmed-fastq``
+    flag for the warning surfaced at invocation time.
+
+    Output schema is identical to :func:`count_fasta` /
+    :func:`count_round` (sequence, reads, rank, rpm).
+    """
+    counter: collections.Counter[str] = collections.Counter()
+    for seq in _iter_fastq_sequences(fastq_gz):
+        counter[seq] += 1
+    return _counter_to_parquet(counter, output_parquet, expected_random_len)
+
+
 def count_round(
     fastq_gz: Path,
     output_parquet: Path,
