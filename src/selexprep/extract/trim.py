@@ -153,17 +153,23 @@ def trim_single_end_linked(
         str(tmp_fa),
         str(input_fastq),
     ]
-    rc, report = _run_cutadapt(argv, tmp_json)
-    n_in, n_out = _read_counts(report)
-    _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
-    tmp_json.unlink(missing_ok=True)
-    return TrimReport(
-        cutadapt_cmd=argv,
-        n_in=n_in,
-        n_out=n_out,
-        return_code=rc,
-        output_paths=[output_fasta_gz],
-    )
+    try:
+        rc, report = _run_cutadapt(argv, tmp_json)
+        n_in, n_out = _read_counts(report)
+        _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
+        return TrimReport(
+            cutadapt_cmd=argv,
+            n_in=n_in,
+            n_out=n_out,
+            return_code=rc,
+            output_paths=[output_fasta_gz],
+        )
+    finally:
+        # Belt-and-suspenders: _repack_fasta_deterministic unlinks tmp_fa on
+        # success; this catches the failure paths (cutadapt raise, repack
+        # raise) so we don't orphan intermediate files.
+        tmp_fa.unlink(missing_ok=True)
+        tmp_json.unlink(missing_ok=True)
 
 
 def trim_single_end_5p(
@@ -192,17 +198,20 @@ def trim_single_end_5p(
         str(tmp_fa),
         str(input_fastq),
     ]
-    rc, report = _run_cutadapt(argv, tmp_json)
-    n_in, n_out = _read_counts(report)
-    _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
-    tmp_json.unlink(missing_ok=True)
-    return TrimReport(
-        cutadapt_cmd=argv,
-        n_in=n_in,
-        n_out=n_out,
-        return_code=rc,
-        output_paths=[output_fasta_gz],
-    )
+    try:
+        rc, report = _run_cutadapt(argv, tmp_json)
+        n_in, n_out = _read_counts(report)
+        _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
+        return TrimReport(
+            cutadapt_cmd=argv,
+            n_in=n_in,
+            n_out=n_out,
+            return_code=rc,
+            output_paths=[output_fasta_gz],
+        )
+    finally:
+        tmp_fa.unlink(missing_ok=True)
+        tmp_json.unlink(missing_ok=True)
 
 
 def trim_single_end_3p(
@@ -229,17 +238,20 @@ def trim_single_end_3p(
         str(tmp_fa),
         str(input_fastq),
     ]
-    rc, report = _run_cutadapt(argv, tmp_json)
-    n_in, n_out = _read_counts(report)
-    _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
-    tmp_json.unlink(missing_ok=True)
-    return TrimReport(
-        cutadapt_cmd=argv,
-        n_in=n_in,
-        n_out=n_out,
-        return_code=rc,
-        output_paths=[output_fasta_gz],
-    )
+    try:
+        rc, report = _run_cutadapt(argv, tmp_json)
+        n_in, n_out = _read_counts(report)
+        _repack_fasta_deterministic(tmp_fa, output_fasta_gz)
+        return TrimReport(
+            cutadapt_cmd=argv,
+            n_in=n_in,
+            n_out=n_out,
+            return_code=rc,
+            output_paths=[output_fasta_gz],
+        )
+    finally:
+        tmp_fa.unlink(missing_ok=True)
+        tmp_json.unlink(missing_ok=True)
 
 
 def trim_paired_split(
@@ -281,15 +293,19 @@ def trim_paired_split(
         str(r1_fastq),
         str(r2_fastq),
     ]
-    rc, report = _run_cutadapt(argv, tmp_json)
-    n_in, n_out = _read_counts(report)
-    _repack_fasta_deterministic(tmp_r1, out_r1_fasta_gz)
-    _repack_fasta_deterministic(tmp_r2, out_r2_fasta_gz)
-    tmp_json.unlink(missing_ok=True)
-    return TrimReport(
-        cutadapt_cmd=argv,
-        n_in=n_in,
-        n_out=n_out,
-        return_code=rc,
-        output_paths=[out_r1_fasta_gz, out_r2_fasta_gz],
-    )
+    try:
+        rc, report = _run_cutadapt(argv, tmp_json)
+        n_in, n_out = _read_counts(report)
+        _repack_fasta_deterministic(tmp_r1, out_r1_fasta_gz)
+        _repack_fasta_deterministic(tmp_r2, out_r2_fasta_gz)
+        return TrimReport(
+            cutadapt_cmd=argv,
+            n_in=n_in,
+            n_out=n_out,
+            return_code=rc,
+            output_paths=[out_r1_fasta_gz, out_r2_fasta_gz],
+        )
+    finally:
+        tmp_r1.unlink(missing_ok=True)
+        tmp_r2.unlink(missing_ok=True)
+        tmp_json.unlink(missing_ok=True)
