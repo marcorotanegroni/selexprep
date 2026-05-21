@@ -39,9 +39,9 @@ from pathlib import Path
 import pandas as pd
 
 from selexprep.library.adapters import (
-    KNOWN_ADAPTERS,
-    KNOWN_ADAPTERS_RC,
+    ADAPTER_PROBE_K,
     count_adapter_hits,
+    matches_known_adapter_prefix,
     reverse_complement,
 )
 from selexprep.library.report import (
@@ -341,9 +341,9 @@ ORIENTATION_REVERSED_REVERSE_MIN = 0.95
 
 # Top-K variants surfaced in the LibraryReport (locked plan line 297: K=3).
 VARIANTS_TOP_K = 3
-
-# Adapter probe length for `count_adapter_hits` substring scan.
-ADAPTER_PROBE_K = 13
+# ADAPTER_PROBE_K is imported from selexprep.library.adapters (single source
+# of truth — same value used by count_adapter_hits and
+# matches_known_adapter_prefix).
 
 
 # ---------------------------------------------------------------------------
@@ -552,16 +552,6 @@ def _detect_orientation(
     return "MIXED"
 
 
-def _matches_known_adapter(primer: str | None, k: int = ADAPTER_PROBE_K) -> bool:
-    """True if ``primer``'s first ``k`` bases coincide with a known adapter or its RC."""
-    if not primer:
-        return False
-    probe = primer.upper()[:k]
-    return any(adapter[:k] == probe for adapter in KNOWN_ADAPTERS.values()) or any(
-        adapter_rc[:k] == probe for adapter_rc in KNOWN_ADAPTERS_RC.values()
-    )
-
-
 def _composite_confidence(signals: dict[str, float | None], *, has_round_map: bool) -> float:
     """Weighted sum of per-signal scores → composite confidence in [0, 1].
 
@@ -744,11 +734,11 @@ def compute_library_report(
     # 1.0 as long as ANY primer survived, hiding the trap).
     adapter_drop_5p = False
     adapter_drop_3p = False
-    if _matches_known_adapter(primer_5p_seq):
+    if matches_known_adapter_prefix(primer_5p_seq):
         logger.info("Dropping 5' primer candidate %r: matches known adapter", primer_5p_seq)
         primer_5p_seq = None
         adapter_drop_5p = True
-    if _matches_known_adapter(primer_3p_seq):
+    if matches_known_adapter_prefix(primer_3p_seq):
         logger.info("Dropping 3' primer candidate %r: matches known adapter", primer_3p_seq)
         primer_3p_seq = None
         adapter_drop_3p = True

@@ -35,18 +35,28 @@ def _make_round_fastq(tmp_path: Path, round_no: int, n: int = 20) -> Path:
     return path
 
 
-def _make_library_report() -> LibraryReport:
+def _make_library_report(
+    *,
+    primer_5p: str | None = PRIMER_5P,
+    primer_3p: str | None = PRIMER_3P,
+    extraction_mode: str = "BOTH_PRIMERS_SINGLE_READ",
+    full_insert_recovered: bool = True,
+    required_action: str = "NONE",
+    orientation: str = "FORWARD",
+    status: str = "HIGH",
+    failure_reason: str | None = None,
+) -> LibraryReport:
     return LibraryReport(
-        primer_5p=PRIMER_5P,
-        primer_3p=PRIMER_3P,
+        primer_5p=primer_5p,
+        primer_3p=primer_3p,
         variants_5p=[],
         variants_3p=[],
         known_adapter_hits={},
-        extraction_mode="BOTH_PRIMERS_SINGLE_READ",
-        full_insert_recovered=True,
+        extraction_mode=extraction_mode,  # type: ignore[arg-type]
+        full_insert_recovered=full_insert_recovered,
         read_source="R1",
-        required_action="NONE",
-        orientation="FORWARD",
+        required_action=required_action,  # type: ignore[arg-type]
+        orientation=orientation,  # type: ignore[arg-type]
         n_length_mode=30,
         n_length_distribution={30: 20},
         n_length_confidence=1.0,
@@ -57,8 +67,8 @@ def _make_library_report() -> LibraryReport:
         read_fraction_used_for_inference=1.0,
         sampling_seed=42,
         confidence=0.85,
-        status="HIGH",
-        failure_reason=None,
+        status=status,  # type: ignore[arg-type]
+        failure_reason=failure_reason,
     )
 
 
@@ -237,3 +247,180 @@ def test_manifest_records_override_primers_when_applied(tmp_path: Path) -> None:
     m = read_manifest_json(result.manifest_path)
     assert m.library_report.primer_5p == override_5p
     assert m.library_report.primer_3p == PRIMER_3P  # 3p unchanged
+
+
+# ===========================================================================
+# Codex Phase 4 pass 1 regressions (2026-05-21)
+# ===========================================================================
+# Locked plan line 311: --override-primer-{5p,3p} is an explicit user
+# bypass for UNABLE_TO_INFER / UNABLE_TO_EXTRACT. To honor that, override
+# must be applied BEFORE the refusal check AND must promote the
+# classification fields the refusal check inspects.
+
+
+def test_override_with_both_primers_promotes_unable_to_extract(tmp_path: Path) -> None:
+    """Phase 4 Codex pass 1: a baseline UNABLE_TO_EXTRACT report should
+    proceed when the user explicitly passes BOTH override primers. The
+    extraction_mode gets promoted to BOTH_PRIMERS_SINGLE_READ (the user
+    has declared both sides), full_insert_recovered → True,
+    required_action → NONE, and status (if UNABLE_TO_INFER) bumps to
+    MEDIUM."""
+    fq = _make_round_fastq(tmp_path, 0)
+    # Baseline: full UNABLE state (status + extraction_mode both blocked).
+    lr = _make_library_report(
+        status="UNABLE_TO_INFER",
+        extraction_mode="UNABLE_TO_EXTRACT",
+        required_action="MANUAL_PRIMERS_REQUIRED",
+        full_insert_recovered=False,
+        failure_reason="synthetic test: baseline detection failed",
+    )
+    outdir = tmp_path / "out"
+
+    result = run_extract(
+        lr,
+        [fq],
+        outdir,
+        round_map={fq.name: 0},
+        override_primer_5p=PRIMER_5P,
+        override_primer_3p=PRIMER_3P,
+    )
+
+    # No refusal — override cleared the UNABLE state.
+    assert not result.skipped, result.skipped_reason
+    assert (outdir / "overridden" / "round_00" / "extracted.fasta.gz").exists()
+
+    # Manifest reflects the promoted state.
+    from selexprep.manifest import read_manifest_json
+
+    m = read_manifest_json(result.manifest_path)  # type: ignore[arg-type]
+    assert m.library_report.extraction_mode == "BOTH_PRIMERS_SINGLE_READ"
+    assert m.library_report.full_insert_recovered is True
+    assert m.library_report.required_action == "NONE"
+    assert m.library_report.status == "MEDIUM"
+    assert m.library_report.failure_reason is None
+    assert m.library_report.primer_5p == PRIMER_5P
+    assert m.library_report.primer_3p == PRIMER_3P
+
+
+def test_override_5p_only_promotes_to_five_prime_only(tmp_path: Path) -> None:
+    """Single-side override on UNABLE_TO_EXTRACT baseline promotes to
+    FIVE_PRIME_ONLY (the user has only declared the 5' side)."""
+    fq = _make_round_fastq(tmp_path, 0, n=20)
+    lr = _make_library_report(
+        primer_3p=None,
+        status="UNABLE_TO_INFER",
+        extraction_mode="UNABLE_TO_EXTRACT",
+        required_action="MANUAL_PRIMERS_REQUIRED",
+        full_insert_recovered=False,
+    )
+    outdir = tmp_path / "out"
+
+    result = run_extract(
+        lr,
+        [fq],
+        outdir,
+        round_map={fq.name: 0},
+        override_primer_5p=PRIMER_5P,
+    )
+
+    assert not result.skipped, result.skipped_reason
+    from selexprep.manifest import read_manifest_json
+
+    m = read_manifest_json(result.manifest_path)  # type: ignore[arg-type]
+    assert m.library_report.extraction_mode == "FIVE_PRIME_ONLY"
+    assert m.library_report.full_insert_recovered is False
+    assert m.library_report.status == "MEDIUM"
+
+
+def test_override_3p_only_promotes_to_three_prime_only(tmp_path: Path) -> None:
+    """Mirror of the 5p-only test: single-side 3p override on
+    UNABLE_TO_EXTRACT baseline promotes to THREE_PRIME_ONLY."""
+    # Synthetic FASTQ with only the 3' primer (so cutadapt has something to
+    # trim once promotion picks THREE_PRIME_ONLY).
+    bases = "ACGT"
+    seqs = ["".join(bases[(i * 7 + j * 13) % 4] for j in range(30)) + PRIMER_3P for i in range(20)]
+    fq = tmp_path / "round_00.fastq.gz"
+    _write_fastq_gz(fq, seqs)
+
+    lr = _make_library_report(
+        primer_5p=None,
+        status="UNABLE_TO_INFER",
+        extraction_mode="UNABLE_TO_EXTRACT",
+        required_action="MANUAL_PRIMERS_REQUIRED",
+        full_insert_recovered=False,
+    )
+    outdir = tmp_path / "out"
+
+    result = run_extract(
+        lr,
+        [fq],
+        outdir,
+        round_map={fq.name: 0},
+        override_primer_3p=PRIMER_3P,
+    )
+
+    assert not result.skipped, result.skipped_reason
+    from selexprep.manifest import read_manifest_json
+
+    m = read_manifest_json(result.manifest_path)  # type: ignore[arg-type]
+    assert m.library_report.extraction_mode == "THREE_PRIME_ONLY"
+    assert m.library_report.full_insert_recovered is False
+    assert m.library_report.status == "MEDIUM"
+
+
+def test_override_logs_warning_when_matches_known_adapter(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The override is allowed (escape-hatch semantics), but the runner
+    should surface a WARNING when the override matches a known
+    sequencing adapter prefix — a common user mistake."""
+    import logging
+
+    from selexprep.library.adapters import KNOWN_ADAPTERS
+
+    fq = _make_round_fastq(tmp_path, 0)
+    lr = _make_library_report()
+    outdir = tmp_path / "out"
+
+    truseq = KNOWN_ADAPTERS["TRUSEQ_R1"]
+    # A 20-nt "primer" whose first 13 nt are TruSeq R1 → adapter match.
+    truseq_like = truseq + "AGGGGGT"
+
+    with caplog.at_level(logging.WARNING):
+        result = run_extract(
+            lr,
+            [fq],
+            outdir,
+            round_map={fq.name: 0},
+            override_primer_5p=truseq_like,
+        )
+
+    # Run still succeeds — override is an explicit escape hatch.
+    assert not result.skipped, result.skipped_reason
+    # …but a WARNING fires with the adapter-trap hint.
+    adapter_warnings = [
+        rec
+        for rec in caplog.records
+        if rec.levelname == "WARNING" and "known sequencing adapter" in rec.message
+    ]
+    assert adapter_warnings, "expected a known-adapter override warning"
+
+
+def test_no_override_on_unable_still_refuses_with_clear_message(tmp_path: Path) -> None:
+    """When no override is given AND baseline is UNABLE, the runner still
+    refuses (regression check that the fix didn't accidentally make
+    UNABLE-without-override silently proceed)."""
+    fq = _make_round_fastq(tmp_path, 0)
+    lr = _make_library_report(
+        status="UNABLE_TO_INFER",
+        extraction_mode="UNABLE_TO_EXTRACT",
+    )
+    outdir = tmp_path / "out"
+
+    result = run_extract(lr, [fq], outdir, round_map={fq.name: 0})
+
+    assert result.skipped
+    assert result.skipped_reason is not None
+    # The refusal still suggests the override path (the user hasn't tried it yet).
+    assert "--override-primer" in result.skipped_reason

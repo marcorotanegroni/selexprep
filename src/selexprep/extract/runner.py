@@ -41,7 +41,7 @@ from selexprep._io import open_gzip_text_deterministic
 from selexprep.extract import strand as strand_module
 from selexprep.extract import trim as trim_module
 from selexprep.extract.demux import demux_sample_sheet
-from selexprep.library.adapters import reverse_complement
+from selexprep.library.adapters import matches_known_adapter_prefix, reverse_complement
 from selexprep.library.report import LibraryReport
 from selexprep.manifest import (
     build_manifest_from_extract_result,
@@ -95,15 +95,17 @@ def _refusal_reason(library_report: LibraryReport) -> str | None:
         return (
             f"LibraryReport status is UNABLE_TO_INFER "
             f"(reason: {library_report.failure_reason or 'unspecified'}). "
-            "Use --override-primer-5p / --override-primer-3p (Phase 4) or "
-            "hand-edit the LibraryReport JSON to proceed."
+            "Pass --override-primer-5p / --override-primer-3p (and the "
+            "runner will promote extraction_mode + status), or hand-edit "
+            "the LibraryReport JSON to proceed."
         )
     if library_report.extraction_mode == "UNABLE_TO_EXTRACT":
         return (
             f"LibraryReport extraction_mode is UNABLE_TO_EXTRACT "
             f"(reason: {library_report.failure_reason or 'unspecified'}). "
-            "Use --override-primer-5p / --override-primer-3p (Phase 4) or "
-            "hand-edit the LibraryReport JSON to proceed."
+            "Pass --override-primer-5p / --override-primer-3p (and the "
+            "runner will promote extraction_mode + status), or hand-edit "
+            "the LibraryReport JSON to proceed."
         )
     return None
 
@@ -450,25 +452,77 @@ def run_extract(
     """
     outdir.mkdir(parents=True, exist_ok=True)
 
-    refusal = _refusal_reason(library_report)
-    if refusal is not None:
-        logger.warning("Refusing to extract: %s", refusal)
-        return ExtractResult(skipped_reason=refusal)
-
-    # Phase 4: optional primer override. Clone the LR with swapped fields.
+    # Phase 4 Codex pass 1 fix: apply override BEFORE the refusal check.
+    # The locked plan (line 311) says ``--override-primer-{5p,3p}`` is an
+    # explicit user bypass for UNABLE_TO_INFER / UNABLE_TO_EXTRACT. To honor
+    # that, override has to (1) replace the primer values AND (2) promote the
+    # classification fields the refusal check inspects (status,
+    # extraction_mode), otherwise the override is a no-op for the cases it
+    # was designed to handle.
     has_override = override_primer_5p is not None or override_primer_3p is not None
     if has_override:
-        updates: dict[str, str | None] = {}
+        updates: dict[str, object] = {}
         if override_primer_5p is not None:
             updates["primer_5p"] = override_primer_5p
         if override_primer_3p is not None:
             updates["primer_3p"] = override_primer_3p
+
+        # Warn (but don't refuse) if an override matches a known sequencing
+        # adapter prefix — the user typed it explicitly, so respect the
+        # escape-hatch semantics, but surface the foot-gun (Codex pass 1
+        # non-blocking).
+        for label, primer in (("5p", override_primer_5p), ("3p", override_primer_3p)):
+            if primer and matches_known_adapter_prefix(primer):
+                logger.warning(
+                    "Override primer %s matches a known sequencing adapter prefix; "
+                    "this is allowed as an explicit escape hatch but is usually a "
+                    "mistake (override value: %r)",
+                    label,
+                    primer,
+                )
+
+        # Promote extraction_mode when the baseline was UNABLE_TO_EXTRACT and
+        # the user is declaring biology via override. The resulting mode is
+        # inferred from which primer sides are now defined.
+        has_5p_after = override_primer_5p is not None or library_report.primer_5p is not None
+        has_3p_after = override_primer_3p is not None or library_report.primer_3p is not None
+        if library_report.extraction_mode == "UNABLE_TO_EXTRACT":
+            if has_5p_after and has_3p_after:
+                updates["extraction_mode"] = "BOTH_PRIMERS_SINGLE_READ"
+                updates["full_insert_recovered"] = True
+                updates["required_action"] = "NONE"
+            elif has_5p_after:
+                updates["extraction_mode"] = "FIVE_PRIME_ONLY"
+                updates["full_insert_recovered"] = False
+                updates["required_action"] = "NONE"
+            elif has_3p_after:
+                updates["extraction_mode"] = "THREE_PRIME_ONLY"
+                updates["full_insert_recovered"] = False
+                updates["required_action"] = "NONE"
+            # else: no primers at all even after override — UNABLE stays,
+            # refusal will fire below with the hand-edit-LR hint.
+
+        # Manual override = MEDIUM confidence by convention; the user must
+        # hand-edit the LibraryReport JSON to claim HIGH.
+        if library_report.status == "UNABLE_TO_INFER":
+            updates["status"] = "MEDIUM"
+            updates["failure_reason"] = None
+
         library_report = library_report.model_copy(update=updates)
         logger.info(
-            "Applied primer overrides: 5p=%r 3p=%r",
+            "Applied primer overrides: 5p=%r 3p=%r -> mode=%s status=%s",
             override_primer_5p,
             override_primer_3p,
+            library_report.extraction_mode,
+            library_report.status,
         )
+
+    # Refusal check happens AFTER override so the user's explicit escape
+    # hatch can clear the UNABLE state (locked plan line 311).
+    refusal = _refusal_reason(library_report)
+    if refusal is not None:
+        logger.warning("Refusing to extract: %s", refusal)
+        return ExtractResult(skipped_reason=refusal)
 
     # When override is set but rebuild is NOT, redirect outputs to a
     # subtree to avoid clobbering the baseline (locked plan: rebuild

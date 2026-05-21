@@ -65,7 +65,36 @@ KNOWN_ADAPTERS_RC: dict[str, str] = {
 }
 
 
-def count_adapter_hits(seqs: list[str], k: int = 13) -> dict[str, int]:
+# Default probe length: first ``k`` bp of an adapter is the canonical
+# "matches the start of an adapter" signal used by both
+# ``count_adapter_hits`` (substring scan over all reads) and
+# ``matches_known_adapter_prefix`` (single-primer check). Colocated here
+# so the two helpers stay in sync.
+ADAPTER_PROBE_K = 13
+
+
+def matches_known_adapter_prefix(
+    primer: str | None,
+    k: int = ADAPTER_PROBE_K,
+) -> bool:
+    """True if ``primer``'s first ``k`` bases match a known adapter or its RC.
+
+    Used by primer-inference (``library/detect``) to drop adapter
+    candidates after the auto-detection step, and by the extract runner
+    (``extract/runner``) to warn when a manually-supplied
+    ``--override-primer-*`` value matches a known sequencing adapter
+    prefix. Returns False for ``None`` (no primer detected / no override
+    given).
+    """
+    if not primer:
+        return False
+    probe = primer.upper()[:k]
+    return any(adapter[:k] == probe for adapter in KNOWN_ADAPTERS.values()) or any(
+        adapter_rc[:k] == probe for adapter_rc in KNOWN_ADAPTERS_RC.values()
+    )
+
+
+def count_adapter_hits(seqs: list[str], k: int = ADAPTER_PROBE_K) -> dict[str, int]:
     """Count sequences containing each known adapter (forward or RC) as a substring.
 
     For each adapter in :data:`KNOWN_ADAPTERS`, count how many sequences in
