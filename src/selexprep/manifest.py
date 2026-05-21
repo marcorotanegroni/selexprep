@@ -77,7 +77,7 @@ def _cutadapt_version() -> str:
 # because the locked plan line 168 explicitly says "input_sha256 (FASTQ
 # files)"; without them ``input_sha256`` would silently stay empty for
 # the entire CLI flow.
-_HASHABLE_SUFFIXES = {".fasta", ".fa", ".fastq", ".fq", ".tsv", ".json"}
+_HASHABLE_SUFFIXES = {".fasta", ".fa", ".fastq", ".fq", ".tsv", ".json", ".yaml"}
 
 
 def _is_hashable_output(path: Path) -> bool:

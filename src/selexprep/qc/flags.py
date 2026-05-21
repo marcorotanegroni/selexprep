@@ -92,12 +92,29 @@ def check_unexpected_rarefied_diversity_increase(
     contamination or that a "round" was actually a re-sequencing of the
     same pool. Uses rarefaction (not raw counts) so depth differences
     do not confound the comparison.
+
+    Phase 5 Codex pass 1 fix: rarefy to ``effective_depth = min(
+    RAREFACTION_DEPTH, min_total_reads_per_round)``. The previous version
+    used ``RAREFACTION_DEPTH`` as a fixed target, but ``rarefy`` returns
+    the original pool unchanged when ``depth >= total`` - so a 2k-read
+    round was being compared against a 10k-rarefied round, reintroducing
+    exactly the depth-confounding the flag is supposed to avoid.
+    ``low_total_reads`` covers the absolute-depth concern separately.
     """
     if len(counts_by_round) < 2:
         return None
+
+    total_per_round = {r: sum(counts_by_round[r].values()) for r in counts_by_round}
+    min_total = min(total_per_round.values())
+    if min_total <= 0:
+        # An empty round is a different problem (the low_total_reads flag
+        # will surface it); rarefaction comparison is undefined.
+        return None
+    effective_depth = min(RAREFACTION_DEPTH, min_total)
+
     rarefied_uniques: dict[int, int] = {}
     for r in sorted(counts_by_round):
-        rarefied = rarefy(counts_by_round[r], depth=RAREFACTION_DEPTH, seed=_RAREFY_SEED)
+        rarefied = rarefy(counts_by_round[r], depth=effective_depth, seed=_RAREFY_SEED)
         rarefied_uniques[r] = unique_count(rarefied)
 
     rounds = sorted(rarefied_uniques)
@@ -120,7 +137,9 @@ def check_unexpected_rarefied_diversity_increase(
         name="unexpected_rarefied_diversity_increase",
         severity="warn",
         evidence={
-            "rarefaction_depth": RAREFACTION_DEPTH,
+            "configured_depth": RAREFACTION_DEPTH,
+            "effective_depth": effective_depth,
+            "min_total_reads": min_total,
             "rarefied_uniques_per_round": rarefied_uniques,
             "increases": increases,
         },
@@ -245,19 +264,79 @@ def check_low_total_reads(counts_by_round: dict[int, dict[str, int]]) -> Flag | 
 
 
 def check_adapter_contamination_high(
-    lr: LibraryReport, counts_by_round: dict[int, dict[str, int]]
+    lr: LibraryReport,
+    trim_reports_by_round: dict[int, dict[str, int]] | None = None,
 ) -> Flag | None:
-    """Any adapter's hits > ADAPTER_CONTAMINATION_MAX_FRACTION of total reads.
+    """Any adapter's hits > ADAPTER_CONTAMINATION_MAX_FRACTION of reads.
 
-    Uses sum of reads across all rounds as denominator (locked plan
-    line 356 says "of reads" without specifying per-round vs total).
+    Phase 5 Codex pass 1 fix: the numerator (``lr.known_adapter_hits``)
+    comes from Phase 2's inference pass on the EARLIEST round's
+    subsampled pre-extraction reads. The denominator must match that
+    measurement universe — using post-extraction ``counts.parquet``
+    totals (the previous behavior) compared apples to oranges and
+    could inflate or deflate the fraction arbitrarily.
+
+    Correct denominator: ``trim_reports_by_round[earliest_round]["n_in"]
+    * lr.read_fraction_used_for_inference``. When ``trim_reports`` is
+    not available (e.g. manifest hand-edited, qc run on a partial
+    artifact set), surface the flag as ``severity="info"`` with
+    ``reason="denominator_unavailable"`` rather than silently guessing.
     """
-    total_reads = sum(sum(c.values()) for c in counts_by_round.values())
-    if total_reads == 0:
+    if not lr.known_adapter_hits:
         return None
+
+    if not trim_reports_by_round:
+        return Flag(
+            name="adapter_contamination_high",
+            severity="info",
+            evidence={
+                "reason": "denominator_unavailable",
+                "note": (
+                    "trim_reports.json is missing; cannot reconstruct the "
+                    "Phase 2 inference-universe denominator. Hits are "
+                    "preserved as raw counts."
+                ),
+                "known_adapter_hits": {a: int(h) for a, h in lr.known_adapter_hits.items()},
+            },
+        )
+
+    # ASSUMPTION (v0.1): the lowest round number in trim_reports.json is
+    # the same round Phase 2's primer inference used. This holds in the
+    # documented v0.1 CLI flow because the user passes the same FASTQ set
+    # to both `detect` and `extract`, so detect's "earliest round" equals
+    # min(extract's trim_reports.rounds). The assumption can BREAK in:
+    #   - partial extract runs (user processed only a subset of detect's
+    #     rounds)
+    #   - manual artifact stitching (hand-assembled trim_reports.json)
+    #   - v0.2 batch driver (`selexprep run`) where multiple extract
+    #     invocations may produce a Frankenstein trim_reports.json
+    # Bulletproof fix (deferred to v0.2): add ``earliest_inference_round``
+    # to the LibraryReport schema in Phase 2's compute_library_report; use
+    # ``lr.earliest_inference_round`` here instead of min(trim_reports).
+    # A schema bump is disproportionate for an edge case unreachable
+    # through the v0.1 single-dataset CLI flow.
+    earliest_round = min(trim_reports_by_round)
+    n_in_earliest = int(trim_reports_by_round[earliest_round].get("n_in", 0))
+    denominator = int(n_in_earliest * lr.read_fraction_used_for_inference)
+    if denominator <= 0:
+        return Flag(
+            name="adapter_contamination_high",
+            severity="info",
+            evidence={
+                "reason": "denominator_zero",
+                "note": (
+                    "Inference-universe denominator computed as 0 "
+                    f"(n_in_earliest={n_in_earliest}, "
+                    f"read_fraction_used_for_inference={lr.read_fraction_used_for_inference}). "
+                    "Cannot evaluate adapter fraction."
+                ),
+                "known_adapter_hits": {a: int(h) for a, h in lr.known_adapter_hits.items()},
+            },
+        )
+
     over: list[dict[str, object]] = []
     for adapter, hits in lr.known_adapter_hits.items():
-        frac = hits / total_reads
+        frac = hits / denominator
         if frac > ADAPTER_CONTAMINATION_MAX_FRACTION:
             over.append(
                 {
@@ -273,6 +352,9 @@ def check_adapter_contamination_high(
         severity="warn",
         evidence={
             "max_fraction": ADAPTER_CONTAMINATION_MAX_FRACTION,
+            "denominator_basis": "trim_reports.json n_in[earliest_round] * read_fraction_used_for_inference",
+            "earliest_round": earliest_round,
+            "denominator": denominator,
             "adapters_above_threshold": over,
         },
     )
@@ -328,8 +410,16 @@ def compute_all_flags(
     counts_by_round: dict[int, dict[str, int]],
     *,
     strand_report_path: Path | None = None,
+    trim_reports_by_round: dict[int, dict[str, int]] | None = None,
 ) -> list[Flag]:
-    """Run every flag check; return the list of flags that fired."""
+    """Run every flag check; return the list of flags that fired.
+
+    ``trim_reports_by_round`` is the aggregated per-round ``{n_in, n_out}``
+    derived from ``trim_reports.json`` (qc/runner does the parsing). Used
+    by ``check_adapter_contamination_high`` to derive the correct
+    denominator (Phase 2's inference universe, not the post-extraction
+    universe). When absent, that flag degrades gracefully.
+    """
     lr = manifest.library_report
     candidates: list[Flag | None] = [
         check_unexpected_rarefied_diversity_increase(counts_by_round),
@@ -337,7 +427,7 @@ def compute_all_flags(
         check_n_length_variation_across_rounds(counts_by_round),
         check_strand_mix(strand_report_path),
         check_low_total_reads(counts_by_round),
-        check_adapter_contamination_high(lr, counts_by_round),
+        check_adapter_contamination_high(lr, trim_reports_by_round),
         check_extraction_mode_changed_across_rounds(None),  # v0.1 always None
         check_requires_read_merging_for_full_insert(lr),
     ]

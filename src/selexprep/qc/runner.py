@@ -137,6 +137,7 @@ def run_qc(
         manifest,
         counts_by_round,
         strand_report_path=strand_report_path,
+        trim_reports_by_round=trim_by_round if trim_by_round else None,
     )
     flags_yaml_path = qc_outdir / "flags.yaml"
     write_flags_yaml(flags, flags_yaml_path)

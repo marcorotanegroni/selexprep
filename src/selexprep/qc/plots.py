@@ -12,7 +12,19 @@ All plots write PNGs to ``<outdir>/qc/``:
 
 **Determinism note**: matplotlib PNG output is NOT byte-deterministic
 across versions (PNG metadata includes timestamps). These plots are
-informational; only ``flags.yaml`` contributes to ``output_sha256``.
+informational.
+
+**QC artifact lifecycle**: ``flags.yaml`` and the 4 PNG plots are
+emitted AFTER ``selexprep extract`` has already sealed
+``selexprep_manifest.json`` (Phase 4). The manifest's
+``output_sha256`` therefore does NOT include the QC outputs by design
+- they're a post-hoc QC report, not part of the immutable extract
+provenance. ``flags.yaml`` IS deterministic by construction (sorted
+keys, rounded floats); callers can hash it independently via
+``selexprep._io.sha256_file`` if they need to record a QC checksum.
+``.yaml`` is included in ``_HASHABLE_SUFFIXES`` so a future
+``selexprep qc-amend`` command (v0.2) could append the YAML hash to
+the manifest if that becomes useful.
 """
 
 from __future__ import annotations
