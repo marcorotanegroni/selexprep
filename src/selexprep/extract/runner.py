@@ -34,9 +34,10 @@ from __future__ import annotations
 import gzip
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+from selexprep._io import open_gzip_text_deterministic
 from selexprep.extract import strand as strand_module
 from selexprep.extract import trim as trim_module
 from selexprep.extract.demux import demux_sample_sheet
@@ -193,6 +194,115 @@ def _write_trim_reports(reports: list[trim_module.TrimReport], path: Path) -> No
         for r in reports
     ]
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _concat_fasta_gz_deterministic(parts: list[Path], target: Path) -> None:
+    """Concatenate `parts` (gzipped FASTAs) into `target` deterministically.
+
+    Reads each part in order, decompresses, and re-emits through
+    ``open_gzip_text_deterministic`` (mtime=0 header). Caller is responsible
+    for the input order: pass the temp files in the same order as the
+    per-input trim calls. Temp inputs are NOT cleaned up here — the caller
+    does that.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open_gzip_text_deterministic(target) as out:
+        for part in parts:
+            with gzip.open(part, "rt", encoding="utf-8") as fh:
+                for line in fh:
+                    out.write(line)
+
+
+def _trim_round_single_end(
+    round_inputs: list[Path],
+    final_target: Path,
+    trim_fn,  # type: ignore[no-untyped-def]
+    **trim_kwargs,
+) -> list[trim_module.TrimReport]:
+    """Trim N single-end FASTQs of one round to `final_target`.
+
+    For one input, calls ``trim_fn`` directly (fast path). For multiple
+    inputs, trims each to a per-input temp target, then concatenates
+    deterministically into ``final_target`` (Codex pass 1 fix: previously
+    each iteration overwrote the same target, dropping all but the last).
+
+    Returns one TrimReport per input — their ``output_paths`` are rewritten
+    to ``[final_target]`` so the downstream per-round aggregation in
+    ``_trim_reports_by_round_from_objects`` groups them correctly.
+    """
+    if len(round_inputs) == 1:
+        return [trim_fn(round_inputs[0], final_target, **trim_kwargs)]
+
+    final_target.parent.mkdir(parents=True, exist_ok=True)
+    temps: list[Path] = []
+    reports: list[trim_module.TrimReport] = []
+    try:
+        for i, fq in enumerate(round_inputs):
+            tmp = final_target.parent / f".{final_target.name}.part_{i:03d}.fasta.gz"
+            report = trim_fn(fq, tmp, **trim_kwargs)
+            temps.append(tmp)
+            reports.append(replace(report, output_paths=[final_target]))
+        _concat_fasta_gz_deterministic(temps, final_target)
+    finally:
+        for tmp in temps:
+            tmp.unlink(missing_ok=True)
+    return reports
+
+
+def _trim_round_paired_split(
+    r1_inputs: list[Path],
+    r2_inputs: list[Path],
+    final_r1_target: Path,
+    final_r2_target: Path,
+    *,
+    primer_5p_r1: str,
+    primer_5p_r2: str,
+) -> list[trim_module.TrimReport]:
+    """Same as ``_trim_round_single_end`` but for paired-end split mode.
+
+    R1 and R2 are processed in lock-step (one cutadapt call per (R1, R2)
+    pair). Multiple pairs in the same round are concatenated into the
+    two final targets deterministically.
+    """
+    if len(r1_inputs) != len(r2_inputs):
+        raise ValueError(f"R1/R2 pair-count mismatch: {len(r1_inputs)} R1 vs {len(r2_inputs)} R2")
+    if len(r1_inputs) == 1:
+        report = trim_module.trim_paired_split(
+            r1_inputs[0],
+            r2_inputs[0],
+            final_r1_target,
+            final_r2_target,
+            primer_5p_r1=primer_5p_r1,
+            primer_5p_r2=primer_5p_r2,
+        )
+        return [report]
+
+    final_r1_target.parent.mkdir(parents=True, exist_ok=True)
+    final_r2_target.parent.mkdir(parents=True, exist_ok=True)
+    temps_r1: list[Path] = []
+    temps_r2: list[Path] = []
+    reports: list[trim_module.TrimReport] = []
+    try:
+        for i, (r1, r2) in enumerate(zip(r1_inputs, r2_inputs, strict=True)):
+            tmp_r1 = final_r1_target.parent / f".{final_r1_target.name}.part_{i:03d}.fasta.gz"
+            tmp_r2 = final_r2_target.parent / f".{final_r2_target.name}.part_{i:03d}.fasta.gz"
+            report = trim_module.trim_paired_split(
+                r1,
+                r2,
+                tmp_r1,
+                tmp_r2,
+                primer_5p_r1=primer_5p_r1,
+                primer_5p_r2=primer_5p_r2,
+            )
+            temps_r1.append(tmp_r1)
+            temps_r2.append(tmp_r2)
+            reports.append(replace(report, output_paths=[final_r1_target, final_r2_target]))
+        _concat_fasta_gz_deterministic(temps_r1, final_r1_target)
+        _concat_fasta_gz_deterministic(temps_r2, final_r2_target)
+    finally:
+        for tmp in temps_r1 + temps_r2:
+            tmp.unlink(missing_ok=True)
+    return reports
 
 
 def _trim_reports_by_round_from_objects(
@@ -374,23 +484,48 @@ def run_extract(
         baseline_for_diff = _read_baseline_for_diff(outdir)
 
     # Optional demux pre-step (multiplexed input).
+    round_inputs: dict[int, list[Path]] | None = None
+    input_root: Path | None = None  # set in sample-sheet mode so manifest
+    # input_sha256 keys are relative to demux dir (demuxed basenames
+    # collide across rounds — Codex pass 1 follow-up fix).
     if sample_sheet is not None:
         demux_dir = outdir / "demux"
         demux_dir.mkdir(parents=True, exist_ok=True)
         demux_sample_sheet(sample_sheet, out_root=demux_dir)
         # After demux, per-round files live under demux/round_NN/<srr>.fastq.gz
         # (single-end) or demux/round_NN/<srr>_1.fastq.gz (paired-end).
-        demuxed_inputs: list[Path] = sorted(
-            p for p in demux_dir.glob("round_*/*.fastq.gz") if "_2" not in p.stem
-        )
-        if not demuxed_inputs:
+        # We collect BOTH R1 and R2 paths here (Codex pass 1 fix: previously
+        # paired_r2_inputs was never rebuilt from demux outputs, so
+        # PAIRED_END_SPLIT_PRIMERS + --sample-sheet failed with "requires
+        # --paired-r2 inputs"). And we build round_inputs path-aware
+        # directly from the demuxed parent dirs — going via the basename-
+        # keyed round_map would collapse across rounds because the demuxed
+        # files share basenames (e.g. ``srr_1.fastq.gz`` in every
+        # ``round_NN/`` folder).
+        all_demuxed = sorted(demux_dir.glob("round_*/*.fastq.gz"))
+        r2_demuxed = [p for p in all_demuxed if p.name.endswith("_2.fastq.gz")]
+        r1_demuxed = [p for p in all_demuxed if not p.name.endswith("_2.fastq.gz")]
+        if not r1_demuxed:
             return ExtractResult(
                 skipped_reason=f"Sample-sheet demux produced no FASTQs under {demux_dir}",
             )
-        fastq_inputs = demuxed_inputs
-        round_map = {p.name: int(p.parent.name.split("_")[1]) for p in demuxed_inputs}
+        fastq_inputs = r1_demuxed
+        input_root = demux_dir
+        round_inputs = {}
+        for p in r1_demuxed:
+            r = int(p.parent.name.split("_")[1])
+            round_inputs.setdefault(r, []).append(p)
+        if r2_demuxed:
+            paired_r2_inputs = {}
+            for p in r2_demuxed:
+                r = int(p.parent.name.split("_")[1])
+                paired_r2_inputs.setdefault(r, []).append(p)
 
-    round_inputs = _group_by_round(fastq_inputs, round_map)
+    # Path-aware sample-sheet path already populated round_inputs; otherwise
+    # group via the basename-keyed round_map (the CLI guarantees basenames
+    # are unique on this code path).
+    if round_inputs is None:
+        round_inputs = _group_by_round(fastq_inputs, round_map)
 
     # Strand orientation pre-step.
     primer_5p = library_report.primer_5p
@@ -418,12 +553,15 @@ def run_extract(
         targets = [outdir / f"round_{r:02d}" / "extracted.fasta.gz" for r in rounds_sorted]
         _check_no_clobber(targets, rebuild)
         for r, target in zip(rounds_sorted, targets, strict=True):
-            for fq in round_inputs[r]:
-                report = trim_module.trim_single_end_linked(
-                    fq, target, primer_5p=primer_5p, primer_3p=primer_3p
-                )
-                trim_reports.append(report)
-                all_outputs.append(target)
+            reports = _trim_round_single_end(
+                round_inputs[r],
+                target,
+                trim_module.trim_single_end_linked,
+                primer_5p=primer_5p,
+                primer_3p=primer_3p,
+            )
+            trim_reports.extend(reports)
+            all_outputs.append(target)
 
     elif extraction_mode == "FIVE_PRIME_ONLY":
         if not primer_5p:
@@ -433,10 +571,14 @@ def run_extract(
         ]
         _check_no_clobber(targets, rebuild)
         for r, target in zip(rounds_sorted, targets, strict=True):
-            for fq in round_inputs[r]:
-                report = trim_module.trim_single_end_5p(fq, target, primer_5p=primer_5p)
-                trim_reports.append(report)
-                all_outputs.append(target)
+            reports = _trim_round_single_end(
+                round_inputs[r],
+                target,
+                trim_module.trim_single_end_5p,
+                primer_5p=primer_5p,
+            )
+            trim_reports.extend(reports)
+            all_outputs.append(target)
 
     elif extraction_mode == "THREE_PRIME_ONLY":
         if not primer_3p:
@@ -446,10 +588,14 @@ def run_extract(
         ]
         _check_no_clobber(targets, rebuild)
         for r, target in zip(rounds_sorted, targets, strict=True):
-            for fq in round_inputs[r]:
-                report = trim_module.trim_single_end_3p(fq, target, primer_3p=primer_3p)
-                trim_reports.append(report)
-                all_outputs.append(target)
+            reports = _trim_round_single_end(
+                round_inputs[r],
+                target,
+                trim_module.trim_single_end_3p,
+                primer_3p=primer_3p,
+            )
+            trim_reports.extend(reports)
+            all_outputs.append(target)
 
     elif extraction_mode == "PAIRED_END_SPLIT_PRIMERS":
         if not primer_5p or not primer_3p:
@@ -478,18 +624,17 @@ def run_extract(
                         f"({len(r1_paths)} R1 vs {len(r2_paths)} R2)"
                     ),
                 )
-            for r1_fq, r2_fq in zip(r1_paths, r2_paths, strict=True):
-                report = trim_module.trim_paired_split(
-                    r1_fq,
-                    r2_fq,
-                    r1_target,
-                    r2_target,
-                    primer_5p_r1=primer_5p,
-                    primer_5p_r2=primer_5p_r2,
-                )
-                trim_reports.append(report)
-                all_outputs.append(r1_target)
-                all_outputs.append(r2_target)
+            reports = _trim_round_paired_split(
+                r1_paths,
+                r2_paths,
+                r1_target,
+                r2_target,
+                primer_5p_r1=primer_5p,
+                primer_5p_r2=primer_5p_r2,
+            )
+            trim_reports.extend(reports)
+            all_outputs.append(r1_target)
+            all_outputs.append(r2_target)
     else:
         return ExtractResult(
             skipped_reason=f"Unknown extraction_mode: {extraction_mode!r}",
@@ -533,6 +678,8 @@ def run_extract(
         library_report=library_report,
         input_paths=input_paths,
         output_paths=all_outputs,
+        output_root=outdir,
+        input_root=input_root,
         accession=accession,
         bioproject_id=bioproject_id,
         runs=runs or [],

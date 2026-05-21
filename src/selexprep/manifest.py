@@ -72,14 +72,17 @@ def _cutadapt_version() -> str:
         return "unknown"
 
 
-# Reproducibility-tracked outputs only — Parquet hashes are advisory
-# (locked plan line 28). The runner's outputs use these extensions.
-_HASHABLE_SUFFIXES = {".fasta", ".fa", ".tsv", ".json"}
+# Reproducibility-tracked files. Parquet is excluded — its hashes are
+# advisory only (locked plan line 28). FASTQ extensions are included
+# because the locked plan line 168 explicitly says "input_sha256 (FASTQ
+# files)"; without them ``input_sha256`` would silently stay empty for
+# the entire CLI flow.
+_HASHABLE_SUFFIXES = {".fasta", ".fa", ".fastq", ".fq", ".tsv", ".json"}
 
 
 def _is_hashable_output(path: Path) -> bool:
-    """True for FASTA/TSV/JSON outputs; False for Parquet/.cutadapt.json/etc."""
-    # Strip .gz so foo.fasta.gz matches the same way foo.fasta would.
+    """True for FASTA / FASTQ / TSV / JSON paths; False for Parquet etc."""
+    # Strip .gz so foo.fastq.gz matches the same way foo.fastq would.
     name = path.name
     stem = name[:-3] if name.endswith(".gz") else name
     return any(stem.endswith(suf) for suf in _HASHABLE_SUFFIXES)
@@ -138,11 +141,22 @@ class SelexprepManifestV1(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-def compute_sha256s(paths: Iterable[Path]) -> dict[str, str]:
+def compute_sha256s(
+    paths: Iterable[Path],
+    *,
+    root: Path | None = None,
+) -> dict[str, str]:
     """SHA256 each FASTA/TSV/JSON path; skip Parquet & non-existent paths.
 
-    Returns ``{basename: hex_digest}``. Locked plan line 28: Parquet
-    hashes are advisory only; pyarrow_version pins their reproducibility.
+    Returns ``{key: hex_digest}``. The key is ``path.relative_to(root)`` (POSIX
+    string form) when ``root`` is given — required for output manifests where
+    per-round files share the same basename (e.g. ``round_00/extracted.fasta.gz``
+    vs ``round_01/extracted.fasta.gz`` would collide if both were keyed on
+    ``p.name``). When ``root`` is None or the path is outside it, falls back
+    to the basename (suitable for inputs where each file has a unique name).
+
+    Locked plan line 28: Parquet hashes are advisory only; ``pyarrow_version``
+    pins their reproducibility.
     """
     out: dict[str, str] = {}
     for p in paths:
@@ -152,7 +166,14 @@ def compute_sha256s(paths: Iterable[Path]) -> dict[str, str]:
         if not _is_hashable_output(p):
             logger.debug("compute_sha256s: skipping non-hashable %s", p)
             continue
-        out[p.name] = sha256_file(p)
+        if root is not None:
+            try:
+                key = p.relative_to(root).as_posix()
+            except ValueError:
+                key = p.name
+        else:
+            key = p.name
+        out[key] = sha256_file(p)
     return out
 
 
@@ -225,6 +246,8 @@ def build_manifest_from_extract_result(
     parameters: dict[str, str],
     runtime_seconds_per_stage: dict[str, float] | None = None,
     flags: list[str] | None = None,
+    output_root: Path | None = None,
+    input_root: Path | None = None,
 ) -> SelexprepManifestV1:
     """Convenience builder used by `selexprep extract`.
 
@@ -232,6 +255,14 @@ def build_manifest_from_extract_result(
     dependency versions, denormalizes the LibraryReport's classification
     fields, and assembles the manifest. ``flags`` defaults to ``[]`` —
     Phase 5's QC layer is where they get populated.
+
+    ``output_root`` keys ``output_sha256`` by path relative to that root,
+    preventing collision between per-round outputs that share the same
+    basename. ``input_root`` does the same for ``input_sha256`` — needed
+    in sample-sheet mode where demuxed inputs share basenames across
+    rounds (e.g. ``round_00/srr_1.fastq.gz`` vs ``round_01/srr_1.fastq.gz``).
+    For the normal CLI flow the user-supplied inputs have unique
+    basenames (the CLI enforces this), so ``input_root=None`` is fine.
     """
     return SelexprepManifestV1(
         selexprep_version=_SELEXPREP_VERSION,
@@ -242,8 +273,8 @@ def build_manifest_from_extract_result(
         accession=accession,
         bioproject_id=bioproject_id,
         runs=runs,
-        input_sha256=compute_sha256s(input_paths),
-        output_sha256=compute_sha256s(output_paths),
+        input_sha256=compute_sha256s(input_paths, root=input_root),
+        output_sha256=compute_sha256s(output_paths, root=output_root),
         library_report=library_report,
         extraction_mode=library_report.extraction_mode,
         read_source=library_report.read_source,

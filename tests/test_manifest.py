@@ -239,6 +239,37 @@ def test_compute_sha256s_skips_missing_paths(tmp_path: Path) -> None:
     assert hashes == {}
 
 
+def test_compute_sha256s_distinct_keys_per_round_with_root(tmp_path: Path) -> None:
+    """Codex Phase 3 pass 1 regression: per-round outputs that share the
+    same basename (round_00/extracted.fasta.gz vs round_01/extracted.fasta.gz)
+    must NOT collide in output_sha256. Pass ``root=outdir`` to key by
+    relative path; basename-only keying would last-write-wins one of them."""
+    outdir = tmp_path / "out"
+    (outdir / "round_00").mkdir(parents=True)
+    (outdir / "round_01").mkdir(parents=True)
+    p1 = outdir / "round_00" / "extracted.fasta.gz"
+    p2 = outdir / "round_01" / "extracted.fasta.gz"
+    # Distinct content so the hashes themselves differ — the test verifies
+    # both end up in the dict, not just that the hash function works.
+    p1.write_bytes(b"round_00 distinct content " + b"A" * 100)
+    p2.write_bytes(b"round_01 distinct content " + b"B" * 100)
+
+    hashes = compute_sha256s([p1, p2], root=outdir)
+
+    assert "round_00/extracted.fasta.gz" in hashes
+    assert "round_01/extracted.fasta.gz" in hashes
+    assert hashes["round_00/extracted.fasta.gz"] != hashes["round_01/extracted.fasta.gz"]
+
+
+def test_compute_sha256s_without_root_falls_back_to_basename(tmp_path: Path) -> None:
+    """Backward-compat: without ``root``, the key is the basename (suitable
+    for inputs where filenames are unique by construction)."""
+    fa = tmp_path / "file.fasta.gz"
+    fa.write_bytes(b"x")
+    hashes = compute_sha256s([fa])
+    assert "file.fasta.gz" in hashes
+
+
 def test_compute_sha256s_handles_mixed_input(tmp_path: Path) -> None:
     fa = tmp_path / "good.fasta.gz"
     fa.write_bytes(b"data")

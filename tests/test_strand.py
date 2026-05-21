@@ -168,6 +168,24 @@ def test_reorient_fastq_gz_output_is_deterministic(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_reorient_fastq_gz_raises_on_truncated_record(tmp_path: Path) -> None:
+    """Codex Phase 3 pass 1 regression: a truncated FASTQ input must raise
+    rather than silently produce a partial output. Previously it logged a
+    warning + broke the loop, leaving the caller no way to detect that
+    extraction was incomplete."""
+    import pytest
+
+    input_fq = tmp_path / "truncated.fastq.gz"
+    # Write a valid first record + a truncated second record (header only).
+    with gzip.open(input_fq, "wt", encoding="utf-8") as fh:
+        fh.write("@r0\nATCG\n+\nIIII\n")  # complete
+        fh.write("@r1\n")  # truncated — no seq/plus/qual
+
+    output_fq = tmp_path / "out.fastq.gz"
+    with pytest.raises(ValueError, match="truncated FASTQ record"):
+        reorient_fastq_gz(input_fq, output_fq)
+
+
 def test_write_strand_report_emits_sorted_tsv(tmp_path: Path) -> None:
     dists = {
         2: {"forward": 30, "reverse": 5, "ambiguous": 0},

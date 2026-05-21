@@ -8,6 +8,83 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+**Phase 3 Codex pass 1 (2026-05-21)** — three blocking bugs +
+three non-blocking polish items, all caught in the second-pass code
+review of the extraction pipeline. Calibration verdict for the one
+Phase 3 constant: `STRAND_REPORT_PER_READ = False` ✅ CONFIRMED.
+
+Blocking:
+
+- **Multi-FASTQ-per-round overwrite (runner.py).** Each per-mode
+  trim loop wrote every input FASTQ in a round to the SAME target
+  path — second iteration overwrote first, dropping all but the last
+  input's reads. Added `_trim_round_single_end` + `_trim_round_paired_split`
+  helpers that trim each input to a per-input temp `.part_NNN.fasta.gz`,
+  then concatenate deterministically via `open_gzip_text_deterministic`
+  into the final per-round target. Single-input case stays on the
+  fast path (no temps).
+- **Sample-sheet paired-end demux didn't rebuild `paired_r2_inputs`
+  (runner.py).** After demux, only R1-shaped files were collected;
+  `paired_r2_inputs` stayed at whatever the caller passed (typically
+  None). `PAIRED_END_SPLIT_PRIMERS + --sample-sheet` would refuse with
+  "requires --paired-r2". Now collects both `_1.fastq.gz` (R1) and
+  `_2.fastq.gz` (R2) from the demuxed layout, builds `round_inputs`
+  path-aware from parent dirs (basenames collide across rounds after
+  demux), and populates `paired_r2_inputs` when R2 files exist.
+- **`output_sha256` collapsed per-round files with same basename
+  (manifest.py).** `compute_sha256s` used `p.name` as the dict key, so
+  `round_00/extracted.fasta.gz` and `round_01/extracted.fasta.gz`
+  collided — last-write-wins. Added `root` kwarg; when given, keys are
+  `path.relative_to(root).as_posix()`. Builder passes `output_root=outdir`
+  so per-round outputs stay distinct in the manifest.
+
+Non-blocking:
+
+- **Orphaned temp files on trim failure (trim.py).** All four trim
+  entry points now wrap cutadapt + repack in `try/finally` that unlinks
+  the intermediate `.fa` and `.cutadapt.json` files, even on cutadapt
+  raise or repack raise.
+- **Truncated FASTQ silently produced partial output (strand.py).**
+  `reorient_fastq_gz` now raises `ValueError` on a truncated record
+  instead of logging a warning and breaking the loop (the caller has
+  no way to distinguish "graceful early termination" from
+  "incomplete extraction"). Aligns with the project's no-silent-miscalls
+  discipline.
+- **R2 basename collision (cli.py).** `extract` now refuses early
+  with an explicit list of duplicate basenames when `--fastq` +
+  `--paired-r2` collectively contain repeated names (which would
+  collapse in the basename-keyed round-map lookup).
+
+Follow-up to the manifest pass (Codex spotted in a second review pass
+of the same commit, folded in here):
+
+- **`input_sha256` basename-collision in sample-sheet mode (manifest.py +
+  runner.py).** The `root` kwarg now applies to inputs too:
+  `build_manifest_from_extract_result` accepts `input_root=...`, and
+  the runner passes `input_root = outdir / "demux"` when sample-sheet
+  mode is active (demuxed files share basenames across rounds —
+  `srr_1.fastq.gz` in every `round_NN/` folder). Normal CLI flow keeps
+  `input_root=None` because the CLI's basename-collision guard
+  guarantees uniqueness upfront.
+- **Latent: `input_sha256` was silently empty for ALL CLI flows
+  (manifest.py).** `_HASHABLE_SUFFIXES` only included
+  `{.fasta, .fa, .tsv, .json}`, so FASTQ inputs got filtered out and
+  the manifest's input-side hashes were missing entirely — contradicting
+  the locked plan line 168 ("input_sha256 (FASTQ files)"). Added
+  `.fastq` + `.fq` to the suffix set. Caught while writing the regression
+  test above.
+
+Six new regression tests:
+- `test_run_extract_multi_fastq_same_round_aggregates`
+- `test_run_extract_sample_sheet_paired_end_demux_rebuilds_r2_inputs`
+- `test_run_extract_sample_sheet_input_sha256_distinct_per_round`
+- `test_compute_sha256s_distinct_keys_per_round_with_root`
+- `test_compute_sha256s_without_root_falls_back_to_basename`
+- `test_reorient_fastq_gz_raises_on_truncated_record`
+
+CI: 367 passed + 1 xfailed (was 361; +6 new tests). All four pre-existing
+CI gates stay green.
+
 **Phase 2 Codex pass 1 semantic bugs (2026-05-20)** — surfaced during
 the calibration review and folded into the same commit:
 

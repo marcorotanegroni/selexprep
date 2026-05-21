@@ -239,6 +239,25 @@ def extract(
     the baseline outputs in place AND emit ``extract_diff.tsv`` comparing
     baseline vs override per-round read counts.
     """
+    # Basename collision check (Codex pass 1 fix): the round-map lookup is
+    # basename-keyed, so two input FASTQs with the same name in different
+    # directories would silently overwrite each other in the lookup dict.
+    # Refuse early with a clear error rather than producing a wrong result.
+    all_input_paths: list[Path] = list(fastq) + list(paired_r2 or [])
+    all_basenames = [p.name for p in all_input_paths]
+    if len(set(all_basenames)) != len(all_basenames):
+        from collections import Counter as _Counter
+
+        dups = sorted(name for name, count in _Counter(all_basenames).items() if count > 1)
+        typer.secho(
+            "extract: duplicate FASTQ basenames in --fastq + --paired-r2: "
+            f"{dups}. Round-map matching is by basename — rename or "
+            "stage inputs in non-colliding paths.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
     if sample_sheet is None and round_map is None:
         typer.secho(
             "extract: either --round-map or --sample-sheet is required "

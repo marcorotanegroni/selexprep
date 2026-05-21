@@ -142,12 +142,14 @@ def reorient_fastq_gz(input_path: Path, output_path: Path) -> int:
             plus = fh.readline()
             qual = fh.readline()
             if not (header and seq and plus and qual):
-                logger.warning(
-                    "reorient_fastq_gz: truncated record at index %d in %s",
-                    n_records,
-                    input_path,
+                # Fail loud rather than silently produce a partial output —
+                # the project's "no silent miscalls" discipline applies here
+                # too. Callers handle the exception (extract/runner.py
+                # surfaces it via ``ExtractResult.skipped_reason``).
+                raise ValueError(
+                    f"reorient_fastq_gz: truncated FASTQ record at index "
+                    f"{n_records} in {input_path}"
                 )
-                break
             seq_stripped = seq.rstrip("\n")
             qual_stripped = qual.rstrip("\n")
             out.write(header)
