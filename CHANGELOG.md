@@ -8,6 +8,79 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+**Phase 4 Codex pass 1 (2026-05-21)** — one blocking semantic bug +
+three non-blocking polish items. Calibration verdict: N/A (Phase 4
+introduces no calibration constants).
+
+Blocking:
+
+- **`--override-primer-{5p,3p}` was applied AFTER the refusal check
+  (runner.py).** Locked plan line 311 explicitly says
+  `--override-primer-*` should bypass the UNABLE_TO_INFER /
+  UNABLE_TO_EXTRACT refusal — but the runner was checking refusal
+  first, so an override could never reach the LR. Worse, the refusal
+  message suggested using override as the fix, creating a circular
+  error path. Refactored to:
+  1. Apply override first (clone LR via `model_copy(update=...)`).
+  2. When baseline `extraction_mode == "UNABLE_TO_EXTRACT"`, infer a
+     new mode from which primer sides are now defined: both →
+     `BOTH_PRIMERS_SINGLE_READ` + `full_insert_recovered=True` +
+     `required_action=NONE`; 5p-only → `FIVE_PRIME_ONLY`; 3p-only →
+     `THREE_PRIME_ONLY` (`full_insert_recovered=False`).
+  3. Promote `status` from `UNABLE_TO_INFER` → `MEDIUM` (manual
+     override = medium confidence by convention; hand-editing the LR
+     JSON is the path to claim HIGH). Clear `failure_reason`.
+  4. THEN run the refusal check. With override applied, UNABLE state
+     is naturally cleared and the dispatcher proceeds. Refusal still
+     fires if no override was given AND baseline is UNABLE.
+  Refusal message also reworded to clarify the override mechanism
+  (dropped the stale `(Phase 4)` parenthetical).
+
+Non-blocking:
+
+- **Override didn't check `KNOWN_ADAPTERS` (runner.py).** An override
+  matching a known sequencing adapter prefix is now allowed (explicit
+  escape hatch) but surfaces a `logger.warning` — the adapter-trap
+  story still holds for the auto-inference path, and the override
+  path gets a foot-gun guard without blocking deliberate use.
+- **`HTTPError` in `inspect_accession` propagates without
+  differentiating 404 vs 503 (fetch/inspect.py).** OK for the current
+  CLI flow; flagged for the future `selexprep run` batch driver.
+  Carry-forward only — not fixed in this round.
+- **`parameters` / `runtime_seconds_per_stage` not normalized in
+  deterministic JSON (manifest.py).** Currently deterministic because
+  the CLI always builds the dict in the same order, but fragile if the
+  library API gets a non-CLI caller. Carry-forward.
+
+### Changed
+
+**Architecture hygiene (Codex pass 1 NB follow-up).** Migrated the
+`_matches_known_adapter` helper from `library/detect.py` (where it was
+underscore-private) to `library/adapters.py` (where `KNOWN_ADAPTERS`,
+`KNOWN_ADAPTERS_RC`, and `count_adapter_hits` already live). Renamed
+to public `matches_known_adapter_prefix()` — the `_prefix` suffix
+makes the semantics explicit (it's a first-`k`-bp match, not arbitrary
+substring). Also moved the `ADAPTER_PROBE_K = 13` constant to
+`library/adapters.py` so the shared default of `count_adapter_hits`
+and `matches_known_adapter_prefix` has a single source of truth.
+Cross-package private imports eliminated. No call-site behavior
+change; the function is byte-identical.
+
+### Tests (Phase 4 follow-up)
+
+Five new regression tests in `tests/test_extract_override.py`:
+- `test_override_with_both_primers_promotes_unable_to_extract`
+- `test_override_5p_only_promotes_to_five_prime_only`
+- `test_override_3p_only_promotes_to_three_prime_only` (symmetry
+  mirror of the 5p-only test)
+- `test_override_logs_warning_when_matches_known_adapter`
+- `test_no_override_on_unable_still_refuses_with_clear_message`
+
+CI: 372 passed + 1 xfailed (was 367; +5 new tests). All four
+pre-existing CI gates stay green. `_make_library_report` in
+`test_extract_override.py` extended with kwargs to support multiple
+test scenarios (matches the helper pattern in `test_extract_runner.py`).
+
 **Phase 3 Codex pass 1 (2026-05-21)** — three blocking bugs +
 three non-blocking polish items, all caught in the second-pass code
 review of the extraction pipeline. Calibration verdict for the one
