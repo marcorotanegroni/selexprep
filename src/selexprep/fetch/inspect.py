@@ -42,6 +42,42 @@ _ENA_FIELDS = (
 
 
 # ---------------------------------------------------------------------------
+# Shared HTTP helper (used by inspect + fetch.plan)
+# ---------------------------------------------------------------------------
+
+
+def query_ena_filereport(
+    accession: str,
+    *,
+    fields: str,
+    timeout_s: int = 30,
+) -> list[dict]:
+    """Hit ENA's filereport REST API; return raw row dicts.
+
+    Single source of truth for the HTTP call shape so callers
+    (``inspect_accession``, ``fetch.plan.build_fetch_plan``) don't
+    duplicate the wire format / error handling.
+
+    Raises:
+        requests.HTTPError on non-2xx (network / 404 unknown accession).
+        ValueError if ENA returns an empty record set.
+    """
+    params = {
+        "accession": accession,
+        "result": "read_run",
+        "fields": fields,
+        "format": "json",
+    }
+    logger.info("query_ena_filereport: GET %s params=%s", ENA_FILEREPORT_URL, params)
+    response = requests.get(ENA_FILEREPORT_URL, params=params, timeout=timeout_s)
+    response.raise_for_status()
+    rows = response.json() or []
+    if not rows:
+        raise ValueError(f"ENA returned no records for accession {accession!r}")
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
 
@@ -79,7 +115,7 @@ class InspectReport:
 # ---------------------------------------------------------------------------
 
 
-def _split_semicolon_list(value: object) -> list[str]:
+def split_semicolon_list(value: object) -> list[str]:
     """Parse a semicolon-delimited string from ENA into a clean list.
 
     ENA returns columns like ``fastq_md5`` as ``"abc;def"`` for paired-end
@@ -100,22 +136,11 @@ def inspect_accession(accession: str, *, timeout_s: int = 30) -> InspectReport:
     - ``requests.HTTPError`` on non-2xx (network / 404 unknown accession)
     - ``ValueError`` if ENA returns an empty record set
     """
-    params = {
-        "accession": accession,
-        "result": "read_run",
-        "fields": _ENA_FIELDS,
-        "format": "json",
-    }
-    logger.info("inspect_accession: GET %s params=%s", ENA_FILEREPORT_URL, params)
-    response = requests.get(ENA_FILEREPORT_URL, params=params, timeout=timeout_s)
-    response.raise_for_status()
-    rows = response.json() or []
-    if not rows:
-        raise ValueError(f"ENA returned no records for accession {accession!r}")
+    rows = query_ena_filereport(accession, fields=_ENA_FIELDS, timeout_s=timeout_s)
 
     runs: list[RunFileInfo] = []
     for row in rows:
-        size_strs = _split_semicolon_list(row.get("fastq_bytes"))
+        size_strs = split_semicolon_list(row.get("fastq_bytes"))
         sizes: list[int] = []
         for s in size_strs:
             try:
@@ -128,7 +153,7 @@ def inspect_accession(accession: str, *, timeout_s: int = 30) -> InspectReport:
                 read_count=int(row.get("read_count") or 0),
                 base_count=int(row.get("base_count") or 0),
                 fastq_size_bytes=sizes,
-                fastq_md5=_split_semicolon_list(row.get("fastq_md5")),
+                fastq_md5=split_semicolon_list(row.get("fastq_md5")),
             )
         )
 

@@ -377,14 +377,63 @@ def test_qc_emits_flags_yaml_and_plots(tmp_path: Path) -> None:
     assert (outdir / "qc" / "per_round_panel.png").exists()
 
 
-def test_fetch_stub_exits_with_code_2() -> None:
-    result = runner.invoke(app, ["fetch", "SRR000000", "--outdir", "/tmp/sx"])
-    assert result.exit_code == 2
-
-
 def test_no_args_shows_help() -> None:
     result = runner.invoke(app, [])
     assert "Usage:" in result.stdout
+
+
+# ===========================================================================
+# Phase 6a — `fetch` + `run` CLI smokes (wired)
+# ===========================================================================
+
+
+def test_fetch_dry_run_smoke(tmp_path: Path) -> None:
+    """End-to-end CLI smoke: --dry-run emits metadata + rounds.tsv with no download."""
+    from unittest.mock import MagicMock, patch
+
+    import requests as _requests
+
+    fake_response = MagicMock(spec=_requests.Response)
+    fake_response.status_code = 200
+    fake_response.raise_for_status.return_value = None
+    fake_response.json.return_value = [
+        {
+            "run_accession": "SRR_DRY",
+            "study_accession": "PRJX",
+            "study_title": "T",
+            "library_strategy": "OTHER",
+            "library_source": "OTHER",
+            "library_name": "",
+            "experiment_title": "",
+            "sample_title": "Round 0",
+            "sample_accession": "SAM_X",
+            "read_count": "10",
+            "base_count": "100",
+            "fastq_md5": "aaa",
+            "fastq_bytes": "100",
+            "fastq_ftp": "ftp.ena.example/SRR_DRY.fastq.gz",
+        }
+    ]
+
+    with patch("selexprep.fetch.inspect.requests.get", return_value=fake_response):
+        result = runner.invoke(app, ["fetch", "PRJ", "--outdir", str(tmp_path), "--dry-run"])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "fetch_metadata.json").exists()
+
+
+def test_run_missing_accession_column_exits_2(tmp_path: Path) -> None:
+    tsv = tmp_path / "bad.tsv"
+    tsv.write_text("not_accession\nPRJ_A\n", encoding="utf-8")
+    result = runner.invoke(app, ["run", str(tsv), "--outdir", str(tmp_path / "out")])
+    assert result.exit_code == 2
+    assert "accession" in result.output
+
+
+def test_run_help_lists_resume_and_stop_on_error() -> None:
+    result = runner.invoke(app, ["run", "--help"])
+    assert result.exit_code == 0
+    assert "--resume" in result.output
+    assert "--stop-on-error" in result.output
 
 
 # ===========================================================================
