@@ -429,11 +429,31 @@ def test_run_missing_accession_column_exits_2(tmp_path: Path) -> None:
     assert "accession" in result.output
 
 
-def test_run_help_lists_resume_and_stop_on_error() -> None:
+def test_run_command_registers_resume_and_stop_on_error_options() -> None:
+    """``selexprep run`` exposes ``--resume`` and ``--stop-on-error``.
+
+    Asserts via Click command introspection rather than grepping the
+    rendered ``--help`` text — Rich help tables get truncated in CI's
+    80-column non-TTY (Ubuntu runner default), which silently elides
+    option names. The contract we care about is "the option exists";
+    the rendered help is matplotlib-style informational and varies by
+    terminal width.
+    """
+    import typer.main
+
+    click_app = typer.main.get_command(app)
+    run_cmd = click_app.commands["run"]  # type: ignore[attr-defined]
+    flag_names: set[str] = set()
+    for param in run_cmd.params:
+        for opt in getattr(param, "opts", []):
+            flag_names.add(opt)
+    assert "--resume" in flag_names
+    assert "--stop-on-error" in flag_names
+
+    # Smoke: --help still exits cleanly (the rendering itself works,
+    # we just don't grep its text).
     result = runner.invoke(app, ["run", "--help"])
     assert result.exit_code == 0
-    assert "--resume" in result.output
-    assert "--stop-on-error" in result.output
 
 
 # ===========================================================================
