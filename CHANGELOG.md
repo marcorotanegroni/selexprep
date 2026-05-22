@@ -8,6 +8,202 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+**Phase 6a Codex pass 1 (2026-05-22)** — two blocking semantic bugs +
+two non-blocking polish items. Calibration verdict: N/A (Phase 6a
+introduces no calibration constants).
+
+Blocking:
+
+- **Outer except in `run_batch` mislabeled every unexpected exception
+  as `EXTRACT_FAILED` (run/runner.py).** If `build_fetch_plan` or
+  `download_srr` raised an `HTTPError`, `RequestException`, or
+  `ValueError`, the exception escaped the fetch block to the outer
+  safety net and `run_summary.tsv` recorded `status=EXTRACT_FAILED`
+  even though the extract stage never ran. Fix: stage-classify
+  expected fetch-stage exceptions inside `_process_one_accession`
+  (new `try/except` around the `run_fetch` call → `FETCH_FAILED`),
+  and rename the outer-net status to a new literal
+  `UNEXPECTED_FAILURE` so a truly-escaped exception is no longer
+  misreported as extract. The `RunStatus` literal gains
+  `UNEXPECTED_FAILURE`; nothing produces `EXTRACT_FAILED` from the
+  outer net any more. Resumed reads of `fetch_metadata.json` now also
+  guard `read_fetch_metadata_json` against malformed audit-trail
+  files (`ValueError` / `KeyError` / `OSError`) and downgrade to
+  `FETCH_FAILED` instead of leaking.
+- **Fetch resume oracle accepted corrupt `.fastq.gz` files
+  (fetch/runner.py).** Both the per-run skip-already-present check
+  (`run_fetch`) and `check_fetch_inventory` used bare `Path.exists()`.
+  A `SIGKILL`'d download leaves a truncated `.fastq.gz` on disk that
+  exists but cannot be decompressed; `--resume` would skip it and
+  downstream `detect`/`extract` would hit gzip errors deep in the
+  pipeline. Fix: both call sites now use
+  `selexprep.fetch.download.validate_fastq_gz` (existing helper at
+  fetch/download.py:96 — checks exists, ≥1024 bytes, and `gzip -t`
+  decompresses cleanly). Mirrors the same check
+  `download_srr_ena_direct` performs at fetch/download.py:288.
+
+Non-blocking:
+
+- **`_count_yaml_flags` used `line.startswith("- name:")` which
+  miscounts under `safe_dump(sort_keys=True)` (run/runner.py).** When
+  a flag has non-empty `evidence`, the YAML emission orders dict keys
+  alphabetically inside each list entry (`evidence` < `name` <
+  `severity`), so the first line of each entry can be
+  `- evidence:` rather than `- name:`. Resumed `run_summary.tsv`
+  would undercount flags. Fix: parse the YAML via `yaml.safe_load`
+  and count list entries that contain a `name` key.
+- **`fastq_filenames_for_run` synthesized
+  `{SRR}.fastq.gz`/`{SRR}_{1,2}.fastq.gz` instead of deriving from
+  URLs (fetch/plan.py).** Right for ENA's canonical naming, but
+  brittle if a future ENA URL convention or Zenodo mirror used a
+  different scheme. `download_srr_ena_direct` writes
+  `output_dir / Path(url_path).name` (fetch/download.py:351), so the
+  URLs are the source of truth. Fix: derive basenames from
+  `run.fastq_urls`; keep the SRR-based synthesis as a defensive
+  fallback for the rare case where ENA returns no `fastq_ftp` (which
+  also means the run isn't downloadable, so the fallback path is
+  effectively dead).
+
+Six new regression tests:
+
+- `test_run_batch_fetch_http_error_records_FETCH_FAILED_not_extract_failed`
+  — `requests.HTTPError` from `build_fetch_plan` ⇒ `FETCH_FAILED`
+  (not `EXTRACT_FAILED`).
+- `test_run_batch_corrupt_fastq_is_redownloaded_by_resume_oracle` —
+  garbled `.fastq.gz` on disk triggers re-download under `--resume`;
+  the result passes `validate_fastq_gz`.
+- `test_run_batch_count_yaml_flags_uses_yaml_parser` — flags YAML
+  with `evidence`-first entry ordering counts to 2, not 0.
+- `test_fastq_filenames_for_run_derives_from_urls` — hypothetical
+  alternate URL naming (`foo_subdir/SRR_X_unusual.fastq.gz`) is
+  honored verbatim.
+- `test_fastq_filenames_for_run_fallback_when_urls_empty` — defensive
+  synthesis path still works when `fastq_urls=[]`.
+- `test_run_batch_unexpected_error_uses_unexpected_failure_status` —
+  outer-net safety catch uses `UNEXPECTED_FAILURE`, not
+  `EXTRACT_FAILED`.
+
+Test fixtures updated: `_stub_download_writes_files` and `_write_fastq`
+now emit 800 records of 60-base pseudo-random sequences so the gzipped
+outputs exceed `validate_fastq_gz`'s 1024-byte floor. The previous
+small fixtures (~38 bytes raw) would now be rejected as too-small to
+be valid downloads.
+
+CI: 432 passed + 1 xfailed (was 426; +6 new tests). All four
+pre-existing CI gates stay green.
+
+### Added
+
+**Phase 6a — close v0.1 CLI surface: `selexprep fetch` + `selexprep run`
+(2026-05-22)**
+
+Wires the two remaining `_not_implemented` CLI verbs from the locked
+plan (lines 181–189), closing the v0.1 single-dataset + batch CLI
+surface. With Phase 6a landed, the public CLI exercises end-to-end
+(`inspect → fetch → detect → extract → count → qc`); Phase 6b
+(benchmark Snakefile + Figure A) can now drive the comparison against
+AptaPLEX + EasyDIVER+ through the public CLI rather than through
+library imports.
+
+- **NEW: `selexprep.fetch.plan`** — `build_fetch_plan(accession,
+  timeout_s) → FetchPlan` hits ENA filereport with extended fields
+  (`sample_title`, `library_name`, `experiment_title`,
+  `sample_accession` on top of the inspect set) so the 5-level
+  cascade in `fetch.metadata.parse_round` runs on real metadata
+  instead of bare-bones inspect fields. Emits a deterministic
+  `fetch_metadata.json` audit trail. Single source of truth for
+  "what does this accession look like and how do its runs map to
+  rounds?", reused by both `fetch` and `run` CLIs.
+- **NEW: `selexprep.fetch.runner`** — `run_fetch(accession, outdir,
+  *, backend, allow_manual_review, dry_run, timeout_s) → FetchResult`
+  orchestrator. Emits `rounds.tsv` (HIGH/MEDIUM-confidence
+  contract that downstream `detect`/`extract` consume; sorted by
+  filename for determinism) + per-round FASTQs under `round_NN/` +
+  optional `manual_review.tsv` + `fetch_metadata.json`. Cardinal
+  rule (per `fetch/metadata.py` line 14): never guess a round
+  assignment — NONE-confidence runs refused by default; opt-in via
+  `--allow-manual-review` routes them to `round_unknown/` + a
+  separate `manual_review.tsv` and **never** lets them enter
+  `rounds.tsv`. If every run is NONE-confidence, refuses fail-fast
+  before any download. Shared `query_ena_filereport()` helper
+  factored out of `inspect.py` so the HTTP call shape is defined
+  once.
+- **NEW: `selexprep.run.runner`** — `run_batch(accessions_tsv,
+  outdir, *, resume, stop_on_error, backend, allow_manual_review,
+  timeout_s) → RunReport` batch driver. Per-accession pipeline
+  (fetch → detect → extract → count → qc) with file-inventory
+  resume oracles per stage (not sentinel-flag based):
+  - **fetch**: `fetch_metadata.json` present AND every expected
+    FASTQ from `FetchPlan.runs` on disk AND `rounds.tsv` present.
+    Mirrors `download_bioproject._missing_srrs` discipline at
+    `fetch/download.py:683`.
+  - **detect**: `library_report.json` present.
+  - **extract**: `selexprep_manifest.json` present.
+  - **count**: per-round `round_NN/counts.parquet` (granular —
+    only missing rounds re-run).
+  - **qc**: `qc/flags.yaml` present.
+  Paired-end FASTQs are grouped by ENA naming convention
+  (`<srr>_1.fastq.gz` = R1, `<srr>_2.fastq.gz` = R2); R1-only
+  sequences feed `compute_library_report`'s primary stream, R2
+  sequences are passed as `paired_mate_streams`, and both are
+  threaded through `run_extract` as `paired_r2_inputs`. Per-accession
+  errors default to log-and-continue with `status=FAILED_<stage>`
+  in `run_summary.tsv`; `--stop-on-error` flips to fail-fast.
+- **WIRED: `selexprep fetch <accession> --outdir OUT
+  [--backend ena|auto|kingfisher|sra] [--allow-manual-review]
+  [--dry-run] [--timeout-s N]`** — replaces the
+  `_not_implemented` stub. **CLI default `--backend ena`** (paper-
+  grade reproducibility; fail-fast if ENA can't serve; never
+  silently fall back to GPL tools); `--backend auto` is the
+  explicit opt-in for the convenience fallback chain. Library-level
+  `download_srr(backend="auto")` default unchanged (Python API
+  ergonomic).
+- **WIRED: `selexprep run accessions.tsv --outdir OUT [--resume]
+  [--stop-on-error] [--backend ena|auto|...] [--allow-manual-review]
+  [--timeout-s N]`** — replaces the `_not_implemented` stub. Emits
+  a deterministic `run_summary.tsv` (sorted by accession) with
+  per-accession status: `OK` /
+  `SKIPPED_READ_MERGING_RECOMMENDED` /
+  `FETCH_REFUSED` / `FETCH_FAILED` / `DETECT_FAILED` /
+  `EXTRACT_REFUSED` / `EXTRACT_FAILED` / `COUNT_FAILED` /
+  `QC_FAILED`. Split-primer guard (`required_action ==
+  READ_MERGING_RECOMMENDED`) skips count + qc and records the
+  status rather than producing misleading half-insert counts
+  (locked plan line 325).
+
+**Tests added (+42, 427 + 1 xfailed total):**
+
+- `tests/test_fetch_plan.py` (12 — mocked-ENA paired-vs-single,
+  round confidence propagation, deterministic JSON, frozen
+  dataclass, extended-field assertion, empty-response ValueError,
+  timeout pass-through).
+- `tests/test_fetch_cli.py` (15 — orchestrator happy paths,
+  refusal paths (all-NONE, mixed-without-flag, allow-manual-review
+  rounds.tsv cleanliness), resume oracle (`check_fetch_inventory`
+  + skip-already-present), CLI dry-run, invalid backend,
+  refusal exit code, propagated ValueError, all four documented
+  backends accepted).
+- `tests/test_run_runner.py` (12 — duplicate-accession refusal,
+  missing-column refusal, fetch refusal status, paired-end
+  R1/R2 threading through detect+extract, split-primer skip
+  (no count/qc), fetch resume oracle re-fetches missing FASTQ,
+  per-stage resume (no work on re-run with all sentinels),
+  log-and-continue default, `--stop-on-error` halts loop,
+  detect-stage exception → `DETECT_FAILED`, summary TSV sorted
+  by accession, manual-review separation keeps `rounds.tsv`
+  clean).
+- `tests/test_cli.py` (+3 — fetch dry-run smoke, run missing-
+  accession-column rejection, run --help lists `--resume` +
+  `--stop-on-error`). Replaced the obsolete
+  `test_fetch_stub_exits_with_code_2`.
+
+**Calibration:** N/A — Phase 6a introduces no new heuristic thresholds.
+The `CALIBRATION-TODO` inventory stays at 19. The fetch refusal
+threshold (NONE-confidence) is the locked-plan cardinal-rule binary,
+not a tunable.
+
+### Fixed
+
 **Phase 5 Codex pass 1 (2026-05-21)** — three blocking semantic bugs +
 three non-blocking polish items. Calibration verdict: all six v0.1
 qc constants ✅ confirmed against published HT-SELEX conventions

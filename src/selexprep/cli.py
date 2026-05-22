@@ -109,9 +109,84 @@ def inspect(
 def fetch(
     accession: str = typer.Argument(..., help="ENA / SRA / DDBJ accession."),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
+    backend: str = typer.Option(
+        "ena",
+        "--backend",
+        help=(
+            "Download backend. Default 'ena' (paper-grade reproducibility; "
+            "fail-fast if ENA can't serve). Use 'auto' for the convenience "
+            "fallback chain (ENA → kingfisher → sra-toolkit; GPL-3.0 "
+            "tools opt-in)."
+        ),
+    ),
+    allow_manual_review: bool = typer.Option(
+        False,
+        "--allow-manual-review",
+        help=(
+            "NONE-confidence runs are downloaded to round_unknown/ and "
+            "surfaced in manual_review.tsv; they NEVER enter rounds.tsv."
+        ),
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print plan; no FASTQ download."),
+    timeout_s: int = typer.Option(30, "--timeout-s", help="HTTP timeout (seconds)."),
 ) -> None:
-    """Download FASTQ + metadata for an accession; round map auto-populated."""
-    _not_implemented("fetch")
+    """Download FASTQ + metadata for an accession; round map auto-populated.
+
+    Emits ``outdir/rounds.tsv`` (the trusted-assignments contract for
+    detect/extract), per-round FASTQs under ``round_NN/``, plus
+    ``fetch_metadata.json`` as the audit trail. Refuses upfront if any
+    run has a NONE-confidence round assignment unless
+    ``--allow-manual-review`` is passed.
+    """
+    from selexprep.fetch import run_fetch as run_fetch_fn
+
+    allowed_backends = {"auto", "ena", "kingfisher", "sra"}
+    if backend not in allowed_backends:
+        typer.secho(
+            f"fetch: invalid --backend {backend!r}; allowed: {sorted(allowed_backends)}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        result = run_fetch_fn(
+            accession,
+            outdir,
+            backend=backend,  # type: ignore[arg-type]
+            allow_manual_review=allow_manual_review,
+            dry_run=dry_run,
+            timeout_s=timeout_s,
+        )
+    except ValueError as e:
+        typer.secho(f"fetch: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from e
+
+    if result.refused_reason is not None:
+        typer.secho(f"fetch: refused — {result.refused_reason}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2)
+
+    typer.echo(f"Accession:        {result.plan.accession}")
+    typer.echo(f"BioProject:       {result.plan.bioproject_id or '-'}")
+    typer.echo(f"Study title:      {result.plan.study_title or '-'}")
+    typer.echo(f"Runs:             {len(result.plan.runs)}")
+    typer.echo(f"  downloaded:     {len(result.downloaded_srrs)}")
+    typer.echo(f"  already-present:{len(result.skipped_srrs)}")
+    typer.echo(f"  failed:         {len(result.failed_srrs)}")
+    typer.echo(f"  manual-review:  {len(result.manual_review_srrs)}")
+    if result.rounds_tsv is not None:
+        typer.echo(f"rounds.tsv -> {result.rounds_tsv}")
+    if result.manual_review_tsv is not None:
+        typer.echo(f"manual_review.tsv -> {result.manual_review_tsv}")
+    typer.echo(f"fetch_metadata.json -> {result.fetch_metadata_json}")
+
+    if result.failed_srrs:
+        typer.secho(
+            f"fetch: {len(result.failed_srrs)} run(s) failed: {', '.join(result.failed_srrs)}",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
 
 def _load_round_map(path: Path) -> dict[str, int]:
@@ -488,9 +563,77 @@ def run(
     accessions: Path = typer.Argument(..., help="TSV of accessions to batch-process."),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
     resume: bool = typer.Option(False, "--resume", help="Resume an interrupted batch."),
+    stop_on_error: bool = typer.Option(
+        False,
+        "--stop-on-error",
+        help="Halt the batch on first per-accession failure instead of logging+continuing.",
+    ),
+    backend: str = typer.Option(
+        "ena",
+        "--backend",
+        help=(
+            "Download backend (default 'ena' for paper-grade reproducibility; "
+            "use 'auto' for the convenience fallback chain)."
+        ),
+    ),
+    allow_manual_review: bool = typer.Option(
+        False,
+        "--allow-manual-review",
+        help=(
+            "NONE-confidence runs are downloaded to round_unknown/ and "
+            "surfaced in manual_review.tsv; they NEVER enter rounds.tsv."
+        ),
+    ),
+    timeout_s: int = typer.Option(30, "--timeout-s", help="HTTP timeout (seconds)."),
 ) -> None:
     """Batch-process a list of accessions; emits per-dataset + corpus-level outputs."""
-    _not_implemented("run")
+    from selexprep.run import run_batch
+
+    allowed_backends = {"auto", "ena", "kingfisher", "sra"}
+    if backend not in allowed_backends:
+        typer.secho(
+            f"run: invalid --backend {backend!r}; allowed: {sorted(allowed_backends)}",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        report = run_batch(
+            accessions,
+            outdir,
+            resume=resume,
+            stop_on_error=stop_on_error,
+            backend=backend,  # type: ignore[arg-type]
+            allow_manual_review=allow_manual_review,
+            timeout_s=timeout_s,
+        )
+    except ValueError as e:
+        typer.secho(f"run: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from e
+
+    n_ok = sum(1 for r in report.rows if r.status == "OK")
+    n_skipped = sum(1 for r in report.rows if r.status == "SKIPPED_READ_MERGING_RECOMMENDED")
+    n_failed = sum(
+        1 for r in report.rows if r.status not in ("OK", "SKIPPED_READ_MERGING_RECOMMENDED")
+    )
+    typer.echo(f"Accessions processed: {len(report.rows)}")
+    typer.echo(f"  OK:                 {n_ok}")
+    typer.echo(f"  skipped (merging):  {n_skipped}")
+    typer.echo(f"  failed:             {n_failed}")
+    if report.summary_tsv is not None:
+        typer.echo(f"run_summary.tsv -> {report.summary_tsv}")
+
+    for row in report.rows:
+        if row.status not in ("OK", "SKIPPED_READ_MERGING_RECOMMENDED"):
+            typer.secho(
+                f"  [{row.status}] {row.accession}: {row.notes}",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
+
+    if n_failed > 0:
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
