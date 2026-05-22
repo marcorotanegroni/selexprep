@@ -8,6 +8,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+**Phase 6a CI hotfix (2026-05-22)** — `test_run_help_lists_resume_and_stop_on_error`
+passed locally on macOS but failed on all three Python versions on
+Ubuntu CI. Root cause: Typer/Rich renders the help table at the
+terminal's column width, and CI's non-TTY default of 80 columns is
+narrow enough that the Rich renderer silently truncates `--resume`,
+`--stop-on-error`, and `--backend` option names out of the rendered
+text. macOS local runs detect a wider effective width (Rich + CliRunner
+interaction) and show all options. The test grepped the rendered help
+text, so it was width-dependent by construction.
+
+Fix: rewrite the test to introspect the Click command's `params` list
+(`flag_names = {opt for p in run_cmd.params for opt in p.opts}`)
+instead of grepping rendered output. Renamed to
+`test_run_command_registers_resume_and_stop_on_error_options`. Kept
+a smoke that `--help` exits cleanly so the rendering path isn't
+unobserved. The contract being tested ("these options exist") is
+captured exactly; the rendered help width remains
+environment-dependent (matplotlib-style informational, per the same
+discipline as Phase 5 plots).
+
 **Phase 6a Codex pass 1 (2026-05-22)** — two blocking semantic bugs +
 two non-blocking polish items. Calibration verdict: N/A (Phase 6a
 introduces no calibration constants).
