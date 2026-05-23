@@ -51,9 +51,9 @@ _GROUND_TRUTH_DIR = _BENCHMARKS_DIR
 
 rule all:
     input:
-        f"{OUTROOT}/figure_a.pdf",
-        f"{OUTROOT}/figure_a.png",
-        f"{OUTROOT}/metrics.json",
+        OUTROOT + "/figure_a.pdf",
+        OUTROOT + "/figure_a.png",
+        OUTROOT + "/metrics.json",
 
 
 rule fetch:
@@ -86,7 +86,7 @@ def _round_map_for(accession: str) -> str:
     """
     if ROUND_MAP_SOURCE[accession] == "curated":
         return str((_GROUND_TRUTH_DIR / ROUND_MAP_PATH[accession]).resolve())
-    return f"{OUTROOT}/{accession}/rounds.tsv"
+    return OUTROOT + "/" + accession + "/rounds.tsv"
 
 
 def _fastq_inputs_for(w):
@@ -126,7 +126,7 @@ rule compute_metrics:
         ground_truth=GROUND_TRUTH,
         reports=expand(OUTROOT + "/{acc}/library_report.json", acc=ACCESSIONS),
     output:
-        f"{OUTROOT}/metrics.json",
+        OUTROOT + "/metrics.json",
     shell:
         "python -m selexprep.benchmark.metrics "
         "--ground-truth {input.ground_truth} "
@@ -136,10 +136,10 @@ rule compute_metrics:
 
 rule figure_a:
     input:
-        f"{OUTROOT}/metrics.json",
+        OUTROOT + "/metrics.json",
     output:
-        pdf=f"{OUTROOT}/figure_a.pdf",
-        png=f"{OUTROOT}/figure_a.png",
+        pdf=OUTROOT + "/figure_a.pdf",
+        png=OUTROOT + "/figure_a.png",
     shell:
         "python -m selexprep.benchmark.figure_a "
         "--metrics {input} --outdir {OUTROOT}"
