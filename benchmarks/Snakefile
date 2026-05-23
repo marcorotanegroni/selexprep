@@ -58,7 +58,12 @@ rule all:
 
 rule fetch:
     output:
-        f"{OUTROOT}/{{accession}}/fetch_metadata.json",
+        # snakemake 7's Snakefile preprocessor errors on wildcards buried
+        # inside an f-string (``f"{OUTROOT}/{{accession}}/..."``); plain
+        # string concatenation works in any snakemake version. Snakemake 9
+        # tolerated the f-string form but the bench extra now pins
+        # ``snakemake<8`` (Python 3.10 compat with pulp<2.8).
+        OUTROOT + "/{accession}/fetch_metadata.json",
     params:
         # Pass --allow-manual-review on curated rows so fetch downloads
         # FASTQs even when ENA metadata is too sparse to auto-assign
@@ -102,10 +107,11 @@ def _fastq_inputs_for(w):
 
 rule detect:
     input:
-        fetch_marker=f"{OUTROOT}/{{accession}}/fetch_metadata.json",
+        # Plain concat (see ``rule fetch`` note about snakemake 7).
+        fetch_marker=OUTROOT + "/{accession}/fetch_metadata.json",
         fastqs=_fastq_inputs_for,
     output:
-        f"{OUTROOT}/{{accession}}/library_report.json",
+        OUTROOT + "/{accession}/library_report.json",
     params:
         round_map=lambda w: _round_map_for(w.accession),
         fastq_args=lambda w, input: " ".join(input.fastqs),
@@ -118,7 +124,7 @@ rule detect:
 rule compute_metrics:
     input:
         ground_truth=GROUND_TRUTH,
-        reports=expand(f"{OUTROOT}/{{acc}}/library_report.json", acc=ACCESSIONS),
+        reports=expand(OUTROOT + "/{acc}/library_report.json", acc=ACCESSIONS),
     output:
         f"{OUTROOT}/metrics.json",
     shell:

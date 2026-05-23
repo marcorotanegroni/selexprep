@@ -6,6 +6,42 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+**Phase 6b.3a HPC dependency-resolution hotfix (2026-05-23)** — surfaced
+during the Phase 6b.4 HPC audit attempt; blocks
+``uv sync --extra bench`` from producing a working Snakemake on a
+fresh venv (including the DGX5 venv the user ran into).
+
+- **`pyproject.toml` ``bench`` extra pinned.** Previously
+  ``bench = ["snakemake >= 7.0"]`` left PuLP transitively unpinned, so
+  a fresh ``uv sync --extra bench`` resolved PuLP 3.x; Snakemake 7
+  calls ``pulp.list_solvers()`` at import time and PuLP 2.8 removed
+  the snake_case alias (only ``listSolvers`` remains), so
+  ``snakemake --version`` crashed with ``AttributeError``. Now pinned
+  to ``snakemake >= 7.0, < 8`` (ceiling matches the existing comment
+  about Python 3.10 compatibility — Snakemake 8+ requires Python
+  3.11+) and ``pulp < 2.8``. ``uv lock`` refresh dropped the
+  snakemake 9 dual-resolve and its ``snakemake-interface-*`` plugin
+  family + sqlalchemy/sqlmodel/greenlet — net reduction in the
+  ``bench``-extra footprint.
+- **`benchmarks/Snakefile` Tier 1 f-string-wildcard pattern**
+  replaced with plain string concatenation. The previous
+  ``f"{OUTROOT}/{{accession}}/fetch_metadata.json"`` pattern (f-string
+  substituting ``OUTROOT`` while the doubled ``{{accession}}``
+  produces a literal Snakemake wildcard) parsed cleanly under
+  Snakemake 9 but errors under Snakemake 7 with ``NameError: name
+  'accession' is not defined``. Snakemake 7's Snakefile preprocessor
+  walks AST nodes that Snakemake 9's doesn't. Refactored four
+  occurrences to ``OUTROOT + "/{accession}/..."``; semantically
+  identical, robust across versions. Both Snakefiles now dry-run
+  cleanly with the pinned Snakemake 7.32.4. **No Tier 1 benchmark
+  logic changed.** ``audit.smk`` was already wildcard-free in its
+  f-strings so didn't need a patch.
+
+CI gates (ruff / ruff-format / mypy / pytest 504+1 xfailed) and both
+Snakefile dry-runs all green after the fix.
+
 ### Added
 
 **Phase 6b.3a — Tier 2 corpus-audit scaffolding + Figure B pipeline (2026-05-23)**
