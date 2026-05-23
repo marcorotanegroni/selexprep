@@ -1,0 +1,132 @@
+# selexprep Phase 6b.1 — benchmark scaffolding
+#
+# Per-accession pipeline: fetch -> detect, then aggregate -> figure_a.
+# Reads ``ground_truth.tsv``; processes only ``verified=true`` rows.
+#
+# Codex pre-implementation amendments folded into this Snakefile:
+#  1. ``verified=false`` rows are excluded from the DAG entirely
+#     (they also get a stderr warning from the metrics aggregator).
+#  2. Only ENA/SRA/DDBJ-fetchable accessions appear here. Non-accession
+#     sources (figshare/zenodo/local-FASTQ) are out of scope for 6b.1.
+#  3. ``round_map_source == "curated"`` rows use the curator's
+#     ``round_map_path`` (resolved relative to ``ground_truth.tsv``)
+#     and pass ``--allow-manual-review`` to ``selexprep fetch`` so the
+#     FASTQs download even when ENA metadata is too sparse for the
+#     auto round-parser.
+#
+# Reproducibility:
+#
+#   snakemake -s benchmarks/Snakefile --cores 1
+#
+# Or dry-run:
+#
+#   snakemake -s benchmarks/Snakefile --cores 1 --dry-run
+
+from pathlib import Path
+
+import pandas as pd
+
+GROUND_TRUTH = "ground_truth.tsv"
+OUTROOT = "results"
+
+# Codex amendment 1: filter to verified-only rows for the Snakemake DAG.
+_gt = pd.read_csv(GROUND_TRUTH, sep="\t", dtype=str).fillna("")
+_gt = _gt[_gt["verified"].str.strip().str.lower() == "true"]
+ACCESSIONS = sorted(_gt["accession"].tolist())
+ROUND_MAP_SOURCE = dict(zip(_gt["accession"], _gt["round_map_source"].replace("", "auto")))
+ROUND_MAP_PATH = dict(zip(_gt["accession"], _gt["round_map_path"]))
+
+# Codex amendment 3: resolve curated round-map paths relative to
+# ``ground_truth.tsv``'s directory so Snakemake invocations from any
+# cwd still find the files.
+_GROUND_TRUTH_DIR = Path(GROUND_TRUTH).resolve().parent
+
+
+rule all:
+    input:
+        f"{OUTROOT}/figure_a.pdf",
+        f"{OUTROOT}/figure_a.png",
+        f"{OUTROOT}/metrics.json",
+
+
+rule fetch:
+    output:
+        f"{OUTROOT}/{{accession}}/fetch_metadata.json",
+    params:
+        # Pass --allow-manual-review on curated rows so fetch downloads
+        # FASTQs even when ENA metadata is too sparse to auto-assign
+        # rounds. NONE-confidence runs land in round_unknown/ and the
+        # curator's round_map_path routes them by basename.
+        extra_flags=lambda w: (
+            "--allow-manual-review" if ROUND_MAP_SOURCE[w.accession] == "curated" else ""
+        ),
+    shell:
+        "selexprep fetch {wildcards.accession} "
+        "--outdir {OUTROOT}/{wildcards.accession} {params.extra_flags}"
+
+
+def _round_map_for(accession: str) -> str:
+    """Resolve which rounds.tsv ``selexprep detect`` should consume.
+
+    - ``auto`` rows: fetch's auto-emitted ``rounds.tsv``.
+    - ``curated`` rows: the curator-supplied TSV path from
+      ``ground_truth.tsv``, resolved relative to that file's directory.
+    """
+    if ROUND_MAP_SOURCE[accession] == "curated":
+        return str((_GROUND_TRUTH_DIR / ROUND_MAP_PATH[accession]).resolve())
+    return f"{OUTROOT}/{accession}/rounds.tsv"
+
+
+def _fastq_inputs_for(w):
+    """List downloaded FASTQ files for an accession.
+
+    Codex amendment (shell-glob safety): ``round_unknown/`` only exists
+    when fetch processed at least one NONE-confidence run, so a bash
+    glob like ``round_unknown/*.fastq.gz`` would otherwise pass the
+    literal string to ``selexprep detect`` on auto-only accessions.
+    ``Path.glob`` returns an empty iterator on non-matching patterns,
+    so both cases work cleanly. Returns sorted list (stable order).
+    """
+    base = Path(OUTROOT) / w.accession
+    files = sorted(base.glob("round_*/*.fastq.gz"))
+    files.extend(sorted(base.glob("round_unknown/*.fastq.gz")))
+    return [str(p) for p in files]
+
+
+rule detect:
+    input:
+        fetch_marker=f"{OUTROOT}/{{accession}}/fetch_metadata.json",
+        fastqs=_fastq_inputs_for,
+    output:
+        f"{OUTROOT}/{{accession}}/library_report.json",
+    params:
+        round_map=lambda w: _round_map_for(w.accession),
+        fastq_args=lambda w, input: " ".join(input.fastqs),
+    shell:
+        "selexprep detect {params.fastq_args} "
+        "--round-map {params.round_map} "
+        "--outdir {OUTROOT}/{wildcards.accession}"
+
+
+rule compute_metrics:
+    input:
+        ground_truth=GROUND_TRUTH,
+        reports=expand(f"{OUTROOT}/{{acc}}/library_report.json", acc=ACCESSIONS),
+    output:
+        f"{OUTROOT}/metrics.json",
+    shell:
+        "python -m selexprep.benchmark.metrics "
+        "--ground-truth {input.ground_truth} "
+        "--reports-dir {OUTROOT} "
+        "--out {output}"
+
+
+rule figure_a:
+    input:
+        f"{OUTROOT}/metrics.json",
+    output:
+        pdf=f"{OUTROOT}/figure_a.pdf",
+        png=f"{OUTROOT}/figure_a.png",
+    shell:
+        "python -m selexprep.benchmark.figure_a "
+        "--metrics {input} --outdir {OUTROOT}"
