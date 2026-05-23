@@ -39,6 +39,12 @@ dependencies = [
 [project.optional-dependencies]
 ncbi = ["biopython >= 1.82", "pysradb >= 2.2"]
 fast = ["pyfastx >= 2.0"]
+# Phase 6b.1 benchmark scaffolding. Snakemake is the only opt-in dep;
+# Pearson/Spearman are computed via pandas (Codex amendment 4 — no SciPy).
+# Pinned to >= 7 so the floor stays compatible with Python 3.10 (the
+# project's minimum); Snakemake 8+ requires 3.11+ which would drop one
+# CI-matrix Python version.
+bench = ["snakemake >= 7.0"]
 dev = [
   "pytest >= 7.0",
   "pytest-cov",
@@ -112,6 +118,13 @@ disable_error_code = [
 
 [[tool.mypy.overrides]]
 module = "selexprep.library.report"
+strict = true
+
+[[tool.mypy.overrides]]
+# Phase 6b.1: equivalence rules are pure functions with a typed
+# EquivalenceResult contract — type precision matters for the metric
+# aggregator that consumes them, same rationale as library.report.
+module = "selexprep.benchmark.equivalence"
 strict = true
 
 [tool.pytest.ini_options]

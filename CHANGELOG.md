@@ -6,6 +6,248 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+**Phase 6b.1 — primer-inference benchmark scaffolding + initial
+ground-truth curation (2026-05-22)**
+
+Ships the code + Snakefile + initial ground-truth row for the
+selexprep primer-inference benchmark. The benchmark tests
+selexprep's **unique claim**:
+
+> Given only public/local HT-SELEX reads plus accession metadata,
+> selexprep infers primer / constant regions and N-region length,
+> reports confidence, and fails safely when inference is ambiguous.
+
+Existing tools (AptaPLEX, EasyDIVER+, FASTAptameR) require the user
+to supply the primers — they cannot benchmark this claim. Phase
+6b.2 expands the ground-truth set to 5–10 verified rows; 6b.3 runs
+the Snakefile on HPC and commits Figure A with measured numbers.
+
+**Scope decision (deviates from locked plan lines 365–366).** The
+locked plan listed count-correlation Pearson+Spearman and AptaPLEX /
+EasyDIVER+ as comparators. A pre-commit Codex design review pivoted
+the scope: comparator-tool head-to-head reduces to a trimming-code
+sanity check given identical primers, not a meaningful scientific
+comparison. Count correlation moves to optional Phase 6c as a
+**self-consistency check** (inferred-primer counts vs
+`--override-primer` counts of selexprep itself — no external tool).
+`CountCorrelationReport` + `compute_count_correlation` stay in
+`metrics.py` as the Phase 6c entry point (so the union+zero-fill /
+no-SciPy methodology isn't re-implemented later); `aggregate_metrics`
+does NOT call them in 6b.1.
+
+**Codex pre-implementation review** raised seven additional design
+amendments, all folded in BEFORE any code landed:
+
+1. **`ground_truth.tsv` is verified-only.** Unverified candidates
+   live in `benchmarks/README.md`'s candidate worklist; they do NOT
+   pollute the ground-truth file. The metrics aggregator filters
+   `verified=true` and emits a stderr warning per skip. The output
+   JSON records both `n_verified` and `n_unverified` so Figure A
+   labels honestly.
+2. **Snakefile fetch/detect restricted to fetchable accessions.**
+   Figshare / Zenodo / processed-data sources are excluded; v0.1
+   `selexprep fetch` only handles ENA/SRA/DDBJ.
+3. **Curated round-map override columns**: `round_map_source` ∈
+   {`auto`,`curated`} + `round_map_path` (relative to
+   `ground_truth.tsv`). Curated rows get `--allow-manual-review` on
+   fetch so FASTQs download even when ENA metadata is too sparse
+   for the auto round-parser; detect then uses the curator's
+   `rounds.tsv`. Critical: without this, the benchmark would lose
+   otherwise-known-primer datasets to ENA metadata sparsity.
+4. **No SciPy.** Pearson via `pandas.Series.corr(method="pearson")`.
+   Spearman computed manually as Pearson-of-ranks
+   (`obs.rank().corr(ref.rank(), method="pearson")`) —
+   mathematically equivalent. `pandas.Series.corr(method="spearman")`
+   lazily imports SciPy, which would defeat the no-SciPy rule.
+5. **Count correlation on union + zero-fill.** When 6c populates
+   it: the Pearson is computed on the **union** of observed +
+   reference sequences with zero-fill, NOT the intersection — which
+   would bias agreement upward by ignoring sequences only one side
+   emitted. A top-K Pearson is labeled as `top_k_pearson`
+   (secondary diagnostic), never as the primary `pearson` field.
+6. **Snakefile FASTQ enumeration uses `Path.glob`, not shell-glob.**
+   `round_unknown/` only exists when fetch handled NONE-confidence
+   runs; a bash glob like `round_unknown/*.fastq.gz` would pass the
+   literal string to `selexprep detect` on auto-only accessions.
+   `Path.glob` returns an empty iterator on non-matching patterns.
+7. **Pyoverdine library_kind verified.** PRJNA932049 ENA project
+   description explicitly says "2'-FY-RNA" — catalog title was
+   correct; Codex's independent DNA flag did not match the ENA
+   record. Verified before encoding `library_kind`.
+
+**New modules:**
+
+- **`selexprep.benchmark.equivalence`** — `primer_equivalent(observed,
+  truth, *, allow_revcomp, allow_ut, strip_barcodes) →
+  EquivalenceResult`. Implements the four locked-plan equivalence
+  rules (line 364: revcomp + U-T + barcode-strip + IUPAC reject)
+  plus PARTIAL_5P / PARTIAL_3P accounting. Promoted to strict-mypy
+  alongside `library.report` (typed contract; metric aggregator
+  depends on the EquivalenceKind enum).
+- **`selexprep.benchmark.metrics`** — per-side primer recovery
+  (`compute_primer_recovery`), pair-level recovery cross-tabbed
+  against `LibraryReport.status`
+  (`compute_pair_recovery_by_status`), safe-failure rate
+  (`compute_safe_failure_rate` — the unique distinguishing
+  capability vs known-primer pipelines), N-length recovery
+  (`compute_n_length_recovery`), honest-accounting distributions
+  for `extraction_mode` and `required_action`
+  (`compute_extraction_mode_distribution`,
+  `compute_required_action_distribution`), top-level
+  `aggregate_metrics`, deterministic `write_metrics_json`, and
+  `main()` for the Snakefile `compute_metrics` rule.
+  `CountCorrelationReport` + `compute_count_correlation` remain as
+  the Phase 6c entry point (union+zero-fill, pandas-only
+  correlations) but are NOT populated by `aggregate_metrics`.
+- **`selexprep.benchmark.figure_a`** — `plot_figure_a(metrics_json,
+  outdir) → (pdf_path, png_path)`. **Four-panel** matplotlib Agg
+  figure:
+  - Panel A · pair recovery by `LibraryReport.status` (headline)
+  - Panel B · per-side recovery breakdown (5'/3' EXACT/partial/miss)
+  - Panel C · N-length recovery (±tolerance buckets)
+  - Panel D · `extraction_mode` + `required_action` distributions
+    (honest accounting)
+  Title carries N verified + safe-failure rate.
+
+**New benchmark infrastructure:**
+
+- **`benchmarks/Snakefile`** — fetch → detect per verified
+  accession → metrics → figure_a. Honors
+  `round_map_source=curated` (passes `--allow-manual-review` to
+  fetch and routes the curator's `rounds.tsv` to detect),
+  enumerates FASTQs via `Path.glob` (shell-glob safety),
+  resolves curated paths relative to `ground_truth.tsv` (Snakemake
+  can be launched from any cwd).
+- **`benchmarks/ground_truth.tsv`** — **11 verified rows**, each
+  source-backed and audit-verified. Modality coverage: 2'-F-Py /
+  2'-FY RNA (×4) + DNA (×5) + T7-tx RNA (×2) × protein (×7) /
+  cell (×2) / small molecule (×2):
+
+  1. **PRJNA315881** — Hoinka 2015 NAR (PMID 25870409, DOI gkv308)
+     "Large scale analysis of the mutational landscape in HT-SELEX
+     improves aptamer discovery" / IL-10RA / N40 / 2'-F-Py RNA.
+     Primer source: PMC4499121 main M&M.
+  2. **PRJEB22637** — Cibiel 2014 PLOS ONE (PMID 24489826) /
+     ACE4 cell-SELEX (selection vs ETBR cells, aptamer later
+     identified as anti-Annexin A2) / N50 / 2'-F-Py RNA.
+     Primer source: PMC3906106 main M&M.
+  3. **PRJEB28411** — Pleiko 2019 Sci Rep (PMID 31148584) /
+     differential binding cell-SELEX vs ccRCC RCC-MF cells /
+     N40 / DNA. Primer source: PMC6544647 main M&M.
+  4. **PRJDB9110** — Ozaki 2020 NAR / RaptRanker Data1 (PMID 32537639)
+     / transglutaminase 2 (TG2) / N30 / T7-tx RNA.
+     Primer source: PMC7641312 main M&M.
+  5. **PRJDB9111** — Ozaki 2020 NAR / RaptRanker Data2 (PMID 32537639)
+     / integrin αVβ3 / N40 / T7-tx RNA.
+     Primer source: PMC7641312 main M&M.
+  6. **PRJEB70964** — Bouvier-Müller 2024 NAR (PMID 38917326) /
+     α-synuclein fibrillar polymorphs / N35 / 2'-F-Py RNA.
+     **Intentional edge case**: 5' constant is revcomp of TruSeq R1
+     adapter prefix, exercising the adapter-trap path.
+     Primer source: PMC11317169 main M&M.
+  7. **PRJNA728693** — Sanford 2021 Chemical Science (PMID 34659704)
+     / RE-SELEX for kanamycin A structure-switching aptamers /
+     N40 / DNA. Edge case: EcoRI site embedded in the 5' constant.
+     Primer source: RSC ESI PDF Fig. 2 (extracted via pdfplumber).
+  8. **PRJNA935703** — Anisuzzaman 2024 Front Chem (PMID 39148668)
+     / pyoverdine PYO-Pf5 / 2'-FY RNA. **Intentional edge case**:
+     split-random-region library (N10 + internal constant + N35);
+     N=55 is the total length between outer constants.
+     Primer source: PMC11324436 main M&M.
+  9. **PRJNA975735** — Halder 2023 Sci Rep (PMID 37666993) /
+     SARS-CoV-2 viral oligopeptide/RBD aptamer SELEX / N40 / DNA.
+     Primer source: PMC10477244 main M&M.
+  10. **PRJNA990511** — Hu 2024 Sci Rep (PMID 38374125) / ASFV p30
+      MB-SELEX / N40 / DNA. Primer source: MOESM1 supp docx
+      Table S3 (extracted via python-docx).
+  11. **PRJNA883192** — Ali 2022 Sci Rep (PMID 36577785) /
+      eosinophil peroxidase (EPX) aptamer / N40 / DNA. Primer
+      source: MOESM1 supp PDF page 2 Table S1, **verified via
+      PyMuPDF raster render + visual inspection** (pdfplumber +
+      pypdf silently drop the table because it's rendered as a
+      raster image inside the PDF). DNA_L =
+      ATGCCATCCTACCAAC-N40-GAGCTCTGAACTGG; FP1 = 5' library
+      constant; RP1 = revcomp of 3' library constant. The row
+      was initially demoted to `candidates.tsv` during the audit
+      pass (when only text-extraction tools were tried) and
+      promoted back to `ground_truth.tsv` after Codex pointed
+      out the visual-rendering verification route.
+
+  Curation toolkit: ENA project XML XREF_LINK → PubMed ID →
+  NCBI PMC ID converter → PMC full-text (when in M&M body) →
+  Europe PMC `/<PMCID>/supplementaryFiles` ZIP endpoint → `pypdf`
+  + `pdfplumber` for supp PDF text + table extraction →
+  `python-docx` for supp `.docx` table extraction → Springer CDN
+  direct URL for MOESM files not in PMC → **`PyMuPDF` (`fitz`)
+  raster render for tables that text extraction silently drops**
+  (the Ali 2022 case demonstrated this failure mode: pdfplumber
+  returned only the table title from the PDF's text stream,
+  missing the actual table body which lives in a raster image).
+
+- **`benchmarks/candidates.tsv`** — **NEW**. Structured record for
+  9 documented candidates that did not pass curation. Schema:
+  `accession`, `paper_doi`, `paper_pmid`, `source_attempted`,
+  `primer_5p/3p_truth` (empty for unrecovered),
+  `n_length_truth`, `status` ∈ {`blocked`, `rejected`},
+  `rejection_reason`. Two confirmed **rejections** (Blocker-SELEX
+  virtual screening + Anti-EGFR uses existing aptamers — both
+  outside SELEX-with-random-N scope; backed by supp-PDF inspection
+  via pypdf). Seven **blocked** (Dao Cell Press, PRIESSTESS NAR/OUP,
+  SELMAP Sci Rep, Penzar bioRxiv, DL-SELEX, Iowa State pyoverdine,
+  Camorani iScience TNBC).
+
+- **Audit fixes:**
+  - **PRJNA315881 (Hoinka)** row had wrong DOI
+    (`10.1093/nar/gkw010`) + wrong PMID (`26773059`) — those
+    identify Chen WH 2016 NAR "Integration of multi-omics data of
+    a genome-reduced bacterium" (DOI gkw004), not Hoinka 2015.
+    Fixed to `10.1093/nar/gkv308` + PMID `25870409` ("Large scale
+    analysis of the mutational landscape in HT-SELEX"), which is
+    the actual paper the primer sequences were extracted from.
+  - **PRJNA883192 (Ali)** was initially demoted to candidates.tsv
+    during the audit pass when pdfplumber returned an empty
+    Table S1 from the MOESM1 supp PDF. Codex pointed out that the
+    table is a raster image inside the PDF; visual inspection of
+    PyMuPDF-rendered page 2 confirmed DNA_L = ATGCCATCCTACCAAC-N40-
+    GAGCTCTGAACTGG. Row promoted back to ground_truth.tsv. Lesson
+    captured in `benchmarks/README.md`: failed text extraction
+    does NOT mean data is absent — try raster render before
+    blocking a candidate.
+- **`benchmarks/README.md`** — "what this benchmark tests / what
+  it deliberately does not test" framing, schema docs,
+  reproduction recipe, scope-pivot deviation note, candidate
+  worklist for 6b.2.
+
+**Tests (+46, 478 + 1 xfailed total):**
+
+- `tests/test_benchmark_equivalence.py` (16 tests): every
+  `EquivalenceKind` outcome + observed=None + IUPAC truth +
+  barcode longest-prefix.
+- `tests/test_benchmark_metrics.py` (23 tests): primer recovery
+  aggregation + pair recovery by status (4 tests) + safe-failure
+  rate (3 tests) + N-length tolerance + extraction_mode and
+  required_action distributions + deterministic JSON
+  serialization + Codex-amendment regressions (verified-row
+  filter with stderr warning; count_correlation union+zero-fill;
+  top_k_pearson labeled secondary; aggregate_metrics does NOT
+  populate count_correlation; metrics JSON schema includes the
+  pivot fields).
+- `tests/test_benchmark_figure_a.py` (7 tests, includes 5
+  parametric status-bucket smokes): 4-panel PDF + PNG emission,
+  empty-data path, safe-failure rate in title.
+
+**`pyproject.toml`:**
+
+- New `[project.optional-dependencies] bench` extra with
+  `snakemake >= 7.0` (Python 3.10 compatible; no SciPy).
+- Strict-mypy override added for `selexprep.benchmark.equivalence`.
+
+CI: 478 passed + 1 xfailed (was 432 + 1; +46 new tests). All four
+pre-existing gates stay green (ruff, ruff format, mypy, pytest
+3.10/3.11/3.12).
+
 ### Fixed
 
 **Phase 6a CI hotfix (2026-05-22)** — `test_run_help_lists_resume_and_stop_on_error`
