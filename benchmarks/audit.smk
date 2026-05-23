@@ -50,15 +50,15 @@ SEED = int(config.get("seed", 42))
 
 rule all:
     input:
-        f"{OUTROOT}/figure_b.pdf",
-        f"{OUTROOT}/figure_b.png",
-        f"{OUTROOT}/audit_metrics.json",
+        OUTROOT + "/figure_b.pdf",
+        OUTROOT + "/figure_b.png",
+        OUTROOT + "/audit_metrics.json",
 
 
 rule sample_corpus:
     output:
-        accessions=f"{OUTROOT}/audit_accessions.tsv",
-        manifest=f"{OUTROOT}/audit_accessions.manifest.json",
+        accessions=OUTROOT + "/audit_accessions.tsv",
+        manifest=OUTROOT + "/audit_accessions.manifest.json",
     params:
         n=N_SAMPLE,
         seed=SEED,
@@ -72,11 +72,11 @@ rule sample_corpus:
 
 rule run_corpus:
     input:
-        accessions=f"{OUTROOT}/audit_accessions.tsv",
+        accessions=OUTROOT + "/audit_accessions.tsv",
     output:
-        summary=f"{OUTROOT}/run_summary.tsv",
+        summary=OUTROOT + "/run_summary.tsv",
     params:
-        runs_dir=f"{OUTROOT}/runs",
+        runs_dir=OUTROOT + "/runs",
     shell:
         # --resume so a re-run picks up where the previous one left off
         # (matches the audit's "interruptible HPC job" use case).
@@ -86,11 +86,11 @@ rule run_corpus:
 
 rule aggregate_audit:
     input:
-        summary=f"{OUTROOT}/run_summary.tsv",
+        summary=OUTROOT + "/run_summary.tsv",
         ground_truth=GROUND_TRUTH,
-        manifest=f"{OUTROOT}/audit_accessions.manifest.json",
+        manifest=OUTROOT + "/audit_accessions.manifest.json",
     output:
-        f"{OUTROOT}/audit_metrics.json",
+        OUTROOT + "/audit_metrics.json",
     shell:
         "python -m selexprep.benchmark.corpus_audit aggregate "
         "--run-summary {input.summary} "
@@ -101,10 +101,10 @@ rule aggregate_audit:
 
 rule figure_b:
     input:
-        f"{OUTROOT}/audit_metrics.json",
+        OUTROOT + "/audit_metrics.json",
     output:
-        pdf=f"{OUTROOT}/figure_b.pdf",
-        png=f"{OUTROOT}/figure_b.png",
+        pdf=OUTROOT + "/figure_b.pdf",
+        png=OUTROOT + "/figure_b.png",
     shell:
         "python -m selexprep.benchmark.figure_b "
         "--audit {input} --outdir {OUTROOT}"

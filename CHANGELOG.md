@@ -25,19 +25,23 @@ fresh venv (including the DGX5 venv the user ran into).
   snakemake 9 dual-resolve and its ``snakemake-interface-*`` plugin
   family + sqlalchemy/sqlmodel/greenlet — net reduction in the
   ``bench``-extra footprint.
-- **`benchmarks/Snakefile` Tier 1 f-string-wildcard pattern**
-  replaced with plain string concatenation. The previous
-  ``f"{OUTROOT}/{{accession}}/fetch_metadata.json"`` pattern (f-string
-  substituting ``OUTROOT`` while the doubled ``{{accession}}``
-  produces a literal Snakemake wildcard) parsed cleanly under
-  Snakemake 9 but errors under Snakemake 7 with ``NameError: name
-  'accession' is not defined``. Snakemake 7's Snakefile preprocessor
-  walks AST nodes that Snakemake 9's doesn't. Refactored four
-  occurrences to ``OUTROOT + "/{accession}/..."``; semantically
-  identical, robust across versions. Both Snakefiles now dry-run
-  cleanly with the pinned Snakemake 7.32.4. **No Tier 1 benchmark
-  logic changed.** ``audit.smk`` was already wildcard-free in its
-  f-strings so didn't need a patch.
+- **Both `benchmarks/Snakefile` (Tier 1) and `benchmarks/audit.smk`
+  (Tier 2): every Snakemake-declared input/output path converted
+  from f-string to plain string concatenation.** Two related issues
+  surfaced once the ``snakemake<8`` pin landed:
+  1. Snakemake 7's Snakefile preprocessor errors with ``NameError:
+     name 'accession' is not defined`` on the doubled-wildcard
+     pattern ``f"{OUTROOT}/{{accession}}/..."`` (4 occurrences in
+     Tier 1; 0 in audit.smk).
+  2. Snakemake 7's path normalizer is fussier than 9's about
+     f-string-derived strings even when no wildcard is buried inside:
+     it emits whitespace-path warnings that could leak into odd
+     output filenames under stricter handling (Codex peer-review
+     follow-up; no functional crash but worth eliminating).
+  Both Snakefiles now follow a simple contract — Snakemake paths
+  always use ``OUTROOT + "/foo/..."``, never ``f"{OUTROOT}/foo/..."``.
+  Semantically identical to the previous form, robust across
+  Snakemake 7 / 8 / 9. **No benchmark logic changed.**
 
 CI gates (ruff / ruff-format / mypy / pytest 504+1 xfailed) and both
 Snakefile dry-runs all green after the fix.
