@@ -41,10 +41,22 @@ ncbi = ["biopython >= 1.82", "pysradb >= 2.2"]
 fast = ["pyfastx >= 2.0"]
 # Phase 6b.1 benchmark scaffolding. Snakemake is the only opt-in dep;
 # Pearson/Spearman are computed via pandas (Codex amendment 4 — no SciPy).
-# Pinned to >= 7 so the floor stays compatible with Python 3.10 (the
-# project's minimum); Snakemake 8+ requires 3.11+ which would drop one
-# CI-matrix Python version.
-bench = ["snakemake >= 7.0"]
+#
+# Pin rationale:
+# - ``snakemake >= 7.0, < 8`` — floor keeps Python 3.10 compatible (the
+#   project's minimum); ceiling prevents a future ``uv sync`` from
+#   silently pulling Snakemake 8 (which requires Python 3.11+ and would
+#   drop one CI-matrix Python version).
+# - ``pulp < 2.8`` — Snakemake 7 calls ``pulp.list_solvers()`` at import
+#   time; PuLP 2.8 removed the snake_case alias (only ``listSolvers``
+#   remains) and Snakemake 7 hasn't been backported. Without this pin,
+#   ``uv sync --extra bench`` on a fresh HPC venv resolves PuLP 3.x and
+#   ``snakemake --version`` crashes with AttributeError. Surfaced during
+#   the Phase 6b.4 HPC audit attempt.
+bench = [
+  "snakemake >= 7.0, < 8",
+  "pulp < 2.8",
+]
 dev = [
   "pytest >= 7.0",
   "pytest-cov",
