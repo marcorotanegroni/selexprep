@@ -1,9 +1,16 @@
-# selexprep benchmark (Phase 6b.1)
+# selexprep benchmark (Phase 6b)
 
-This directory implements selexprep's primer-inference benchmark: the
-Snakefile, the ground-truth TSV, the metric / Figure A entry points
-(implemented under `src/selexprep/benchmark/`), and the curation
-worklist.
+This directory implements selexprep's two-tier benchmark:
+
+- **Tier 1 — Figure A** (`Snakefile` + `ground_truth.tsv`): curated
+  primer-recovery validation against paper-reported primers on N=11
+  source-verified accessions.
+- **Tier 2 — Figure B** (`audit.smk` + the bundled catalog): a corpus
+  audit / utility characterization across N≈30 sampled INSDC
+  accessions, no per-row ground truth. Distributional metrics only.
+
+Both tiers share the metric + figure entry points under
+`src/selexprep/benchmark/`.
 
 ## What this benchmark tests
 
@@ -28,13 +35,15 @@ input — they cannot answer this question by construction.
   match `--override-primer`-driven counts of the same dataset? That's
   Phase 6c (see *Roadmap* below).
 
-## Scope split: 6b.1 → 6b.2 → 6b.3 → 6c
+## Scope split: 6b.1 → 6b.2 → 6b.3a → 6b.4 → 6c
 
 | Phase | Deliverable | Status |
 |---|---|---|
-| **6b.1** | Schema + metrics + Figure A + Snakefile | ✅ shipped |
+| **6b.1** | Tier 1 schema + metrics + Figure A + `Snakefile` | ✅ shipped |
 | **6b.2** | Curate verified rows from public papers via WebFetch (+ENA XML PubMed links + Europe PMC search → PMC full-text → M&M extraction) | ✅ 11 rows shipped |
-| **6b.3** | Re-run benchmark on HPC; commit `results/figure_a.{pdf,png}` + measured `metrics.json`; optionally expand beyond 10 rows by curating from paper PDFs / supplements | data work |
+| **6b.3a** | Tier 2 corpus-audit **pipeline**: `benchmark.corpus_audit` + `benchmark.figure_b` + `audit.smk` + tests | ✅ scaffolding shipped (this section) |
+| **6b.3** | Re-run **Tier 1** benchmark on HPC; commit `results/figure_a.{pdf,png}` + measured `metrics.json` | data work |
+| **6b.4** | Run **Tier 2** audit on HPC; commit `audit_results/audit_accessions.tsv` + `audit_metrics.json` + `figure_b.{pdf,png}` (no code changes) | data work |
 | **6c (optional)** | Self-consistency check: inferred-primer counts vs `--override-primer` counts (Pearson on union+zero-fill) | post-v0.1 |
 
 ## Headline metrics
@@ -134,6 +143,89 @@ The metric aggregator filters `verified=true` rows;
 NOT stored here — candidates live in the worklist below until
 promoted.
 
+## Tier 2: corpus audit **pipeline**
+
+> **Note (6b.3a):** what ships here is the **pipeline**, not the
+> results. The Snakefile + module are reviewable + runnable, but CI
+> does not execute the Snakefile (real-data fetch is heavy and not a
+> CI workload). The committed `audit_metrics.json` +
+> `audit_accessions.tsv` + `figure_b.{pdf,png}` will land in the
+> **6b.4 follow-up commit** with no code changes — just the run
+> output + curator review.
+
+### What Tier 2 measures
+
+Across N≈30 INSDC accessions sampled deterministically from the
+bundled catalog, the audit reports the **distributions** of:
+
+- **Fetch outcomes** — every `RunStatus` value (`OK`,
+  `FETCH_FAILED`, `FETCH_REFUSED`, `EXTRACT_REFUSED`, etc.). Answers
+  "can public data be obtained?".
+- **LibraryReport status** — HIGH / MEDIUM / LOW / UNABLE_TO_INFER
+  for rows where `detect` ran successfully.
+- **Extraction mode** — `BOTH_PRIMERS_SINGLE_READ` /
+  `FIVE_PRIME_ONLY` / `THREE_PRIME_ONLY` /
+  `PAIRED_END_SPLIT_PRIMERS` / `UNABLE_TO_EXTRACT`.
+- **Required action** — `NONE` / `MANUAL_PRIMERS_REQUIRED` /
+  `READ_MERGING_RECOMMENDED`.
+- **Inference safe-failure rate** — the headline number. The fraction
+  of rows-with-a-LibraryReport where selexprep refused (UNABLE_TO_INFER
+  OR UNABLE_TO_EXTRACT OR MANUAL_PRIMERS_REQUIRED).
+
+### What Tier 2 does NOT claim
+
+This is **descriptive distributional metrics, no per-row ground
+truth**. The audit cannot say a given accession's primer call is
+"correct" or "incorrect" because Tier 2 accessions have no
+paper-reported primers attached (that's Tier 1's domain). The
+methods text in the paper says so explicitly.
+
+### Per-panel denominators (Figure B)
+
+Each panel labels its denominator in the subtitle so a reviewer
+never has to guess the normalization. Two distinct denominators live
+in the same figure:
+
+| Panel | Question | Denominator |
+|---|---|---|
+| **A · Fetch outcomes** | Can public data be obtained? | `n_sampled` |
+| **B · Inference confidence** | Given detect ran, what did the report say? | `n_with_library_report` |
+| **C · Extraction mode** | Honest accounting of inferred biology | `n_with_library_report` |
+| **D · Required action** | Workflow guidance + safe-failure rate overlay | `n_with_library_report` |
+
+The methodological correction (Codex peer-review + user pass):
+`inference_safe_failure_rate` is computed **only** among rows with a
+LibraryReport. Mixing fetch failures into this rate would inflate the
+metric with ENA / network / regional-restriction problems —
+conflating "selexprep refused" (a feature) with "the dataset was
+unreachable" (an external problem).
+
+### Reproducing the Tier 2 audit
+
+```bash
+snakemake -s audit.smk --cores 4
+```
+
+Outputs land in `audit_results/`:
+
+- `audit_accessions.tsv` — the sampled accession list (first-class
+  artifact; committed in 6b.4 so the figure is reproducible across
+  future catalog refreshes).
+- `audit_accessions.manifest.json` — sidecar with the reproducibility
+  envelope (`catalog_version`, `sample_seed`, `sample_accessions_sha256`).
+- `run_summary.tsv` — `selexprep run --resume` per-accession status.
+- `audit_metrics.json` — distributional metrics (sorted-keys JSON;
+  the source of truth — matplotlib PNG bytes are not deterministic).
+- `figure_b.{pdf,png}` — the four-panel Figure B.
+
+Sampling determinism: `sample_corpus(n, seed)` deterministically
+samples from `filter_catalog(insdc_only=True)`. A future `selexprep
+catalog refresh` will shift row indices and the same seed will draw
+different accessions — which is why `audit_accessions.tsv` ships as
+a first-class committed artifact in 6b.4: reviewers reproduce the
+figure by `selexprep run audit_accessions.tsv` regardless of any
+catalog drift.
+
 ## Reproducing the benchmark
 
 ```bash
@@ -220,12 +312,6 @@ as an image and visually inspect. Ali 2022 Sci Rep (PRJNA883192) was
 initially demoted to this list when pdfplumber returned an empty
 Table S1; the row was promoted back to `ground_truth.tsv` after
 visual inspection of the raster-rendered page 2.
-
-Additional candidate discovered during the expansion pass:
-
-| Accession | Status | Reason |
-|---|---|---|
-| `PRJNA558191` | blocked | TNBC 2′F-RNA cell-SELEX — accession and library architecture confirmed, but exact primer sequences remain behind the iScience / Cell Press PDF path |
 
 To promote a blocked candidate: open the paper's supplementary PDF
 (usually downloadable from the journal page in a browser session),

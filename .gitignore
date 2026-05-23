@@ -22,6 +22,9 @@ coverage.xml
 .mypy_cache/
 .ruff_cache/
 
+# Snakemake (created by --dry-run too — both repo-root and benchmarks/)
+.snakemake/
+
 # Virtual environments
 .venv/
 venv/
