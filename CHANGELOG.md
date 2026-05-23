@@ -8,6 +8,219 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+**Phase 6b.3a — Tier 2 corpus-audit scaffolding + Figure B pipeline (2026-05-23)**
+
+Ships the code + Snakefile + tests for the Tier 2 corpus audit. This
+is the second figure in the paper's two-figure story:
+
+- **Figure A** (Tier 1, shipped in 6b.1+6b.2): primer-recovery
+  validation on N=11 curated source-backed accessions — selexprep
+  recovers paper-reported primers exactly / partially / safely
+  refuses.
+- **Figure B** (Tier 2, *pipeline* shipped here, *results* in 6b.4):
+  corpus characterization on N≈30 sampled INSDC accessions, no
+  per-row ground truth — fetchability, `LibraryReport.status`
+  distribution, `extraction_mode` + `required_action` distributions,
+  inference-stage safe-failure rate.
+
+Framing: Tier 2 is an **audit / corpus characterization**, not a
+validation in the strict sense — there is no per-row ground truth.
+This is selexprep's unique claim: comparator tools (AptaPLEX,
+EasyDIVER+) cannot produce this kind of audit by construction —
+they require known primers as input, so they cannot be pointed at a
+random catalog accession and asked "what does the LibraryReport
+say?".
+
+**Scaffolding vs results split.** 6b.3a is deliberately scoped to
+the pipeline only: code + Snakefile + tests, reviewable + runnable.
+The real-data HPC run that produces measured `audit_metrics.json` +
+`audit_accessions.tsv` + `figure_b.{pdf,png}` is the **6b.4
+follow-up commit** with no code changes — just the Snakefile output
+artifacts after a manual HPC run + curator review. CI does NOT
+execute the Snakefile.
+
+**Methodological correction folded in (Codex peer-review + user,
+5 rounds of revisions).** `inference_safe_failure_rate` is computed
+**only** among rows with a LibraryReport (denominator =
+`n_with_library_report`), NEVER mixed with fetch failures. Mixing
+the two would inflate the rate with ENA / network / regional-
+restriction problems — conflating "selexprep refused" (a feature)
+with "the dataset was unreachable" (an external problem). Each
+Figure B panel labels its denominator in the subtitle so a reviewer
+never has to guess the normalization.
+
+**New modules:**
+
+- **`selexprep.benchmark.corpus_audit`** —
+  - `sample_corpus(n, *, sources=None, exclude=(), seed=42)` —
+    deterministic uniform-random sample from
+    `filter_catalog(insdc_only=True)`. Excluded accessions never
+    appear; output is sorted (draw order is implementation detail).
+  - `write_accessions_tsv(accessions, path)` — emits the 2-column
+    TSV (`accession\tnotes`) that `selexprep run` consumes.
+  - `accessions_sha256(accessions)` — sha256 over the sorted
+    accession list, used as the reproducibility fingerprint.
+  - `CorpusAuditReport` dataclass with **explicit denominator
+    partition**: reproducibility envelope
+    (`catalog_version`, `sample_seed`, `sample_accessions_sha256`),
+    fetchability metrics (denominator `n_sampled`), inference
+    metrics (denominator `n_with_library_report`), QC metrics
+    (denominator `n_with_qc_run`), per-accession traceability with
+    `is_in_ground_truth` annotation.
+  - `aggregate_audit_from_run_outputs(run_summary_tsv,
+    ground_truth_tsv, *, catalog_version, sample_seed,
+    sample_accessions_sha256)` — parses `run_summary.tsv` (Phase
+    6a batch driver output), optionally overlaps with
+    `ground_truth.tsv` for the overlap count, stamps the
+    reproducibility envelope. The reproducibility kwargs are
+    required (not defaulted) so callers cannot forget to thread
+    them through.
+  - `write_audit_json(report, path)` — deterministic sorted-keys
+    JSON. Same discipline as `benchmark.metrics.write_metrics_json`.
+  - `main(argv)` — CLI with `sample` and `aggregate` subcommands.
+    `sample` writes both the accessions TSV and a sidecar
+    `*.manifest.json` with the reproducibility envelope; `aggregate`
+    reads the sidecar so the Snakefile doesn't have to thread
+    catalog version / seed / sha through shell args.
+
+- **`selexprep.benchmark.figure_b`** —
+  - `plot_figure_b(audit_json, outdir) → (pdf, png)` — 2×2 panel
+    mirroring Figure A's layout:
+    - **Panel A** · Fetch outcomes · denominator `n_sampled`.
+    - **Panel B** · `LibraryReport.status` (HIGH/MEDIUM/LOW/UNABLE
+      _TO_INFER) · denominator `n_with_library_report`.
+    - **Panel C** · `extraction_mode` distribution · denominator
+      `n_with_library_report`.
+    - **Panel D** · `required_action` distribution + inference
+      safe-failure rate overlay annotation · denominator
+      `n_with_library_report`.
+    Each panel labels its denominator in the subtitle (per-panel
+    transparency on the normalization). Title carries `n_sampled` /
+    `n_fetchable` / `n_with_library_report` + catalog version +
+    seed. PNG byte-output not deterministic across matplotlib
+    versions (same discipline as Figure A); the audit JSON IS
+    deterministic and is the source of truth.
+  - `main(argv)` — CLI entry for the Snakefile `figure_b` rule.
+
+**New benchmark infrastructure:**
+
+- **`benchmarks/audit.smk`** — separate Snakefile (NOT merged with
+  Tier 1's `Snakefile` — different outdir, different DAG shape,
+  different cohort). DAG:
+  - `rule sample_corpus` → `audit_accessions.tsv` +
+    `audit_accessions.manifest.json` sidecar.
+  - `rule run_corpus` → `run_summary.tsv` via
+    `selexprep run --resume` (reuses the Phase 6a batch driver —
+    no new runner code).
+  - `rule aggregate_audit` → `audit_metrics.json` (reads sidecar
+    manifest for the reproducibility envelope).
+  - `rule figure_b` → `figure_b.{pdf,png}`.
+  Configurable via `--config n_sample=30 seed=42`. Excludes
+  `ground_truth.tsv` accessions by construction so Tier 1 rows
+  don't double-count in Tier 2.
+
+- **`benchmarks/README.md`** — new "Tier 2: corpus audit
+  **pipeline**" section (deliberate wording: 6b.3a ships the
+  pipeline, NOT the results). Documents what Tier 2 measures, what
+  it does NOT claim ("descriptive distributional metrics, no
+  per-row ground truth"), the explicit per-panel denominators, and
+  the reproduction recipe (`snakemake -s audit.smk --cores N`).
+  Calls out 6b.4 as the follow-up commit that lands actual
+  `audit_metrics.json` + `audit_accessions.tsv` + `figure_b.{pdf,png}`
+  after the HPC run.
+
+**Codex post-implementation peer-review fixes (2026-05-23):**
+
+One blocking + three non-blocking findings from the Codex peer-review
+pass, all applied before the commit:
+
+- **[blocking] `benchmarks/audit.smk` paths now anchored to
+  `workflow.basedir`.** Originally `GROUND_TRUTH = "ground_truth.tsv"`
+  and `OUTROOT = "audit_results"` were CWD-relative, so
+  `snakemake -s benchmarks/audit.smk` from the repo root (the plan's
+  verification command) died with `MissingInputException` because
+  Snakemake looked for `ground_truth.tsv` in the repo root. Fixed by
+  anchoring both to `Path(workflow.basedir).resolve()` —
+  `workflow.basedir` is the standard Snakemake idiom for "the
+  directory of the main Snakefile", stable across snakemake 6+.
+  Both `cd benchmarks/ && snakemake -s audit.smk` and
+  `snakemake -s benchmarks/audit.smk` from repo root now dry-run
+  cleanly.
+- **[non-blocking] `corpus_audit aggregate` now refuses when the
+  reproducibility envelope is empty.** Previously, if neither
+  `--sample-manifest` nor `--sample-sha` was provided, the CLI would
+  silently emit an audit JSON with empty `sample_accessions_sha256`
+  — defeating the whole point of the envelope (a paper-defensible
+  audit fingerprinted by the sampled accession list). Now raises
+  `SystemExit` with an actionable message; the function signature
+  was already strict (positional kwarg, not defaulted), the CLI
+  now enforces the same at its boundary. Regression test
+  `test_main_aggregate_refuses_when_no_sha_available`.
+- **[non-blocking] `corpus_audit aggregate` now warns on sidecar
+  `n_sampled` mismatch.** If the sidecar manifest's `n_sampled`
+  differs from the run summary's row count, the audit JSON still
+  reports the actually-processed count (the source of truth for
+  the per-accession breakdown), but a loud WARNING is printed and
+  logged. Surfaces either a selexprep run bug (rows lost) or
+  operator error (re-ran with a different TSV). Regression test
+  `test_main_aggregate_warns_on_n_sampled_mismatch`.
+- **[non-blocking] `write_audit_json` now defensively re-sorts
+  `per_accession`.** The aggregator already sorts upstream, but
+  the writer no longer trusts caller-supplied ordering — direct
+  callers (tests, future hand-rolled scripts) cannot accidentally
+  emit non-deterministic JSON. The existing
+  `test_write_audit_json_deterministic` was extended to pass
+  intentionally-unsorted input and assert sorted output.
+- **[non-blocking] `benchmarks/README.md` duplicate-row dedupe.**
+  `PRJNA558191` appeared twice in the candidate worklist (full row
+  + a second "additional candidate discovered" mini-table). The
+  second occurrence was pure documentation duplication and was
+  removed.
+- **[opportunistic, pre-existing] Tier 1 `benchmarks/Snakefile`
+  path anchoring.** Tier 1 had the same cwd-relative quirk that
+  the Tier 2 fix addressed (`GROUND_TRUTH = "ground_truth.tsv"`,
+  `OUTROOT = "results"`), so
+  `snakemake -s benchmarks/Snakefile ...` from repo root failed
+  while `cd benchmarks && snakemake -s Snakefile ...` worked. Not
+  a 6b.3a blocker (pre-existing Tier 1 behavior), but the fix was
+  one-line and folded in here for consistency:
+  `_BENCHMARKS_DIR = Path(workflow.basedir).resolve()` anchors
+  `GROUND_TRUTH` + `OUTROOT` + `_GROUND_TRUTH_DIR`. Both
+  Snakefiles now dry-run cleanly from either invocation point.
+  No benchmark logic changed.
+  Note: Ruff parses Snakefile rule syntax as plain Python and
+  emits false syntax errors on `rule ...:` blocks, so
+  `benchmarks/Snakefile` is NOT in the ruff scope. The standard
+  `ruff check src/ tests/` is the contract.
+
+**Tests (+~15, expected 494+ passed + 1 xfailed total):**
+
+- `tests/test_benchmark_corpus_audit.py` (~12 tests):
+  - Deterministic sampling (same seed → same accessions).
+  - Different seed → different sample.
+  - `exclude=(...)` drops accessions from the pool.
+  - INSDC-only filter excludes `figshare:` / `zenodo:` / `utexas:` prefixes.
+  - `sources` substring filter narrows the pool.
+  - Empty pool returns `[]` (no crash).
+  - `accessions_sha256` is order-independent.
+  - `write_accessions_tsv` emits 2-column sorted TSV.
+  - Aggregator's `inference_safe_failure_rate` excludes fetch failures
+    (the regression test for the Codex+user methodological correction).
+  - Aggregator's `n_fetchable` partition matches the locked plan.
+  - QC flags histogram counts only OK rows with a flags_raised value.
+  - Ground-truth overlap annotation per row + total overlap count.
+  - Deterministic JSON output (sorted keys + stable accession order).
+  - CLI: `sample` writes TSV + sidecar with envelope.
+  - CLI: `aggregate` picks up sidecar values.
+
+- `tests/test_benchmark_figure_b.py` (~5 tests, mirrors
+  `test_benchmark_figure_a.py`):
+  - PDF + PNG emission with non-trivial size.
+  - Empty audit payload handled.
+  - Parametric status-bucket smoke (HIGH/MEDIUM/LOW/UNABLE_TO_INFER).
+  - Safe-failure rate overlay render path.
+  - Forward-compatibility for an unexpected status label.
+
 **Phase 6b.1 — primer-inference benchmark scaffolding + initial
 ground-truth curation (2026-05-22)**
 

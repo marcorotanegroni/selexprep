@@ -26,8 +26,15 @@ from pathlib import Path
 
 import pandas as pd
 
-GROUND_TRUTH = "ground_truth.tsv"
-OUTROOT = "results"
+# Anchor paths to this Snakefile's directory so both invocation styles work:
+#
+#   snakemake -s benchmarks/Snakefile ...
+#   cd benchmarks && snakemake -s Snakefile ...
+#
+# This mirrors the Phase 6b.3a audit.smk path discipline.
+_BENCHMARKS_DIR = Path(workflow.basedir).resolve()
+GROUND_TRUTH = str(_BENCHMARKS_DIR / "ground_truth.tsv")
+OUTROOT = str(_BENCHMARKS_DIR / "results")
 
 # Codex amendment 1: filter to verified-only rows for the Snakemake DAG.
 _gt = pd.read_csv(GROUND_TRUTH, sep="\t", dtype=str).fillna("")
@@ -39,7 +46,7 @@ ROUND_MAP_PATH = dict(zip(_gt["accession"], _gt["round_map_path"]))
 # Codex amendment 3: resolve curated round-map paths relative to
 # ``ground_truth.tsv``'s directory so Snakemake invocations from any
 # cwd still find the files.
-_GROUND_TRUTH_DIR = Path(GROUND_TRUTH).resolve().parent
+_GROUND_TRUTH_DIR = _BENCHMARKS_DIR
 
 
 rule all:
