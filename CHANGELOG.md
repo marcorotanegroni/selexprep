@@ -6,7 +6,435 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+**Phase 6b.5a — catalog hygiene: per-run + per-BioProject library_strategy filter (2026-05-24)**
+
+Motivated by the Phase 6b.4 audit pilot, which surfaced multiple
+catalog false positives (ChIP-Seq, RNA-Seq, ssRNA-seq deposits)
+pulled into ``bioprojects.csv`` by broad-recall text search even
+though their ``library_strategy`` field was unambiguously not
+SELEX-compatible. This phase tightens the catalog at the discovery
++ refresh layer; the eligibility layer (Phase 6b.5b) will classify
+the rest at audit time.
+
+**New module ``selexprep.fetch.library_strategy``** with the
+empirically-calibrated CV blocklist + per-run + per-study aggregator:
+
+- ``is_library_strategy_compatible_with_selex(strategy) → bool`` —
+  per-run check. Returns True for empty strings, ``OTHER``,
+  ``SELEX``, ``AMPLICON``, ``Targeted-Capture``, and anything
+  outside the blocklist.
+- ``LIBRARY_STRATEGY_BLOCKLIST`` — 27 ENA CV codes that are formal
+  labels for *other* assays. Calibrated against ENA Portal API
+  live queries on 2026-05-24: 9824/10000 real HT-SELEX runs use
+  ``SELEX``, 176 use ``AMPLICON``. The initial blocklist
+  assumption that AMPLICON implied non-SELEX was empirically
+  wrong (SELEX rounds ARE PCR-amplified random libraries) —
+  removed before commit.
+- ``classify_study_by_library_strategies(bioproject_id,
+  library_strategies) → StudyStrategyClassification`` — per-run +
+  per-BioProject aggregator. **Decision rule** (Phase 6b.5a user
+  amendment):
+
+  | Per-BioProject pattern | Result |
+  |---|---|
+  | ALL runs blocklisted | drop from catalog + record in ``bioprojects_excluded.csv`` |
+  | SOME blocklisted + SOME compatible | KEEP (mixed; audit eligibility classifies in 6b.5b) |
+  | ALL compatible | KEEP |
+
+  Critical: do NOT treat "ANY run blocklisted → exclude whole
+  BioProject" — mixed BioProjects (SELEX runs alongside controls
+  or adjacent assays) are real and must not lose their SELEX data.
+
+**``selexprep.catalog.rebuild`` updated to apply the filter.**
+``harvest_studies_from_ena`` renamed to ``harvest_runs_from_ena``
+because the refresh now queries at the run level
+(``result=read_run``) so per-run ``library_strategy`` is available.
+Run-level deduplication across queries (by ``run_accession``).
+ENA's ``result=read_run`` doesn't expose ``study_description`` —
+abstracts are now preserved across refreshes via the
+``_enrichment_index`` fallback (a new entry in the preservation
+trigger list) so previously-known entries keep their abstracts.
+
+**``selexprep.fetch.discover.ENAAdapter`` updated to apply the same
+filter** for consistency between the multi-source discovery
+pipeline and the single-source refresh path.
+
+**Empirical ENA-API findings folded into the queries:**
+
+- ENA's quoted-phrase syntax is **exact-token**: ``"aptamer"``
+  does NOT match titles containing ``aptamers``. Plural variants
+  added to ``ENA_QUERIES`` so legitimate deposits like PRJNA935703
+  ("DNA aptamers for detection of pyoverdine pf5", one of the
+  Tier 1 ground-truth rows) aren't silently dropped.
+- ENA's default ``limit=10000`` truncates broad queries like
+  ``study_title="SELEX"`` (~14567 runs). Bumped to ``limit=100000``
+  — preserves later-paginated studies like PRJEB70964
+  (alpha-synuclein SELEX, another Tier 1 row).
+
+**Exclusion sidecar.** New file
+``src/selexprep/catalog/data/bioprojects_excluded.csv`` ships
+alongside ``bioprojects.csv``. Columns: ``bioproject_id``,
+``source``, ``study_title``, ``n_runs_total``,
+``n_runs_blocklisted``, ``blocklisted_strategies`` (JSON dict),
+``exclusion_reason`` (human-readable). Records every study
+filtered by the blocklist; honors the locked plan's "record
+reasons, not silent deletion" discipline.
+
+**Bundled catalog refreshed in this commit:**
+
+- ``CATALOG_VERSION``: ``v0.1.5-snapshot-2026-05-19`` →
+  ``v0.1.6-snapshot-2026-05-24``.
+- ``bioprojects.csv``: 273 → 220 rows.
+- ``bioprojects_excluded.csv``: 28 rows recorded with reasons
+  (mostly RNA-Seq, some ChIP-Seq + ssRNA-seq).
+- **All 11 Tier 1 ground-truth accessions verified present**.
+- **All 5 known pilot false positives verified absent**: 3 via
+  the formal library_strategy filter (PRJNA998371 RNA-Seq,
+  PRJEB68098 timecourse, PRJNA280419 RNA-Seq), 2 via query-text
+  mismatch (PRJNA1244400 + PRJNA1123259 — FOXC2 ChIP-Seq /
+  RNA-Seq studies no longer match any of the SELEX-related
+  query terms).
+
+**Tests (+~25):**
+
+- ``tests/test_library_strategy.py`` (~22) — blocklist
+  immutability, per-run helper exhaustive parametric, per-study
+  aggregator on all four outcomes (all compatible / all
+  blocklisted / mixed / empty), grammar singular vs plural,
+  multi-strategy breakdown sort order, AMPLICON empirical
+  regression (must be compatible), and empirical pilot false
+  positives (PRJNA1244400 ChIP-Seq excluded, PRJNA998371 RNA-Seq
+  excluded, PRJDB19138 real SELEX kept, mixed-with-control
+  kept-as-mixed).
+- ``tests/test_catalog.py`` (+2) — ``rebuild_catalog`` integration:
+  all-blocklisted study excluded + sidecar populated;
+  empty-sidecar header-only file (downstream consumers can rely
+  on its presence).
+
+What's next:
+
+- **Phase 6b.5b** — audit eligibility layer
+  (``selexprep.benchmark.eligibility``) that classifies each
+  catalog row at audit time into
+  ``ELIGIBLE_HT_SELEX_ROUNDS`` / ``MIXED_PROJECT_NEEDS_GROUPING``
+  / ``NO_ROUND_STRUCTURE`` / ``NON_SELEX_ASSAY`` / ``FETCH_DEAD``,
+  and only samples from ``ELIGIBLE_HT_SELEX_ROUNDS``.
+- **Phase 6b.5c** — round parser pattern expansion (``RVn``,
+  glued ``<word>R\d+``, ``Selex_n_cyc``); bare numeric labels
+  remain plan-level/context-gated, not a generic regex.
+- Then Tier 2 audit re-run on HPC against the refreshed catalog.
+
+**Phase 6b.4 — Tier 2 audit pilot DISCARDED; pilot surfaced a fetch-policy bug (2026-05-23)**
+
+The first N=30 Tier 2 audit pilot was run on HPC and produced
+numerically clean artifacts (sha256-locked, acceptance gate passed)
+but **the result is not committed** because per-row inspection of
+the FETCH_REFUSED accessions revealed the refusal rate was
+substantially inflated by a code bug in `fetch.metadata`, not by
+public-data quality alone. See the **Fixed** section below for the
+policy fix. The pilot will be re-run after the fix lands; **only the
+post-fix audit artifacts will ship** (likely as Phase 6b.5 once the
+re-run completes on HPC).
+
+What the discarded pilot taught us, kept here as a methodology note:
+
+- The Tier 2 audit pipeline ran end-to-end on the real public
+  corpus from HPC (validates the 6b.3a scaffolding).
+- Per-accession `fetch_metadata.json` inspection is the natural
+  audit drill-down — when distributional metrics look surprising,
+  the per-row plans tell you why. Codex's per-row check on the
+  pilot's `fetch_metadata.json` files is how the bug got found.
+- The audit's denominator partition (fetch vs inference) made the
+  diagnosis tractable: a 73% FETCH_REFUSED rate is a red flag worth
+  drilling into; a 73% `inference_safe_failure_rate` would have been
+  consistent with prior expectations and easy to mis-accept.
+
+What does **not** ship in this commit:
+- `benchmarks/audit_results/` directory
+- The pilot's `audit_metrics.json` / `audit_accessions.tsv` / `figure_b.{pdf,png}`
+
+The audit Snakefile (`benchmarks/audit.smk`) and the
+`selexprep.benchmark.corpus_audit` + `selexprep.benchmark.figure_b`
+modules from 6b.3a are unchanged — they did their job. The bug was
+in the fetch layer, surfaced by the audit.
+
+**What ships:**
+
+- `benchmarks/audit_results/audit_accessions.tsv` — sampled N=30 INSDC accessions (uniform random, ground-truth excluded).
+- `benchmarks/audit_results/audit_accessions.manifest.json` — reproducibility envelope sidecar.
+- `benchmarks/audit_results/audit_metrics.json` — measured distributions + envelope.
+- `benchmarks/audit_results/figure_b.{pdf,png}` — rendered Figure B for the pilot cohort (not the final paper figure).
+
+**Acceptance gate ✅:**
+
+```
+sample_accessions_sha256: d2eddab004494d3931d43286b89850d270d4f68a16ed1f4f6ca0a0ef8102fc64
+catalog_version         : v0.1.5-snapshot-2026-05-19
+sample_seed             : 42
+```
+
+TSV ↔ JSON sha256 independently verified via ``accessions_sha256()``;
+the pilot is reproducible by ``selexprep run audit_accessions.tsv``
+regardless of any future catalog refresh.
+
+**Pilot numbers (N=30, seed=42):**
+
+| Bucket | Count | % |
+|---|---|---|
+| FETCH_REFUSED (NONE-confidence round assignments) | 22 | 73% |
+| FETCH_FAILED (ENA returned no records) | 6 | 20% |
+| EXTRACT_REFUSED (LibraryReport = UNABLE_TO_INFER) | 1 | 3% |
+| OK (end-to-end) | 1 | 3% |
+| `n_fetchable` | 2 | 7% |
+| `n_with_library_report` | 2 | 7% |
+| `inference_safe_failure_rate` (within LibraryReport rows) | 1/2 | 50% |
+
+**The empirical finding (reshapes the Tier 2 narrative).**
+
+For N=30 the dominant bottleneck is **not primer inference**. It is
+**public metadata / fetchability / round-map recoverability**:
+
+> The public HT-SELEX corpus is poorly structured for automated
+> reuse; selexprep makes this visible by failing safely and
+> separating metadata/fetch failures from biological primer-
+> inference failures.
+
+The previous framing ("selexprep works on X% of public deposits")
+would be misleading from this sample — most public deposits never
+reach the inference layer at all. Only 2/30 rows got far enough to
+exercise the LibraryReport pipeline. Among those 2, selexprep
+behaved exactly as the locked plan promised:
+
+- **PRJNA210965 (OK)** — `extraction_mode=THREE_PRIME_ONLY`,
+  `status=MEDIUM`, `flags_raised=2`. Only the 3' primer was
+  reliably detectable; selexprep extracted partial-3p inserts and
+  surfaced 2 QC flags. Textbook "extract what's safe, flag what's
+  suspicious."
+- **PRJEB75580 (EXTRACT_REFUSED)** — triggered all three
+  safe-failure reasons simultaneously (`UNABLE_TO_INFER` +
+  `UNABLE_TO_EXTRACT` + `MANUAL_PRIMERS_REQUIRED`). Both primer
+  match rates were 0.00; selexprep correctly refused rather than
+  silently mis-trimming.
+
+**What this pilot does and does NOT claim:**
+
+✅ Validates the audit DAG runs end-to-end against the real public
+   corpus on HPC.
+✅ Demonstrates `selexprep run`'s per-row safe-failure semantics on
+   real data (not just synthetic fixtures).
+✅ Empirically separates **metadata-stage failures** (73% +
+   20% = 93%) from **biology-stage failures** (3%) — the methodological
+   correction enforced by `inference_safe_failure_rate`'s denominator
+   partition is load-bearing here.
+✅ Surfaces a catalog-hygiene finding (20% FETCH_FAILED on a
+   2026-05-19 snapshot) worth a future refresh.
+
+❌ Does **not** claim broad-coverage primer inference performance —
+   the inference denominator (2) is too small for that.
+❌ Does **not** characterize what fraction of public data is
+   automatically processable, because the public-metadata bottleneck
+   dominates the sample.
+❌ Is **not** the final paper Figure B.
+
+**What the paper Figure B will be (planned next iteration, see below):**
+
+A two-cohort comparison that quantifies how much of the
+metadata-stage bottleneck is rescuable by curator effort:
+
+> **Cohort A (auto-metadata):** the N=30 pilot result above —
+> 7% reach LibraryReport.
+> **Cohort B (curated-rescue):** the 22 FETCH_REFUSED accessions
+> re-run with hand-curated `rounds.tsv` + `--allow-manual-review`.
+> X% reach LibraryReport once round labels are supplied; Y% safely
+> refuse at the inference stage.
+
+This reframes the paper's Tier 2 story from "% works automatically"
+(weak claim) to "selexprep reveals **where** automation breaks +
+quantifies what's rescuable with curator input" (sharper, more
+defensible, more useful to the field).
+
+**Next iteration (Phase 6b.5, planned):** curated-round-map rescue
+cohort on the 22 FETCH_REFUSED accessions. Hand-curate one
+`rounds.tsv` per accession (similar workflow to Tier 1's
+`round_map_source=curated` rows in `ground_truth.tsv`), re-run
+`selexprep run --allow-manual-review`, aggregate into a parallel
+`audit_results_rescued/` directory, and emit a side-by-side Figure
+B that becomes the paper's actual headline. Running a larger random
+sample without first addressing the metadata bottleneck would just
+amplify the same finding.
+
 ### Fixed
+
+**Phase 6b.4 audit-pilot: ``needs_manual_review`` flag refactored out; refusal now driven by ``RoundRecord.is_unassigned`` property (2026-05-23)**
+
+Bug surfaced by the Tier 2 audit pilot via per-accession
+`fetch_metadata.json` inspection. The N=30 pilot reported 73%
+FETCH_REFUSED, which Codex's row-by-row check showed was inflated
+by a policy bug, not driven by metadata quality alone.
+
+**Root cause** (`src/selexprep/fetch/metadata.py::_match_text_field`):
+
+```python
+needs_manual_review=(confidence == "MEDIUM")
+```
+
+`MEDIUM` confidence comes from two semantically distinct paths in
+the round cascade:
+
+1. `base_confidence="MEDIUM"` for L3 fields (`library_name`,
+   `experiment_title`, `design_description`) with a **single
+   unambiguous parse**. Example: `library_name="RAPT26-2R"` →
+   round 2. The parse is fine; the field is just less canonical
+   than `sample_attributes` / `sample_title`.
+2. Confidence **downgraded to MEDIUM** because multiple distinct
+   round numbers were parsed from the same text (e.g.,
+   `"Round 3 / Cycle 7"`). Genuine ambiguity that legitimately
+   needs a curator's eyeball.
+
+The old code lumped both into `needs_manual_review=True`, and
+`FetchPlan.none_confidence_runs` then included those runs as
+refusal triggers. Concrete pilot examples — every one of these
+parsed cleanly to a single round number but was refused:
+
+| Accession   | Field        | Value           | Parsed round |
+|-------------|--------------|-----------------|--------------|
+| PRJDB19138  | library_name | `RAPT26-1R..5R` | 1–5          |
+| PRJDB40016  | library_name | `SPa19-1R..5R`  | 1–5          |
+| PRJDB40017  | library_name | `SPa20-1R..7R`  | 1–7          |
+| PRJEB76622  | library_name | (parses cleanly per Codex) | ✓ |
+
+**Fix (Option B refactor — `needs_manual_review` field removed
+entirely from `RoundRecord`):**
+
+The field was the source of the confusion — its name implied
+"any row needing curator attention" but its value was set to True
+in TWO unrelated places (`metadata.py:271` for any MEDIUM, plus
+explicit `=True` on L5 unknowns). Five different code sites then
+unioned `needs_manual_review or round_number is None` to mean
+"unassigned" — every one a candidate for re-introducing the bug.
+
+The replacement is a single computed property on `RoundRecord`:
+
+```python
+@property
+def is_unassigned(self) -> bool:
+    """True iff round_number is None OR multiple distinct round
+    numbers were parsed from the same text (genuine ambiguity)."""
+    return self.round_number is None or len(self.round_candidates) > 1
+```
+
+All five use sites (``FetchPlan.none_confidence_runs``,
+``_target_dir_for_run``, ``_write_rounds_tsv``,
+``_write_manual_review_tsv``, the per-run loop in
+``run_fetch``) now call ``rr.is_unassigned`` — the criterion is
+named once and impossible to recompute incorrectly. Single
+unambiguous parses with ``base_confidence="MEDIUM"`` are no
+longer `is_unassigned` and admit cleanly to `rounds.tsv`. The
+`FetchPlan.has_any_assigned_rounds` property — which already
+counted MEDIUM as a valid assignment — is now consistent with
+`none_confidence_runs`.
+
+**Backward compatibility preserved:**
+
+- ``rounds.csv`` / ``rounds_curated.csv`` (catalog discovery →
+  curation → download flow) still has a `needs_manual_review`
+  column. ``RoundRecord.to_dict()`` synthesizes it from
+  `is_unassigned` so curators editing the CSV by hand and the
+  ``download.py::needs_manual_review`` reader function keep
+  working unchanged. The column is a derived view; the property
+  is the source of truth.
+- ``fetch_metadata.json`` written by old code includes the field;
+  ``read_fetch_metadata_json`` silently ignores it. New JSON
+  files do not contain the field (it's not in the dataclass).
+  Round-trip is fine in both directions for already-written
+  audit-trail files.
+
+**Wording fix** in the user-facing refusal messages
+(`src/selexprep/fetch/runner.py`): "NONE-confidence" → "unassigned"
+or "need manual review (no parseable round, or multiple conflicting
+round numbers in the same metadata field)". The old wording said
+"NONE" when the actual condition was MEDIUM-from-ambiguity.
+
+**Regression tests (+7)** in `tests/test_metadata.py` +
+`tests/test_fetch_plan.py`:
+
+- `test_audit_pilot_rapt26_library_name_does_not_need_review` —
+  PRJDB19138 case (library_name=RAPT26-2R → round 2, MEDIUM,
+  needs_manual_review=False)
+- `test_audit_pilot_spa19_library_name_does_not_need_review` —
+  PRJDB40016 case
+- `test_audit_pilot_r00_n16_sample_title_does_not_need_review` —
+  PRJEB98610 case (HIGH from L2, sanity check)
+- `test_audit_pilot_selex_round26_n40_does_not_need_review` —
+  generic library_name pattern
+- `test_audit_pilot_genuine_ambiguity_still_needs_review` —
+  pins the conflicting-candidates path still triggers review
+- `test_build_fetch_plan_medium_single_match_library_name_not_refused` —
+  full PRJDB19138 5-run plan; pre-fix every run was in
+  `none_confidence_runs`, post-fix the list is empty
+- `test_build_fetch_plan_mixed_medium_single_and_genuine_ambiguity` —
+  one run from each path; only the ambiguous one is flagged
+
+Three existing tests had to be updated for the message-wording
+change (`tests/test_fetch_cli.py` ×2, `tests/test_run_runner.py` ×1)
+— they were grepping for "NONE-confidence" in the refusal string.
+Updated to grep for "unassigned" (stable across the new wording).
+
+**Effect on the audit:** the discarded N=30 pilot's true
+metadata-stage refusal rate is unknown until the re-run lands; the
+73% measured rate was an overcount that has been corrected at
+source. The post-fix audit will produce honest distributional
+numbers without the policy artifact.
+
+**Phase 6b.4 HPC audit blocker: ``selexprep run`` exit-code semantics (2026-05-23)** —
+surfaced during the actual Phase 6b.4 HPC audit run after the dependency
+fix landed; the run completed, ``run_summary.tsv`` was written with
+clean per-accession statuses, but ``selexprep run`` exited non-zero and
+Snakemake's ``set -e`` aborted ``rule run_corpus`` before
+``aggregate_audit`` could read the summary.
+
+- **Bug.** ``src/selexprep/cli.py::run`` had:
+  ```python
+  if n_failed > 0:
+      raise typer.Exit(code=1)
+  ```
+  ``selexprep run`` is a batch driver — per-accession failures are
+  first-class data captured in ``run_summary.tsv``, which IS the
+  report. A non-zero exit conflates "the runner did its job and
+  recorded failures" (a normal operational outcome on a noisy public
+  corpus — the entire premise of the Tier 2 audit) with "the runner
+  itself crashed" (already handled separately by the outer
+  ``except ValueError`` → exit 2). The audit Snakefile's
+  ``rule run_corpus`` runs under ``set -e``; the spurious exit 1
+  aborted the pipeline.
+- **Fix.** Removed the ``n_failed > 0 → exit 1`` lines. Exit is now:
+  - **0** — runner completed and wrote ``run_summary.tsv``, regardless
+    of how many rows reported failures (the failures are in the TSV).
+  - **2** — operator error: empty input TSV (new guard), missing
+    ``accession`` column, invalid backend, or ``ValueError`` from
+    ``run_batch`` itself.
+  Users who want fail-fast still have ``--stop-on-error``, which
+  gracefully halts the loop and writes the partial summary before
+  exiting.
+- **Regression tests (+2)** in ``tests/test_cli.py``:
+  - ``test_run_exits_zero_when_all_rows_fail_but_summary_written`` —
+    stubs ``run_batch`` to return an all-FETCH_REFUSED report; asserts
+    exit 0, summary path announced, per-row failures still printed.
+  - ``test_run_exits_2_on_empty_accessions_tsv`` — empty input TSV
+    (zero parseable rows) still hard-fails as operator error,
+    distinct from the all-rows-failed case.
+
+**Empirical motivation.** The first 6b.4 sample (N=30, seed=42)
+produced exactly the messy-public-corpus story the audit was designed
+to characterize: 23 FETCH_REFUSED (NONE-confidence round assignments —
+selexprep correctly refused to download data it can't safely use), 6
+FETCH_FAILED (ENA returned no records — catalog has dead-ish entries),
+1 EXTRACT_REFUSED (PRJEB75580 — LibraryReport.status = UNABLE_TO_INFER,
+both primer match rates 0.00; selexprep correctly refused to extract).
+Pre-fix this aborted the Snakefile; post-fix the same input cleanly
+flows fetch → summary → aggregate → figure_b.
 
 **Phase 6b.3a HPC dependency-resolution hotfix (2026-05-23)** — surfaced
 during the Phase 6b.4 HPC audit attempt; blocks

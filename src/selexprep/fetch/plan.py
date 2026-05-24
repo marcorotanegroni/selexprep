@@ -91,12 +91,22 @@ class FetchPlan:
 
     @property
     def none_confidence_runs(self) -> list[FetchRun]:
-        """Runs the cascade could not assign a round to (LOW/NONE + needs_manual_review)."""
-        return [
-            run
-            for run in self.runs
-            if run.round_record.needs_manual_review or run.round_record.round_number is None
-        ]
+        """Runs the cascade could not safely assign a round to.
+
+        Delegates to ``RoundRecord.is_unassigned`` (Phase 6b.4 audit
+        refactor) so the criterion is named once: a run is in this list
+        iff its parsed `round_number` is None OR multiple distinct round
+        numbers were parsed from the same metadata text (genuine
+        ambiguity). MEDIUM records with a single unambiguous parse
+        — e.g. ``library_name=RAPT26-2R`` → round 2 — are NOT covered
+        here; they're trusted as L3 assignments per the cascade
+        docstring.
+
+        Both cases legitimately block fetch (the trusted-assignments
+        contract that ``detect`` / ``extract`` consume requires a
+        single unambiguous round per run).
+        """
+        return [run for run in self.runs if run.round_record.is_unassigned]
 
 
 # ---------------------------------------------------------------------------

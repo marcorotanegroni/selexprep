@@ -161,9 +161,13 @@ def test_run_fetch_refuses_when_all_runs_none_confidence(tmp_path: Path) -> None
     ):
         result = run_fetch("PRJ_ALL_NONE", tmp_path, allow_manual_review=True)
 
-    # All-NONE fails even with --allow-manual-review (no rounds to anchor)
+    # All-unassigned fails even with --allow-manual-review (no rounds to
+    # anchor). Phase 6b.4 audit-pilot fix: the refusal message now says
+    # "unassigned" rather than "NONE-confidence" because the old wording
+    # was misleading once MEDIUM-single-match records stopped being
+    # lumped into the refusal bucket.
     assert result.refused_reason is not None
-    assert "NONE-confidence" in result.refused_reason
+    assert "unassigned" in result.refused_reason
     mock_dl.assert_not_called()
     assert not (tmp_path / "rounds.tsv").exists()
 
@@ -292,7 +296,11 @@ def test_cli_fetch_refusal_exits_with_code_2(tmp_path: Path) -> None:
     with patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)):
         result = CliRunner().invoke(app, ["fetch", "PRJ", "--outdir", str(tmp_path)])
     assert result.exit_code == 2
-    assert "NONE-confidence" in result.output
+    # Phase 6b.4 audit-pilot fix: refusal message says "unassigned" now,
+    # not "NONE-confidence". See tests/test_metadata.py for the
+    # MEDIUM-single-match regression suite that motivated the wording
+    # change.
+    assert "unassigned" in result.output
 
 
 def test_cli_fetch_propagates_value_error(tmp_path: Path) -> None:

@@ -10,7 +10,15 @@ import pandas as pd
 #: Snapshot identifier for the bundled catalog. Bump this on every refresh.
 #: Persona-1 users (ML researchers / atlas builders) rely on this to know
 #: how stale the catalog is vs the upstream archives.
-CATALOG_VERSION = "v0.1.5-snapshot-2026-05-19"
+#:
+#: Phase 6b.5a (2026-05-24): bumped from v0.1.5 to v0.1.6 because the
+#: catalog now applies the per-run + per-BioProject library_strategy
+#: filter (see ``selexprep.fetch.library_strategy``), which drops
+#: 100%-blocklisted studies (RNA-Seq / ChIP-Seq / miRNA-Seq / etc.)
+#: that the broad-recall text search would otherwise pick up. Mixed
+#: studies are kept; their per-run mix is classified at audit time by
+#: Phase 6b.5b.
+CATALOG_VERSION = "v0.1.6-snapshot-2026-05-24"
 
 _CATALOG_FILENAME = "bioprojects.csv"
 

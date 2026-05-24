@@ -98,15 +98,17 @@ def run_fetch(
 
     plan = build_fetch_plan(accession, timeout_s=timeout_s)
 
-    # Refusal: every run is NONE-confidence.
+    # Refusal: no run produced a HIGH/MEDIUM round assignment at all.
     if not plan.has_any_assigned_rounds:
         reason = (
-            f"All {len(plan.runs)} run(s) in {accession} have NONE-confidence "
-            "round assignments. detect's cross-round persistence is unusable "
-            "without HIGH/MEDIUM rounds; refusing to download. Hand-curate "
-            "round assignments and feed local FASTQs to detect/extract "
-            "directly, or open the accession's metadata to confirm round "
-            "indicators are missing."
+            f"All {len(plan.runs)} run(s) in {accession} are unassigned "
+            "(no HIGH/MEDIUM round could be parsed from sample_attributes, "
+            "sample_title, library_name, or experiment_title). detect's "
+            "cross-round persistence is unusable without HIGH/MEDIUM "
+            "rounds; refusing to download. Hand-curate round assignments "
+            "and feed local FASTQs to detect/extract directly, or open "
+            "the accession's metadata to confirm round indicators are "
+            "missing."
         )
         logger.error("run_fetch[%s]: %s", accession, reason)
         metadata_path = outdir / "fetch_metadata.json"
@@ -120,14 +122,16 @@ def run_fetch(
             refused_reason=reason,
         )
 
-    # Refusal: NONE-confidence runs present, --allow-manual-review NOT set.
+    # Refusal: unassigned or ambiguity-flagged runs present, --allow-manual-review NOT set.
     none_runs = plan.none_confidence_runs
     if none_runs and not allow_manual_review:
         srrs = ", ".join(r.srr for r in none_runs)
         reason = (
-            f"{len(none_runs)} run(s) in {accession} have NONE-confidence "
-            f"round assignments: {srrs}. Re-run with --allow-manual-review "
-            "to download these into round_unknown/ and surface them in "
+            f"{len(none_runs)} run(s) in {accession} are unassigned or "
+            f"need manual review (no parseable round, or multiple "
+            f"conflicting round numbers in the same metadata field): "
+            f"{srrs}. Re-run with --allow-manual-review to download "
+            "these into round_unknown/ and surface them in "
             "manual_review.tsv. They will never enter rounds.tsv (the "
             "trusted-assignments contract that detect/extract consume)."
         )
@@ -152,9 +156,7 @@ def run_fetch(
     for run in plan.runs:
         target_dir = _target_dir_for_run(outdir, run)
         target_dir.mkdir(parents=True, exist_ok=True)
-        is_manual = run.round_record.needs_manual_review or run.round_record.round_number is None
-
-        if is_manual:
+        if run.round_record.is_unassigned:
             manual_review_srrs.append(run.srr)
 
         # Codex pass 1 fix: skip-already-present must validate the gzip stream,
@@ -243,6 +245,12 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
     runs: list[FetchRun] = []
     for r in payload.get("runs", []):
         rr_data = r["round_record"]
+        # Phase 6b.4 audit refactor: ``needs_manual_review`` was removed
+        # from ``RoundRecord`` (replaced by the ``is_unassigned`` property
+        # computed from ``round_number`` + ``round_candidates``). Old
+        # ``fetch_metadata.json`` files on disk still have the field;
+        # silently drop it. ``round_candidates`` carries the information
+        # needed to reconstruct ``is_unassigned`` correctly.
         round_record = RoundRecord(
             srr=rr_data["srr"],
             round_number=rr_data["round_number"],
@@ -250,7 +258,6 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
             source_field=rr_data["source_field"],
             matched_pattern=rr_data["matched_pattern"],
             round_candidates=rr_data.get("round_candidates", []) or [],
-            needs_manual_review=rr_data.get("needs_manual_review", False),
             parser_notes=rr_data.get("parser_notes", ""),
             target_hint=rr_data.get("target_hint"),
         )
@@ -288,8 +295,10 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
 def _target_dir_for_run(outdir: Path, run: FetchRun) -> Path:
     """Where this run's FASTQs land — `round_NN/` or `round_unknown/`."""
     rr = run.round_record
-    if rr.round_number is None or rr.needs_manual_review:
+    if rr.is_unassigned:
         return outdir / "round_unknown"
+    # is_unassigned False implies round_number is not None — narrow for mypy.
+    assert rr.round_number is not None
     return outdir / f"round_{rr.round_number:02d}"
 
 
@@ -302,10 +311,11 @@ def _write_rounds_tsv(path: Path, plan: FetchPlan, outdir: Path) -> None:
     rows: list[tuple[str, int]] = []
     for run in plan.runs:
         rr = run.round_record
-        if rr.round_number is None or rr.needs_manual_review:
+        if rr.is_unassigned:
             continue
         if rr.confidence not in ("HIGH", "MEDIUM"):
             continue
+        assert rr.round_number is not None  # narrow for mypy (is_unassigned False)
         for name in fastq_filenames_for_run(run):
             rows.append((name, rr.round_number))
     rows.sort(key=lambda x: x[0])
@@ -325,7 +335,7 @@ def _write_manual_review_tsv(path: Path, plan: FetchPlan, outdir: Path) -> None:
     rows: list[tuple[str, str, str, str, str]] = []
     for run in plan.runs:
         rr = run.round_record
-        if rr.round_number is not None and not rr.needs_manual_review:
+        if not rr.is_unassigned:
             continue
         for name in fastq_filenames_for_run(run):
             rows.append(

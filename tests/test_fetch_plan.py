@@ -134,7 +134,7 @@ def test_build_fetch_plan_none_confidence_when_no_round_indicator() -> None:
 
     run = plan.runs[0]
     assert run.round_record.confidence == "NONE"
-    assert run.round_record.needs_manual_review is True
+    assert run.round_record.is_unassigned is True  # round_number is None
     assert run.round_record.round_number is None
     assert plan.has_any_assigned_rounds is False
     assert plan.none_confidence_runs == [run]
@@ -152,6 +152,56 @@ def test_build_fetch_plan_has_any_assigned_rounds_true_when_mixed() -> None:
     none_runs = plan.none_confidence_runs
     assert len(none_runs) == 1
     assert none_runs[0].srr == "SRR_BAD"
+
+
+def test_build_fetch_plan_medium_single_match_library_name_not_refused() -> None:
+    """Phase 6b.4 audit-pilot regression: PRJDB19138 had 5 runs all parsing
+    cleanly from library_name (RAPT26-1R / RAPT26-2R / ...). Pre-fix every
+    one was flagged as needs_manual_review (because base_confidence=MEDIUM
+    on L3 fields), so ``none_confidence_runs`` returned all 5 and the
+    fetch runner refused the whole accession.
+
+    Post-fix: a single unambiguous parse from library_name produces a
+    MEDIUM record with ``is_unassigned=False``. The runs admit cleanly
+    to ``rounds.tsv`` and the accession is fetchable.
+    """
+    rows = [
+        _row(srr="DRR618526", library_name="RAPT26-1R"),
+        _row(srr="DRR618527", library_name="RAPT26-2R"),
+        _row(srr="DRR618528", library_name="RAPT26-3R"),
+        _row(srr="DRR618529", library_name="RAPT26-4R"),
+        _row(srr="DRR618530", library_name="RAPT26-5R"),
+    ]
+    with patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)):
+        plan = build_fetch_plan("PRJDB19138")
+
+    # Every run is MEDIUM single-match — none should be in
+    # none_confidence_runs (the refusal trigger).
+    for run in plan.runs:
+        assert run.round_record.confidence == "MEDIUM"
+        assert run.round_record.round_number is not None
+        assert run.round_record.is_unassigned is False
+
+    assert plan.has_any_assigned_rounds is True
+    assert plan.none_confidence_runs == []  # ← the bug was here
+
+
+def test_build_fetch_plan_mixed_medium_single_and_genuine_ambiguity() -> None:
+    """A plan with both MEDIUM-single-match (should pass) and
+    MEDIUM-from-conflict (should be refused) only flags the latter."""
+    rows = [
+        _row(srr="SRR_OK", library_name="SELEX_round26_N40"),  # MEDIUM, single, OK
+        _row(srr="SRR_AMBIG", sample_title="Round 3 / Cycle 7"),  # MEDIUM, conflict, refuse
+    ]
+    with patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)):
+        plan = build_fetch_plan("PRJX")
+
+    by_srr = {r.srr: r for r in plan.runs}
+    assert by_srr["SRR_OK"].round_record.is_unassigned is False
+    assert by_srr["SRR_AMBIG"].round_record.is_unassigned is True
+
+    none_runs = plan.none_confidence_runs
+    assert [r.srr for r in none_runs] == ["SRR_AMBIG"]
 
 
 def test_build_fetch_plan_raises_on_empty_response() -> None:

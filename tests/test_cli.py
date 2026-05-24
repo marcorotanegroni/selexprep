@@ -429,6 +429,73 @@ def test_run_missing_accession_column_exits_2(tmp_path: Path) -> None:
     assert "accession" in result.output
 
 
+def test_run_exits_zero_when_all_rows_fail_but_summary_written(tmp_path: Path) -> None:
+    """Phase 6b.4 HPC audit fix: per-accession failures are first-class data
+    captured in ``run_summary.tsv``. ``selexprep run`` is a batch driver —
+    a non-zero exit when every row safely failed would conflate "the runner
+    did its job and recorded refusals" (a normal operational outcome on
+    a noisy public corpus — the whole point of the Tier 2 audit) with
+    "the runner itself crashed" (already handled separately via exit 2).
+    The audit Snakefile's ``rule run_corpus`` runs under ``set -e``; a
+    non-zero exit here would abort the pipeline before aggregate_audit
+    could even read the summary.
+    """
+    from unittest.mock import patch
+
+    from selexprep.run.runner import RunReport, RunRowReport
+
+    tsv = tmp_path / "accs.tsv"
+    tsv.write_text("accession\tnotes\nPRJ_A\t\nPRJ_B\t\n", encoding="utf-8")
+    out = tmp_path / "out"
+
+    # Stub run_batch so we get a deterministic all-failed report without
+    # touching the network. The summary TSV path is set; the runner
+    # otherwise behaves exactly as it would on a real all-FETCH_REFUSED
+    # sample.
+    summary_path = out / "run_summary.tsv"
+    out.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text("accession\tstatus\n", encoding="utf-8")
+    fake_report = RunReport(
+        accessions_tsv=tsv,
+        outdir=out,
+        rows=[
+            RunRowReport(
+                accession="PRJ_A",
+                status="FETCH_REFUSED",
+                last_stage_completed="fetch",
+                notes="all NONE-confidence rounds",
+            ),
+            RunRowReport(
+                accession="PRJ_B",
+                status="FETCH_REFUSED",
+                last_stage_completed="fetch",
+                notes="all NONE-confidence rounds",
+            ),
+        ],
+        summary_tsv=summary_path,
+    )
+
+    with patch("selexprep.run.run_batch", return_value=fake_report):
+        result = runner.invoke(app, ["run", str(tsv), "--outdir", str(out)])
+
+    assert result.exit_code == 0, result.output
+    # The summary path is still announced to the user.
+    assert "run_summary.tsv" in result.output
+    # The per-row failure surface is still emitted for human review.
+    assert "FETCH_REFUSED" in result.output
+
+
+def test_run_exits_2_on_empty_accessions_tsv(tmp_path: Path) -> None:
+    """An empty input TSV (zero parseable accessions) is operator error,
+    not an audit outcome. Distinct from the all-rows-failed case above.
+    """
+    tsv = tmp_path / "empty.tsv"
+    tsv.write_text("accession\tnotes\n", encoding="utf-8")
+    result = runner.invoke(app, ["run", str(tsv), "--outdir", str(tmp_path / "out")])
+    assert result.exit_code == 2
+    assert "zero rows" in result.output or "zero rows" in (result.stderr or "")
+
+
 def test_run_command_registers_resume_and_stop_on_error_options() -> None:
     """``selexprep run`` exposes ``--resume`` and ``--stop-on-error``.
 
