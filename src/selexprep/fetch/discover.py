@@ -248,9 +248,20 @@ class ENAAdapter(SourceAdapter):
     name = "ena"
 
     def search(self, query: str | None = None) -> tuple[list[dict], list[dict]]:
+        from selexprep.fetch.library_strategy import (
+            classify_study_by_library_strategies,
+        )
+
         queries = [query] if query else ENA_QUERIES
         bp_rows: dict[str, dict] = {}
         sample_rows: list[dict] = []
+        # Phase 6b.5a: collect per-BioProject library_strategy values so
+        # we can apply the same per-run + per-study classifier as the
+        # ``selexprep catalog refresh`` path (see
+        # ``selexprep.catalog.rebuild``). Studies whose runs are 100%
+        # blocklisted (RNA-Seq / ChIP-Seq / etc.) are filtered out here
+        # too, keeping the discovery pipeline consistent with refresh.
+        strategies_by_bp: dict[str, list[str]] = {}
 
         for q in queries:
             logger.info("[ENA] searching: %s", q)
@@ -276,6 +287,9 @@ class ENAAdapter(SourceAdapter):
                     bp["source"] = "ena"
                     bp["study_title"] = run.get("study_title", "")
                     bp_rows[bp_id] = bp
+                    strategies_by_bp[bp_id] = []
+
+                strategies_by_bp[bp_id].append((run.get("library_strategy") or "").strip())
 
                 s = empty_sample()
                 s["srr"] = run.get("run_accession", "")
@@ -289,7 +303,25 @@ class ENAAdapter(SourceAdapter):
                 sample_rows.append(s)
             time.sleep(0.4)
 
-        return list(bp_rows.values()), sample_rows
+        # Apply per-study filter: drop BioProjects whose runs are 100%
+        # blocklisted. Mixed studies (some compatible + some blocklisted)
+        # are KEPT; the audit-eligibility layer (Phase 6b.5b) classifies
+        # them downstream. See ``selexprep.fetch.library_strategy`` for
+        # the decision rule.
+        excluded_ids: set[str] = set()
+        for bp_id, strategies in strategies_by_bp.items():
+            classification = classify_study_by_library_strategies(bp_id, strategies)
+            if classification.should_exclude:
+                excluded_ids.add(bp_id)
+                logger.info(
+                    "[ENA] excluding %s: %s",
+                    bp_id,
+                    classification.exclusion_reason,
+                )
+
+        kept_bp_rows = [bp for bp_id, bp in bp_rows.items() if bp_id not in excluded_ids]
+        kept_sample_rows = [s for s in sample_rows if s["bioproject_id"] not in excluded_ids]
+        return kept_bp_rows, kept_sample_rows
 
 
 # ---------------------------------------------------------------------------

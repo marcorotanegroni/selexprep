@@ -632,8 +632,28 @@ def run(
                 err=True,
             )
 
-    if n_failed > 0:
-        raise typer.Exit(code=1)
+    # NOTE (Phase 6b.4 HPC audit fix): ``selexprep run`` is a batch driver —
+    # per-accession failures are first-class data captured in
+    # ``run_summary.tsv``, which is the report. A non-zero exit here would
+    # conflate "the runner did its job and recorded failures" (a normal
+    # operational outcome for a noisy public corpus) with "the runner
+    # itself crashed" (which is already handled separately by the outer
+    # ``except ValueError`` → exit 2). The audit Snakefile + any
+    # downstream automation (CI, monitoring, the Tier 2 ``rule run_corpus``
+    # under ``set -e``) depends on a clean exit when the summary was
+    # written. Users who want fail-fast can pass ``--stop-on-error``,
+    # which also writes the summary before halting.
+    #
+    # An empty input TSV (zero accessions) DOES still need to fail loudly
+    # — that's an operator error, not "the audited corpus is messy".
+    if not report.rows:
+        typer.secho(
+            "run: accessions TSV produced zero rows after parsing — refusing "
+            "to emit an empty summary.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
 
 
 if __name__ == "__main__":

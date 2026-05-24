@@ -260,18 +260,20 @@ def test_rebuild_catalog_merges_enrichment_and_preserves_non_insdc(tmp_path: Pat
             "study_title": "FRESH ENA TITLE",
             "study_description": "Fresh abstract from ENA",
             "scientific_name": "Homo sapiens",
+            "library_strategies": ["OTHER"],
         },
         "PRJTEST2": {
             "study_accession": "PRJTEST2",
             "study_title": "New aptamer study",
             "study_description": "Discovered via broader query",
             "scientific_name": "Mus musculus",
+            "library_strategies": ["OTHER", "OTHER"],
         },
     }
 
     new_path = tmp_path / "new.csv"
     with mock.patch(
-        "selexprep.catalog.rebuild.harvest_studies_from_ena",
+        "selexprep.catalog.rebuild.harvest_runs_from_ena",
         return_value=fake_ena,
     ):
         n = rebuild_catalog(out_path=new_path, preserve_from=old_path)
@@ -305,11 +307,12 @@ def test_rebuild_catalog_no_preserve_drops_enrichment_and_non_insdc(tmp_path: Pa
             "study_accession": "PRJTEST1",
             "study_title": "Fresh title",
             "study_description": "Fresh abstract",
+            "library_strategies": ["OTHER"],
         },
     }
     new_path = tmp_path / "new.csv"
     with mock.patch(
-        "selexprep.catalog.rebuild.harvest_studies_from_ena",
+        "selexprep.catalog.rebuild.harvest_runs_from_ena",
         return_value=fake_ena,
     ):
         n = rebuild_catalog(out_path=new_path, preserve_from=None)
@@ -319,3 +322,89 @@ def test_rebuild_catalog_no_preserve_drops_enrichment_and_non_insdc(tmp_path: Pa
         rebuilt = list(csv.DictReader(f))
     assert rebuilt[0]["bioproject_id"] == "PRJTEST1"
     assert rebuilt[0]["protein_target"] == ""
+
+
+def test_rebuild_catalog_excludes_all_blocklisted_studies(tmp_path: Path) -> None:
+    """Phase 6b.5a: a study whose runs are 100% RNA-Seq must be dropped
+    from the catalog AND recorded in ``bioprojects_excluded.csv`` with
+    a human-readable reason. Mixed studies (some OTHER + some RNA-Seq)
+    must be KEPT — they contain real SELEX data alongside controls.
+    """
+    fake_ena = {
+        "PRJ_REAL_SELEX": {
+            "study_accession": "PRJ_REAL_SELEX",
+            "study_title": "Real HT-SELEX study",
+            "study_description": "...",
+            "scientific_name": "synthetic construct",
+            "library_strategies": ["OTHER", "OTHER", "OTHER"],
+        },
+        "PRJ_RNASEQ_FALSE_POSITIVE": {
+            "study_accession": "PRJ_RNASEQ_FALSE_POSITIVE",
+            "study_title": "Bladder cancer transcriptome (mentions aptamer)",
+            "study_description": "...",
+            "scientific_name": "Homo sapiens",
+            "library_strategies": ["RNA-Seq"] * 5,
+        },
+        "PRJ_MIXED_SELEX_AND_CONTROLS": {
+            "study_accession": "PRJ_MIXED_SELEX_AND_CONTROLS",
+            "study_title": "SELEX with RNA-seq controls",
+            "study_description": "...",
+            "scientific_name": "Mus musculus",
+            "library_strategies": ["OTHER", "OTHER", "RNA-Seq"],
+        },
+    }
+
+    new_path = tmp_path / "new.csv"
+    with mock.patch(
+        "selexprep.catalog.rebuild.harvest_runs_from_ena",
+        return_value=fake_ena,
+    ):
+        n = rebuild_catalog(out_path=new_path, preserve_from=None)
+
+    # 2 kept (real SELEX + mixed), 1 excluded (RNA-Seq-only)
+    assert n == 2
+    with open(new_path) as f:
+        rebuilt = {r["bioproject_id"] for r in csv.DictReader(f)}
+    assert rebuilt == {"PRJ_REAL_SELEX", "PRJ_MIXED_SELEX_AND_CONTROLS"}
+    assert "PRJ_RNASEQ_FALSE_POSITIVE" not in rebuilt
+
+    # Sidecar present + populated
+    excluded_path = tmp_path / "bioprojects_excluded.csv"
+    assert excluded_path.exists()
+    with open(excluded_path) as f:
+        excluded_rows = list(csv.DictReader(f))
+    assert len(excluded_rows) == 1
+    row = excluded_rows[0]
+    assert row["bioproject_id"] == "PRJ_RNASEQ_FALSE_POSITIVE"
+    assert row["n_runs_total"] == "5"
+    assert row["n_runs_blocklisted"] == "5"
+    assert "RNA-Seq" in row["exclusion_reason"]
+    assert "5 runs" in row["exclusion_reason"]
+    # blocklisted_strategies is a JSON-encoded dict for downstream parsing
+    assert "RNA-Seq" in row["blocklisted_strategies"]
+
+
+def test_rebuild_catalog_emits_empty_exclusion_sidecar(tmp_path: Path) -> None:
+    """When every study is compatible, the sidecar still exists (header-only).
+    Downstream consumers can rely on its presence."""
+    fake_ena = {
+        "PRJ_OK": {
+            "study_accession": "PRJ_OK",
+            "study_title": "...",
+            "study_description": "...",
+            "scientific_name": "",
+            "library_strategies": ["OTHER"],
+        },
+    }
+    new_path = tmp_path / "new.csv"
+    with mock.patch(
+        "selexprep.catalog.rebuild.harvest_runs_from_ena",
+        return_value=fake_ena,
+    ):
+        rebuild_catalog(out_path=new_path, preserve_from=None)
+
+    excluded_path = tmp_path / "bioprojects_excluded.csv"
+    assert excluded_path.exists()
+    with open(excluded_path) as f:
+        rows = list(csv.DictReader(f))
+    assert rows == []  # header-only

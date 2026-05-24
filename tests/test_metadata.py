@@ -20,7 +20,7 @@ def test_l1_structured_round_attribute_high_confidence() -> None:
     assert r.round_number == 3
     assert r.confidence == "HIGH"
     assert r.source_field == "sample_attributes"
-    assert r.needs_manual_review is False
+    assert r.is_unassigned is False
 
 
 def test_l1_handles_various_attribute_keys() -> None:
@@ -60,7 +60,10 @@ def test_l2_conflicting_numbers_downgrade_to_medium() -> None:
     r = parse_round("SRR1", sample_title="Round 3 / Cycle 7")
     assert r.confidence == "MEDIUM"
     assert r.round_candidates == [3, 7]
-    assert r.needs_manual_review is True
+    # Phase 6b.4 audit refactor: genuine ambiguity is flagged via
+    # ``is_unassigned`` (computed from ``len(round_candidates) > 1``)
+    # rather than the old per-record ``needs_manual_review`` field.
+    assert r.is_unassigned is True
 
 
 # ----- L3: library_name / experiment_title -----
@@ -71,12 +74,78 @@ def test_l3_library_name_medium_confidence() -> None:
     assert r.round_number == 6
     assert r.confidence == "MEDIUM"
     assert r.source_field == "library_name"
+    # Phase 6b.4 audit refactor: a single unambiguous L3 parse is NOT
+    # unassigned. Previously the field ``needs_manual_review`` was True
+    # here, which caused ``FetchPlan.none_confidence_runs`` to refuse
+    # fetch on accessions whose round signals only lived in library_name.
+    assert r.is_unassigned is False
 
 
 def test_l3_falls_through_to_experiment_then_design() -> None:
     r = parse_round("SRR1", experiment_title="SELEX cycle 4 enrichment")
     assert r.round_number == 4
     assert r.source_field == "experiment_title"
+    assert r.is_unassigned is False
+
+
+# ----- Phase 6b.4 audit-pilot regression tests -----
+#
+# The N=30 Tier 2 audit pilot surfaced a policy bug: MEDIUM single-match
+# parses (RAPT26-2R, SPa19-1R, R00_N16) were treated as unassigned and
+# triggered FETCH_REFUSED on whole accessions. These tests pin the fixed
+# behavior against the empirical cases Codex found during the pilot's
+# per-accession fetch_metadata.json inspection.
+
+
+def test_audit_pilot_rapt26_library_name_does_not_need_review() -> None:
+    """PRJDB19138: library_name='RAPT26-2R' must parse to round 2 without
+    being treated as unassigned. Pre-fix this caused the whole accession
+    to be refused; post-fix it admits cleanly to rounds.tsv."""
+    r = parse_round("DRR618526", library_name="RAPT26-2R")
+    assert r.round_number == 2
+    assert r.confidence == "MEDIUM"
+    assert r.source_field == "library_name"
+    assert r.is_unassigned is False
+
+
+def test_audit_pilot_spa19_library_name_does_not_need_review() -> None:
+    """PRJDB40016: library_name='SPa19-1R' → round 1, not unassigned."""
+    r = parse_round("DRR895630", library_name="SPa19-1R")
+    assert r.round_number == 1
+    assert r.confidence == "MEDIUM"
+    assert r.is_unassigned is False
+
+
+def test_audit_pilot_r00_n16_sample_title_does_not_need_review() -> None:
+    """PRJEB98610: sample_title='R00_N16' → round 0 (HIGH confidence —
+    sample_title is L2; this row was already HIGH and is the cleanest
+    sanity check that no L2 single-match record was ever unassigned)."""
+    r = parse_round("ERR15669095", sample_title="R00_N16")
+    assert r.round_number == 0
+    assert r.confidence == "HIGH"
+    assert r.source_field == "sample_title"
+    assert r.is_unassigned is False
+
+
+def test_audit_pilot_selex_round26_n40_does_not_need_review() -> None:
+    """Synthetic regression for ``SELEX_round26_N40`` (a generic library_name
+    pattern seen across multiple SELEX deposits). Single unambiguous
+    parse, MEDIUM confidence by virtue of being L3, not unassigned."""
+    r = parse_round("SRRX", library_name="SELEX_round26_N40")
+    assert r.round_number == 26
+    assert r.confidence == "MEDIUM"
+    assert r.is_unassigned is False
+
+
+def test_audit_pilot_genuine_ambiguity_still_unassigned() -> None:
+    """The pre-existing 'Round 3 / Cycle 7' case must STILL be unassigned
+    — multiple distinct parses are the genuine-ambiguity path that
+    ``is_unassigned`` correctly identifies via
+    ``len(round_candidates) > 1``."""
+    r = parse_round("SRR1", sample_title="Round 3 / Cycle 7")
+    assert r.confidence == "MEDIUM"
+    assert r.round_candidates == [3, 7]
+    assert r.is_unassigned is True
 
 
 # ----- L4: abstract count is informative only -----
@@ -109,7 +178,7 @@ def test_l5_unknown_writes_manual_review_dump(tmp_path: Path) -> None:
         manual_review_dir=tmp_path,
     )
     assert r.confidence == "NONE"
-    assert r.needs_manual_review is True
+    assert r.is_unassigned is True  # round_number is None → unassigned
     dump = tmp_path / "PRJNA1_SRR999.txt"
     assert dump.exists()
     assert "MANUAL REVIEW REQUIRED" in dump.read_text()

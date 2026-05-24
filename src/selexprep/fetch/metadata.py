@@ -8,7 +8,8 @@ Priority order (first match wins):
   L4 — BioProject abstract (count only —
        NEVER assigns SRR→round)                    (confidence=LOW, informative)
   L5 — Unknown                                     (confidence=NONE)
-       → needs_manual_review=True
+       → ``round_number is None`` (caught by
+         ``RoundRecord.is_unassigned``)
        → dump written to metadata/manual_review/
 
 **Cardinal rule: never guess.** A catalog with 20% unknowns is better than one
@@ -36,13 +37,43 @@ class RoundRecord:
     source_field: str
     matched_pattern: str
     round_candidates: list[int] = field(default_factory=list)
-    needs_manual_review: bool = False
     parser_notes: str = ""
     target_hint: str | None = None
+
+    @property
+    def is_unassigned(self) -> bool:
+        """The run cannot safely contribute to ``rounds.tsv``.
+
+        True iff either:
+
+        - the cascade found no parseable round number
+          (``round_number is None``), or
+        - multiple distinct round numbers were parsed from the same text
+          (``len(round_candidates) > 1``) — genuine ambiguity that
+          needs a curator's eyeball before trusting any of them.
+
+        Phase 6b.4 audit fix: replaces the older ``needs_manual_review``
+        boolean field, which was set to ``True`` for every L3
+        single-match parse (`base_confidence="MEDIUM"`) and caused
+        ``FetchPlan.none_confidence_runs`` to refuse fetch on
+        accessions where ``library_name="RAPT26-2R"`` parsed cleanly
+        to round 2. The property makes the criterion explicit at
+        every call site — there is no longer a per-record flag whose
+        meaning could drift.
+        """
+        return self.round_number is None or len(self.round_candidates) > 1
 
     def to_dict(self) -> dict:
         d = asdict(self)
         d["round_candidates"] = json.dumps(d["round_candidates"])
+        # Preserve the `needs_manual_review` column on serialized
+        # ``rounds.csv`` rows so existing readers
+        # (`selexprep.fetch.download.needs_manual_review` and curators
+        # hand-editing `rounds_curated.csv`) keep working. Computed from
+        # ``is_unassigned`` — the property is the single source of truth
+        # on the dataclass; the CSV column is a derived view kept for
+        # backward compat with the discovery → curation → download flow.
+        d["needs_manual_review"] = self.is_unassigned
         return d
 
 
@@ -153,7 +184,6 @@ def parse_round(
                     source_field="sample_attributes",
                     matched_pattern="structured_attr",
                     round_candidates=[round_num],
-                    needs_manual_review=False,
                     parser_notes=f"structured attribute key='{key}' value='{stripped}'",
                     target_hint=_extract_target_hint(sample_title),
                 )
@@ -183,7 +213,8 @@ def parse_round(
             f"abstract declares ~{n_rounds_abstract} rounds total (informative only, not assigned)"
         )
 
-    # L5 — Unknown → manual review
+    # L5 — Unknown → manual review (round_number is None makes
+    # ``RoundRecord.is_unassigned`` True; no per-record flag needed)
     record = RoundRecord(
         srr=srr,
         round_number=None,
@@ -191,7 +222,6 @@ def parse_round(
         source_field="none",
         matched_pattern="none",
         round_candidates=[],
-        needs_manual_review=True,
         parser_notes=notes or "no round indicator found in any metadata field",
         target_hint=_extract_target_hint(sample_title),
     )
@@ -255,6 +285,14 @@ def _match_text_field(
         confidence = base_confidence
         notes = f"matched '{unique_patterns[0]}' in {field_name}: '{text[:120]}'"
     else:
+        # Phase 6b.4 audit fix: the only legitimate "needs review" case
+        # in this helper is genuine ambiguity (multiple distinct round
+        # numbers from the same text). ``RoundRecord.is_unassigned``
+        # picks this up via ``len(round_candidates) > 1`` — no per-record
+        # boolean flag required. Pre-fix the field was set unconditionally
+        # for MEDIUM and lumped single-match L3 parses into refusal
+        # alongside genuine ambiguity, which is the bug this refactor
+        # closes at source.
         confidence = "MEDIUM"
         notes = (
             f"conflicting candidates {unique_numbers} from patterns "
@@ -268,7 +306,6 @@ def _match_text_field(
         source_field=field_name,
         matched_pattern=unique_patterns[0],
         round_candidates=unique_numbers,
-        needs_manual_review=(confidence == "MEDIUM"),
         parser_notes=notes,
     )
 
@@ -388,7 +425,6 @@ def apply_seed_overrides(
                 source_field="seed_override",
                 matched_pattern="manual",
                 round_candidates=[mapping[r.srr]],
-                needs_manual_review=False,
                 parser_notes=f"overridden by seed mapping: round={mapping[r.srr]}",
                 target_hint=r.target_hint,
             )

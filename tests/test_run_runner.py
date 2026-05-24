@@ -183,7 +183,8 @@ def test_run_batch_records_fetch_refused_status_for_all_none_runs(tmp_path: Path
     row = report.rows[0]
     assert row.status == "FETCH_REFUSED"
     assert row.last_stage_completed == "fetch"
-    assert "NONE-confidence" in row.notes
+    # Phase 6b.4 audit-pilot fix: refusal note says "unassigned" now.
+    assert "unassigned" in row.notes
 
 
 # ---------------------------------------------------------------------------
