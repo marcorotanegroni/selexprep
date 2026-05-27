@@ -101,6 +101,33 @@ _ROUND_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("R_digit_boundary", re.compile(r"(?:^|[\s_\-./])[Rr](\d+)(?:[\s_\-./]|$)")),
     ("C_digit_boundary", re.compile(r"(?:^|[\s_\-./])[Cc](\d+)(?:[\s_\-./]|$)")),
     ("digit_R_suffix", re.compile(r"(?:^|[\s_\-./])(\d+)[Rr](?:[\s_\-./]|$)")),
+    # Phase 6b.5c — empirical patterns surfaced by the Phase 6b.4 audit
+    # pilot's per-accession metadata inspection. Each was a SELEX deposit
+    # the original cascade missed.
+    #
+    # ``RV01`` / ``RV02`` / ... (PRJEB51212 — Sall4 SELEX rounds). The R
+    # and V are glued, so ``R_digit_boundary`` ('R immediately followed
+    # by digit') doesn't match; this pattern handles the RV-glued case
+    # explicitly.
+    ("RV_digit", re.compile(r"(?:^|[\s_\-./])RV(\d+)(?:[\s_\-./]|$)")),
+    # ``DNAFOXR00`` / ``DNAFOXR01`` / ... (PRJEB62756 — DNAFOX SELEX
+    # series). A word prefix glued to ``R\d+`` with no separator.
+    # Requires the prefix to be ≥3 letters (uppercase + ≥2 more letters)
+    # to limit false positives from short protein abbreviations like
+    # ``TFR1`` (transcription factor R1). Catches DNAFOX (6 letters) but
+    # not TF (2).
+    ("glued_word_R_digit", re.compile(r"[A-Z][A-Za-z]{2,}R(\d+)(?:[\s_\-./]|$)")),
+    # ``Selex_7_cyc`` / ``7_cyc`` / ``7 cycles`` (PRJNA385825). Digit
+    # BEFORE the cyc(le) token; complements ``cycle_word_digit`` which
+    # only matches ``cycle 5`` (cycle BEFORE digit).
+    (
+        "digit_cyc_suffix",
+        re.compile(
+            # cyc / cycle / cycles — handles singular + plural
+            r"(?:^|[\s_\-./])(\d+)[\s_\-]*cyc(?:les?)?(?:[\s_\-./]|$)",
+            re.IGNORECASE,
+        ),
+    ),
 ]
 
 # L4 — abstract round count (informative, never assigns SRR→round)

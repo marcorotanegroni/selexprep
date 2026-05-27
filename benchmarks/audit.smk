@@ -5,12 +5,17 @@
 # (``audit_accessions.tsv`` + ``audit_metrics.json`` + ``figure_b.{pdf,png}``)
 # is the 6b.4 follow-up commit with no code changes.
 #
-# DAG (locked plan + Codex peer-review):
+# DAG (locked plan + Codex peer-review + Phase 6b.5b eligibility layer):
 #
-#   rule sample_corpus  → audit_accessions.tsv (+ .manifest.json sidecar)
-#   rule run_corpus     → run_summary.tsv (via ``selexprep run --resume``)
-#   rule aggregate_audit → audit_metrics.json
-#   rule figure_b       → figure_b.{pdf,png}
+#   rule classify_catalog → eligibility.tsv (per-accession audit-eligibility
+#                            classification via ENA fetch per row)
+#   rule sample_corpus    → audit_accessions.tsv (samples only from
+#                            ELIGIBLE_HT_SELEX_ROUNDS rows) + .manifest.json
+#   rule run_corpus       → run_summary.tsv (via ``selexprep run --resume``)
+#   rule aggregate_audit  → audit_metrics.json (includes
+#                            catalog_classification_distribution from the
+#                            full catalog classification)
+#   rule figure_b         → figure_b.{pdf,png}
 #
 # Methodological correction folded into ``rule aggregate_audit``:
 # ``inference_safe_failure_rate`` is computed ONLY among rows with a
@@ -46,6 +51,10 @@ OUTROOT = str(_BENCHMARKS_DIR / "audit_results")
 GROUND_TRUTH = str(_BENCHMARKS_DIR / "ground_truth.tsv")
 N_SAMPLE = int(config.get("n_sample", 30))
 SEED = int(config.get("seed", 42))
+# Catalog snapshot path (resolved at import time from the installed
+# package; the Phase 6b.5b classifier reads the same file).
+import selexprep.catalog.reader as _cat_reader
+CATALOG_CSV = str(_cat_reader.catalog_path())
 
 
 rule all:
@@ -55,7 +64,34 @@ rule all:
         OUTROOT + "/audit_metrics.json",
 
 
+rule classify_catalog:
+    """Phase 6b.5b: classify every INSDC catalog row before sampling.
+
+    Hits ENA once per accession to build a FetchPlan, then applies
+    ``selexprep.benchmark.eligibility.classify_plan``. Only
+    ``ELIGIBLE_HT_SELEX_ROUNDS`` rows feed ``sample_corpus`` below;
+    the other buckets (NON_SELEX_ASSAY, NO_ROUND_STRUCTURE,
+    MIXED_PROJECT_NEEDS_GROUPING, FETCH_DEAD) are counted and reported
+    in ``audit_metrics.json``'s ``catalog_classification_distribution``.
+
+    ~200 ENA queries; takes a couple of minutes. ``--limit`` available
+    via config knob for smoke runs.
+    """
+    output:
+        eligibility=OUTROOT + "/eligibility.tsv",
+    params:
+        catalog=CATALOG_CSV,
+        limit=int(config.get("classify_limit", 0)),
+    shell:
+        "python -m selexprep.benchmark.eligibility classify-catalog "
+        "--catalog {params.catalog} "
+        "--out {output.eligibility} "
+        + (" --limit {params.limit}" if int(config.get("classify_limit", 0)) > 0 else "")
+
+
 rule sample_corpus:
+    input:
+        eligibility=OUTROOT + "/eligibility.tsv",
     output:
         accessions=OUTROOT + "/audit_accessions.tsv",
         manifest=OUTROOT + "/audit_accessions.manifest.json",
@@ -67,6 +103,7 @@ rule sample_corpus:
         "python -m selexprep.benchmark.corpus_audit sample "
         "--n {params.n} --seed {params.seed} "
         "--exclude-ground-truth {params.ground_truth} "
+        "--eligibility {input.eligibility} "
         "--out {output.accessions}"
 
 
@@ -89,6 +126,7 @@ rule aggregate_audit:
         summary=OUTROOT + "/run_summary.tsv",
         ground_truth=GROUND_TRUTH,
         manifest=OUTROOT + "/audit_accessions.manifest.json",
+        eligibility=OUTROOT + "/eligibility.tsv",
     output:
         OUTROOT + "/audit_metrics.json",
     shell:
@@ -96,6 +134,7 @@ rule aggregate_audit:
         "--run-summary {input.summary} "
         "--ground-truth {input.ground_truth} "
         "--sample-manifest {input.manifest} "
+        "--eligibility {input.eligibility} "
         "--out {output}"
 
 

@@ -132,6 +132,15 @@ class CorpusAuditReport:
     n_with_qc_run: int = 0
     flags_raised_histogram: dict[int, int] = field(default_factory=dict)
 
+    # Phase 6b.5b: catalog-level eligibility breakdown (denominator =
+    # the full classified catalog, NOT n_sampled). Populated when an
+    # eligibility TSV is passed to the aggregator. Provides the
+    # "audit-eligible vs not" layer-1 story alongside the layer-2
+    # in-sample distributions above.
+    catalog_classification_distribution: dict[str, int] = field(default_factory=dict)
+    n_catalog_classified: int = 0
+    n_catalog_eligible: int = 0
+
     # Traceability — the parsed per-accession rows with ground-truth
     # overlap annotation. Stable sort by accession.
     per_accession: list[dict[str, Any]] = field(default_factory=list)
@@ -148,6 +157,7 @@ def sample_corpus(
     sources: str | None = None,
     exclude: tuple[str, ...] = (),
     seed: int = 42,
+    eligible_only: tuple[str, ...] | None = None,
 ) -> list[str]:
     """Sample ``n`` INSDC accessions from the bundled catalog deterministically.
 
@@ -170,6 +180,13 @@ def sample_corpus(
         Seed for ``random.Random``. The same ``(catalog, n, sources,
         exclude, seed)`` quadruple always returns the same accession
         list (bit-deterministic).
+    eligible_only
+        Phase 6b.5b: restrict the sampling pool to this set of
+        accessions (intersected with the INSDC catalog). The audit
+        Snakefile passes the ``ELIGIBLE_HT_SELEX_ROUNDS`` rows from
+        the eligibility TSV here so non-eligible rows (NON_SELEX_ASSAY,
+        NO_ROUND_STRUCTURE, MIXED, FETCH_DEAD) can't be drawn. ``None``
+        means no restriction (backward compat with pre-6b.5b callers).
 
     Returns
     -------
@@ -187,7 +204,12 @@ def sample_corpus(
     df = load_catalog()
     df = filter_catalog(df, insdc_only=True, source_contains=sources)
     excluded = set(exclude)
-    pool = sorted(a for a in df["bioproject_id"].tolist() if a and a not in excluded)
+    eligible_set = set(eligible_only) if eligible_only is not None else None
+    pool = sorted(
+        a
+        for a in df["bioproject_id"].tolist()
+        if a and a not in excluded and (eligible_set is None or a in eligible_set)
+    )
     if not pool:
         return []
     take = min(n, len(pool))
@@ -245,6 +267,7 @@ def aggregate_audit_from_run_outputs(
     catalog_version: str | None,
     sample_seed: int,
     sample_accessions_sha256: str,
+    eligibility_tsv: Path | None = None,
 ) -> CorpusAuditReport:
     """Parse ``run_summary.tsv`` (Phase 6a batch driver) into the audit report.
 
@@ -273,6 +296,14 @@ def aggregate_audit_from_run_outputs(
         ``rule aggregate_audit`` from the values the sampler recorded.
         Required (not defaulted) so callers cannot forget to thread
         them through.
+    eligibility_tsv
+        Phase 6b.5b: optional path to the eligibility TSV emitted by
+        ``selexprep.benchmark.eligibility.classify-catalog``. When
+        present, the audit JSON gains
+        ``catalog_classification_distribution`` (counts per
+        AuditEligibility value across the full classified catalog) +
+        ``n_catalog_classified`` + ``n_catalog_eligible`` for the
+        layer-1 "what fraction of the catalog is audit-eligible" story.
     """
     df = pd.read_csv(run_summary_tsv, sep="\t", dtype=str).fillna("")
     report = CorpusAuditReport(
@@ -280,6 +311,22 @@ def aggregate_audit_from_run_outputs(
         sample_seed=sample_seed,
         sample_accessions_sha256=sample_accessions_sha256,
     )
+
+    if eligibility_tsv is not None and eligibility_tsv.exists():
+        # Local import to avoid circular: eligibility imports from
+        # fetch.plan which is fine, but corpus_audit is imported by
+        # the Snakefile too. Lazy keeps module-level imports tight.
+        from selexprep.benchmark.eligibility import (
+            classification_distribution,
+            read_eligibility_tsv,
+        )
+
+        elig_reports = read_eligibility_tsv(eligibility_tsv)
+        report.catalog_classification_distribution = classification_distribution(elig_reports)
+        report.n_catalog_classified = len(elig_reports)
+        report.n_catalog_eligible = report.catalog_classification_distribution.get(
+            "ELIGIBLE_HT_SELEX_ROUNDS", 0
+        )
 
     gt_set = set(_read_ground_truth_accessions(ground_truth_tsv)) if ground_truth_tsv else set()
     report.n_sampled = len(df)
@@ -398,6 +445,14 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
         "sample_accessions_sha256": report.sample_accessions_sha256,
         "n_sampled": report.n_sampled,
         "n_in_ground_truth_overlap": report.n_in_ground_truth_overlap,
+        # Phase 6b.5b layer-1 view: catalog-level eligibility breakdown.
+        # Empty when the aggregator wasn't given an eligibility TSV
+        # (backward compat with pre-6b.5b audit runs).
+        "n_catalog_classified": report.n_catalog_classified,
+        "n_catalog_eligible": report.n_catalog_eligible,
+        "catalog_classification_distribution": dict(
+            sorted(report.catalog_classification_distribution.items())
+        ),
         "fetch_outcome_distribution": dict(sorted(report.fetch_outcome_distribution.items())),
         "n_fetchable": report.n_fetchable,
         "n_with_library_report": report.n_with_library_report,
@@ -434,11 +489,23 @@ def _cmd_sample(args: argparse.Namespace) -> int:
     exclude_tuple: tuple[str, ...] = ()
     if args.exclude_ground_truth is not None:
         exclude_tuple = tuple(_read_ground_truth_accessions(args.exclude_ground_truth))
+    # Phase 6b.5b: when an eligibility TSV is provided, restrict the
+    # sampling pool to ``ELIGIBLE_HT_SELEX_ROUNDS`` accessions only.
+    eligible_tuple: tuple[str, ...] | None = None
+    if args.eligibility is not None:
+        from selexprep.benchmark.eligibility import (
+            eligible_accessions,
+            read_eligibility_tsv,
+        )
+
+        elig_reports = read_eligibility_tsv(args.eligibility)
+        eligible_tuple = tuple(eligible_accessions(elig_reports))
     accessions = sample_corpus(
         n=args.n,
         sources=args.sources,
         exclude=exclude_tuple,
         seed=args.seed,
+        eligible_only=eligible_tuple,
     )
     write_accessions_tsv(accessions, args.out)
     # Also emit a sidecar manifest with the reproducibility envelope so the
@@ -498,6 +565,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
         catalog_version=catalog_version_value,
         sample_seed=sample_seed_value,
         sample_accessions_sha256=sample_sha_value,
+        eligibility_tsv=args.eligibility,
     )
 
     # Codex peer-review fix: the run summary's row count should match the
@@ -544,6 +612,17 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Path to ground_truth.tsv; its accessions are excluded from the sample.",
     )
+    sample.add_argument(
+        "--eligibility",
+        type=Path,
+        default=None,
+        help=(
+            "Phase 6b.5b: path to eligibility.tsv emitted by "
+            "``selexprep.benchmark.eligibility classify-catalog``. "
+            "When provided, only accessions classified as "
+            "ELIGIBLE_HT_SELEX_ROUNDS are eligible for sampling."
+        ),
+    )
     sample.add_argument("--out", type=Path, required=True)
     sample.set_defaults(func=_cmd_sample)
 
@@ -563,6 +642,16 @@ def main(argv: list[str] | None = None) -> int:
     aggregate.add_argument("--catalog-version", type=str, default=None)
     aggregate.add_argument("--sample-seed", type=int, default=42)
     aggregate.add_argument("--sample-sha", type=str, default="")
+    aggregate.add_argument(
+        "--eligibility",
+        type=Path,
+        default=None,
+        help=(
+            "Phase 6b.5b: path to eligibility.tsv. When provided, the "
+            "audit JSON gains ``catalog_classification_distribution`` "
+            "(layer-1 view) alongside the in-sample metrics."
+        ),
+    )
     aggregate.set_defaults(func=_cmd_aggregate)
 
     args = p.parse_args(argv)

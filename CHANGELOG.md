@@ -8,6 +8,182 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+**Phase 6b.5b — Tier 2 audit-eligibility classifier (2026-05-24)**
+
+Two-layer Tier 2 audit story (Phase 6b.5b user amendment): before
+sampling, classify every catalog row into one of 5 buckets; sample
+ONLY from ``ELIGIBLE_HT_SELEX_ROUNDS``; surface the breakdown in
+``audit_metrics.json``'s new
+``catalog_classification_distribution`` block + Figure B's title.
+The audit JSON now answers two questions instead of one:
+
+- **Layer 1 (NEW):** of N catalog rows, how many are audit-eligible?
+  What are the failure modes for the rest?
+- **Layer 2 (existing):** of the audit-sampled subset, what
+  distributional metrics did selexprep produce?
+
+**New module ``selexprep.benchmark.eligibility``:**
+
+- ``AuditEligibility`` (str, Enum) — 5 values:
+  ``ELIGIBLE_HT_SELEX_ROUNDS`` (the only bucket that can be
+  sampled), ``MIXED_PROJECT_NEEDS_GROUPING`` (≥2 sub-trajectories
+  OR mixed library_strategy), ``NO_ROUND_STRUCTURE`` (<2 distinct
+  rounds parseable), ``NON_SELEX_ASSAY`` (all runs blocklisted —
+  defense in depth alongside Phase 6b.5a's catalog filter),
+  ``FETCH_DEAD`` (ENA fetch raised). Uses ``(str, Enum)`` rather
+  than ``StrEnum`` because StrEnum is Python 3.11+; selexprep
+  supports 3.10.
+- ``EligibilityReport`` dataclass — carries the classification +
+  diagnostic fields: ``n_runs``, ``n_runs_with_round``,
+  ``distinct_rounds_parsed``, ``library_strategies``,
+  ``n_runs_strategy_compatible``, ``n_runs_strategy_blocklisted``,
+  ``mixed_group_count``, ``reason``.
+- ``classify_plan(plan: FetchPlan) → EligibilityReport`` — pure,
+  network-free classifier. The decision tree (top to bottom; first
+  match wins):
+
+  | Rule | Bucket |
+  |---|---|
+  | empty FetchPlan | ``FETCH_DEAD`` |
+  | all runs blocklisted (via Phase 6b.5a classifier) | ``NON_SELEX_ASSAY`` |
+  | < 2 compatible runs with parseable round | ``NO_ROUND_STRUCTURE`` |
+  | < 2 distinct rounds across compatible runs | ``NO_ROUND_STRUCTURE`` |
+  | ≥ 2 sub-trajectory groups OR mixed library_strategy | ``MIXED_PROJECT_NEEDS_GROUPING`` |
+  | otherwise | ``ELIGIBLE_HT_SELEX_ROUNDS`` |
+
+- ``classify_accession(accession: str) → EligibilityReport`` —
+  wraps ``build_fetch_plan`` and maps ``requests.RequestException`` +
+  ``ValueError`` to ``FETCH_DEAD``.
+- **Sub-trajectory detection** (rule #5):
+  ``_count_distinct_library_name_groups`` normalizes each compatible
+  run's ``library_name`` by replacing digit substrings with the
+  literal ``{N}`` placeholder, then counts distinct normalized
+  strings. ``RAPT26-1R..5R`` all normalize to ``RAPT{N}-{N}R`` →
+  1 group → not MIXED. PRJNA1246497's ``SELEX_round26_N40`` +
+  ``SELEX_round2_N40`` + ``SELEX_round26_Stem2`` +
+  ``SELEX_round2_Stem2`` normalize to 2 distinct strings → MIXED.
+- ``write_eligibility_tsv`` / ``read_eligibility_tsv`` — TSV
+  round-trip. Columns: ``accession``, ``classification``,
+  ``n_runs``, ``n_runs_with_round``, ``distinct_rounds_parsed`` (JSON),
+  ``library_strategies`` (JSON), ``n_runs_strategy_compatible``,
+  ``n_runs_strategy_blocklisted``, ``mixed_group_count``, ``reason``.
+  Sorted by accession for deterministic diffs.
+- ``main(argv)`` — CLI with ``classify-catalog`` subcommand
+  (catalog CSV → per-accession TSV, ~200 ENA queries).
+  ``--limit`` knob for smoke runs.
+
+**``selexprep.fetch.plan.FetchRun`` gains per-run ``library_strategy``.**
+Previously only the study-level value lived on ``FetchPlan``; per-run
+granularity is needed by the eligibility classifier's mixed-strategy
+detection. Backward-compatible (default ``""`` for old
+fetch_metadata.json files without the field, handled in
+``read_fetch_metadata_json``).
+
+**``selexprep.benchmark.corpus_audit`` extensions:**
+
+- ``sample_corpus(..., eligible_only=...)`` — when set, restricts
+  the sampling pool to those accessions. Backward compat: ``None``
+  default leaves behavior unchanged.
+- ``aggregate_audit_from_run_outputs(..., eligibility_tsv=...)`` —
+  when given, populates ``CorpusAuditReport``'s new fields:
+  ``catalog_classification_distribution`` (dict),
+  ``n_catalog_classified`` (denominator),
+  ``n_catalog_eligible`` (numerator).
+- CLI: ``sample --eligibility PATH`` and
+  ``aggregate --eligibility PATH`` wire the new functionality
+  through.
+- ``write_audit_json`` emits the 3 new fields above before the
+  existing fetch/inference metrics, so the JSON shape is the
+  layer-1 → layer-2 narrative top-to-bottom.
+
+**``selexprep.benchmark.figure_b`` title update.** When
+``n_catalog_classified > 0``, the figure title adds a layer-1 segment
+``X of Y catalog rows audit-eligible`` between the existing audit
+headline and the catalog/seed provenance. No 5th panel added (user
+preference: keep 2×2 layout).
+
+**Audit Snakefile (``benchmarks/audit.smk``) new DAG:**
+
+```
+rule classify_catalog → eligibility.tsv
+rule sample_corpus    → audit_accessions.tsv (filtered to ELIGIBLE)
+rule run_corpus       → run_summary.tsv (selexprep run --resume)
+rule aggregate_audit  → audit_metrics.json (with classification dist)
+rule figure_b         → figure_b.{pdf,png}
+```
+
+``classify_catalog`` runs first and queries ENA ~200 times.
+``--config classify_limit=N`` smoke knob caps the classification at N
+accessions for development.
+
+**Tests (+19 in ``test_benchmark_eligibility.py``):**
+
+- ``_normalize_library_name`` digit replacement + empty handling +
+  PRJNA1246497 sub-library collapse.
+- All 5 ``classify_plan`` buckets via synthetic FetchPlan
+  fixtures (eligible / NON_SELEX / NO_ROUND_STRUCTURE — too few
+  runs + only 1 distinct / MIXED — sub-library groups + mixed
+  strategy / FETCH_DEAD — empty plan).
+- ``classify_accession`` network-mocked: HTTPError → FETCH_DEAD,
+  ValueError → FETCH_DEAD, success → classify_plan delegate.
+- TSV round-trip + sort-by-accession + ``eligible_accessions`` +
+  ``classification_distribution`` sorted-alpha.
+- CLI smoke: ``classify-catalog`` end-to-end against a 3-row
+  catalog (2 INSDC + 1 zenodo passthrough) with mocked ENA.
+- Empirical pilot regressions: PRJDB19138 (RAPT26 series) →
+  ELIGIBLE; PRJNA932049 (single-run pyoverdine) → NO_ROUND_STRUCTURE.
+
+**Phase 6b.5c — round-parser pattern expansion (2026-05-24)**
+
+Three new patterns added to ``selexprep.fetch.metadata::_ROUND_PATTERNS``,
+each motivated by a real SELEX deposit the Phase 6b.4 audit pilot
+showed the cascade was missing:
+
+- **``RV_digit``** (``RV(\d+)`` with word-boundary): matches
+  ``RV01``, ``RV02``, ... PRJEB51212 (Sall4 SELEX rounds) uses this
+  scheme where the R and V are glued; ``R_digit_boundary`` (which
+  needs R *immediately* followed by digit) doesn't fire.
+- **``glued_word_R_digit``** (``[A-Z][A-Za-z]{2,}R(\d+)``): matches
+  ``DNAFOXR00``, ``DNAFOXR01``, ... PRJEB62756 (DNAFOX SELEX series)
+  glues a word prefix to ``R\d+`` with no separator. The pattern
+  requires ≥3 letters before R to limit false positives from short
+  protein abbreviations like ``TFR1`` (transcription factor R1,
+  which is NOT a SELEX round). Catches DNAFOX (6 letters) but not
+  TF (2).
+- **``digit_cyc_suffix``** (``(\d+)[\s_\-]*cyc(?:les?)?``):
+  matches ``Selex_7_cyc``, ``7 cycles``, ``7_cyc``, etc.
+  Complements ``cycle_word_digit`` which only handles
+  ``cycle 5`` (cycle BEFORE digit); this pattern handles the
+  digit-first variant. Case-insensitive. PRJNA385825
+  (sample_title=``Selex_7_cyc``) was unparseable pre-fix.
+
+The new patterns slot into the cascade at MEDIUM confidence when
+matched in L3 fields (library_name / experiment_title /
+design_description) and HIGH when in L2 sample_title.
+
+Bare numeric library names (e.g. ``library_name="10"`` in
+PRJNA672779 NGAL particle-display) are explicitly NOT added as a
+generic regex — per the user's amendment, those need
+plan-level / study-context guards (multi-run trajectory check,
+SELEX-context check) that a regex can't express alone. Deferred
+to a future iteration (likely as a study-level post-process in
+the eligibility layer rather than a parser-level pattern).
+
+**Tests (+14 in ``test_metadata.py``):**
+
+- ``test_pattern_rv01_sample_title_high`` / ``..._library_name_medium``
+- ``test_pattern_rv_does_not_match_just_R_or_V_alone``
+- ``test_pattern_glued_dnafoxr00_sample_title_high`` /
+  ``..._dnafoxr12_library_name_medium``
+- ``test_pattern_glued_requires_3_letters_before_R`` — the TFR1
+  false-positive guard
+- ``test_pattern_digit_cyc_suffix_selex_7_cyc``
+- ``test_pattern_digit_cyc_variants`` — parametric:
+  ``7_cyc`` / ``7 cyc`` / ``7-cyc`` / ``7_cycle`` / ``12 cycles``
+  / ``Selex_3_cyc``
+- ``test_pattern_digit_cyc_does_not_match_cycle_word_digit`` —
+  pre-existing ``cycle 5`` path still works at HIGH
+
 **Phase 6b.5a — catalog hygiene: per-run + per-BioProject library_strategy filter (2026-05-24)**
 
 Motivated by the Phase 6b.4 audit pilot, which surfaced multiple
