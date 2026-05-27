@@ -275,6 +275,10 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
                 fastq_bytes=list(r.get("fastq_bytes", [])),
                 paired_end=bool(r.get("paired_end", False)),
                 round_record=round_record,
+                # Phase 6b.5b: per-run library_strategy. Old
+                # fetch_metadata.json files written before the field
+                # existed default to empty string.
+                library_strategy=str(r.get("library_strategy", "")),
             )
         )
     return FetchPlan(

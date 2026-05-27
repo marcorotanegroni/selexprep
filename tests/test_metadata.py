@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from selexprep.fetch.metadata import (
     RoundRecord,
     apply_seed_overrides,
@@ -146,6 +148,104 @@ def test_audit_pilot_genuine_ambiguity_still_unassigned() -> None:
     assert r.confidence == "MEDIUM"
     assert r.round_candidates == [3, 7]
     assert r.is_unassigned is True
+
+
+# ----- Phase 6b.5c — round-parser empirical pattern expansion -----
+#
+# Each pattern below was missing from the Phase 6b.4 cascade and caused a
+# real SELEX deposit (per Codex's per-accession fetch_metadata.json
+# inspection) to fall into NO-CONFIDENCE territory. Adding the patterns
+# moves these to HIGH/MEDIUM-confidence assignments.
+
+
+def test_pattern_rv01_sample_title_high() -> None:
+    """PRJEB51212: sample_title='RV01' → round 1 (HIGH from L2)."""
+    r = parse_round("SRR1", sample_title="RV01")
+    assert r.round_number == 1
+    assert r.confidence == "HIGH"
+    assert r.is_unassigned is False
+
+
+def test_pattern_rv01_library_name_medium() -> None:
+    """library_name='RV01_s' (PRJEB51212 actual values like 'RV01_s')
+    must still parse to round 1 (MEDIUM from L3)."""
+    r = parse_round("SRR1", library_name="RV01_s")
+    assert r.round_number == 1
+    assert r.confidence == "MEDIUM"
+    assert r.source_field == "library_name"
+    assert r.is_unassigned is False
+
+
+def test_pattern_rv_does_not_match_just_R_or_V_alone() -> None:
+    """Sanity: pattern requires the glued ``RV`` literal; doesn't fire on
+    ``R 01`` (space-separated, already handled by R_digit_boundary) or
+    ``V01`` (no R prefix)."""
+    # "V01" alone doesn't match RV_digit (needs R-V-digits)
+    r = parse_round("SRR1", sample_title="V01_library")
+    assert r.round_number is None
+
+
+def test_pattern_glued_dnafoxr00_sample_title_high() -> None:
+    """PRJEB62756: sample_title='DNAFOXR00' → round 0 (HIGH from L2)."""
+    r = parse_round("SRR1", sample_title="DNAFOXR00")
+    assert r.round_number == 0
+    assert r.confidence == "HIGH"
+    assert r.is_unassigned is False
+
+
+def test_pattern_glued_dnafoxr12_library_name_medium() -> None:
+    """library_name='DNAFOXR12' → round 12 (MEDIUM from L3)."""
+    r = parse_round("SRR1", library_name="DNAFOXR12")
+    assert r.round_number == 12
+    assert r.confidence == "MEDIUM"
+    assert r.is_unassigned is False
+
+
+def test_pattern_glued_requires_3_letters_before_R() -> None:
+    """The glued pattern requires at least 3 letters before R to limit
+    false positives from short protein abbreviations like 'TFR1'
+    (transcription factor R1, not a SELEX round)."""
+    # TF is only 2 letters before R → must NOT match this pattern alone.
+    # But "TFR1" still has a fallback: if NO pattern matches, returns None.
+    r = parse_round("SRR1", library_name="TFR1")
+    # Neither glued_word_R_digit (need ≥3 letters) nor R_digit_boundary
+    # (no word boundary before R) should fire on TFR1.
+    assert r.round_number is None
+
+
+def test_pattern_digit_cyc_suffix_selex_7_cyc() -> None:
+    """PRJNA385825: sample_title='Selex_7_cyc' → round 7."""
+    r = parse_round("SRR1", sample_title="Selex_7_cyc")
+    assert r.round_number == 7
+    assert r.confidence == "HIGH"
+    assert r.is_unassigned is False
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("7_cyc", 7),
+        ("7 cyc", 7),
+        ("7-cyc", 7),
+        ("7_cycle", 7),
+        ("12 cycles", 12),
+        ("Selex_3_cyc", 3),
+    ],
+)
+def test_pattern_digit_cyc_variants(text: str, expected: int) -> None:
+    """The digit-before-cyc pattern handles common separator + plural variants."""
+    r = parse_round("SRR1", sample_title=text)
+    assert r.round_number == expected
+
+
+def test_pattern_digit_cyc_does_not_match_cycle_word_digit() -> None:
+    """``cycle 5`` (cycle BEFORE digit) is the pre-existing
+    ``cycle_word_digit`` path; new pattern handles the reverse only."""
+    # Both patterns may fire on "cycle 5 cycles 8" but each on its own
+    # axis. We just check the simple "cycle 5" still works at HIGH.
+    r = parse_round("SRR1", sample_title="cycle 5")
+    assert r.round_number == 5
+    assert r.confidence == "HIGH"
 
 
 # ----- L4: abstract count is informative only -----

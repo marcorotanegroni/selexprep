@@ -50,7 +50,17 @@ _ENA_FETCH_FIELDS = (
 
 @dataclass(frozen=True)
 class FetchRun:
-    """One sequencing run inside a fetch plan."""
+    """One sequencing run inside a fetch plan.
+
+    Phase 6b.5b adds ``library_strategy`` per-run. Previously only the
+    study-level value was preserved on :class:`FetchPlan`; per-run
+    granularity is required for the audit eligibility layer
+    (:mod:`selexprep.benchmark.eligibility`) to detect mixed BioProjects
+    where some runs are SELEX-compatible and others are blocklisted
+    (RNA-Seq controls, ChIP-Seq adjacent assays, etc.). Defaults to
+    empty string for backward compatibility with old fetch_metadata.json
+    files written before the field existed.
+    """
 
     srr: str
     sample_accession: str
@@ -64,6 +74,7 @@ class FetchRun:
     fastq_bytes: list[int]
     paired_end: bool
     round_record: RoundRecord
+    library_strategy: str = ""
 
 
 @dataclass(frozen=True)
@@ -169,6 +180,7 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
                 fastq_bytes=sizes,
                 paired_end=len(urls) == 2,
                 round_record=round_record,
+                library_strategy=str(row.get("library_strategy") or "").strip(),
             )
         )
 
