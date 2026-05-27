@@ -345,6 +345,128 @@ def test_write_audit_json_deterministic(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+def test_aggregator_populates_catalog_denominators_when_catalog_csv_given(
+    tmp_path: Path,
+) -> None:
+    """Phase 6b.5d: --catalog wires the full-catalog denominator into the audit JSON.
+
+    The eligibility classifier only sees INSDC rows. Without surfacing
+    the figshare/zenodo passthrough count, Figure B's title reads "X of
+    N audit-eligible" implicitly meaning "X of all catalog rows" — which
+    is wrong when N is the INSDC subset. This test pins the contract: a
+    synthetic catalog with 2 INSDC + 3 passthrough rows must yield
+    ``n_catalog_total=5`` + ``n_catalog_non_insdc_passthrough=3``.
+    """
+    summary = tmp_path / "run_summary.tsv"
+    _write_run_summary(summary, [{"accession": "PRJNA1", "status": "FETCH_FAILED"}])
+    catalog = tmp_path / "bioprojects.csv"
+    catalog.write_text(
+        "bioproject_id,source\n"
+        "PRJNA1,ena\n"
+        "PRJDB1,ena\n"
+        "figshare:1234,figshare:1234\n"
+        "zenodo:5678,zenodo:5678\n"
+        "figshare:9999,figshare:9999\n",
+        encoding="utf-8",
+    )
+    report = aggregate_audit_from_run_outputs(
+        run_summary_tsv=summary,
+        ground_truth_tsv=None,
+        catalog_version="v-test",
+        sample_seed=42,
+        sample_accessions_sha256="x",
+        catalog_csv=catalog,
+    )
+    assert report.n_catalog_total == 5
+    assert report.n_catalog_non_insdc_passthrough == 3
+
+
+def test_aggregator_catalog_denominators_default_to_zero_when_omitted(tmp_path: Path) -> None:
+    """Backward compat: pre-6b.5d aggregator calls omit --catalog; denominators stay 0."""
+    summary = tmp_path / "run_summary.tsv"
+    _write_run_summary(summary, [{"accession": "A", "status": "FETCH_FAILED"}])
+    report = aggregate_audit_from_run_outputs(
+        run_summary_tsv=summary,
+        ground_truth_tsv=None,
+        catalog_version=None,
+        sample_seed=42,
+        sample_accessions_sha256="x",
+    )
+    assert report.n_catalog_total == 0
+    assert report.n_catalog_non_insdc_passthrough == 0
+
+
+def test_aggregator_emits_multiplex_caveat_for_no_round_structure(tmp_path: Path) -> None:
+    """Phase 6b.5d: the multiplex caveat under NO_ROUND_STRUCTURE always ships.
+
+    Single-FASTQ inline-barcoded multiplexed SELEX deposits land in
+    NO_ROUND_STRUCTURE because v0.1 cannot detect them without a sample
+    sheet. The audit JSON surfaces this so a paper reviewer doesn't
+    read NO_ROUND_STRUCTURE as "selexprep is broken on these".
+    """
+    summary = tmp_path / "run_summary.tsv"
+    _write_run_summary(summary, [{"accession": "A", "status": "FETCH_FAILED"}])
+    report = aggregate_audit_from_run_outputs(
+        run_summary_tsv=summary,
+        ground_truth_tsv=None,
+        catalog_version=None,
+        sample_seed=42,
+        sample_accessions_sha256="x",
+    )
+    caveat = report.caveats.get("NO_ROUND_STRUCTURE", "")
+    assert "multiplex" in caveat.lower()
+    assert "sample sheet" in caveat.lower()
+    # v0.2 deferral is explicit so a reader sees the planned trajectory.
+    assert "v0.2" in caveat
+
+
+def test_write_audit_json_emits_catalog_denominators_and_caveats(tmp_path: Path) -> None:
+    """JSON shape pinning: n_catalog_total + n_catalog_non_insdc_passthrough + caveats."""
+    report = CorpusAuditReport(
+        catalog_version="x",
+        sample_seed=7,
+        sample_accessions_sha256="abc",
+        n_catalog_total=220,
+        n_catalog_non_insdc_passthrough=125,
+        caveats={"NO_ROUND_STRUCTURE": "see eligibility module docstring"},
+    )
+    out = tmp_path / "audit.json"
+    write_audit_json(report, out)
+    parsed = json.loads(out.read_text(encoding="utf-8"))
+    assert parsed["n_catalog_total"] == 220
+    assert parsed["n_catalog_non_insdc_passthrough"] == 125
+    assert parsed["caveats"]["NO_ROUND_STRUCTURE"] == "see eligibility module docstring"
+
+
+def test_main_aggregate_threads_catalog_into_json(tmp_path: Path) -> None:
+    """CLI smoke: --catalog flag populates the new fields in the on-disk JSON."""
+    summary = tmp_path / "run_summary.tsv"
+    _write_run_summary(summary, [{"accession": "PRJNA1", "status": "FETCH_FAILED"}])
+    catalog = tmp_path / "bioprojects.csv"
+    catalog.write_text(
+        "bioproject_id,source\nPRJNA1,ena\nfigshare:1,figshare:1\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "audit_metrics.json"
+    rc = main(
+        [
+            "aggregate",
+            "--run-summary",
+            str(summary),
+            "--sample-sha",
+            "deadbeef" * 8,
+            "--catalog",
+            str(catalog),
+            "--out",
+            str(out),
+        ]
+    )
+    assert rc == 0
+    parsed = json.loads(out.read_text(encoding="utf-8"))
+    assert parsed["n_catalog_total"] == 2
+    assert parsed["n_catalog_non_insdc_passthrough"] == 1
+
+
 def test_main_sample_writes_tsv_and_manifest(tmp_path: Path) -> None:
     """``corpus_audit sample`` writes accessions TSV + sidecar manifest with envelope."""
     out = tmp_path / "accs.tsv"

@@ -12,7 +12,22 @@ import re
 
 import pandas as pd
 
-_INSDC_PREFIX_RE = re.compile(r"^(PRJ[NDE][ABM]|SRP|ERP|DRP)")
+INSDC_PREFIX_RE = re.compile(r"^(PRJ[NDE][ABM]|SRP|ERP|DRP)")
+"""Regex matching INSDC BioProject prefixes (PRJNA / PRJDB / PRJEB / SRP / ERP / DRP).
+
+Public so the eligibility classifier and audit aggregator agree on what
+counts as INSDC without each maintaining its own copy.
+"""
+
+
+def is_insdc_accession(accession: str) -> bool:
+    """True iff ``accession`` matches the INSDC BioProject prefix scheme.
+
+    Non-INSDC catalog rows (``figshare:*``, ``zenodo:*``, ``utexas:*``) are
+    catalog-only references to published HT-SELEX data and cannot be
+    fetched through ENA / SRA / DDBJ as raw FASTQ.
+    """
+    return bool(INSDC_PREFIX_RE.match(accession or ""))
 
 
 def filter_catalog(
@@ -61,7 +76,7 @@ def filter_catalog(
         out = out[nrounds >= min_rounds]
 
     if insdc_only:
-        mask = out["bioproject_id"].fillna("").str.match(_INSDC_PREFIX_RE, na=False)
+        mask = out["bioproject_id"].fillna("").str.match(INSDC_PREFIX_RE, na=False)
         out = out[mask]
 
     return out
