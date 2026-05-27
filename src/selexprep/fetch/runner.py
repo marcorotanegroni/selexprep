@@ -14,15 +14,24 @@ artefacts ``selexprep detect`` / ``selexprep extract`` consume:
     └── fetch_metadata.json                 (audit trail; not a resume oracle)
 
 **Cardinal rule (locked plan + metadata.py:14):** never guess a round
-assignment. NONE-confidence runs are refused by default; the user must
-opt in to ``allow_manual_review`` to download them into
-``round_unknown/`` AND surface them in ``manual_review.tsv``. Such runs
-do NOT appear in ``rounds.tsv`` — downstream tools see only trusted
-assignments.
+assignment. NONE-confidence runs do NOT appear in ``rounds.tsv`` —
+downstream tools see only trusted assignments. The user opts in to
+``allow_manual_review`` to download them into ``round_unknown/`` AND
+surface them in ``manual_review.tsv``.
+
+**Phase 6b.5d contract relaxation.** When some (but not all) runs are
+NONE-confidence and ``allow_manual_review`` is False, the runner
+*skips* those runs (logging the SRRs at WARNING level) and proceeds
+with the HIGH/MEDIUM ones. Previously the runner hard-refused the
+whole accession, which threw away clean SELEX time series when even a
+single run lacked a parseable round (audit cohort: PRJNA1244796 with
+260/268 parseable, PRJNA809588 with 10/12). The trusted-assignments
+contract is preserved because ``rounds.tsv`` is still HIGH/MEDIUM-only;
+the relaxation is purely about *which* runs we attempt to download.
 
 If every run is NONE-confidence (no HIGH/MEDIUM rounds), the runner
-fails fast: ``detect``'s cross-round persistence is unusable in this
-state and silently downloading then-blocking would waste bandwidth.
+still fails fast: ``detect``'s cross-round persistence is unusable in
+that state and silently downloading then-blocking would waste bandwidth.
 
 Public API:
 
@@ -122,29 +131,23 @@ def run_fetch(
             refused_reason=reason,
         )
 
-    # Refusal: unassigned or ambiguity-flagged runs present, --allow-manual-review NOT set.
+    # Phase 6b.5d: partial-parseability is no longer a hard refusal.
+    # When some runs are unassigned and --allow-manual-review is NOT set,
+    # log them at WARNING level and skip them in the download loop; the
+    # rest of the accession proceeds normally. The hard refusal at line
+    # ~102 (all-unassigned) still fires when there's nothing to fetch.
     none_runs = plan.none_confidence_runs
     if none_runs and not allow_manual_review:
         srrs = ", ".join(r.srr for r in none_runs)
-        reason = (
-            f"{len(none_runs)} run(s) in {accession} are unassigned or "
-            f"need manual review (no parseable round, or multiple "
-            f"conflicting round numbers in the same metadata field): "
-            f"{srrs}. Re-run with --allow-manual-review to download "
-            "these into round_unknown/ and surface them in "
-            "manual_review.tsv. They will never enter rounds.tsv (the "
-            "trusted-assignments contract that detect/extract consume)."
-        )
-        logger.error("run_fetch[%s]: %s", accession, reason)
-        metadata_path = outdir / "fetch_metadata.json"
-        write_fetch_metadata_json(plan, metadata_path)
-        return FetchResult(
-            plan=plan,
-            outdir=outdir,
-            rounds_tsv=None,
-            manual_review_tsv=None,
-            fetch_metadata_json=metadata_path,
-            refused_reason=reason,
+        logger.warning(
+            "run_fetch[%s]: skipping %d unassigned run(s) (no parseable "
+            "round, or conflicting round numbers): %s. Pass "
+            "--allow-manual-review to download them into round_unknown/ "
+            "and surface them in manual_review.tsv. They will never "
+            "enter rounds.tsv (trusted-assignments contract).",
+            accession,
+            len(none_runs),
+            srrs,
         )
 
     # Download per run.
@@ -154,6 +157,13 @@ def run_fetch(
     manual_review_srrs: list[str] = []
 
     for run in plan.runs:
+        if run.round_record.is_unassigned and not allow_manual_review:
+            # Phase 6b.5d: skip unassigned runs unless the user opted in
+            # to manual-review downloading. The WARNING above already
+            # listed the SRRs and the reason; recording in ``skipped``
+            # keeps the result shape stable.
+            skipped.append(run.srr)
+            continue
         target_dir = _target_dir_for_run(outdir, run)
         target_dir.mkdir(parents=True, exist_ok=True)
         if run.round_record.is_unassigned:

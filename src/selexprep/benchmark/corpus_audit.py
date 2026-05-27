@@ -141,6 +141,23 @@ class CorpusAuditReport:
     n_catalog_classified: int = 0
     n_catalog_eligible: int = 0
 
+    # Phase 6b.5d: full-catalog denominator (INSDC-classified + passthrough
+    # rows). The eligibility classifier only sees INSDC rows because
+    # figshare/zenodo passthrough deposits don't have ENA filereport
+    # endpoints or per-run library_strategy metadata. Surfacing the total
+    # here keeps Figure B's title honest — without it, a reviewer reads
+    # "X of N audit-eligible" as "X of all catalog rows" rather than
+    # "X of the N rows that the classifier can act on".
+    n_catalog_total: int = 0
+    n_catalog_non_insdc_passthrough: int = 0
+
+    # Phase 6b.5d: free-form caveats block surfaced verbatim in the audit
+    # JSON. Currently carries the multiplex-detection caveat (NO_ROUND_STRUCTURE
+    # may include single-FASTQ inline-barcoded SELEX deposits that v0.1
+    # cannot detect without a user-supplied sample sheet). The aggregator
+    # populates this; consumers (Figure B, Application Note) read it.
+    caveats: dict[str, str] = field(default_factory=dict)
+
     # Traceability — the parsed per-accession rows with ground-truth
     # overlap annotation. Stable sort by accession.
     per_accession: list[dict[str, Any]] = field(default_factory=list)
@@ -260,6 +277,16 @@ def _read_ground_truth_accessions(path: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+_MULTIPLEX_CAVEAT_NO_ROUND_STRUCTURE = (
+    "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded "
+    "multiplexed SELEX deposits that selexprep v0.1 cannot detect without a "
+    "user-supplied sample sheet (multiplex auto-detection is a v0.2 "
+    "deferral per the locked plan). Visible v0.1 signals are: few runs + "
+    "library_strategy=SELEX + 0 parseable rounds. Single-run deposits with "
+    "n_runs_with_round=1 are genuinely single-round and correctly classified."
+)
+
+
 def aggregate_audit_from_run_outputs(
     run_summary_tsv: Path,
     ground_truth_tsv: Path | None,
@@ -268,6 +295,7 @@ def aggregate_audit_from_run_outputs(
     sample_seed: int,
     sample_accessions_sha256: str,
     eligibility_tsv: Path | None = None,
+    catalog_csv: Path | None = None,
 ) -> CorpusAuditReport:
     """Parse ``run_summary.tsv`` (Phase 6a batch driver) into the audit report.
 
@@ -304,6 +332,13 @@ def aggregate_audit_from_run_outputs(
         AuditEligibility value across the full classified catalog) +
         ``n_catalog_classified`` + ``n_catalog_eligible`` for the
         layer-1 "what fraction of the catalog is audit-eligible" story.
+    catalog_csv
+        Phase 6b.5d: optional path to ``bioprojects.csv``. When given,
+        the audit JSON gains ``n_catalog_total`` +
+        ``n_catalog_non_insdc_passthrough`` so a reviewer can read
+        Figure B's "X of N audit-eligible" segment against the full
+        catalog denominator rather than the implicit INSDC-only one.
+        ``None`` leaves both fields at 0 (backward compat).
     """
     df = pd.read_csv(run_summary_tsv, sep="\t", dtype=str).fillna("")
     report = CorpusAuditReport(
@@ -311,6 +346,20 @@ def aggregate_audit_from_run_outputs(
         sample_seed=sample_seed,
         sample_accessions_sha256=sample_accessions_sha256,
     )
+
+    # Phase 6b.5d: populate full-catalog denominators (when a catalog
+    # path is supplied) + the multiplex caveat under NO_ROUND_STRUCTURE.
+    # Both feed Figure B's title + the paper's "what the public corpus
+    # looks like" narrative.
+    if catalog_csv is not None and catalog_csv.exists():
+        from selexprep.catalog.filter import is_insdc_accession
+
+        catalog_df = pd.read_csv(catalog_csv)
+        ids = catalog_df["bioproject_id"].fillna("").astype(str).tolist()
+        report.n_catalog_total = len(ids)
+        report.n_catalog_non_insdc_passthrough = sum(1 for a in ids if not is_insdc_accession(a))
+
+    report.caveats["NO_ROUND_STRUCTURE"] = _MULTIPLEX_CAVEAT_NO_ROUND_STRUCTURE
 
     if eligibility_tsv is not None and eligibility_tsv.exists():
         # Local import to avoid circular: eligibility imports from
@@ -445,6 +494,12 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
         "sample_accessions_sha256": report.sample_accessions_sha256,
         "n_sampled": report.n_sampled,
         "n_in_ground_truth_overlap": report.n_in_ground_truth_overlap,
+        # Phase 6b.5d: full-catalog denominator (zero unless the
+        # aggregator was given --catalog). Lets Figure B's title quote
+        # the honest "X of N INSDC rows · M non-INSDC passthrough · K
+        # catalog total" breakdown.
+        "n_catalog_total": report.n_catalog_total,
+        "n_catalog_non_insdc_passthrough": report.n_catalog_non_insdc_passthrough,
         # Phase 6b.5b layer-1 view: catalog-level eligibility breakdown.
         # Empty when the aggregator wasn't given an eligibility TSV
         # (backward compat with pre-6b.5b audit runs).
@@ -453,6 +508,8 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
         "catalog_classification_distribution": dict(
             sorted(report.catalog_classification_distribution.items())
         ),
+        # Phase 6b.5d: free-form caveats keyed by bucket / topic.
+        "caveats": dict(sorted(report.caveats.items())),
         "fetch_outcome_distribution": dict(sorted(report.fetch_outcome_distribution.items())),
         "n_fetchable": report.n_fetchable,
         "n_with_library_report": report.n_with_library_report,
@@ -566,6 +623,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
         sample_seed=sample_seed_value,
         sample_accessions_sha256=sample_sha_value,
         eligibility_tsv=args.eligibility,
+        catalog_csv=args.catalog,
     )
 
     # Codex peer-review fix: the run summary's row count should match the
@@ -650,6 +708,17 @@ def main(argv: list[str] | None = None) -> int:
             "Phase 6b.5b: path to eligibility.tsv. When provided, the "
             "audit JSON gains ``catalog_classification_distribution`` "
             "(layer-1 view) alongside the in-sample metrics."
+        ),
+    )
+    aggregate.add_argument(
+        "--catalog",
+        type=Path,
+        default=None,
+        help=(
+            "Phase 6b.5d: path to bioprojects.csv. When provided, the "
+            "audit JSON gains ``n_catalog_total`` + "
+            "``n_catalog_non_insdc_passthrough`` so Figure B's title can "
+            "report the honest full-catalog denominator."
         ),
     )
     aggregate.set_defaults(func=_cmd_aggregate)

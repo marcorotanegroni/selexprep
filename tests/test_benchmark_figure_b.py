@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from selexprep.benchmark.figure_b import plot_figure_b
+from selexprep.benchmark.figure_b import _build_title, plot_figure_b
 
 
 def _make_audit_payload() -> dict:
@@ -114,3 +114,40 @@ def test_plot_figure_b_handles_unexpected_status_label(tmp_path: Path) -> None:
     pdf, png = plot_figure_b(audit, tmp_path / "out")
     assert pdf.exists()
     assert png.exists()
+
+
+# ---------------------------------------------------------------------------
+# Phase 6b.5b + 6b.5d title segments
+# ---------------------------------------------------------------------------
+
+
+def test_build_title_omits_eligibility_segment_when_classifier_did_not_run() -> None:
+    """Pre-6b.5b audit JSON (n_catalog_classified=0) → title has no layer-1 segment."""
+    title = _build_title(_make_audit_payload())
+    assert "audit-eligible" not in title
+    assert "selexprep Figure B" in title
+
+
+def test_build_title_includes_insdc_only_eligibility_segment_without_catalog() -> None:
+    """6b.5b-but-not-6b.5d (eligibility set, catalog total absent) → INSDC-only segment."""
+    payload = _make_audit_payload()
+    payload["n_catalog_classified"] = 95
+    payload["n_catalog_eligible"] = 24
+    title = _build_title(payload)
+    assert "24 of 95 INSDC rows audit-eligible" in title
+    # No full-catalog segment when n_catalog_total absent.
+    assert "non-INSDC passthrough" not in title
+    assert "catalog total" not in title
+
+
+def test_build_title_includes_full_catalog_denominator_when_present() -> None:
+    """Phase 6b.5d: --catalog populates n_catalog_total + non-INSDC count → full segment."""
+    payload = _make_audit_payload()
+    payload["n_catalog_classified"] = 95
+    payload["n_catalog_eligible"] = 24
+    payload["n_catalog_total"] = 220
+    payload["n_catalog_non_insdc_passthrough"] = 125
+    title = _build_title(payload)
+    assert "24 of 95 INSDC rows audit-eligible" in title
+    assert "125 non-INSDC passthrough" in title
+    assert "220 catalog total" in title

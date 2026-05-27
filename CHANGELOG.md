@@ -6,7 +6,138 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+**Phase 6b.5d — fetcher contract relaxation: partial-parseability is no longer a hard refusal (2026-05-27)**
+
+The Phase 6b.5b HPC audit re-run surfaced a classifier-vs-fetcher
+contract mismatch: ``selexprep.benchmark.eligibility.classify_plan``
+classifies a BioProject as ``ELIGIBLE_HT_SELEX_ROUNDS`` whenever ≥2
+distinct rounds are parseable across the compatible runs (it records
+``n_runs`` and ``n_runs_with_round`` separately and does NOT require
+them to be equal), but ``selexprep.fetch.runner.run_fetch`` refused the
+WHOLE accession when *any* run was unassigned and
+``--allow-manual-review`` was not passed. Two real-world casualties in
+the audit cohort:
+
+- **PRJNA1244796**: 268 total runs, 260 parseable (97% clean), single
+  trajectory, 4 distinct rounds [1, 2, 3, 4] → classifier says ELIGIBLE
+  → fetcher refused because 8 runs (SRR32942085–32942092) lacked a
+  parseable round. The 260 clean runs were thrown away.
+- **PRJNA809588**: 12 runs, 10 parseable (83% clean), single
+  trajectory, 10 distinct rounds [0..9] → classifier says ELIGIBLE →
+  fetcher refused because 2 runs (SRR18110618–SRR18110619) lacked a
+  parseable round.
+
+The contract is now: when *some* (not all) runs are unassigned and
+``--allow-manual-review`` is False, ``run_fetch`` logs the unparseable
+SRRs at WARNING level, *skips* them, and proceeds with the
+HIGH/MEDIUM-confidence runs. The trusted-assignments contract is
+preserved because ``rounds.tsv`` is still HIGH/MEDIUM-only — the
+relaxation is purely about *which* runs we attempt to download. The
+first refusal block (ALL runs unassigned → hard fail) is unchanged:
+``detect``'s cross-round persistence is unusable in that state and
+silent downloading would waste bandwidth.
+
+**Tests:**
+
+- ``test_run_fetch_skips_unassigned_runs_without_manual_review_flag``
+  (replaces the previous ``..._refuses_none_confidence_without_manual_review_flag``):
+  asserts the contract — refusal absent, assigned run downloaded,
+  unassigned run skipped + present in ``skipped_srrs``, WARNING log
+  line names the skipped SRR and references ``--allow-manual-review``,
+  ``rounds.tsv`` clean, no ``round_unknown/`` directory created, no
+  ``manual_review.tsv`` emitted.
+- ``test_run_fetch_partial_parseability_majority_assigned`` (new):
+  PRJNA1244796-shaped case with 3 assigned + 2 unassigned runs. Asserts
+  all 3 assigned runs downloaded, both unassigned runs skipped, single
+  WARNING log line covers both (no per-run spam), ``rounds.tsv``
+  contains only the 3 trusted assignments.
+
 ### Added
+
+**Phase 6b.5d — full-catalog denominator in audit JSON + Figure B title (2026-05-27)**
+
+The eligibility classifier only sees INSDC catalog rows (per the
+``^(PRJ[NDE][ABM]|SRP|ERP|DRP)`` prefix filter) because figshare /
+zenodo / utexas passthrough deposits don't have ENA filereport
+endpoints or per-run ``library_strategy`` metadata. As a result, the
+post-6b.5b audit JSON's ``n_catalog_classified=95`` is silently scoped
+to the INSDC subset of the 220-row bundled catalog — a paper reviewer
+reading Figure B's title "24 of 95 catalog rows audit-eligible" would
+read "Y=95" as the full catalog rather than the INSDC subset.
+
+**Changes (3 modules + Snakefile):**
+
+- ``selexprep.catalog.filter``: ``_INSDC_PREFIX_RE`` promoted to public
+  ``INSDC_PREFIX_RE`` + new helper ``is_insdc_accession(accession)``.
+  Both ``eligibility.py`` and ``corpus_audit.py`` now use the shared
+  helper rather than duplicating the regex (eliminates drift risk).
+- ``selexprep.benchmark.corpus_audit.CorpusAuditReport``: 2 new fields
+  ``n_catalog_total`` + ``n_catalog_non_insdc_passthrough`` populated
+  when ``aggregate_audit_from_run_outputs`` is called with a
+  ``catalog_csv`` path. Backward compat: both default to 0 when the
+  argument is omitted (pre-6b.5d aggregator calls).
+- ``selexprep.benchmark.corpus_audit.write_audit_json``: emits the 2
+  new fields under their semantic names. JSON shape pinned by a new
+  test (``test_write_audit_json_emits_catalog_denominators_and_caveats``).
+- ``selexprep.benchmark.corpus_audit`` CLI: new ``--catalog`` flag on
+  the ``aggregate`` subcommand.
+- ``selexprep.benchmark.figure_b._build_title`` (extracted from
+  ``plot_figure_b`` for testability): when ``n_catalog_total > 0``,
+  the layer-1 title segment now reads "X of Y INSDC rows audit-eligible
+  · Z non-INSDC passthrough · W catalog total". Falls back to the
+  6b.5b-only "X of Y catalog rows audit-eligible" wording when
+  ``n_catalog_total`` is absent (backward compat with older audit JSON
+  files).
+- ``benchmarks/audit.smk``: ``rule aggregate_audit`` now passes
+  ``--catalog {CATALOG_CSV}`` so HPC runs auto-populate the new fields.
+
+**Phase 6b.5d — multiplex caveat in audit JSON (2026-05-27)**
+
+User flagged that ``NO_ROUND_STRUCTURE`` may include single-FASTQ
+inline-barcoded multiplexed SELEX deposits that v0.1 cannot detect
+without a user-supplied sample sheet (multiplex auto-detection is a
+v0.2 deferral per the locked plan). Without a caveat, a paper
+reviewer reads ``NO_ROUND_STRUCTURE: 50/95`` as "selexprep is broken
+on these" rather than "some are multiplex, classifier is doing what
+it can with the metadata".
+
+**Changes:**
+
+- ``selexprep.benchmark.eligibility`` module docstring: NO_ROUND_STRUCTURE
+  bucket description now flags the multiplex-deposit possibility +
+  the v0.2 deferral + the visible signals (few runs + library_strategy
+  = SELEX + 0 parseable rounds) + the disambiguation (single-run
+  deposits with ``n_runs_with_round=1`` are genuinely single-round).
+- ``selexprep.benchmark.corpus_audit.CorpusAuditReport.caveats`` (new
+  field): free-form dict surfaced verbatim in the audit JSON. The
+  aggregator always populates ``caveats["NO_ROUND_STRUCTURE"]`` with
+  the verbose multiplex caveat string.
+- ``selexprep.benchmark.corpus_audit.write_audit_json``: emits the
+  ``caveats`` block (sorted by key).
+
+**Tests (+~7 in ``test_benchmark_corpus_audit.py`` and ``test_benchmark_figure_b.py``):**
+
+- ``test_aggregator_populates_catalog_denominators_when_catalog_csv_given``
+  — synthetic 2 INSDC + 3 passthrough catalog → totals (5, 3).
+- ``test_aggregator_catalog_denominators_default_to_zero_when_omitted``
+  — backward-compat for pre-6b.5d aggregator calls.
+- ``test_aggregator_emits_multiplex_caveat_for_no_round_structure``
+  — caveat always present, mentions multiplex + sample sheet + v0.2.
+- ``test_write_audit_json_emits_catalog_denominators_and_caveats``
+  — JSON shape pinning.
+- ``test_main_aggregate_threads_catalog_into_json`` — CLI smoke for
+  the new ``--catalog`` flag.
+- ``test_build_title_omits_eligibility_segment_when_classifier_did_not_run``
+  + ``..._includes_insdc_only_eligibility_segment_without_catalog``
+  + ``..._includes_full_catalog_denominator_when_present`` — three-way
+  title coverage (pre-6b.5b / 6b.5b-only / 6b.5d).
+
+Audit-artifact ship is the next commit (HPC re-run with the relaxed
+fetcher contract is expected to flip PRJNA1244796 + PRJNA809588 from
+FETCH_REFUSED to either OK or EXTRACT_REFUSED; sample sha256 is
+preserved because the eligible-only sample didn't change).
 
 **Phase 6b.5b — Tier 2 audit-eligibility classifier (2026-05-24)**
 

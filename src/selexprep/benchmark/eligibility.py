@@ -14,7 +14,14 @@ per-BioProject; mixed projects exist):
    Phase 6b.5a catalog filter should already have caught these)
    → ``NON_SELEX_ASSAY``
 3. Among the compatible runs: < 2 distinct round numbers parsed
-   → ``NO_ROUND_STRUCTURE`` (cross-round persistence needs ≥ 2)
+   → ``NO_ROUND_STRUCTURE`` (cross-round persistence needs ≥ 2). Note:
+   this bucket may also include single-FASTQ inline-barcoded multiplexed
+   SELEX deposits where rounds are encoded as inline barcodes rather
+   than per-run metadata. v0.1 cannot detect these without a
+   user-supplied sample sheet; multiplex auto-detection is a v0.2
+   deferral. Visible signals are few runs + library_strategy=SELEX +
+   0 parseable rounds; single-run deposits with n_runs_with_round=1
+   are genuinely single-round and correctly classified here.
 4. Compatible runs partition into ≥ 2 sub-trajectory groups by
    normalized ``library_name`` OR the catalog/strategy classifier
    flagged the BioProject as mixed-strategy
@@ -48,6 +55,7 @@ from pathlib import Path
 
 import requests
 
+from selexprep.catalog.filter import INSDC_PREFIX_RE
 from selexprep.fetch.library_strategy import (
     classify_study_by_library_strategies,
     is_library_strategy_compatible_with_selex,
@@ -391,9 +399,7 @@ def _cmd_classify_catalog(args: argparse.Namespace) -> int:
     import pandas as pd  # local import — pandas is core dep, kept lazy
 
     catalog_df = pd.read_csv(args.catalog)
-    insdc_only = catalog_df[
-        catalog_df["bioproject_id"].str.match(r"^(PRJ[NDE][ABM]|SRP|ERP|DRP)", na=False)
-    ]
+    insdc_only = catalog_df[catalog_df["bioproject_id"].str.match(INSDC_PREFIX_RE, na=False)]
     accessions = sorted(set(insdc_only["bioproject_id"].tolist()))
     if args.limit is not None and args.limit > 0:
         accessions = accessions[: args.limit]

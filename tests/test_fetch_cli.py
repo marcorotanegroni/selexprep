@@ -172,21 +172,95 @@ def test_run_fetch_refuses_when_all_runs_none_confidence(tmp_path: Path) -> None
     assert not (tmp_path / "rounds.tsv").exists()
 
 
-def test_run_fetch_refuses_none_confidence_without_manual_review_flag(tmp_path: Path) -> None:
+def test_run_fetch_skips_unassigned_runs_without_manual_review_flag(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Phase 6b.5d: partial-parseability is warn-and-skip, not hard refusal.
+
+    Previously the whole accession was refused when any run was
+    unassigned and --allow-manual-review was not set. Audit cohort
+    showed this threw away clean SELEX time series (PRJNA1244796:
+    260/268 parseable runs, PRJNA809588: 10/12). The contract is now:
+    skip the unassigned runs, log them at WARNING, proceed with the
+    HIGH/MEDIUM-confidence runs.
+    """
     rows = [
         _row("SRR_OK", sample_title="Round 5"),
         _row("SRR_BAD", sample_title="nothing"),
     ]
+
+    def fake_dl(srr: str, output_dir: Path, backend: str = "ena", **kw):
+        return _stub_download_writes_files(output_dir, srr, paired=False)
+
     with (
+        caplog.at_level("WARNING", logger="selexprep.fetch.runner"),
         patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)),
-        patch("selexprep.fetch.runner.download_srr") as mock_dl,
+        patch("selexprep.fetch.runner.download_srr", side_effect=fake_dl),
     ):
         result = run_fetch("PRJ_MIX", tmp_path)
 
-    assert result.refused_reason is not None
-    assert "SRR_BAD" in result.refused_reason
-    assert "--allow-manual-review" in result.refused_reason
-    mock_dl.assert_not_called()
+    # No accession-level refusal.
+    assert result.refused_reason is None
+    # Only the assigned run was downloaded; the unassigned was skipped.
+    assert result.downloaded_srrs == ["SRR_OK"]
+    assert "SRR_BAD" in result.skipped_srrs
+    # WARNING log line names the skipped SRR and references the manual-review opt-in.
+    assert any(
+        "SRR_BAD" in rec.getMessage() and "--allow-manual-review" in rec.getMessage()
+        for rec in caplog.records
+    )
+    # rounds.tsv contains only the trusted assignment; round_unknown/ NOT created.
+    assert (tmp_path / "round_05" / "SRR_OK.fastq.gz").exists()
+    assert not (tmp_path / "round_unknown").exists()
+    rounds_body = sorted((tmp_path / "rounds.tsv").read_text().strip().splitlines()[1:])
+    assert rounds_body == ["SRR_OK.fastq.gz\t5"]
+    # No manual_review.tsv (that's --allow-manual-review territory).
+    assert not (tmp_path / "manual_review.tsv").exists()
+
+
+def test_run_fetch_partial_parseability_majority_assigned(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Phase 6b.5d: PRJNA1244796-shaped case — 3 assigned + 2 unassigned.
+
+    Verifies the contract on a realistic mixed-parseability plan:
+    download proceeds for all assigned runs, skips all unassigned runs,
+    rounds.tsv contains only the assigned ones, single WARNING log line
+    lists every skipped SRR.
+    """
+    rows = [
+        _row("SRR_A", sample_title="Round 1"),
+        _row("SRR_B", sample_title="Round 2"),
+        _row("SRR_C", sample_title="Round 3"),
+        _row("SRR_X", sample_title="just a label"),
+        _row("SRR_Y", sample_title="some other label"),
+    ]
+
+    def fake_dl(srr: str, output_dir: Path, backend: str = "ena", **kw):
+        return _stub_download_writes_files(output_dir, srr, paired=False)
+
+    with (
+        caplog.at_level("WARNING", logger="selexprep.fetch.runner"),
+        patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)),
+        patch("selexprep.fetch.runner.download_srr", side_effect=fake_dl),
+    ):
+        result = run_fetch("PRJ_PARTIAL", tmp_path)
+
+    assert result.refused_reason is None
+    assert sorted(result.downloaded_srrs) == ["SRR_A", "SRR_B", "SRR_C"]
+    assert set(result.skipped_srrs) == {"SRR_X", "SRR_Y"}
+    rounds_body = sorted((tmp_path / "rounds.tsv").read_text().strip().splitlines()[1:])
+    assert rounds_body == ["SRR_A.fastq.gz\t1", "SRR_B.fastq.gz\t2", "SRR_C.fastq.gz\t3"]
+    # Single WARNING log line covers both skipped SRRs (no per-run spam).
+    warns = [
+        rec
+        for rec in caplog.records
+        if rec.levelname == "WARNING" and "skipping" in rec.getMessage()
+    ]
+    assert len(warns) == 1
+    msg = warns[0].getMessage()
+    assert "SRR_X" in msg and "SRR_Y" in msg
+    assert "2 unassigned run(s)" in msg
 
 
 def test_run_fetch_allow_manual_review_keeps_rounds_tsv_clean(tmp_path: Path) -> None:

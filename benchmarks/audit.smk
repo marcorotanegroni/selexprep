@@ -129,12 +129,21 @@ rule aggregate_audit:
         eligibility=OUTROOT + "/eligibility.tsv",
     output:
         OUTROOT + "/audit_metrics.json",
+    params:
+        # Phase 6b.5d: pass the catalog snapshot so the aggregator can
+        # populate ``n_catalog_total`` + ``n_catalog_non_insdc_passthrough``
+        # — surfacing the full-catalog denominator in the audit JSON +
+        # Figure B title (the eligibility classifier only sees INSDC
+        # rows, so without this segment a reviewer reads "X of N
+        # audit-eligible" as "X of all catalog rows").
+        catalog=CATALOG_CSV,
     shell:
         "python -m selexprep.benchmark.corpus_audit aggregate "
         "--run-summary {input.summary} "
         "--ground-truth {input.ground_truth} "
         "--sample-manifest {input.manifest} "
         "--eligibility {input.eligibility} "
+        "--catalog {params.catalog} "
         "--out {output}"
 
 
