@@ -8,6 +8,195 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+**Phase 6b.6 — catalog discovery completeness: ``library_strategy="SELEX"`` positive query + manual exclusions for mis-labels (2026-05-28)**
+
+The 6b.5b/c/d/e audit pipeline tested fetcher, eligibility, sampler,
+and inference behavior against the existing catalog. This phase
+measures and fixes a different thing: **catalog discovery recall /
+completeness**.
+
+**Empirical finding (independently verified against ENA on 2026-05-28):**
+
+The discovery layer's text-pattern queries
+(``study_title="aptamer"`` / ``description="HT-SELEX"`` / etc.) missed
+~half of ENA studies explicitly typed as
+``library_strategy="SELEX"``:
+
+| Metric | Pre-6b.6 (v0.1.6) | Post-6b.6 (v0.1.7) |
+|---|---|---|
+| ENA library_strategy=SELEX studies | 103 | 103 |
+| Present in ``bioprojects.csv`` | 52 (50.5%) | 82 (79.6%) |
+| Present in ``bioprojects_excluded.csv`` | 0 | 21 (20.4%) |
+| Unaccounted for | 51 (49.5%) | **0 (0%)** |
+| Auditable coverage | 50.5% | **79.6%** |
+| Discovery coverage (accounted for) | 50.5% | **100%** |
+
+**Changes:**
+
+- ``selexprep.catalog.rebuild.ENA_QUERIES``: adds
+  ``library_strategy="SELEX"`` as a positive ENA Portal query. This
+  is a structured-metadata query (orthogonal to the existing
+  text-pattern queries) that pulls in studies whose titles/descriptions
+  don't mention "SELEX" / "aptamer" but whose submitter tagged the
+  library_strategy field correctly. ENA Portal returns 103 unique
+  ``study_accession`` values for this query as of 2026-05-28.
+- ``selexprep.catalog.rebuild.MANUAL_EXCLUSIONS`` (new): hand-curated
+  dict of **21 accessions** that ENA tags as ``library_strategy="SELEX"``
+  but per-study metadata triage (study_title + library_source +
+  library_name + run-level fields) shows are not aptamer-or-synthetic-
+  library HT-SELEX. Split into two clusters:
+
+  - **8 metadata mis-labels** (Codex pass 1): library_strategy="SELEX"
+    submitted in error on studies that are genomic transcriptomics
+    (Onion GBS, rice root, Arabidopsis small RNA), protein profiling,
+    AEGIS expanded-alphabet DNA methodology, CRISPR off-target
+    profiling, ATAC-seq with mis-tagged runs, etc. These are clearly
+    not selection experiments at all.
+
+  - **13 gSELEX / genomic-fragment SELEX** (verification pass 2,
+    selexprep maintainer): legitimate selection experiments with
+    library_source=GENOMIC (or mixed GENOMIC+SYNTHETIC) on their
+    SELEX-tagged runs. These use genomic DNA fragments as the
+    library rather than primer-flanked synthetic random oligos —
+    selexprep's primer-inference + random-region-extraction logic
+    cannot preprocess them correctly and would silently mis-trim.
+    The cluster includes fungal gSELEX (PRJDB16474 KojR gSELEX-Seq,
+    PRJDB4820, PRJDB6696), Helicase-SELEX (PRJEB50170), TF-binding
+    surveys on genomic substrates (PRJEB7934, PRJEB9797, PRJNA486548,
+    PRJNA611637, PRJNA272858, PRJNA378233, PRJNA820961), the ATI
+    assay (PRJEB15639), and functional-RNA-domain selection on
+    mixed natural/synthetic substrates (PRJNA1113781). Each one was
+    verified against per-study ENA metadata before exclusion.
+
+  Each entry carries a verbose reason string surfaced verbatim in
+  ``bioprojects_excluded.csv``'s ``exclusion_reason`` column.
+  Adding to this dict is the v0.2 path for future mis-label
+  discoveries — matches the locked plan's "record reasons, not
+  silent deletion" discipline.
+- ``selexprep.catalog.rebuild._classify_all_studies``: applies
+  ``MANUAL_EXCLUSIONS`` after the library_strategy classifier runs,
+  forcing the 8 mis-labels into the excluded sidecar regardless of
+  the classifier's verdict.
+- ``CATALOG_VERSION``: bumped from ``v0.1.6-snapshot-2026-05-24`` to
+  ``v0.1.7-snapshot-2026-05-28``. Catalog grows from 220 → 250 rows
+  (95 INSDC + 125 passthrough → 125 INSDC + 125 passthrough). The
+  net INSDC delta is +30 (43 newly-discovered minus 13 verified-
+  false-positive gSELEX deposits excluded into the sidecar). All 11
+  Tier 1 ground-truth accessions verified still present.
+
+**Manual exclusions (21 total, each verified against ENA per-study metadata on 2026-05-28):**
+
+*Cluster 1 — 8 submission-metadata mis-labels (Codex pass 1):*
+
+| Accession | Title (truncated) | library_source | Reason summary |
+|---|---|---|---|
+| PRJDB19386 | Onion GBS genome enhancement (KAP) | GENOMIC | Onion genomic GBS sequencing, not aptamer SELEX |
+| PRJDB4462 | Rice root developmental transcriptomics | TRANSCRIPTOMIC | Rice root transcriptomics, library_strategy submission error |
+| PRJEB108136 | Human milk protein RNA-seq (Kklib custom) | SYNTHETIC | Protein profiling with pre-enriched libraries, not aptamer HT-SELEX |
+| PRJNA1104196 | AEGIS DNA sequencing (50 runs) | SYNTHETIC | Expanded-alphabet DNA methodology (Benner lab), not aptamer SELEX |
+| PRJNA1338232 | Arabidopsis NLP7 TF study | mixed | Mixed ChIP-Seq+RNA-Seq+WGS+SELEX-tagged; SELEX runs are TF-binding, not aptamer |
+| PRJNA577206 | Arabidopsis small RNA nutrient limitation | TRANSCRIPTOMIC | Small RNA-seq, library_strategy submission error |
+| PRJNA608749 | CRISPR enzyme in vitro binding profiling | SYNTHETIC | CRISPR off-target profiling, selection-like but not aptamer HT-SELEX |
+| PRJNA751745 | Glycine max ATAC+RNA-seq mixed | mixed | SELEX-tagged runs have library_name='Flower ATAC-seq rep*' — mis-labeled ATAC-seq |
+
+*Cluster 2 — 13 gSELEX / genomic-fragment SELEX (verification pass 2):*
+
+| Accession | Title (truncated) | library_source | Reason summary |
+|---|---|---|---|
+| PRJDB16474 | KojR target genes (gSELEX-Seq) | GENOMIC | Explicit gSELEX-Seq in title; genomic-fragment library |
+| PRJDB4820 | Aspergillus nidulans fungal TF | GENOMIC | Fungal gSELEX, genomic-fragment library |
+| PRJDB6696 | Aspergillus oryzae fungal TF | GENOMIC | Fungal gSELEX, genomic-fragment library |
+| PRJEB7934 | TF heterodimer complex specificity | mixed | TF-binding on genomic substrates, not aptamer SELEX |
+| PRJEB9797 | CpG methylation TF binding | mixed | gSELEX/methyl-SELEX on genomic substrates |
+| PRJEB15639 | Active TF Identification (ATI) | mixed | gSELEX-style genome-wide TF survey |
+| PRJEB50170 | Rho helicase natural substrates | GENOMIC | Helicase-SELEX on natural transcripts |
+| PRJNA272858 | DNA shape recognition (Drosophila) | GENOMIC | gSELEX on Drosophila genomic fragments |
+| PRJNA378233 | Arabidopsis MADS-box homeotic TF | GENOMIC | gSELEX-style TF binding survey |
+| PRJNA486548 | TF binding to noncoding variants | GENOMIC | Genome-wide TF survey on human noncoding regions |
+| PRJNA611637 | Pseudomonas TF compendium | GENOMIC | gSELEX on bacterial genomic substrates |
+| PRJNA820961 | FRUITFULL MADS-domain TF | GENOMIC | gSELEX-style Arabidopsis TF survey |
+| PRJNA1113781 | Functional RNA domains | mixed | Selection on natural-RNA-derived substrates |
+
+**New file: ``benchmarks/catalog_completeness_audit.py``**
+
+Reusable one-off audit script that re-runs the ENA
+``library_strategy="SELEX"`` query and diffs against
+``bioprojects.csv`` + ``bioprojects_excluded.csv``. A paper reviewer
+can re-derive the 100% / 92.2% coverage numbers from public APIs at
+any future date. Outputs:
+
+- ``benchmarks/catalog_completeness_audit.json`` — structured report
+  (ENA count, present / excluded / unaccounted, coverage %, missing
+  accession list).
+- ``benchmarks/catalog_completeness_audit.tsv`` — per-accession diff
+  (one row per ENA-SELEX study with its catalog status).
+
+Methodology section in the script docstring documents the orthogonal
+relationship to the text-pattern discovery (this is the
+structured-metadata audit, not a re-derivation of the text queries).
+Also notes that the ``AMPLICON`` strategy was checked as a parallel
+control arm in the original audit and found 26/26 already-covered
+(text patterns catch that subset cleanly) — so AMPLICON does NOT
+need to be promoted to a positive query.
+
+**Codex attribution + selexprep verification pass:** the initial
+103/52/51 diff + manual triage of the 51 missing accessions into 8
+clear false positives + 14-17 weak/out-of-scope + 26-29 plausible
+HT-SELEX was performed by Codex on 2026-05-28. selexprep's
+verification pass independently confirmed the numbers (character-
+for-character match on the missing list) and then pulled per-study
+metadata for ALL 43 newly-added accessions (51 ENA-missing minus
+Codex's 8 already-exclusions). A second pass surfaced **13 additional
+false positives** in Codex's "weak/out-of-scope" cluster that needed
+formal exclusion — all gSELEX-style deposits where library_source=
+GENOMIC on the SELEX-tagged runs (genomic-fragment libraries rather
+than synthetic-random oligos). selexprep cannot preprocess gSELEX
+correctly, so silently leaving them in the catalog would mislead
+downstream users. These 13 were moved from "weak/out-of-scope" to
+formal MANUAL_EXCLUSIONS with reason strings grounded in actual ENA
+library_source + library_name + study_title fields.
+
+Net effect of the verification pass: catalog INSDC count went from
+138 (Codex-pass-1 only) to **125** (after pass-2), with 21
+documented exclusions instead of 8. Auditable coverage went from
+92.2% to 79.6%; discovery coverage stayed at 100% (no unaccounted-
+for studies).
+
+**Tests / verification:**
+
+- All 11 Tier 1 ground-truth accessions verified present in v0.1.7.
+- All 21 MANUAL_EXCLUSIONS verified to land in
+  ``bioprojects_excluded.csv`` with the documented reason strings.
+- All 43 newly-added accessions in ``bioprojects.csv`` (post pass-2
+  exclusions: 30) verified against ENA per-study metadata — no
+  gSELEX/genomic-substrate deposits remaining among the kept rows.
+- Post-refresh ENA-SELEX coverage rerun via
+  ``benchmarks/catalog_completeness_audit.py``: 100% discovery
+  (0 unaccounted), 79.6% auditable (82/103).
+
+**What this phase does and does NOT claim:**
+
+✅ The discovery layer now captures 100% of ENA-typed-SELEX deposits,
+either as catalog entries or as documented exclusions.
+
+✅ The 8 false-positive exclusions are grounded in per-study ENA
+metadata, not opaque heuristics.
+
+✅ The audit script is re-runnable — anyone can verify the coverage
+number against the live ENA API at any future date.
+
+❌ Does NOT claim coverage of mis-labeled deposits whose
+``library_strategy`` is something other than "SELEX". A study
+submitter who mis-labels their HT-SELEX as ``OTHER`` or ``AMPLICON``
+without SELEX context in the title would still be missed. The
+text-pattern queries catch many of those; the 6b.6 audit covered the
+specific gap visible at the structured-metadata level.
+
+❌ Does NOT re-run the Tier 2 audit against v0.1.7. The 6b.5e audit
+artifacts remain valid for the v0.1.6 catalog snapshot; a future
+Phase 6b.7 will re-run the audit against v0.1.7 with the larger
+eligible pool (likely 30-40 ELIGIBLE_HT_SELEX_ROUNDS instead of 24).
+
 **Phase 6b.5e — Tier 2 audit artifacts shipped against the post-6b.5d codebase (2026-05-28)**
 
 The HPC re-run with the relaxed fetcher contract (6b.5d) + the new
