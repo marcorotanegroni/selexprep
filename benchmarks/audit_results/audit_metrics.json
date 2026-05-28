@@ -1,0 +1,236 @@
+{
+  "catalog_classification_distribution": {
+    "ELIGIBLE_HT_SELEX_ROUNDS": 24,
+    "MIXED_PROJECT_NEEDS_GROUPING": 21,
+    "NO_ROUND_STRUCTURE": 50
+  },
+  "catalog_version": "v0.1.6-snapshot-2026-05-24",
+  "caveats": {
+    "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral per the locked plan). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
+  },
+  "extraction_mode_distribution": {
+    "BOTH_PRIMERS_SINGLE_READ": 8,
+    "FIVE_PRIME_ONLY": 2,
+    "THREE_PRIME_ONLY": 2,
+    "UNABLE_TO_EXTRACT": 7
+  },
+  "fetch_outcome_distribution": {
+    "EXTRACT_REFUSED": 7,
+    "FETCH_FAILED": 1,
+    "OK": 12
+  },
+  "flags_raised_histogram": {
+    "0": 2,
+    "1": 5,
+    "2": 5
+  },
+  "inference_safe_failure_by_reason": {
+    "extraction_mode_UNABLE_TO_EXTRACT": 7,
+    "required_action_MANUAL_PRIMERS_REQUIRED": 7,
+    "status_UNABLE_TO_INFER": 7
+  },
+  "inference_safe_failure_rate": 0.368421,
+  "library_report_status_distribution": {
+    "HIGH": 7,
+    "MEDIUM": 5,
+    "UNABLE_TO_INFER": 7
+  },
+  "n_catalog_classified": 95,
+  "n_catalog_eligible": 24,
+  "n_catalog_non_insdc_passthrough": 125,
+  "n_catalog_total": 220,
+  "n_fetchable": 19,
+  "n_in_ground_truth_overlap": 0,
+  "n_inference_safe_failures": 7,
+  "n_sampled": 20,
+  "n_with_library_report": 19,
+  "n_with_qc_run": 12,
+  "per_accession": [
+    {
+      "accession": "PRJDB19098",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB19138",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "0",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB19139",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "2",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB19140",
+      "extraction_mode": "FIVE_PRIME_ONLY",
+      "flags_raised": "2",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB19141",
+      "extraction_mode": "FIVE_PRIME_ONLY",
+      "flags_raised": "2",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB40016",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "0",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJDB40017",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJEB111361",
+      "extraction_mode": "THREE_PRIME_ONLY",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJEB51212",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJEB51473",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJEB9897",
+      "extraction_mode": "",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
+    },
+    {
+      "accession": "PRJNA1067620",
+      "extraction_mode": "THREE_PRIME_ONLY",
+      "flags_raised": "2",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJNA1206477",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJNA1244796",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA1376488",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA450989",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA615076",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "HIGH",
+      "required_action": "NONE",
+      "status": "OK"
+    },
+    {
+      "accession": "PRJNA633039",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA741127",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA809588",
+      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+      "flags_raised": "2",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
+    }
+  ],
+  "required_action_distribution": {
+    "MANUAL_PRIMERS_REQUIRED": 7,
+    "NONE": 12
+  },
+  "sample_accessions_sha256": "8fcc5957fdddbb2e9254459c268efe3bd73ded40c0128ba34632a6a110909c40",
+  "sample_seed": 42
+}

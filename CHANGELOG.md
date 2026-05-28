@@ -6,6 +6,168 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Added
+
+**Phase 6b.5e — Tier 2 audit artifacts shipped against the post-6b.5d codebase (2026-05-28)**
+
+The HPC re-run with the relaxed fetcher contract (6b.5d) + the new
+catalog-denominator + multiplex caveat (6b.5d) completed. Artifacts
+ship in this commit. No code changes — pure artifact ship, analogous
+to what the discarded 6b.4 commit was going to do, this time with the
+post-6b.5b/c/d pipeline producing the numbers.
+
+**What ships:**
+
+- ``benchmarks/audit_results/eligibility.tsv`` — per-accession Tier 2
+  audit-eligibility classification for all 95 INSDC catalog rows
+  (Phase 6b.5b output).
+- ``benchmarks/audit_results/audit_accessions.tsv`` — the N=20 sampled
+  audit accessions (uniform random from ELIGIBLE_HT_SELEX_ROUNDS,
+  seed=42, ground-truth excluded).
+- ``benchmarks/audit_results/audit_accessions.manifest.json`` —
+  reproducibility envelope sidecar.
+- ``benchmarks/audit_results/audit_metrics.json`` — aggregate
+  distributional metrics + the full Phase 6b.5d field set
+  (``n_catalog_total``, ``n_catalog_non_insdc_passthrough``,
+  ``caveats``, ``catalog_classification_distribution``).
+- ``benchmarks/audit_results/figure_b.{pdf,png}`` — rendered Figure B
+  with the full Phase 6b.5d title segment ("X of Y INSDC rows
+  audit-eligible · Z non-INSDC passthrough · W catalog total").
+
+**Acceptance gate ✅:**
+
+```
+sample_accessions_sha256: 8fcc5957fdddbb2e9254459c268efe3bd73ded40c0128ba34632a6a110909c40
+catalog_version         : v0.1.6-snapshot-2026-05-24
+sample_seed             : 42
+n_sampled               : 20
+n_catalog_total         : 220
+n_catalog_non_insdc_passthrough : 125
+n_catalog_classified    : 95     (INSDC subset)
+n_catalog_eligible      : 24     (ELIGIBLE_HT_SELEX_ROUNDS)
+```
+
+The ``sample_accessions_sha256`` is byte-identical to the discarded
+6b.4 pilot's sha — the eligible-only sample pool didn't change between
+6b.5b/c and 6b.5d. The audit can be reproduced by
+``selexprep run audit_accessions.tsv`` regardless of any future catalog
+refresh.
+
+**Layer 1 — catalog audit-eligibility breakdown (across all 95 INSDC rows):**
+
+| Bucket | Count | % |
+|---|---|---|
+| ELIGIBLE_HT_SELEX_ROUNDS | 24 | 25.3% |
+| MIXED_PROJECT_NEEDS_GROUPING | 21 | 22.1% |
+| NO_ROUND_STRUCTURE | 50 | 52.6% |
+| NON_SELEX_ASSAY | 0 | 0% |
+| FETCH_DEAD | 0 | 0% |
+
+Plus 125 non-INSDC passthrough rows (figshare / zenodo) that the
+classifier cannot act on — surfaced in the audit JSON as
+``n_catalog_non_insdc_passthrough`` and on Figure B's title.
+
+``NO_ROUND_STRUCTURE`` carries the multiplex caveat surfaced in
+``audit_metrics.json``'s ``caveats`` block: it may include
+single-FASTQ inline-barcoded SELEX deposits that v0.1 cannot detect
+without a user-supplied sample sheet (multiplex auto-detection is a
+v0.2 deferral).
+
+**Layer 2 — in-sample fetch / inference outcomes (N=20):**
+
+| Outcome | Count | % | Δ vs pre-6b.5d HPC run |
+|---|---|---|---|
+| OK end-to-end | 12 | 60% | was 11 (+1) |
+| EXTRACT_REFUSED (UNABLE_TO_INFER) | 7 | 35% | was 6 (+1) |
+| FETCH_REFUSED (round-map issues) | **0** | 0% | was 2 (−2, **eliminated**) |
+| FETCH_FAILED (ENA upstream) | 1 | 5% | unchanged |
+
+``inference_safe_failure_rate`` = 7/19 = **36.8%** (denominator =
+``n_with_library_report`` only; PRJEB9897's FETCH_FAILED row is NOT
+mixed in — the methodological correction from the Codex peer-review).
+
+**The 6b.5d fetcher contract relaxation in action.**
+
+The two previously-FETCH_REFUSED rows flipped exactly as the contract
+predicted:
+
+- **PRJNA1244796** → ``EXTRACT_REFUSED`` (was ``FETCH_REFUSED``). The
+  relaxed fetcher logged ``run_fetch[PRJNA1244796]: skipping 8
+  unassigned run(s) ... : SRR32942085, ..., SRR32942092`` and
+  proceeded to download the 260 parseable runs. ``detect`` then
+  failed safely on primer inference (Both primer match rates 0.00).
+  The biological signal (no detectable primers in the FASTQs) is what
+  selexprep is supposed to flag — pre-6b.5d we never reached this
+  judgement because the whole accession was refused upstream.
+- **PRJNA809588** → ``OK end-to-end`` (was ``FETCH_REFUSED``). New full
+  success. ``MEDIUM`` confidence, ``BOTH_PRIMERS_SINGLE_READ``,
+  ``confidence=0.7194``, 2 QC flags raised. Pre-6b.5d this accession
+  was thrown away because 2/12 runs lacked parseable round labels;
+  post-6b.5d the 10 parseable runs flow through cleanly.
+
+**The empirical finding (reshapes the Tier 2 narrative again).**
+
+Compared to the discarded 6b.4 pilot (where 73% of rows were lost to a
+fetcher bug), the post-6b.5b/c/d pipeline produces a clean two-cluster
+failure distribution:
+
+1. **Primer-inference safe failures (35%, 7/20).** Six of seven are
+   "both primer match rates below 0.40" (no primer detection at all);
+   one is "only 3' primer detected but N-length confidence ≤ 0.80".
+   This is the safe-failure mode selexprep was designed for —
+   ``MANUAL_PRIMERS_REQUIRED`` is surfaced, no silent mis-trim
+   happens, the user can supply primers via ``--override-primer-*``
+   to proceed.
+2. **ENA upstream unavailability (5%, 1/20).** PRJEB9897 had no
+   ``fastq_ftp`` URLs returned by ENA's filereport API for any of its
+   8 SRRs — an external data-availability issue, NOT a selexprep
+   limitation.
+
+The end-to-end success rate (60%, 12/20) is the right paper headline
+for the audit-eligible subset. The honest framing is:
+
+> Of 220 catalog rows (95 INSDC + 125 non-INSDC passthrough), 25%
+> of the INSDC subset is audit-eligible (single-trajectory HT-SELEX
+> time series with parseable rounds). Within an N=20 random sample of
+> the eligible set, selexprep achieves 60% end-to-end success, 35%
+> safe-failure on primer inference (the designed behavior for
+> low-signal deposits), and 5% ENA data unavailability. No accession
+> in this sample was lost to per-run round-parser limitations after
+> 6b.5d's fetcher contract relaxation.
+
+**What this pilot does and does NOT claim:**
+
+✅ Validates the audit DAG runs end-to-end against the real public
+corpus from HPC (6b.3a scaffolding + 6b.5b eligibility + 6b.5c parser
+expansions + 6b.5d fetcher relaxation all working together).
+
+✅ Demonstrates the fetcher contract relaxation rescues two real-world
+accessions (PRJNA1244796 + PRJNA809588) that the pre-6b.5d codebase
+would have lost.
+
+✅ Pins the reproducibility envelope: ``sample_accessions_sha256``
+matches the pre-6b.5d run, so re-running the audit on this catalog
+snapshot with this seed will draw the same 20 accessions.
+
+❌ Does NOT claim "selexprep works on 60% of public HT-SELEX
+deposits". N=20 from the audit-eligible subset is a power-limited
+sample; the 60% figure is a single point estimate of in-sample
+end-to-end success, not a population claim. The paper benchmark
+(Figure A, Phase 6) is the place for a known-primer correctness
+claim.
+
+❌ Does NOT close the catalog-completeness question (whether
+``bioprojects.csv`` covers all SELEX-tagged ENA studies). That's a
+separate one-off audit, queued as Phase 6b.6.
+
+**Next:**
+
+- Phase 6b.6 — catalog completeness audit (ENA ``library_strategy=
+  SELEX`` diff vs ``bioprojects.csv``); a one-off script in
+  ``benchmarks/`` outputting a paper-quotable coverage number.
+- Phase 6 — Figure A benchmark (known-primer comparison; the paper
+  centerpiece).
+
 ### Fixed
 
 **Phase 6b.5d — fetcher contract relaxation: partial-parseability is no longer a hard refusal (2026-05-27)**
