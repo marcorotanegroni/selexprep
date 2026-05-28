@@ -7,20 +7,28 @@
 
 ## Status
 
-**v0.1 RC.** The single-dataset workflow is feature-complete and tested
-(358 passing tests + 1 strict-xfail reserved for v0.2 read merging).
-Calibration constants are documented v0.1 placeholders pending a Codex
-peer-review pass + Phase 6 benchmark recovery numbers. Not yet on PyPI.
+**v0.1 RC.** Full single-dataset + batch workflow is feature-complete
+and tested (587 passing tests + 1 strict-xfail reserved for v0.2 read
+merging). Tier 2 corpus audit shipped against a v0.1.6 catalog
+snapshot; catalog discovery completeness measured at 100% of
+ENA-typed-SELEX deposits in v0.1.7. Calibration constants are
+documented v0.1 placeholders pending Phase 6 benchmark recovery
+numbers. Not yet on PyPI.
 
-**v0.1 ships:** `catalog` (273 public SELEX BioProjects) · `detect`
-(primer inference) · `extract` (cutadapt-driven trimming + paired-end
-+ strand handling) · `count` (per-round unique sequences) · `qc`
-(suspicion flags + 4 PNG plots) · `inspect` (ENA metadata preview).
+**v0.1 ships:** `catalog` (250 public SELEX entries: 125 INSDC +
+125 figshare/zenodo passthrough; 21 documented exclusions in
+`bioprojects_excluded.csv`) · `inspect` (ENA metadata preview) ·
+`fetch` (accession download with relaxed partial-parseability
+contract) · `detect` (primer inference) · `extract` (cutadapt-driven
+trimming + paired-end + strand handling) · `count` (per-round unique
+sequences) · `qc` (suspicion flags + 4 PNG plots) · `run` (batch
+driver across many accessions with `--resume`).
 
-**v0.2 / Phase 6 deferrals:** `fetch` (accession download) · `run`
-(batch driver across many accessions) · read merging for paired-end
-full-insert recovery · AnnData export · BibTeX auto-citation · library-
-type classification.
+**v0.2 deferrals:** read merging for paired-end full-insert recovery ·
+multiplex auto-detection (v0.1 needs a user-supplied sample sheet) ·
+figshare/zenodo fetch backends · `SELEXPREP_CATALOG_PATH` env var
+for user-supplied catalogs · AnnData export · BibTeX auto-citation ·
+library-type classification.
 
 ## Why it exists (the gap)
 
@@ -38,11 +46,11 @@ supply primers**.
 | nf-core | ✗ (no SELEX pipelines exist) | — | — |
 | **`selexprep`** | ✓ (v0.2; catalog ships v0.1) | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
 
-**Benchmark headline (Codex-honest, Phase 6):** *`selexprep` approaches
+**Benchmark headline (Phase 6):** *`selexprep` approaches
 known-primer pipelines on datasets where primer inference is
 high-confidence, while explicitly failing safe on ambiguous ones.*
 
-## What v0.1 does (Codex-frozen core claim)
+## What v0.1 does
 
 > *`selexprep` converts public or local HT-SELEX reads into primer-stripped
 > random-region FASTA/FASTQ files, per-round count tables, QC reports,
@@ -51,9 +59,11 @@ high-confidence, while explicitly failing safe on ambiguous ones.*
 
 Concretely:
 
-1. **Discovers** public SELEX BioProjects from a bundled catalog (273
-   BPs refreshed against broad ENA queries; `selexprep catalog list /
-   show`).
+1. **Discovers** public SELEX BioProjects from a bundled catalog (250
+   entries: text-pattern queries + `library_strategy="SELEX"` positive
+   query — measured at 100% coverage of ENA-typed-SELEX deposits, with
+   21 documented exclusions for mis-labeled and gSELEX/genomic-fragment
+   variants; `selexprep catalog list / show`).
 2. **Infers** the SELEX library structure — primer pair, N-region
    length, orientation, paired-end layout — directly from read content,
    using **cross-round persistence** (a true primer appears at a
@@ -139,14 +149,14 @@ selexprep extract round_*.fastq.gz \
 
 | Command | Status | What it does |
 |---|---|---|
-| `selexprep catalog list \| show \| version \| refresh` | ✅ v0.1 | Browse the bundled discovery catalog (273 BPs). |
+| `selexprep catalog list \| show \| version \| refresh` | ✅ v0.1 | Browse / refresh the bundled discovery catalog (250 entries; refresh hits live ENA). |
 | `selexprep inspect <ACC>` | ✅ v0.1 | ENA filereport REST preview — round count, `library_strategy` (SRA verbatim, not classified), file sizes + MD5s. No download. |
+| `selexprep fetch <ACC> --outdir OUT [--allow-manual-review]` | ✅ v0.1 | Download FASTQ + auto-populate round map. Partial-parseability is warn-and-skip (Phase 6b.5d); unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
 | `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | ✅ v0.1 | Auto-infer primers + library structure → `library_report.json`. |
 | `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT [--sample-sheet samples.tsv] [--paired-r2 ...] [--override-primer-{5p,3p} ...] [--rebuild]` | ✅ v0.1 | Cutadapt-driven trim + strand reorient + per-round FASTA + manifest. |
 | `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | ✅ v0.1 | FASTA → counts.parquet (sequence, reads, rank, RPM). |
 | `selexprep qc <manifest> [--counts-dir DIR] [--outdir OUT]` | ✅ v0.1 | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
-| `selexprep fetch <ACC> --outdir OUT` | ⬜ v0.2 | Download FASTQ + auto-populate round map. |
-| `selexprep run <accessions.tsv> --outdir OUT --resume` | ⬜ v0.2 | Batch driver across many accessions; emits corpus-level plot. |
+| `selexprep run <accessions.tsv> --outdir OUT --resume` | ✅ v0.1 | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. Drives both Tier 1 (Figure A) and Tier 2 (audit) pipelines. |
 
 ## Output layout (after a full single-dataset run)
 
@@ -209,23 +219,20 @@ Tests assert on **behavior**, never on threshold values (e.g.
 `assert HIGH_CUTOFF == 0.85`). Tuning the numbers is therefore safe
 under the existing test suite.
 
-**Phase 2 (LibraryReport inference)** — peer-reviewed by Codex on
-2026-05-20, pass 1. Eight `CALIBRATION-REVIEWED` markers in
-`library/detect.py`: six confirmed at locked-plan defaults, four
-revised with cited rationale (`POSITION_CONSISTENCY_TOLERANCE` 2 → 3
-per AptaPLEX default; `STATUS_HIGH_CUTOFF` 0.80 → 0.85; both
-`COMPOSITE_WEIGHTS` regimes rebalanced to give parity to match-rate +
-position-consistency and weight the SELEX-specific cross-round
-persistence highest). See `CHANGELOG.md` for the full diff.
+**Phase 2 (LibraryReport inference)** — `CALIBRATION-REVIEWED` markers
+in `library/detect.py` document the v0.1 values + rationale for each
+threshold (`STATUS_HIGH_CUTOFF`, `POSITION_CONSISTENCY_TOLERANCE`, the
+two `COMPOSITE_WEIGHTS` regimes, etc.). See `CHANGELOG.md` for the
+diff history.
 
 **Phase 5 (QC suspicion flags) + adapter blacklist composition** —
-still pending. Six `CALIBRATION-TODO` markers in `qc/flags.py`, plus
-one in `library/adapters.py` (TruSeq + Nextera vs full Illumina set)
-and one in `extract/strand.py`. Inventory:
+still pending. `CALIBRATION-TODO` markers in `qc/flags.py`,
+`library/adapters.py` (TruSeq + Nextera vs full Illumina set), and
+`extract/strand.py`. Inventory:
 
 ```bash
-grep -rn "CALIBRATION-TODO" src/      # what's left to review
-grep -rn "CALIBRATION-REVIEWED" src/  # what Codex has already vetted
+grep -rn "CALIBRATION-TODO" src/      # what's left to tune
+grep -rn "CALIBRATION-REVIEWED" src/  # what's already vetted with rationale
 ```
 
 Final calibration tuning will use Phase 6 benchmark recovery numbers
@@ -235,14 +242,15 @@ Final calibration tuning will use Phase 6 benchmark recovery numbers
 
 ```
                      ┌──────────────────┐
-                     │  catalog (Phase  │
-                     │  1.5 — 273 BPs)  │
+                     │  catalog         │
+                     │  (250 entries;   │
+                     │   v0.1.7)        │
                      └────────┬─────────┘
                               │
                               ▼
    ┌─────────────┐    ┌──────────────┐    ┌───────────────┐
    │  inspect    │    │   fetch      │    │  detect       │
-   │  (ENA REST  │    │  (v0.2 —     │    │ (LibraryReport│
+   │  (ENA REST  │    │  (ENA REST   │    │ (LibraryReport│
    │   preview)  │    │   download)  │───►│  schema)      │
    └─────────────┘    └──────────────┘    └───────┬───────┘
                                                   │
@@ -271,7 +279,7 @@ Final calibration tuning will use Phase 6 benchmark recovery numbers
 
 ```bash
 # Pre-commit gates (run all four before pushing)
-uv run pytest                       # 358 + 1 xfailed
+uv run pytest                       # 587 + 1 xfailed
 uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 uv run mypy src/                     # strict on library.report
@@ -279,13 +287,30 @@ uv run mypy src/                     # strict on library.report
 
 CI matrix: Python 3.10 / 3.11 / 3.12.
 
+## Benchmarks
+
+Two-tier benchmark under `benchmarks/`:
+
+- **Tier 1 — Figure A** (`Snakefile` + `ground_truth.tsv`): curated
+  primer-recovery validation against paper-reported primers (N=11
+  source-verified accessions, modality-diverse).
+- **Tier 2 — Figure B** (`audit.smk`): a corpus utility audit over a
+  random sample of audit-eligible INSDC catalog rows. Shipped audit
+  artifacts live in `benchmarks/audit_results/`; reproducibility
+  envelope (catalog version + sample sha256 + seed) is committed.
+- **Catalog completeness audit** (`catalog_completeness_audit.py`):
+  re-runnable one-off script that diffs `bioprojects.csv` against
+  ENA's `library_strategy="SELEX"` set. Current snapshot:
+  100% discovery / 79.6% auditable (82/103) with 21 documented
+  exclusions for mis-labels + gSELEX variants.
+
+See [`benchmarks/README.md`](benchmarks/README.md) for the methodology
+and curation notes.
+
 ## License
 
 MIT. See [`LICENSE`](LICENSE).
 
-## Citation
+## Changelog
 
-
-## Acknowledgments
-
-The full development log is in [`CHANGELOG.md`](CHANGELOG.md).
+Full development log: [`CHANGELOG.md`](CHANGELOG.md).
