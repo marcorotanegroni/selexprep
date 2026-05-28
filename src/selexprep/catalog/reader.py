@@ -18,7 +18,17 @@ import pandas as pd
 #: that the broad-recall text search would otherwise pick up. Mixed
 #: studies are kept; their per-run mix is classified at audit time by
 #: Phase 6b.5b.
-CATALOG_VERSION = "v0.1.6-snapshot-2026-05-24"
+#:
+#: Phase 6b.6 (2026-05-28): bumped from v0.1.6 to v0.1.7 because the
+#: discovery layer now includes ``library_strategy="SELEX"`` as a
+#: positive ENA query (recovering ~43 INSDC studies the text-pattern
+#: queries missed; pre-6b.6 coverage measured at 50.5% of ENA-SELEX
+#: deposits via ``benchmarks/catalog_completeness_audit.py``). 8 known
+#: mis-labeled deposits (Onion GBS, rice transcriptomics, AEGIS DNA
+#: methodology, ATAC-seq-with-SELEX-label, etc.) are forced into
+#: ``bioprojects_excluded.csv`` via
+#: ``selexprep.catalog.rebuild.MANUAL_EXCLUSIONS``.
+CATALOG_VERSION = "v0.1.7-snapshot-2026-05-28"
 
 _CATALOG_FILENAME = "bioprojects.csv"
 

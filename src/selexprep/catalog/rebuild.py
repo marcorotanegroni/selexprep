@@ -84,7 +84,172 @@ ENA_QUERIES: tuple[str, ...] = (
     'description="SELEX-seq"',
     'description="aptamer selection"',
     'description="SELEX rounds"',
+    # Phase 6b.6 — data-type positive query. The Phase 6b.6 catalog
+    # completeness audit found that 49.5% (51/103) of ENA studies
+    # explicitly typed as ``library_strategy="SELEX"`` were missing
+    # from the text-pattern-only catalog. Adding the strategy as a
+    # positive query recovers them; obvious mis-labels (e.g. Onion
+    # GBS, ATAC-seq deposits with library_strategy=SELEX) are filtered
+    # by ``MANUAL_EXCLUSIONS`` below. The empirical AMPLICON+text-query
+    # intersection (Phase 6b.6 audit) found 26/26 already in the
+    # catalog, so AMPLICON does NOT need to be promoted to a positive
+    # query — text matching catches that subset.
+    'library_strategy="SELEX"',
 )
+
+
+#: Phase 6b.6 — accessions ENA labels as ``library_strategy="SELEX"`` but
+#: that are NOT aptamer HT-SELEX deposits per per-study metadata triage.
+#: These pass the library_strategy positive query above (so they'd land
+#: in the catalog) but per-study evidence (library_source, library_name,
+#: study_title, run-level metadata) shows they're submission-metadata
+#: mis-labels of genuine non-SELEX experiments. Forced into
+#: ``bioprojects_excluded.csv`` at refresh time with the reason string
+#: surfaced verbatim. Adding to this dict is the v0.2 path for any new
+#: mis-labels surfaced by future catalog completeness audits — the
+#: locked plan's "record reasons, not silent deletion" discipline.
+#:
+#: Each entry was verified against ENA's read_run + per-study metadata
+#: on 2026-05-28 via the Phase 6b.6 catalog completeness audit (see
+#: ``benchmarks/catalog_completeness_audit.py``).
+MANUAL_EXCLUSIONS: dict[str, str] = {
+    # ---- Originally identified mis-labels (Codex pass 1) ----
+    "PRJDB19386": (
+        "Onion GBS genomic sequencing (KAP NGS support project); "
+        "library_source=GENOMIC across all runs (Onion_GBS_*_GENOMIC "
+        "library_names); library_strategy=SELEX is a submission-"
+        "metadata error"
+    ),
+    "PRJDB4462": (
+        "Rice (Oryza sativa) root developmental transcriptomics; "
+        "library_source=TRANSCRIPTOMIC across all runs; "
+        "library_strategy=SELEX is a submission-metadata error"
+    ),
+    "PRJEB108136": (
+        "Human milk protein profiling using pre-enriched RNA-sequence "
+        "libraries (custom 'Kklib' libraries); library_source=SYNTHETIC "
+        "but library_selection=RT-PCR and study scope is protein "
+        "profiling, not aptamer HT-SELEX"
+    ),
+    "PRJNA1104196": (
+        "AEGIS (Artificially Expanded Genetic Information System) DNA "
+        "sequencing methodology (ESEGA-seq); 50 runs profiling synthetic "
+        "expanded-alphabet DNA, not aptamer HT-SELEX selection rounds"
+    ),
+    "PRJNA1338232": (
+        "Arabidopsis thaliana NLP7 transcription-factor regulatory "
+        "network study (mixed ChIP-Seq + RNA-Seq + WGS + SELEX-tagged "
+        "runs across 38 samples); the SELEX-tagged subset is TF-binding "
+        "selection, not aptamer HT-SELEX"
+    ),
+    "PRJNA577206": (
+        "Small RNA-seq under carbon/nitrogen/sulfur limitation in "
+        "Arabidopsis thaliana; library_source=TRANSCRIPTOMIC, "
+        "library_selection='size fractionation' across all runs; "
+        "library_strategy=SELEX is a submission-metadata error"
+    ),
+    "PRJNA608749": (
+        "In vitro CRISPR enzyme binding-affinity and endonuclease-"
+        "activity profiling (Cas variant 'SELEX-like' selections "
+        "against substrate libraries); library_source=SYNTHETIC + "
+        "library_selection=RANDOM but the selection is CRISPR off-"
+        "target profiling, not aptamer HT-SELEX"
+    ),
+    "PRJNA751745": (
+        "Glycine max (soybean) mixed ATAC-seq + RNA-seq deposit; "
+        "SELEX-tagged runs have library_name='Flower ATAC-seq rep*' "
+        "and library_source=GENOMIC — mis-labeled ATAC-seq libraries, "
+        "not aptamer HT-SELEX"
+    ),
+    # ---- gSELEX / genomic-fragment SELEX (verification pass 2) ----
+    # All have library_source=GENOMIC (or mixed GENOMIC+SYNTHETIC) on
+    # their SELEX-tagged runs, indicating the variable region is genomic-
+    # fragment-derived rather than primer-flanked synthetic random
+    # oligos. selexprep's primer-inference + random-region-extraction
+    # logic is built for the synthetic-random-library shape; gSELEX-
+    # style libraries have a different shape (genomic fragments with
+    # flanking adapters, not a fixed N-region) and would be silently
+    # mis-processed.
+    "PRJDB16474": (
+        "Aspergillus oryzae KojR target genes via gSELEX-Seq (literal "
+        "'gSELEX-Seq' in title); library_source=GENOMIC; uses genomic "
+        "DNA fragments as the library rather than synthetic random "
+        "oligos — out of scope for selexprep's primer-flanked-N-region "
+        "extraction"
+    ),
+    "PRJDB4820": (
+        "Genome-wide fungal transcriptional regulation (Aspergillus "
+        "nidulans) via gSELEX; library_source=GENOMIC across all 4 "
+        "runs; genomic-fragment SELEX library, not synthetic-random "
+        "aptamer SELEX"
+    ),
+    "PRJDB6696": (
+        "Genome-wide fungal transcriptional regulation (Aspergillus "
+        "oryzae RIB40) via gSELEX; library_source=GENOMIC across all "
+        "8 runs; genomic-fragment SELEX library, not synthetic-random "
+        "aptamer SELEX"
+    ),
+    "PRJEB50170": (
+        "Helicase-SELEX for E. coli Rho natural substrates; "
+        "library_source=GENOMIC; selection on natural transcripts (not "
+        "a synthetic random library) — out of scope for selexprep's "
+        "extraction"
+    ),
+    "PRJEB15639": (
+        "Active transcription factor identification (ATI) assay (Mus "
+        "musculus); 59 SELEX-tagged runs with mixed GENOMIC + "
+        "SYNTHETIC library_source — gSELEX-style genome-wide TF "
+        "binding survey rather than synthetic-random aptamer SELEX"
+    ),
+    "PRJEB7934": (
+        "Heterodimeric transcription factor complex specificities "
+        "(human); 199 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC "
+        "library_source + 1 ChIP-Exo control — gSELEX/TF-binding "
+        "survey on genomic substrates, not synthetic-random aptamer "
+        "SELEX"
+    ),
+    "PRJEB9797": (
+        "CpG methylation effects on TF binding (mouse); 194 SELEX-"
+        "tagged runs with mixed GENOMIC + SYNTHETIC library_source + "
+        "ChIP-Seq runs — gSELEX/methyl-SELEX on genomic substrates"
+    ),
+    "PRJNA272858": (
+        "DNA shape recognition vs sequence (Drosophila melanogaster); "
+        "32 SELEX-tagged runs, library_source=GENOMIC across all — "
+        "gSELEX on Drosophila genomic fragments, not synthetic-random "
+        "aptamer SELEX"
+    ),
+    "PRJNA378233": (
+        "Arabidopsis MADS-box homeotic protein complex DNA-binding "
+        "specificity; 28 SELEX runs, library_source=GENOMIC across all "
+        "— gSELEX-style TF binding survey, not synthetic-random "
+        "aptamer SELEX"
+    ),
+    "PRJNA486548": (
+        "Systematic TF binding to noncoding variants (human); 197 "
+        "SELEX-tagged runs ALL library_source=GENOMIC — gSELEX-style "
+        "screening of genomic noncoding regions, not synthetic-random "
+        "aptamer SELEX"
+    ),
+    "PRJNA611637": (
+        "Compendium of DNA-Binding Specificities of TFs in Pseudomonas "
+        "savastanoi; 184 SELEX-tagged runs ALL library_source=GENOMIC "
+        "— gSELEX on bacterial genomic substrates, not synthetic-"
+        "random aptamer SELEX"
+    ),
+    "PRJNA820961": (
+        "FRUITFULL MADS-domain TF target gene selection (Arabidopsis); "
+        "28 SELEX-tagged runs, library_source=GENOMIC — gSELEX-style "
+        "TF binding survey, not synthetic-random aptamer SELEX"
+    ),
+    "PRJNA1113781": (
+        "High-throughput discovery of functional RNA domains; 5 SELEX-"
+        "tagged runs with mixed GENOMIC + SYNTHETIC library_source "
+        "(library_names like 'FGD3_Circ', 'Were1_Pool') — selection "
+        "on natural-RNA-derived substrates, not synthetic-random "
+        "aptamer SELEX"
+    ),
+}
 
 #: Run-level fields needed for catalog row + per-study library_strategy
 #: classification. Querying at ``result=read_run`` means one row per run
@@ -266,9 +431,36 @@ def _passthrough_non_insdc(catalog_path: Path, exclude_ids: set[str]) -> list[di
 def _classify_all_studies(
     studies: dict[str, dict],
 ) -> dict[str, StudyStrategyClassification]:
-    """Apply the per-run + per-study library_strategy classifier to every study."""
+    """Apply the per-run + per-study library_strategy classifier to every study.
+
+    Phase 6b.6: after the library_strategy classifier runs, accessions
+    listed in :data:`MANUAL_EXCLUSIONS` are forced into the excluded
+    bucket regardless of the classifier's verdict — these are studies
+    that ENA labels as ``library_strategy="SELEX"`` but per-study
+    evidence (library_source, library_name, study_title, run-level
+    metadata) shows are mis-labels of non-SELEX experiments. The
+    classifier alone can't catch them because ``SELEX`` is a compatible
+    strategy by definition.
+    """
     classifications: dict[str, StudyStrategyClassification] = {}
     for acc, meta in studies.items():
+        if acc in MANUAL_EXCLUSIONS:
+            n_runs = len(meta.get("library_strategies", []))
+            classifications[acc] = StudyStrategyClassification(
+                bioproject_id=acc,
+                n_runs_total=n_runs,
+                # Manual exclusion is at the study-context level, not
+                # the library_strategy level — leave the strategy
+                # bookkeeping at 0 so a reader can tell at a glance
+                # this isn't a strategy-blocklist exclusion.
+                n_runs_compatible=n_runs,
+                n_runs_blocklisted=0,
+                blocklisted_strategies={},
+                should_exclude=True,
+                is_mixed_strategy=False,
+                exclusion_reason=f"manual exclusion (Phase 6b.6): {MANUAL_EXCLUSIONS[acc]}",
+            )
+            continue
         classifications[acc] = classify_study_by_library_strategies(
             bioproject_id=acc,
             library_strategies=meta.get("library_strategies", []),
@@ -428,6 +620,7 @@ __all__ = [
     "ENA_PORTAL",
     "ENA_QUERIES",
     "EXCLUDED_COLS",
+    "MANUAL_EXCLUSIONS",
     "PUBLIC_COLS",
     "harvest_runs_from_ena",
     "rebuild_catalog",
