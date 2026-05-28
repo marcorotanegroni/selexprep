@@ -1,15 +1,21 @@
 # selexprep benchmark (Phase 6b)
 
-This directory implements selexprep's two-tier benchmark:
+This directory implements selexprep's two-tier benchmark plus a
+standalone catalog discovery audit:
 
 - **Tier 1 — Figure A** (`Snakefile` + `ground_truth.tsv`): curated
   primer-recovery validation against paper-reported primers on N=11
   source-verified accessions.
 - **Tier 2 — Figure B** (`audit.smk` + the bundled catalog): a corpus
-  audit / utility characterization across N≈30 sampled INSDC
-  accessions, no per-row ground truth. Distributional metrics only.
+  utility audit over N=20 sampled `ELIGIBLE_HT_SELEX_ROUNDS` INSDC
+  accessions (Phase 6b.5b eligibility filter). Distributional metrics
+  only — no per-row ground truth.
+- **Catalog completeness audit** (`catalog_completeness_audit.py`): a
+  one-off reusable script that diffs `bioprojects.csv` against ENA's
+  `library_strategy="SELEX"` set. Outputs `catalog_completeness_audit.json`
+  + `.tsv` (currently 100% discovery / 79.6% auditable against v0.1.7).
 
-Both tiers share the metric + figure entry points under
+Tier 1 + Tier 2 share metric + figure entry points under
 `src/selexprep/benchmark/`.
 
 ## What this benchmark tests
@@ -35,15 +41,21 @@ input — they cannot answer this question by construction.
   match `--override-primer`-driven counts of the same dataset? That's
   Phase 6c (see *Roadmap* below).
 
-## Scope split: 6b.1 → 6b.2 → 6b.3a → 6b.4 → 6c
+## Scope split: 6b.1 → ... → 6b.6 → 6c
 
 | Phase | Deliverable | Status |
 |---|---|---|
 | **6b.1** | Tier 1 schema + metrics + Figure A + `Snakefile` | ✅ shipped |
-| **6b.2** | Curate verified rows from public papers via WebFetch (+ENA XML PubMed links + Europe PMC search → PMC full-text → M&M extraction) | ✅ 11 rows shipped |
-| **6b.3a** | Tier 2 corpus-audit **pipeline**: `benchmark.corpus_audit` + `benchmark.figure_b` + `audit.smk` + tests | ✅ scaffolding shipped (this section) |
-| **6b.3** | Re-run **Tier 1** benchmark on HPC; commit `results/figure_a.{pdf,png}` + measured `metrics.json` | data work |
-| **6b.4** | Run **Tier 2** audit on HPC; commit `audit_results/audit_accessions.tsv` + `audit_metrics.json` + `figure_b.{pdf,png}` (no code changes) | data work |
+| **6b.2** | Curate verified rows from public papers (WebFetch + ENA XML PubMed links + Europe PMC → PMC full-text → M&M extraction) | ✅ 11 rows shipped |
+| **6b.3a** | Tier 2 corpus-audit **pipeline**: `benchmark.corpus_audit` + `benchmark.figure_b` + `audit.smk` + tests | ✅ shipped |
+| **6b.4** | First Tier 2 audit pilot on HPC | ❌ discarded — surfaced a fetcher policy bug |
+| **6b.5a** | Catalog hygiene: per-run + per-BioProject library_strategy filter + exclusion sidecar | ✅ shipped |
+| **6b.5b** | Audit eligibility classifier (5 buckets) + sample-from-ELIGIBLE-only | ✅ shipped |
+| **6b.5c** | Round-parser pattern expansion (`RV_digit`, glued `<word>R\d+`, `digit_cyc_suffix`) | ✅ shipped |
+| **6b.5d** | Fetcher contract relaxation (partial-parseability → warn-and-skip) + full-catalog denominator + multiplex caveat | ✅ shipped |
+| **6b.5e** | Tier 2 audit artifacts shipped against v0.1.6 catalog (validates 6b.5d fetcher fix) | ✅ shipped |
+| **6b.6** | Catalog discovery completeness: `library_strategy="SELEX"` positive query + 21 verified manual exclusions; coverage 50.5% → 100% | ✅ shipped |
+| **6b.7** | Re-run Tier 2 audit on HPC against v0.1.7; ship new artifacts alongside the v0.1.6 ones | data work |
 | **6c (optional)** | Self-consistency check: inferred-primer counts vs `--override-primer` counts (Pearson on union+zero-fill) | post-v0.1 |
 
 ## Headline metrics
@@ -55,26 +67,26 @@ The Snakefile aggregates these per run; Figure A renders the highlights.
   unsupported.
 - **Pair recovery by status**: of HIGH-confidence calls, what fraction
   recovered the pair exactly? Same for MEDIUM / LOW / UNABLE_TO_INFER.
-  This is the Codex-honest headline panel.
+  This is the headline panel.
 - **Safe-failure rate**: rows where selexprep refused
   (`status=UNABLE_TO_INFER`, `extraction_mode=UNABLE_TO_EXTRACT`, or
   `required_action=MANUAL_PRIMERS_REQUIRED`). The unique
   distinguishing metric vs known-primer pipelines.
 - **N-length recovery within tolerance**.
 - **Honest accounting**: `extraction_mode` + `required_action`
-  distributions (locked plan line 369).
+  distributions.
 
-## Codex pre-implementation amendments folded in
+## Design decisions folded into the benchmark
 
-A Codex peer-review pass before any code landed corrected seven
-design choices. They are referenced inline in the source files:
+Pre-implementation peer review corrected seven design choices.
+They're referenced inline in the source files:
 
 1. **Verified-only ground truth.** `ground_truth.tsv` contains
    `verified=true` rows only. Unverified candidates live in the
    *Candidate worklist* below and stay out of the metrics until a
    curator confirms their primer sequences.
 2. **Accession-fetchable only.** The Snakefile invokes
-   `selexprep fetch`, which v0.1 supports for ENA / SRA / DDBJ.
+   `selexprep fetch`, which supports ENA / SRA / DDBJ.
    Figshare / Zenodo / processed-data sources are deferred to v0.2.
 3. **Curated round-map override.** Rows where ENA metadata is too
    sparse for auto round-parsing can set
@@ -93,15 +105,14 @@ design choices. They are referenced inline in the source files:
    correlation moves to Phase 6c.
 7. **Library-kind verification.** Each row's `library_kind` is
    encoded from the paper's Materials & Methods, not the catalog
-   title alone (pyoverdine PRJNA932049 was specifically cross-
-   checked because Codex flagged a possible DNA-vs-RNA ambiguity;
-   the ENA project XML confirms 2'-FY RNA).
+   title alone (e.g., pyoverdine PRJNA932049 cross-checked
+   against ENA project XML to confirm 2'-FY RNA, resolving a
+   DNA-vs-RNA ambiguity in the public metadata).
 
-### Scope pivot vs locked plan (2026-05-22)
+### Comparators + count correlation deprioritized
 
-The locked plan (`~/.claude/plans/unified-seeking-treehouse.md` line
-365–366) listed count correlation Pearson+Spearman AND AptaPLEX /
-EasyDIVER+ as comparators. Both are deprioritized here:
+The earliest scope listed count correlation (Pearson + Spearman) and
+AptaPLEX / EasyDIVER+ as comparators. Both are deprioritized:
 
 - **Comparators are not benchmarked.** Both require known primers as
   input → cannot test selexprep's unique claim.
@@ -109,7 +120,7 @@ EasyDIVER+ as comparators. Both are deprioritized here:
   check (inferred vs `--override-primer` runs of selexprep itself),
   not a comparator-tool oracle. The `CountCorrelationReport`
   dataclass + `compute_count_correlation` function remain in
-  `metrics.py` for the 6c entry point; `aggregate_metrics` does not
+  `metrics.py` as the 6c entry point; `aggregate_metrics` does not
   call them in 6b.1.
 
 This deviation is conscious and serves the headline claim more
@@ -139,24 +150,25 @@ notes                Curation citation + any caveats.
 
 The metric aggregator filters `verified=true` rows;
 `verified=false` rows would emit a stderr warning per skip. To keep
-`ground_truth.tsv` clean (Codex amendment 1), unverified rows are
-NOT stored here — candidates live in the worklist below until
-promoted.
+`ground_truth.tsv` clean, unverified rows are NOT stored here —
+candidates live in the worklist below until promoted.
 
-## Tier 2: corpus audit **pipeline**
+## Tier 2: corpus audit pipeline + shipped artifacts
 
-> **Note (6b.3a):** what ships here is the **pipeline**, not the
-> results. The Snakefile + module are reviewable + runnable, but CI
-> does not execute the Snakefile (real-data fetch is heavy and not a
-> CI workload). The committed `audit_metrics.json` +
-> `audit_accessions.tsv` + `figure_b.{pdf,png}` will land in the
-> **6b.4 follow-up commit** with no code changes — just the run
-> output + curator review.
+> **Note (6b.5e):** the pipeline AND the audit artifacts both ship.
+> CI does not execute the Snakefile (real-data fetch is heavy + not a
+> CI workload), but `audit_results/` contains the committed Phase 6b.5e
+> run output (audit_metrics.json, eligibility.tsv, audit_accessions.tsv
+> + manifest, figure_b.{pdf,png}) — reproducible by
+> `selexprep run audit_accessions.tsv` against the pinned catalog
+> snapshot.
 
 ### What Tier 2 measures
 
-Across N≈30 INSDC accessions sampled deterministically from the
-bundled catalog, the audit reports the **distributions** of:
+Across N=20 audit-eligible INSDC accessions sampled deterministically
+from the bundled catalog (Phase 6b.5b filter: only
+`ELIGIBLE_HT_SELEX_ROUNDS` rows), the audit reports the
+**distributions** of:
 
 - **Fetch outcomes** — every `RunStatus` value (`OK`,
   `FETCH_FAILED`, `FETCH_REFUSED`, `EXTRACT_REFUSED`, etc.). Answers
@@ -193,12 +205,11 @@ in the same figure:
 | **C · Extraction mode** | Honest accounting of inferred biology | `n_with_library_report` |
 | **D · Required action** | Workflow guidance + safe-failure rate overlay | `n_with_library_report` |
 
-The methodological correction (Codex peer-review + user pass):
-`inference_safe_failure_rate` is computed **only** among rows with a
-LibraryReport. Mixing fetch failures into this rate would inflate the
-metric with ENA / network / regional-restriction problems —
-conflating "selexprep refused" (a feature) with "the dataset was
-unreachable" (an external problem).
+Methodological discipline: `inference_safe_failure_rate` is computed
+**only** among rows with a LibraryReport. Mixing fetch failures into
+this rate would inflate the metric with ENA / network /
+regional-restriction problems — conflating "selexprep refused"
+(a feature) with "the dataset was unreachable" (an external problem).
 
 ### Reproducing the Tier 2 audit
 
@@ -218,13 +229,49 @@ Outputs land in `audit_results/`:
   the source of truth — matplotlib PNG bytes are not deterministic).
 - `figure_b.{pdf,png}` — the four-panel Figure B.
 
-Sampling determinism: `sample_corpus(n, seed)` deterministically
-samples from `filter_catalog(insdc_only=True)`. A future `selexprep
-catalog refresh` will shift row indices and the same seed will draw
-different accessions — which is why `audit_accessions.tsv` ships as
-a first-class committed artifact in 6b.4: reviewers reproduce the
-figure by `selexprep run audit_accessions.tsv` regardless of any
-catalog drift.
+Sampling determinism: `sample_corpus(n, seed, eligible_only=...)`
+deterministically samples from `filter_catalog(insdc_only=True)`
+intersected with the `ELIGIBLE_HT_SELEX_ROUNDS` set from
+`eligibility.tsv`. A future `selexprep catalog refresh` will shift
+row indices and the same seed will draw different accessions —
+which is why `audit_accessions.tsv` + its `audit_accessions.manifest.json`
+sidecar (with `catalog_version` + `sample_seed` +
+`sample_accessions_sha256`) ship as first-class committed artifacts:
+reviewers reproduce the figure by
+`selexprep run audit_accessions.tsv` regardless of any catalog drift.
+
+## Catalog completeness audit
+
+Standalone reusable script (`catalog_completeness_audit.py`) that
+hits ENA at the data-type level (`library_strategy="SELEX"`) and
+diffs the result against `bioprojects.csv` +
+`bioprojects_excluded.csv`. Orthogonal to selexprep's text-pattern
+discovery layer — that orthogonality is the point.
+
+```bash
+uv run python -m benchmarks.catalog_completeness_audit
+```
+
+Outputs (committed):
+
+- `catalog_completeness_audit.json` — coverage breakdown + missing
+  accession list.
+- `catalog_completeness_audit.tsv` — per-accession diff.
+
+Current snapshot (v0.1.7-snapshot-2026-05-28):
+
+| Metric | Value |
+|---|---|
+| ENA `library_strategy="SELEX"` studies | 103 |
+| Present in `bioprojects.csv` (auditable) | 82 (79.6%) |
+| Present in `bioprojects_excluded.csv` (documented exclusions) | 21 (20.4%) |
+| Unaccounted for | **0** |
+
+Exclusions split into 8 submission-metadata mis-labels +
+13 gSELEX/genomic-fragment SELEX variants. See
+`selexprep.catalog.rebuild.MANUAL_EXCLUSIONS` for the per-row
+reason strings (each grounded in study_title + library_source +
+library_name + library_selection from ENA per-study metadata).
 
 ## Reproducing the benchmark
 
@@ -285,10 +332,10 @@ benchmark.
 ## Candidate worklist — see `candidates.tsv`
 
 Unverified or rejected candidates are tracked in
-`benchmarks/candidates.tsv` (NOT in `ground_truth.tsv` per Codex
-amendment 1). Each row records: accession, paper_doi, paper_pmid,
-the source attempted, the (unrecovered) primer fields, status
-(`blocked` / `rejected`), and a structured rejection reason.
+`benchmarks/candidates.tsv` (NOT in `ground_truth.tsv`). Each row
+records: accession, paper_doi, paper_pmid, the source attempted, the
+(unrecovered) primer fields, status (`blocked` / `rejected`), and a
+structured rejection reason.
 
 Summary of 9 documented candidates:
 
@@ -322,7 +369,7 @@ aggregator picks it up on the next Snakefile run with no code
 changes needed.
 
 To find new candidates not in this list: scan the bundled catalog
-(`src/selexprep/catalog/data/bioprojects.csv`, 273 rows) for
+(`src/selexprep/catalog/data/bioprojects.csv`, 250 rows) for
 HT-SELEX studies, look up the ENA XML for `XREF_LINK` → `PUBMED`,
 then check Europe PMC for PMC full-text availability:
 
