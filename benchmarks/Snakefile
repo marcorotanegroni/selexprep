@@ -63,18 +63,31 @@ rule fetch:
         # string concatenation works in any snakemake version. Snakemake 9
         # tolerated the f-string form but the bench extra now pins
         # ``snakemake<8`` (Python 3.10 compat with pulp<2.8).
-        OUTROOT + "/{accession}/fetch_metadata.json",
+        marker=OUTROOT + "/{accession}/fetch_metadata.json",
+        # Phase 6b.9: explicit FASTQ manifest, written AFTER fetch completes.
+        # Replaces the old ``Path.glob`` input function in rule detect, which
+        # Snakemake evaluated before fetch ran → empty file list on a fresh
+        # run. The manifest is the single source of truth for which FASTQs
+        # detect consumes. The ``! -name '*_2.fastq.gz'`` filter is the
+        # paired-end policy: detect's CLI is not paired-aware (single R1
+        # stream), so we keep R1 + single-end and drop R2 mates uniformly.
+        # Paired-aware detect is a v0.2 deferral.
+        manifest=OUTROOT + "/{accession}/fastqs.manifest",
     params:
         # Pass --allow-manual-review on curated rows so fetch downloads
         # FASTQs even when ENA metadata is too sparse to auto-assign
         # rounds. NONE-confidence runs land in round_unknown/ and the
-        # curator's round_map_path routes them by basename.
+        # curator's round_map_path routes them by basename. Phase 6b.9
+        # gates the all-unassigned refusal on this flag, so curated rows
+        # whose runs are ALL unassigned still download.
         extra_flags=lambda w: (
             "--allow-manual-review" if ROUND_MAP_SOURCE[w.accession] == "curated" else ""
         ),
     shell:
         "selexprep fetch {wildcards.accession} "
-        "--outdir {OUTROOT}/{wildcards.accession} {params.extra_flags}"
+        "--outdir {OUTROOT}/{wildcards.accession} {params.extra_flags} && "
+        "find {OUTROOT}/{wildcards.accession} -name '*.fastq.gz' "
+        "! -name '*_2.fastq.gz' | sort > {output.manifest}"
 
 
 def _round_map_for(accession: str) -> str:
@@ -89,34 +102,26 @@ def _round_map_for(accession: str) -> str:
     return OUTROOT + "/" + accession + "/rounds.tsv"
 
 
-def _fastq_inputs_for(w):
-    """List downloaded FASTQ files for an accession.
-
-    Codex amendment (shell-glob safety): ``round_unknown/`` only exists
-    when fetch processed at least one NONE-confidence run, so a bash
-    glob like ``round_unknown/*.fastq.gz`` would otherwise pass the
-    literal string to ``selexprep detect`` on auto-only accessions.
-    ``Path.glob`` returns an empty iterator on non-matching patterns,
-    so both cases work cleanly. Returns sorted list (stable order).
-    """
-    base = Path(OUTROOT) / w.accession
-    files = sorted(base.glob("round_*/*.fastq.gz"))
-    files.extend(sorted(base.glob("round_unknown/*.fastq.gz")))
-    return [str(p) for p in files]
-
-
 rule detect:
     input:
-        # Plain concat (see ``rule fetch`` note about snakemake 7).
-        fetch_marker=OUTROOT + "/{accession}/fetch_metadata.json",
-        fastqs=_fastq_inputs_for,
+        # Phase 6b.9: depend on the manifest (an output of rule fetch),
+        # not a Path.glob input function. This guarantees fetch ran first
+        # AND that the FASTQ list reflects what's actually on disk. The old
+        # glob was evaluated by Snakemake before fetch executed → empty
+        # fastq_args on a fresh run (Codex-caught blocker).
+        manifest=OUTROOT + "/{accession}/fastqs.manifest",
     output:
         OUTROOT + "/{accession}/library_report.json",
     params:
         round_map=lambda w: _round_map_for(w.accession),
-        fastq_args=lambda w, input: " ".join(input.fastqs),
     shell:
-        "selexprep detect {params.fastq_args} "
+        # if/fi guard (NOT ``|| { ... }``): bash brace groups collide with
+        # Snakemake's {} placeholder syntax. Fail fast + readably if fetch
+        # produced no FASTQs rather than calling detect with no arguments.
+        "if [ ! -s {input.manifest} ]; then "
+        "echo 'empty manifest: fetch produced no FASTQs for {wildcards.accession}' >&2; "
+        "exit 1; fi; "
+        "selexprep detect $(cat {input.manifest}) "
         "--round-map {params.round_map} "
         "--outdir {OUTROOT}/{wildcards.accession}"
 
