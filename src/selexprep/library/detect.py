@@ -830,6 +830,26 @@ def compute_library_report(
 
     # Composite confidence.
     has_round_map = len(normalized) >= 2
+    if not has_round_map:
+        # Phase 6b.8 UX: single-round / final-pool input is a legitimate
+        # and common workflow (HT-SELEX is costly; many depositors
+        # sequence only the final enriched pool). It is NOT refused — but
+        # the strongest SELEX-specific signal (cross-round persistence) is
+        # unavailable, so confidence is capped at MEDIUM (see
+        # report._assign_status) and inference leans on within-round
+        # signals only. Surface this explicitly so the MEDIUM ceiling is
+        # understood rather than mistaken for a calibration wobble.
+        logger.warning(
+            "single round provided (%d round): cross-round persistence "
+            "unavailable (the strongest SELEX-specific primer signal); "
+            "confidence is capped at MEDIUM and inference relies on "
+            "within-round signals only (primer match rate, flank "
+            "position, low-entropy region, adapter blacklist). Verify the "
+            "inferred primers before trusting extraction, or pass "
+            "--override-primer-5p / --override-primer-3p if you already "
+            "know them.",
+            len(normalized),
+        )
     # adapter_clean = 1.0 only if NO detected candidate was dropped as an
     # adapter (Codex pass 1 fix: previously this was "we have at least one
     # primer", which hid the adapter trap whenever the other side survived).
