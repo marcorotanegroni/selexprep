@@ -8,6 +8,134 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+**Phase 6b.7 — Tier 2 audit re-run against the v0.1.7 catalog (2026-05-28)**
+
+Re-ran the Tier 2 corpus audit against the post-6b.6 catalog
+(v0.1.7, 125 INSDC rows) on HPC. The shipped `audit_results/`
+artifacts now reflect the v0.1.7 snapshot, overwriting the v0.1.6
+(6b.5e) run. The v0.1.6 numbers remain documented in the 6b.5e
+entry below + recoverable from git history. No code changes.
+
+**Acceptance gate ✅:**
+
+```
+catalog_version         : v0.1.7-snapshot-2026-05-28
+sample_accessions_sha256: ba7c35e85617a292161a9096ee60821265c2f85cc9a9bf0bf02a665fc25bb1c3
+sample_seed             : 42
+n_sampled               : 23
+n_catalog_total         : 250
+n_catalog_non_insdc_passthrough : 125
+n_catalog_classified    : 125    (INSDC subset)
+n_catalog_eligible      : 27     (ELIGIBLE_HT_SELEX_ROUNDS)
+```
+
+The `sample_accessions_sha256` differs from the v0.1.6 run
+(`8fcc5957…`) because the eligible pool grew. **Note on sampling:**
+with N=30 requested and only 23 accessions in the
+`ELIGIBLE_HT_SELEX_ROUNDS`-minus-Tier-1 pool, `take = min(30, 23) =
+23` — the audit sampled the *entire* eligible pool, not a random
+subset. This is the same situation as v0.1.6 (pool was 20 then). The
+20 v0.1.6 accessions are all present in the 23; the 3 additions are
+new rows from the 6b.6 catalog expansion.
+
+**Layer 1 — catalog audit-eligibility breakdown (across all 125 INSDC rows):**
+
+| Bucket | v0.1.6 (95 rows) | v0.1.7 (125 rows) |
+|---|---|---|
+| ELIGIBLE_HT_SELEX_ROUNDS | 24 | 27 |
+| MIXED_PROJECT_NEEDS_GROUPING | 21 | 26 |
+| NO_ROUND_STRUCTURE | 50 | 72 |
+| NON_SELEX_ASSAY / FETCH_DEAD | 0 / 0 | 0 / 0 |
+
+**Layer 2 — in-sample fetch / inference outcomes:**
+
+| Outcome | v0.1.6 (N=20) | v0.1.7 (N=23) |
+|---|---|---|
+| OK end-to-end | 12 (60%) | 11 (47.8%) |
+| EXTRACT_REFUSED (safe failure) | 6 (30%) | 8 (34.8%) |
+| FETCH_FAILED (ENA upstream) | 1 (5%) | 4 (17.4%) |
+| FETCH_REFUSED (round-map) | 0 | 0 |
+
+`inference_safe_failure_rate` = 8/19 = **42.1%** (denominator =
+`n_with_library_report`; the 4 FETCH_FAILED rows never reach the
+inference layer and are excluded, per the standing methodological
+correction).
+
+**The OK rate dropping 60% → 48% is NOT a selexprep regression** — it
+is entirely accounted for by 3 additional upstream ENA-availability
+failures, two of which are *new accessions* introduced by the 6b.6
+catalog expansion:
+
+- **PRJNA1066781 → FETCH_FAILED (new accession; embargoed).** ENA's
+  filereport returned no `fastq_ftp` for any of its 81 runs. The
+  eligibility classifier correctly types it ELIGIBLE (81 runs, 5
+  distinct rounds [0–4], all `library_strategy=SELEX`) — it is
+  genuine HT-SELEX, simply not yet public. This matches the Phase 6b.6
+  manual-triage prediction that PRJNA1066781 "looked like real
+  HT-SELEX from the run names but was private/non-fetchable at check
+  time". When the embargo lifts the audit will fetch it
+  automatically; no code or catalog change is warranted.
+- **PRJNA1406499 → FETCH_FAILED (new accession; partial filereport).**
+  2 of 8 runs (SRR36932080, SRR36932082) returned no `fastq_ftp`.
+  The runner's "any failed SRR → FETCH_FAILED" policy treats the whole
+  accession as failed. (A future fetcher relaxation analogous to
+  Phase 6b.5d — "download the available subset, skip the
+  unavailable runs if ≥2 rounds still covered" — could rescue
+  partial-availability accessions; deferred to v0.2.)
+- **PRJNA615076 → FETCH_FAILED (was OK in v0.1.6; likely transient).**
+  1 run (SRR11413172) exhausted 5 download retries with
+  `[Errno 111] Connection refused` against `ftp.sra.ebi.ac.uk`. The
+  run log shows the same connection error across many unrelated SRRs
+  during that window, consistent with a transient ENA FTP gateway
+  outage rather than a data-availability or selexprep problem. Shipped
+  as observed (Option A — no re-run); a future audit pass on a healthy
+  ENA window is expected to restore this row to OK.
+
+**The 6b.5d fetcher contract relaxation continues to hold.** Both
+accessions it rescued in v0.1.6 are in this sample and behave
+identically:
+
+- **PRJNA1244796** → EXTRACT_REFUSED (fetcher skipped 8 unassigned
+  runs, fetched the parseable ones, `detect` safe-failed on primer
+  inference).
+- **PRJNA809588** → OK end-to-end (MEDIUM, BOTH_PRIMERS_SINGLE_READ,
+  confidence 0.7194).
+
+**Honest paper framing for the v0.1.7 audit:**
+
+> Of 250 catalog entries (125 INSDC + 125 non-INSDC passthrough),
+> 27 of the 125 INSDC rows are audit-eligible single-trajectory
+> HT-SELEX time series. Within the eligible-minus-ground-truth pool
+> (N=23, sampled exhaustively), selexprep reaches the inference layer
+> on 19/23 (83%); of those, it succeeds end-to-end on 11 and
+> safely refuses 8 (primer inference below confidence threshold —
+> the designed behavior). The remaining 4/23 fail upstream at ENA
+> data availability (embargo, partial filereport, transient
+> infrastructure), never reaching selexprep's inference logic. The
+> public HT-SELEX corpus is partially unavailable for automated
+> reuse, and selexprep makes the boundary explicit by separating
+> fetch failures from biological inference failures.
+
+**What this re-run does and does NOT claim:**
+
+✅ Validates the full v0.1.7 pipeline end-to-end on HPC against the
+expanded catalog.
+
+✅ Confirms the 6b.5d fetcher fix is stable (PRJNA1244796 +
+PRJNA809588 unchanged).
+
+✅ Surfaces the embargo / partial-availability boundary as honest
+upstream-failure accounting, distinct from inference safe-failures.
+
+❌ Does NOT claim a fixed "selexprep success rate". N=23 exhaustive
+of the eligible pool is small; the 48% OK / 35% safe-failure / 17%
+upstream-failure split is a single-snapshot point estimate, sensitive
+to ENA availability on the run day (see PRJNA615076).
+
+❌ Does NOT re-trigger any code or catalog change. The 3 new failures
+are all upstream ENA conditions, correctly reported by the existing
+FETCH_FAILED bucket; none indicate a selexprep bug.
+
 **Phase 6b.6 — catalog discovery completeness: ``library_strategy="SELEX"`` positive query + manual exclusions for mis-labels (2026-05-28)**
 
 The 6b.5b/c/d/e audit pipeline tested fetcher, eligibility, sampler,
@@ -122,7 +250,7 @@ The discovery layer's text-pattern queries
 Reusable one-off audit script that re-runs the ENA
 ``library_strategy="SELEX"`` query and diffs against
 ``bioprojects.csv`` + ``bioprojects_excluded.csv``. A paper reviewer
-can re-derive the 100% / 92.2% coverage numbers from public APIs at
+can re-derive the 100% / 79.6% coverage numbers from public APIs at
 any future date. Outputs:
 
 - ``benchmarks/catalog_completeness_audit.json`` — structured report
