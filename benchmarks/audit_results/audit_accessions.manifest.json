@@ -1,6 +1,6 @@
 {
-  "catalog_version": "v0.1.6-snapshot-2026-05-24",
-  "n_sampled": 20,
-  "sample_accessions_sha256": "8fcc5957fdddbb2e9254459c268efe3bd73ded40c0128ba34632a6a110909c40",
+  "catalog_version": "v0.1.7-snapshot-2026-05-28",
+  "n_sampled": 23,
+  "sample_accessions_sha256": "ba7c35e85617a292161a9096ee60821265c2f85cc9a9bf0bf02a665fc25bb1c3",
   "sample_seed": 42
 }

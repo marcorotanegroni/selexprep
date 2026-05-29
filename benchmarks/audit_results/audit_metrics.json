@@ -1,50 +1,50 @@
 {
   "catalog_classification_distribution": {
-    "ELIGIBLE_HT_SELEX_ROUNDS": 24,
-    "MIXED_PROJECT_NEEDS_GROUPING": 21,
-    "NO_ROUND_STRUCTURE": 50
+    "ELIGIBLE_HT_SELEX_ROUNDS": 27,
+    "MIXED_PROJECT_NEEDS_GROUPING": 26,
+    "NO_ROUND_STRUCTURE": 72
   },
-  "catalog_version": "v0.1.6-snapshot-2026-05-24",
+  "catalog_version": "v0.1.7-snapshot-2026-05-28",
   "caveats": {
     "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral per the locked plan). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
   },
   "extraction_mode_distribution": {
-    "BOTH_PRIMERS_SINGLE_READ": 8,
+    "BOTH_PRIMERS_SINGLE_READ": 7,
     "FIVE_PRIME_ONLY": 2,
     "THREE_PRIME_ONLY": 2,
-    "UNABLE_TO_EXTRACT": 7
+    "UNABLE_TO_EXTRACT": 8
   },
   "fetch_outcome_distribution": {
-    "EXTRACT_REFUSED": 7,
-    "FETCH_FAILED": 1,
-    "OK": 12
+    "EXTRACT_REFUSED": 8,
+    "FETCH_FAILED": 4,
+    "OK": 11
   },
   "flags_raised_histogram": {
     "0": 2,
-    "1": 5,
+    "1": 4,
     "2": 5
   },
   "inference_safe_failure_by_reason": {
-    "extraction_mode_UNABLE_TO_EXTRACT": 7,
-    "required_action_MANUAL_PRIMERS_REQUIRED": 7,
-    "status_UNABLE_TO_INFER": 7
+    "extraction_mode_UNABLE_TO_EXTRACT": 8,
+    "required_action_MANUAL_PRIMERS_REQUIRED": 8,
+    "status_UNABLE_TO_INFER": 8
   },
-  "inference_safe_failure_rate": 0.368421,
+  "inference_safe_failure_rate": 0.421053,
   "library_report_status_distribution": {
-    "HIGH": 7,
+    "HIGH": 6,
     "MEDIUM": 5,
-    "UNABLE_TO_INFER": 7
+    "UNABLE_TO_INFER": 8
   },
-  "n_catalog_classified": 95,
-  "n_catalog_eligible": 24,
+  "n_catalog_classified": 125,
+  "n_catalog_eligible": 27,
   "n_catalog_non_insdc_passthrough": 125,
-  "n_catalog_total": 220,
+  "n_catalog_total": 250,
   "n_fetchable": 19,
   "n_in_ground_truth_overlap": 0,
-  "n_inference_safe_failures": 7,
-  "n_sampled": 20,
+  "n_inference_safe_failures": 8,
+  "n_sampled": 23,
   "n_with_library_report": 19,
-  "n_with_qc_run": 12,
+  "n_with_qc_run": 11,
   "per_accession": [
     {
       "accession": "PRJDB19098",
@@ -146,6 +146,15 @@
       "status": "FETCH_FAILED"
     },
     {
+      "accession": "PRJNA1066781",
+      "extraction_mode": "",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
+    },
+    {
       "accession": "PRJNA1067620",
       "extraction_mode": "THREE_PRIME_ONLY",
       "flags_raised": "2",
@@ -182,6 +191,15 @@
       "status": "EXTRACT_REFUSED"
     },
     {
+      "accession": "PRJNA1406499",
+      "extraction_mode": "",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
+    },
+    {
       "accession": "PRJNA450989",
       "extraction_mode": "UNABLE_TO_EXTRACT",
       "flags_raised": "",
@@ -192,12 +210,12 @@
     },
     {
       "accession": "PRJNA615076",
-      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
-      "flags_raised": "1",
+      "extraction_mode": "",
+      "flags_raised": "",
       "is_in_ground_truth": false,
-      "library_report_status": "HIGH",
-      "required_action": "NONE",
-      "status": "OK"
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
     },
     {
       "accession": "PRJNA633039",
@@ -225,12 +243,21 @@
       "library_report_status": "MEDIUM",
       "required_action": "NONE",
       "status": "OK"
+    },
+    {
+      "accession": "PRJNA862494",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
     }
   ],
   "required_action_distribution": {
-    "MANUAL_PRIMERS_REQUIRED": 7,
-    "NONE": 12
+    "MANUAL_PRIMERS_REQUIRED": 8,
+    "NONE": 11
   },
-  "sample_accessions_sha256": "8fcc5957fdddbb2e9254459c268efe3bd73ded40c0128ba34632a6a110909c40",
+  "sample_accessions_sha256": "ba7c35e85617a292161a9096ee60821265c2f85cc9a9bf0bf02a665fc25bb1c3",
   "sample_seed": 42
 }
