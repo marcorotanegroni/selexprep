@@ -153,23 +153,67 @@ def test_run_fetch_paired_end_emits_both_R1_R2(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_run_fetch_refuses_when_all_runs_none_confidence(tmp_path: Path) -> None:
+def test_run_fetch_refuses_all_unassigned_without_manual_review(tmp_path: Path) -> None:
+    """All-unassigned WITHOUT --allow-manual-review → refuse (safe default).
+
+    Phase 6b.9: the all-unassigned refusal is now gated by
+    ``not allow_manual_review``. Without the flag the safe default is
+    preserved — a download whose rounds can't be trusted wastes
+    bandwidth, so the runner refuses.
+    """
     rows = [_row("SRR_X", sample_title="just text"), _row("SRR_Y", sample_title="also nothing")]
     with (
         patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)),
         patch("selexprep.fetch.runner.download_srr") as mock_dl,
     ):
-        result = run_fetch("PRJ_ALL_NONE", tmp_path, allow_manual_review=True)
+        result = run_fetch("PRJ_ALL_NONE", tmp_path)  # allow_manual_review defaults False
 
-    # All-unassigned fails even with --allow-manual-review (no rounds to
-    # anchor). Phase 6b.4 audit-pilot fix: the refusal message now says
-    # "unassigned" rather than "NONE-confidence" because the old wording
-    # was misleading once MEDIUM-single-match records stopped being
-    # lumped into the refusal bucket.
     assert result.refused_reason is not None
     assert "unassigned" in result.refused_reason
+    assert "--allow-manual-review" in result.refused_reason
     mock_dl.assert_not_called()
     assert not (tmp_path / "rounds.tsv").exists()
+
+
+def test_run_fetch_all_unassigned_with_manual_review_downloads(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """All-unassigned WITH --allow-manual-review → download to round_unknown/.
+
+    Phase 6b.9 reversal: previously this also refused. Now the explicit
+    opt-in means "download anyway, I'll curate rounds myself" — every run
+    lands in round_unknown/, manual_review.tsv is emitted, rounds.tsv is
+    present-but-empty (no trusted assignments). This is what the Tier-1
+    benchmark's curated path relies on for metadata-less deposits.
+    """
+    rows = [_row("SRR_X", sample_title="just text"), _row("SRR_Y", sample_title="also nothing")]
+
+    def fake_dl(srr: str, output_dir: Path, backend: str = "ena", **kw):
+        return _stub_download_writes_files(output_dir, srr, paired=False)
+
+    with (
+        caplog.at_level("WARNING", logger="selexprep.fetch.runner"),
+        patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)),
+        patch("selexprep.fetch.runner.download_srr", side_effect=fake_dl),
+    ):
+        result = run_fetch("PRJ_ALL_NONE", tmp_path, allow_manual_review=True)
+
+    # No accession-level refusal; both runs downloaded into round_unknown/.
+    assert result.refused_reason is None
+    assert sorted(result.downloaded_srrs) == ["SRR_X", "SRR_Y"]
+    assert (tmp_path / "round_unknown" / "SRR_X.fastq.gz").exists()
+    assert (tmp_path / "round_unknown" / "SRR_Y.fastq.gz").exists()
+    # manual_review.tsv emitted; rounds.tsv present-but-empty (header only).
+    assert (tmp_path / "manual_review.tsv").exists()
+    rounds_body = (tmp_path / "rounds.tsv").read_text().strip().splitlines()
+    assert rounds_body[0].startswith("file\t")
+    assert len(rounds_body) == 1  # header only, no trusted rounds
+    # WARNING explains the empty rounds.tsv + curated round-map need.
+    assert any(
+        "all 2 run(s) unassigned" in r.getMessage() and "round_unknown/" in r.getMessage()
+        for r in caplog.records
+        if r.levelname == "WARNING"
+    )
 
 
 def test_run_fetch_skips_unassigned_runs_without_manual_review_flag(

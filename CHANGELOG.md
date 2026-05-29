@@ -6,7 +6,71 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+**Phase 6b.9 — Tier-1 benchmark prep: fetcher all-unassigned gating + Snakefile manifest (2026-05-29)**
+
+Prep for the Phase 6 Figure-A primer-recovery run on HPC. A pre-HPC
+cross-check against the v0.1.7 eligibility classification found 4 of the
+11 Tier-1 ground-truth accessions have ZERO auto-parseable rounds
+(`PRJEB28411`, `PRJNA935703`, `PRJNA975735`, `PRJNA883192`) — exactly
+the rows giving Figure A its modality diversity (DNA-vs-cell,
+small-molecule, DNA-vs-protein). They would have failed the HPC run
+mid-flight. Two fixes (Codex-reviewed, 3 passes):
+
+**Fetcher: gate the all-unassigned refusal by `--allow-manual-review`.**
+`selexprep.fetch.runner.run_fetch`'s first refusal block
+(`not plan.has_any_assigned_rounds`) was NOT gated by
+`allow_manual_review` — so even the curated path (which passes the flag)
+couldn't rescue all-unassigned accessions. Now gated by
+`and not allow_manual_review`, consistent with the some-unassigned block
+from 6b.5d: without the flag the safe default still refuses (no wasted
+bandwidth on untrusted rounds); with it, all runs download into
+`round_unknown/`, `rounds.tsv` comes out empty, and a curated round-map
+drives `detect`. Module docstring + block comment updated.
+
+**Snakefile: explicit FASTQ manifest replaces the glob input (BLOCKER).**
+`benchmarks/Snakefile`'s `_fastq_inputs_for` used `Path.glob()` as an
+input function, which Snakemake evaluates *before* `rule fetch` runs →
+empty `fastq_args` on a fresh run (`detect` launched with no files).
+`rule fetch` now emits `fastqs.manifest`
+(`find ... ! -name '*_2.fastq.gz' | sort`) after fetch completes, and
+`rule detect` reads it at runtime behind an `if [ ! -s ... ]; then ...
+fi` empty-guard (brace groups collide with Snakemake `{}`). The manifest
+is the single source of truth for which FASTQs `detect` consumes.
+
+**Paired-end policy.** 3 Tier-1 are paired-end (`PRJNA883192`,
+`PRJNA315881`, `PRJNA728693`); the v0.1 `detect` CLI reads all FASTQs as
+one R1 stream, so feeding both mates would mix R1/R2 silently. The
+manifest's `! -name '*_2.fastq.gz'` filter makes the benchmark
+**R1-only** uniformly. Paired-aware detect is a v0.2 deferral.
+
 ### Added
+
+**Phase 6b.9 — 4 curated Tier-1 round-maps (2026-05-29)**
+
+`benchmarks/round_maps/{PRJEB28411,PRJNA935703,PRJNA975735,PRJNA883192}.rounds.tsv`,
+with the 4 ground-truth rows flipped `round_map_source=auto`→`curated`.
+Round numbers are inferred from sample aliases (`P4`→4 / `P11`→11;
+`Abhi_1..5`→1..5; `SELEX1/2`→1/2; the mono-round pyoverdine pool→0) and
+used only to enable primer-recovery inference, not per-round biological
+claims — primers are constant across rounds, so recovery is robust to
+the exact numbering. `notes` carry this caveat. `PRJEB28411` split
+verified 6/6 against ENA (round 4 = ERR2764563/64/65/69/70/71, round 11
+= ERR2764566/67/68/72/73/74).
+
+`PRJNA315881` stays `auto` (single-round, MEDIUM): its `SRR3279660`
+(`IL10RA_1_4`) is a rounds-1-4 inline-barcoded multiplexed FASTQ
+(user-confirmed via their own demux) — a real specimen of the
+`NO_ROUND_STRUCTURE` multiplex caveat. Full-trajectory recovery needs a
+sample-sheet demux step (v0.2).
+
+**Tests (+8):** `test_fetch_cli.py` splits the old all-unassigned-refusal
+test into without-flag (still refuses) + with-flag (downloads to
+`round_unknown/`, emits `manual_review.tsv`, empty `rounds.tsv`). New
+`test_benchmark_tier1_curation.py` pins the curation contract (4 curated
+rows, PRJNA315881 stays auto, round-maps valid + R1-only, notes carry
+the caveat, Snakefile manifest filter + empty-guard present).
 
 **Phase 6b.8 — single-round / final-pool UX: explicit MEDIUM-cap warning (2026-05-29)**
 

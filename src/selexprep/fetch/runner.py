@@ -30,8 +30,14 @@ contract is preserved because ``rounds.tsv`` is still HIGH/MEDIUM-only;
 the relaxation is purely about *which* runs we attempt to download.
 
 If every run is NONE-confidence (no HIGH/MEDIUM rounds), the runner
-still fails fast: ``detect``'s cross-round persistence is unusable in
-that state and silently downloading then-blocking would waste bandwidth.
+fails fast *unless* ``allow_manual_review`` is passed. Without the
+flag, refusing avoids wasting bandwidth on a download whose rounds
+can't be trusted. With it (Phase 6b.9), the user has explicitly opted
+in to manual curation, so all runs download into ``round_unknown/``,
+``rounds.tsv`` is emitted empty (no trusted assignments), and a
+hand-supplied round-map drives ``detect`` downstream. This is what the
+Tier-1 benchmark's ``curated`` rows rely on for deposits whose round
+structure is absent from ENA metadata.
 
 Public API:
 
@@ -108,16 +114,23 @@ def run_fetch(
     plan = build_fetch_plan(accession, timeout_s=timeout_s)
 
     # Refusal: no run produced a HIGH/MEDIUM round assignment at all.
-    if not plan.has_any_assigned_rounds:
+    # Phase 6b.9: gated by ``not allow_manual_review`` (consistent with the
+    # some-unassigned block below). Without the flag we refuse — a download
+    # whose rounds can't be trusted wastes bandwidth. With it, the user has
+    # explicitly opted in to manual curation, so we fall through: every run
+    # downloads into round_unknown/, rounds.tsv comes out empty, and a
+    # curated round-map drives detect downstream (the Tier-1 benchmark's
+    # ``curated`` path for metadata-less deposits).
+    if not plan.has_any_assigned_rounds and not allow_manual_review:
         reason = (
             f"All {len(plan.runs)} run(s) in {accession} are unassigned "
             "(no HIGH/MEDIUM round could be parsed from sample_attributes, "
             "sample_title, library_name, or experiment_title). detect's "
             "cross-round persistence is unusable without HIGH/MEDIUM "
-            "rounds; refusing to download. Hand-curate round assignments "
-            "and feed local FASTQs to detect/extract directly, or open "
-            "the accession's metadata to confirm round indicators are "
-            "missing."
+            "rounds; refusing to download. Re-run with --allow-manual-review "
+            "to download all runs into round_unknown/ and drive detect with "
+            "a hand-curated round-map, or open the accession's metadata to "
+            "confirm round indicators are missing."
         )
         logger.error("run_fetch[%s]: %s", accession, reason)
         metadata_path = outdir / "fetch_metadata.json"
@@ -129,6 +142,18 @@ def run_fetch(
             manual_review_tsv=None,
             fetch_metadata_json=metadata_path,
             refused_reason=reason,
+        )
+
+    # Phase 6b.9: all-unassigned BUT --allow-manual-review is set → proceed.
+    # The download loop routes every (unassigned) run to round_unknown/ and
+    # emits manual_review.tsv; rounds.tsv will be empty (no trusted rounds).
+    if not plan.has_any_assigned_rounds:
+        logger.warning(
+            "run_fetch[%s]: all %d run(s) unassigned; downloading to "
+            "round_unknown/ under --allow-manual-review. rounds.tsv will be "
+            "empty — supply a curated round-map to detect.",
+            accession,
+            len(plan.runs),
         )
 
     # Phase 6b.5d: partial-parseability is no longer a hard refusal.

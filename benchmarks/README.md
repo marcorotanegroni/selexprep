@@ -294,6 +294,33 @@ uv sync --extra bench
 pip install -e ".[bench]"
 ```
 
+### Curated round-maps + R1-only paired-end policy (Phase 6b.9)
+
+4 Tier-1 deposits have no round structure parseable from ENA metadata
+(`PRJEB28411`, `PRJNA935703`, `PRJNA975735`, `PRJNA883192`). They are
+marked `round_map_source=curated` with a hand-supplied TSV under
+`benchmarks/round_maps/`; `rule fetch` passes `--allow-manual-review`
+(which downloads all-unassigned runs into `round_unknown/`), and
+`detect` consumes the curated round-map. Round numbers there are
+**inferred from sample aliases** (e.g. `P4/P11`, `SELEX1/2`,
+`Abhi_1..5`) and used only to enable primer-recovery inference — not as
+per-round biological claims (primers are constant across rounds, so
+recovery is robust to the exact numbering).
+
+**Paired-end policy:** 3 Tier-1 are paired-end (`PRJNA883192`,
+`PRJNA315881`, `PRJNA728693`). The v0.1 `detect` CLI is not
+paired-aware (it reads all FASTQs as a single R1 stream), so `rule
+fetch`'s manifest excludes R2 mates (`! -name '*_2.fastq.gz'`) and the
+benchmark processes these **R1-only**. If R1 carries both library
+constants, recovery is full; otherwise 5'-only, reported honestly.
+Paired-aware extraction is a v0.2 item.
+
+**PRJNA315881** stays `auto` (single-round, MEDIUM): its `SRR3279660`
+(`IL10RA_1_4`) is a rounds-1-4 inline-barcoded multiplexed FASTQ — a
+real specimen of the multiplex case the audit's `NO_ROUND_STRUCTURE`
+caveat describes. Recovering its full trajectory needs a sample-sheet
+demux step (v0.2), so the benchmark uses only its round-5 pool.
+
 ## Currently verified (11 rows, modality-diverse)
 
 See `ground_truth.tsv` for the full table. Each row was source-verified
