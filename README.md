@@ -145,6 +145,28 @@ selexprep extract round_*.fastq.gz \
 # Emits extract_diff.tsv comparing baseline vs override per round.
 ```
 
+### Only have the final pool / a single round?
+
+That's the common case — HT-SELEX is costly, so many experiments
+sequence only the final enriched pool. selexprep still works: pass a
+one-row round map and run the same `detect` → `extract` → `count` →
+`qc` flow.
+
+```bash
+printf 'file\tround_number\nfinal_pool.fastq.gz\t0\n' > rounds.tsv
+selexprep detect final_pool.fastq.gz --round-map rounds.tsv --outdir ./out
+```
+
+The one difference: **confidence is capped at `MEDIUM`**, because
+cross-round persistence (the strongest SELEX-specific primer signal)
+needs ≥2 rounds. `detect` logs a warning saying so, and inference falls
+back to within-round signals only (primer match rate, flank position,
+low-entropy region, adapter blacklist). Verify the inferred primers
+before trusting extraction — or, if you designed the library and
+already know the primers, pass `--override-primer-5p/3p`: extraction
+then uses your sequences directly and the inference confidence cap
+no longer applies (you're not inferring anything).
+
 ## CLI surface
 
 | Command | Status | What it does |

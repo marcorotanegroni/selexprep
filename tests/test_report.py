@@ -237,6 +237,29 @@ def test_status_capped_medium_no_round_map() -> None:
     assert report.status in ("MEDIUM", "LOW", "UNABLE_TO_INFER")
 
 
+def test_single_round_caps_status_and_warns(caplog: pytest.LogCaptureFixture) -> None:
+    """Phase 6b.8 single-round UX: explicit anti-regression of the MEDIUM cap.
+
+    A strong, clean single-round pool would score HIGH on within-round
+    signals alone — but the cap in ``report._assign_status`` must force it
+    to ≤ MEDIUM because cross-round persistence (the strongest
+    SELEX-specific signal) is unavailable. This test pins ``!= "HIGH"``
+    explicitly so a future refactor of ``_assign_status`` can't silently
+    drop the cap, and confirms the user-facing warning is emitted.
+    """
+    pools = {0: _synthetic_pool(PRIMER_5P_T7, PRIMER_3P_CCAT, n=1000)}
+    with caplog.at_level("WARNING", logger="selexprep.library.detect"):
+        report = compute_library_report(pools, read_source="R1")
+
+    # Hard anti-regression: single round must NEVER be HIGH.
+    assert report.status != "HIGH"
+
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert any(
+        "single round" in m and "capped at MEDIUM" in m and "persistence" in m for m in warnings
+    ), f"expected single-round MEDIUM-cap warning, got: {warnings}"
+
+
 def test_adapter_blacklist_demotes_truseq_candidate() -> None:
     """If the detected 5' primer matches a known sequencing adapter,
     the candidate is dropped and ``known_adapter_hits`` reflects it."""

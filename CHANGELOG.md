@@ -8,6 +8,45 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+**Phase 6b.8 — single-round / final-pool UX: explicit MEDIUM-cap warning (2026-05-29)**
+
+Single-round input (a final enriched pool, or any deposit with one
+sequenced round) is a legitimate and *common* SELEX workflow — HT-SELEX
+is costly, so many experiments sequence only the final pool to read
+off the top binders. selexprep already handled this correctly under
+the hood (``compute_library_report`` falls back to
+``COMPOSITE_WEIGHTS_NO_ROUND_MAP`` and ``report._assign_status`` caps
+the status at MEDIUM because cross-round persistence — the strongest
+SELEX-specific signal — can't run on one round). But the behavior was
+silent: a user feeding a final pool got a MEDIUM ceiling with no
+explanation.
+
+This phase makes the path explicit and discoverable, without changing
+the algorithm:
+
+- ``compute_library_report`` now emits a clear ``logger.warning`` when
+  only one round is provided: *cross-round persistence unavailable →
+  confidence capped at MEDIUM → inference uses within-round signals
+  only (match rate, flank position, low-entropy region, adapter
+  blacklist) → verify the inferred primers, or pass
+  ``--override-primer-5p/3p`` if known*. Honest framing: the tool
+  still works on a single round, it just tells you the confidence
+  ceiling and why.
+- **Anti-regression test** (``test_single_round_caps_status_and_warns``):
+  pins ``status != "HIGH"`` *explicitly* on a strong clean single-round
+  pool (which would otherwise score HIGH on within-round signals
+  alone), so a future refactor of ``_assign_status`` can't silently
+  drop the MEDIUM cap. Also asserts the warning is emitted.
+
+The use case this unblocks for the user: *"you only have the final
+pool / round X? here's what you can do"* — verify primers + strip +
+count + QC on a single round, with an honest MEDIUM confidence label.
+The README Quick start now documents this as a named recipe ("Only
+have the final pool / a single round?") with the one-row round-map
+command and the override path. Rigorous empirical validation of
+single-round inference (degrade the Tier-1 multi-round datasets to one
+round, measure recovery vs full) is a separate v0.2 effort.
+
 **Phase 6b.7 — Tier 2 audit re-run against the v0.1.7 catalog (2026-05-28)**
 
 Re-ran the Tier 2 corpus audit against the post-6b.6 catalog
