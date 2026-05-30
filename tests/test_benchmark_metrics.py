@@ -20,17 +20,23 @@ import pytest
 
 from selexprep.benchmark.metrics import (
     BenchmarkRow,
+    FetchStats,
     aggregate_metrics,
     compute_count_correlation,
     compute_extraction_mode_distribution,
+    compute_fetch_stats_from_plan,
     compute_n_length_recovery,
     compute_pair_recovery_by_status,
     compute_primer_recovery,
     compute_required_action_distribution,
     compute_safe_failure_rate,
+    compute_specificity,
+    load_fetch_stats,
     load_ground_truth,
     write_metrics_json,
 )
+from selexprep.fetch.metadata import RoundRecord
+from selexprep.fetch.plan import FetchPlan, FetchRun, write_fetch_metadata_json
 from selexprep.library.report import LibraryReport
 
 
@@ -81,6 +87,10 @@ def _row(accession: str = "PRJ_TEST", *, verified: bool = True, **overrides: Any
         "library_report": _make_lr(),
         "observed_counts": None,
         "reference_counts": None,
+        # Phase 6b.10: default to the recovery arm so existing recovery
+        # tests keep exercising recovery metrics (aggregate_metrics runs
+        # them only on raw_standard rows).
+        "read_state": "raw_standard",
     }
     defaults.update(overrides)
     return BenchmarkRow(**defaults)
@@ -480,3 +490,282 @@ def test_write_metrics_json_includes_new_pivot_fields(tmp_path: Path) -> None:
         "by_reason",
         "safe_failure_accessions",
     }
+
+
+# ===========================================================================
+# Phase 6b.10 — two-arm sensitivity/specificity reframe
+# ===========================================================================
+
+
+def _fetch_run(srr: str, urls: list[str], *, paired: bool) -> FetchRun:
+    return FetchRun(
+        srr=srr,
+        sample_accession="",
+        sample_title="",
+        library_name="",
+        experiment_title="",
+        read_count=0,
+        base_count=0,
+        fastq_urls=urls,
+        fastq_md5s=[],
+        fastq_bytes=[],
+        paired_end=paired,
+        round_record=RoundRecord(
+            srr=srr,
+            round_number=1,
+            confidence="HIGH",
+            source_field="test",
+            matched_pattern="test",
+        ),
+    )
+
+
+def _plan(accession: str, runs: list[FetchRun]) -> FetchPlan:
+    return FetchPlan(
+        accession=accession,
+        bioproject_id=accession,
+        study_title="",
+        library_strategy="SELEX",
+        library_source="",
+        runs=runs,
+    )
+
+
+# --- read-state arm split --------------------------------------------------
+
+
+def test_aggregate_runs_recovery_only_on_raw_standard() -> None:
+    """Recovery metrics see only raw_standard rows; specificity sees pre_trimmed."""
+    rows = [
+        _row(accession="PRJ_RS", read_state="raw_standard"),
+        _row(
+            accession="PRJ_PT",
+            read_state="pre_trimmed",
+            library_report=_make_lr(primer_5p=None, primer_3p=None),
+        ),
+    ]
+    report = aggregate_metrics(rows)
+    # recovery arm excludes the pre_trimmed row
+    assert report.recovery_denominator == 1
+    assert report.primer_recovery.n_evaluated == 1
+    assert report.pair_recovery_by_status.n_evaluated == 1
+    assert (
+        report.n_length_recovery.n_in_tolerance + report.n_length_recovery.n_out_of_tolerance == 1
+    )
+    # specificity arm sees only the pre_trimmed row
+    assert report.specificity.n_evaluated == 1
+    assert report.specificity.n_no_false_call == 1
+
+
+def test_aggregate_unlabeled_read_state_excluded_from_both_arms() -> None:
+    """A row with read_state="" belongs to neither arm (excluded from both)."""
+    rows = [_row(accession="PRJ_UNK", read_state="")]
+    report = aggregate_metrics(rows)
+    assert report.recovery_denominator == 0
+    assert report.primer_recovery.n_evaluated == 0
+    assert report.specificity.n_evaluated == 0
+    # but it still counts in the honest-accounting distributions
+    assert sum(report.extraction_mode_distribution.counts.values()) == 1
+
+
+# --- specificity -----------------------------------------------------------
+
+
+def test_compute_specificity_null_primers_is_no_false_call() -> None:
+    rows = [
+        _row(
+            accession="PRJ_PT",
+            read_state="pre_trimmed",
+            library_report=_make_lr(
+                primer_5p=None,
+                primer_3p=None,
+                status="UNABLE_TO_INFER",
+                extraction_mode="UNABLE_TO_EXTRACT",
+            ),
+        )
+    ]
+    report = compute_specificity(rows)
+    assert report.n_evaluated == 1
+    assert report.n_no_false_call == 1
+    assert report.n_false_positive == 0
+    assert report.false_positive_accessions == []
+
+
+def test_compute_specificity_emitted_primer_is_false_positive() -> None:
+    rows = [
+        _row(
+            accession="PRJ_PT",
+            read_state="pre_trimmed",
+            library_report=_make_lr(primer_5p="ACGTACGT", primer_3p=None),
+        )
+    ]
+    report = compute_specificity(rows)
+    assert report.n_false_positive == 1
+    assert report.n_no_false_call == 0
+    assert report.false_positive_accessions == ["PRJ_PT"]
+
+
+def test_compute_specificity_ignores_raw_standard_rows() -> None:
+    rows = [_row(accession="PRJ_RS", read_state="raw_standard")]
+    report = compute_specificity(rows)
+    assert report.n_evaluated == 0
+
+
+def test_compute_specificity_missing_report_is_no_false_call() -> None:
+    """No report ⇒ no emitted primer ⇒ not a false positive."""
+    rows = [_row(accession="PRJ_PT", read_state="pre_trimmed", library_report=None)]
+    report = compute_specificity(rows)
+    assert report.n_no_false_call == 1
+    assert report.n_false_positive == 0
+
+
+# --- multi-round-only sensitivity sub-report -------------------------------
+
+
+def test_multi_round_sensitivity_excludes_mono_round_rows() -> None:
+    rows = [
+        _row(accession="PRJ_MULTI", read_state="raw_standard", mono_round=False),
+        _row(accession="PRJ_MONO", read_state="raw_standard", mono_round=True),
+    ]
+    report = aggregate_metrics(rows)
+    # full recovery arm counts both
+    assert report.recovery_denominator == 2
+    assert report.pair_recovery_by_status.n_evaluated == 2
+    # multi-round-only sub-report drops the mono_round row
+    assert report.multi_round_sensitivity.n_evaluated == 1
+
+
+# --- fetch_stats (honest field names; NO failed_runs) ----------------------
+
+
+def test_compute_fetch_stats_partial_fetch() -> None:
+    plan = _plan(
+        "PRJ_PARTIAL",
+        [
+            _fetch_run("SRR1", ["ftp://e/SRR1_1.fastq.gz", "ftp://e/SRR1_2.fastq.gz"], paired=True),
+            _fetch_run("SRR2", ["ftp://e/SRR2.fastq.gz"], paired=False),
+            _fetch_run("SRR3", [], paired=False),  # no fastq_ftp URL
+        ],
+    )
+    # manifest is R1-only on disk; SRR3 never landed
+    manifest = {"SRR1_1.fastq.gz", "SRR2.fastq.gz"}
+    fs = compute_fetch_stats_from_plan("PRJ_PARTIAL", plan, manifest)
+    assert fs.fetch_expected_runs == 3
+    assert fs.fetch_available_runs == 2
+    assert fs.fetch_missing_runs == 1
+    assert fs.runs_with_no_fastq_url == 1
+    assert fs.partial_fetch is True
+    # honest accounting: never claims failed_runs (the plan is not an outcome log)
+    assert not hasattr(fs, "failed_runs")
+
+
+def test_compute_fetch_stats_complete_fetch_not_partial() -> None:
+    plan = _plan("PRJ_OK", [_fetch_run("SRR1", ["ftp://e/SRR1.fastq.gz"], paired=False)])
+    fs = compute_fetch_stats_from_plan("PRJ_OK", plan, {"SRR1.fastq.gz"})
+    assert fs.fetch_expected_runs == 1
+    assert fs.fetch_available_runs == 1
+    assert fs.fetch_missing_runs == 0
+    assert fs.partial_fetch is False
+
+
+def test_compute_fetch_stats_total_miss_not_partial() -> None:
+    """available == 0 is a total miss, NOT a partial fetch."""
+    plan = _plan("PRJ_MISS", [_fetch_run("SRR1", ["ftp://e/SRR1.fastq.gz"], paired=False)])
+    fs = compute_fetch_stats_from_plan("PRJ_MISS", plan, set())
+    assert fs.fetch_available_runs == 0
+    assert fs.fetch_missing_runs == 1
+    assert fs.partial_fetch is False
+
+
+def test_load_fetch_stats_reads_metadata_and_manifest(tmp_path: Path) -> None:
+    acc = "PRJ_PARTIAL"
+    accdir = tmp_path / acc
+    accdir.mkdir()
+    plan = _plan(
+        acc,
+        [
+            _fetch_run("SRR1", ["ftp://e/SRR1_1.fastq.gz", "ftp://e/SRR1_2.fastq.gz"], paired=True),
+            _fetch_run("SRR2", ["ftp://e/SRR2.fastq.gz"], paired=False),
+            _fetch_run("SRR3", [], paired=False),
+        ],
+    )
+    write_fetch_metadata_json(plan, accdir / "fetch_metadata.json")
+    (accdir / "fastqs.manifest").write_text(
+        f"{accdir}/round_01/SRR1_1.fastq.gz\n{accdir}/round_02/SRR2.fastq.gz\n",
+        encoding="utf-8",
+    )
+    fs = load_fetch_stats(tmp_path, acc)
+    assert fs is not None
+    assert fs.fetch_expected_runs == 3
+    assert fs.fetch_available_runs == 2
+    assert fs.partial_fetch is True
+
+
+def test_load_fetch_stats_returns_none_without_metadata(tmp_path: Path) -> None:
+    assert load_fetch_stats(tmp_path, "PRJ_ABSENT") is None
+
+
+def test_aggregate_surfaces_attached_fetch_stats() -> None:
+    fs = FetchStats(
+        accession="PRJ_A",
+        fetch_expected_runs=27,
+        fetch_available_runs=17,
+        fetch_missing_runs=10,
+        runs_with_no_fastq_url=0,
+        partial_fetch=True,
+    )
+    report = aggregate_metrics([_row(accession="PRJ_A", read_state="raw_standard", fetch_stats=fs)])
+    assert "PRJ_A" in report.fetch_stats
+    assert report.fetch_stats["PRJ_A"].fetch_available_runs == 17
+    assert report.fetch_stats["PRJ_A"].partial_fetch is True
+
+
+# --- loader + serialization ------------------------------------------------
+
+
+def test_load_ground_truth_parses_read_state_and_flags(tmp_path: Path) -> None:
+    tsv = tmp_path / "gt.tsv"
+    tsv.write_text(
+        "accession\tlibrary_kind\ttarget_kind\tprimer_5p_truth\tprimer_3p_truth"
+        "\tn_length_truth\tpaper_doi\tpaper_pmid\tround_map_source\tround_map_path"
+        "\tverified\tread_state\tmono_round\tpartial_fetch\tpaired_end_r1_only"
+        "\tdemultiplexed\tnotes\n"
+        "PRJ_R\tRNA\tprotein\tACGT\tTGCA\t30\t10.1/abc\t1\tauto\t\ttrue"
+        "\traw_standard\tfalse\ttrue\tfalse\tfalse\trecovery row\n"
+        "PRJ_S\tDNA\tprotein\t\t\t40\t10.1/xyz\t2\tauto\t\ttrue"
+        "\tpre_trimmed\ttrue\tfalse\tfalse\tfalse\tspecificity row\n",
+        encoding="utf-8",
+    )
+    rows = load_ground_truth(tsv)
+    by = {r.accession: r for r in rows}
+    assert by["PRJ_R"].read_state == "raw_standard"
+    assert by["PRJ_R"].partial_fetch is True
+    assert by["PRJ_R"].mono_round is False
+    assert by["PRJ_S"].read_state == "pre_trimmed"
+    assert by["PRJ_S"].mono_round is True
+    assert by["PRJ_S"].paired_end_r1_only is False
+
+
+def test_write_metrics_json_includes_two_arm_fields(tmp_path: Path) -> None:
+    rows = [
+        _row(accession="PRJ_RS", read_state="raw_standard"),
+        _row(
+            accession="PRJ_PT",
+            read_state="pre_trimmed",
+            library_report=_make_lr(primer_5p=None, primer_3p=None),
+        ),
+    ]
+    report = aggregate_metrics(rows)
+    out = tmp_path / "m.json"
+    write_metrics_json(report, out)
+    payload = json.loads(out.read_text())
+    assert "recovery_denominator" in payload
+    assert "specificity" in payload
+    assert "multi_round_sensitivity" in payload
+    assert "fetch_stats" in payload
+    assert payload["recovery_denominator"] == 1
+    assert payload["specificity"]["n_evaluated"] == 1
+    assert payload["specificity"]["n_false_positive"] == 0
+    # top-level keys stay sorted (determinism contract)
+    keys = list(payload.keys())
+    assert keys == sorted(keys)

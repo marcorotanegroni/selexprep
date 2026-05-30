@@ -3,31 +3,38 @@
 Scope pivot (2026-05-22): the figure tests selexprep's **unique claim**
 (primer inference from accession reads + safe failure on ambiguity),
 NOT comparator-tool count agreement. AptaPLEX / EasyDIVER+ both require
-known primers as input; they cannot benchmark primer inference. Count
-correlation moves to Phase 6c via a self-consistency check (inferred
-vs ``--override-primer``).
+known primers as input; they cannot benchmark primer inference.
 
-Four panels arranged 2x2 (locked plan line 365, revised):
+Phase 6b.10 reframe (Codex pass-3, 4 passes + user-approved): Figure A is
+a **two-arm sensitivity/specificity benchmark**, NOT a read-state
+taxonomy. The benchmark set (``ground_truth.tsv``) carries a ``read_state``
+label — ``raw_standard`` (recovery arm) or ``pre_trimmed`` (specificity
+arm) — assigned from independent read-length + architecture evidence,
+never from detect output. Out-of-scope deposits (nonstandard
+architecture, aggregate-like) were removed to ``excluded_datasets.tsv``
+and are NOT figure arms.
 
-- **Panel A (top-left)** — Pair recovery by LibraryReport.status.
-  The headline panel: of HIGH-confidence calls, what fraction
-  recovered the primer pair exactly? Stacked bar of
-  {pair_exact, pair_equivalent, pair_partial, pair_failed} per
-  status bucket.
+Four panels arranged 2x2:
 
-- **Panel B (top-right)** — 5'/3'/pair/partial recovery breakdown
-  across all verified rows. Grouped bar showing per-side EXACT
-  recovery, pair recovery, partial recovery, and pair_failed.
+- **Panel A (top-left)** — recovery arm (sensitivity). Pair recovery
+  (complete / partial / miss) over the ``raw_standard`` rows, with a
+  multi-round-only overlay so confidence-limited mono-round rows don't
+  silently deflate the headline.
 
-- **Panel C (bottom-left)** — N-length recovery within ±tolerance
-  (locked plan line 365).
+- **Panel B (top-right)** — specificity arm. False-positive primer calls
+  on ``pre_trimmed`` deposits (target = 0) + the per-side (5'/3')
+  no-call breakdown.
 
-- **Panel D (bottom-right)** — Two-row honest accounting:
-  ``extraction_mode`` distribution (top) +
-  ``required_action`` distribution (bottom).
+- **Panel C (bottom-left)** — N-length recovery within ±tolerance, on the
+  ``raw_standard`` arm.
 
-The figure title carries the headline number: N verified rows +
-safe-failure rate.
+- **Panel D (bottom-right)** — honest accounting: ``extraction_mode`` +
+  ``required_action`` distributions across all verified rows, plus a
+  fetch_stats note for partial-fetch deposits (e.g. PRJEB70964 17/27).
+
+The figure title carries the headline: complete/partial recovery on the
+``raw_standard`` N + the specificity false-positive count. NEVER a flat
+"X/11" (the set is not a random sample).
 
 PNG byte-output is non-deterministic across matplotlib versions
 (accepted in Phase 5); the underlying ``metrics.json`` IS deterministic
@@ -49,15 +56,7 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
-# Stable, ordered buckets so the visual order doesn't reshuffle between
-# runs.
-_STATUS_ORDER: tuple[str, ...] = ("HIGH", "MEDIUM", "LOW", "UNABLE_TO_INFER", "NO_REPORT")
-_PAIR_BUCKETS: tuple[str, ...] = (
-    "pair_exact",
-    "pair_equivalent",
-    "pair_partial",
-    "pair_failed",
-)
+# Stable, ordered buckets so the visual order doesn't reshuffle between runs.
 _EXTRACTION_MODE_ORDER: tuple[str, ...] = (
     "BOTH_PRIMERS_SINGLE_READ",
     "FIVE_PRIME_ONLY",
@@ -73,69 +72,118 @@ _REQUIRED_ACTION_ORDER: tuple[str, ...] = (
     "NO_REPORT",
 )
 
+# Recovery semantics: a recovered pair is "complete" when both constants
+# matched (exact OR via an equivalence rule), "partial" when one side
+# matched, "miss" when neither did.
+_RECOVERY_COLORS = {"complete": "tab:green", "partial": "tab:orange", "miss": "tab:red"}
+_SPECIFICITY_COLORS = {"no_false_call": "tab:green", "false_positive": "tab:red"}
+
 
 def _no_data_label(ax: Any, title: str) -> None:
     ax.set_title(f"{title} (no data)")
     ax.text(0.5, 0.5, "no data", ha="center", va="center", transform=ax.transAxes)
 
 
-def _panel_a_pair_recovery_by_status(ax: Any, pair_recovery: dict[str, Any]) -> None:
-    """Stacked bar of pair_exact / equivalent / partial / failed per status."""
-    counts: dict[str, dict[str, int]] = pair_recovery.get("counts", {})
-    statuses = [s for s in _STATUS_ORDER if s in counts]
-    if not statuses:
-        _no_data_label(ax, "A · Pair recovery by status")
+def _collapse_pair_counts(counts: dict[str, dict[str, int]]) -> dict[str, int]:
+    """Sum status-bucketed pair recovery into complete / partial / miss.
+
+    ``counts`` is ``{status: {pair_exact/pair_equivalent/pair_partial/
+    pair_failed: n}}`` (the ``pair_recovery_by_status`` cross-tab). The
+    recovery arm cares about the pair-level outcome, not the status
+    bucket, so we collapse over statuses.
+    """
+    complete = partial = miss = 0
+    for bucket_counts in counts.values():
+        complete += int(bucket_counts.get("pair_exact", 0)) + int(
+            bucket_counts.get("pair_equivalent", 0)
+        )
+        partial += int(bucket_counts.get("pair_partial", 0))
+        miss += int(bucket_counts.get("pair_failed", 0))
+    return {"complete": complete, "partial": partial, "miss": miss}
+
+
+def _panel_a_recovery(ax: Any, pair_recovery: dict[str, Any], multi_round: dict[str, Any]) -> None:
+    """Recovery arm: complete/partial/miss pair recovery on raw_standard.
+
+    Two stacked bars — all raw_standard rows + the multi-round-only
+    subset (mono-round rows excluded) — so the overlay shows whether the
+    confidence-limited single-round rows are dragging the headline.
+    """
+    all_counts = _collapse_pair_counts(pair_recovery.get("counts", {}))
+    mr_counts = _collapse_pair_counts(multi_round.get("counts", {}))
+    n_all = sum(all_counts.values())
+    n_mr = sum(mr_counts.values())
+    if n_all == 0:
+        _no_data_label(ax, "A · Recovery (raw_standard)")
         return
 
-    bottom = [0.0] * len(statuses)
-    for bucket in _PAIR_BUCKETS:
-        heights = [float(counts.get(s, {}).get(bucket, 0)) for s in statuses]
-        if all(h == 0 for h in heights):
-            continue
-        ax.bar(statuses, heights, bottom=bottom, label=bucket)
-        bottom = [b + h for b, h in zip(bottom, heights, strict=True)]
+    labels = [f"raw_standard\n(all, N={n_all})", f"multi-round only\n(N={n_mr})"]
+    series = [all_counts, mr_counts]
+    bottoms = [0.0, 0.0]
+    for key in ("complete", "partial", "miss"):
+        heights = [float(s.get(key, 0)) for s in series]
+        ax.bar(labels, heights, bottom=bottoms, label=key, color=_RECOVERY_COLORS[key])
+        bottoms = [b + h for b, h in zip(bottoms, heights, strict=True)]
 
-    ax.set_title("A · Pair recovery by LibraryReport.status")
-    ax.set_xlabel("status")
+    ax.set_title("A · Recovery arm — pair recovery (sensitivity)")
     ax.set_ylabel("rows")
     ax.legend(loc="upper right", fontsize="x-small")
 
 
-def _panel_b_breakdown(ax: Any, primer_recovery: dict[str, Any]) -> None:
-    """Grouped bar: 5' EXACT / 3' EXACT / pair_exact / partial / failed across all rows.
+def _panel_b_specificity(ax: Any, specificity: dict[str, Any]) -> None:
+    """Specificity arm: false-positive primer calls on pre_trimmed (target 0).
 
-    Computed from primer_recovery.counts_5p + counts_3p + the row-pair
-    aggregator outputs the metrics report carries.
+    Grouped bar over {pair, 5' side, 3' side}: no-false-call (green,
+    correct) vs false-positive (red). A pre-trimmed deposit's reads are
+    the N-region only, so the correct behavior is to emit NO primer.
     """
-    counts_5p = primer_recovery.get("counts_5p", {})
-    counts_3p = primer_recovery.get("counts_3p", {})
-    n_evaluated = primer_recovery.get("n_evaluated", 0)
-    if n_evaluated == 0:
-        _no_data_label(ax, "B · Per-side / pair recovery breakdown")
+    n_eval = int(specificity.get("n_evaluated", 0))
+    if n_eval == 0:
+        _no_data_label(ax, "B · Specificity (pre_trimmed)")
         return
 
-    # Per-side EXACT counts.
-    exact_5p = counts_5p.get("EXACT", 0)
-    exact_3p = counts_3p.get("EXACT", 0)
-    partial_5p = counts_5p.get("PARTIAL_5P", 0) + counts_5p.get("PARTIAL_3P", 0)
-    partial_3p = counts_3p.get("PARTIAL_5P", 0) + counts_3p.get("PARTIAL_3P", 0)
-    mismatch_5p = counts_5p.get("MISMATCH", 0) + counts_5p.get("IUPAC_UNSUPPORTED", 0)
-    mismatch_3p = counts_3p.get("MISMATCH", 0) + counts_3p.get("IUPAC_UNSUPPORTED", 0)
+    n_no_call = int(specificity.get("n_no_false_call", 0))
+    n_fp = int(specificity.get("n_false_positive", 0))
 
-    categories = ["5' EXACT", "3' EXACT", "5' partial", "3' partial", "5' miss", "3' miss"]
-    values = [exact_5p, exact_3p, partial_5p, partial_3p, mismatch_5p, mismatch_3p]
+    # Per-side breakdown from per_row (primer_5p / primer_3p None = no call).
+    per_row = specificity.get("per_row", [])
+    n5_emit = sum(1 for x in per_row if x.get("primer_5p") is not None)
+    n3_emit = sum(1 for x in per_row if x.get("primer_3p") is not None)
+    n5_no = n_eval - n5_emit
+    n3_no = n_eval - n3_emit
 
-    ax.bar(categories, values)
-    ax.set_title(f"B · Per-side recovery breakdown (N={n_evaluated})")
-    ax.set_ylabel("rows")
-    ax.tick_params(axis="x", labelrotation=20)
+    groups = ["pair", "5' side", "3' side"]
+    no_call = [n_no_call, n5_no, n3_no]
+    false_pos = [n_fp, n5_emit, n3_emit]
+
+    x = range(len(groups))
+    width = 0.38
+    ax.bar(
+        [i - width / 2 for i in x],
+        no_call,
+        width,
+        label="no false call",
+        color=_SPECIFICITY_COLORS["no_false_call"],
+    )
+    ax.bar(
+        [i + width / 2 for i in x],
+        false_pos,
+        width,
+        label="false positive",
+        color=_SPECIFICITY_COLORS["false_positive"],
+    )
+    ax.set_xticks(list(x))
+    ax.set_xticklabels(groups)
+    ax.set_title(f"B · Specificity arm — {n_fp}/{n_eval} false-positive calls (target 0)")
+    ax.set_ylabel("pre_trimmed deposits")
+    ax.legend(loc="upper center", fontsize="x-small")
 
 
 def _panel_c_n_length_recovery(ax: Any, n_length_recovery: dict[str, Any]) -> None:
-    """Bar of N-length recovery buckets."""
-    in_tol = n_length_recovery.get("n_in_tolerance", 0)
-    out_tol = n_length_recovery.get("n_out_of_tolerance", 0)
-    unmeasurable = n_length_recovery.get("n_unmeasurable", 0)
+    """N-length recovery buckets on the raw_standard arm."""
+    in_tol = int(n_length_recovery.get("n_in_tolerance", 0))
+    out_tol = int(n_length_recovery.get("n_out_of_tolerance", 0))
+    unmeasurable = int(n_length_recovery.get("n_unmeasurable", 0))
     tolerance = n_length_recovery.get("tolerance", 2)
     total = in_tol + out_tol + unmeasurable
     if total == 0:
@@ -144,49 +192,74 @@ def _panel_c_n_length_recovery(ax: Any, n_length_recovery: dict[str, Any]) -> No
     ax.bar(
         ["in tolerance", "out of tolerance", "unmeasurable"],
         [in_tol, out_tol, unmeasurable],
+        color=["tab:green", "tab:red", "tab:gray"],
     )
-    ax.set_title(f"C · N-length recovery (±{tolerance} nt)")
+    ax.set_title(f"C · N-length recovery (±{tolerance} nt, raw_standard)")
     ax.set_ylabel("rows")
 
 
 def _panel_d_distributions(
-    ax: Any, extraction_counts: dict[str, int], required_action_counts: dict[str, int]
+    ax: Any,
+    extraction_counts: dict[str, int],
+    required_action_counts: dict[str, int],
+    fetch_stats: dict[str, Any],
 ) -> None:
-    """Two horizontal bar groups in one axes: extraction_mode + required_action."""
+    """Honest accounting: extraction_mode + required_action + a fetch note."""
     extraction_modes = [m for m in _EXTRACTION_MODE_ORDER if m in extraction_counts]
     required_actions = [a for a in _REQUIRED_ACTION_ORDER if a in required_action_counts]
 
+    # Partial-fetch note (e.g. PRJEB70964 17/27) — surfaced from fetch_stats.
+    partial_notes = [
+        f"{acc}: {fs.get('fetch_available_runs')}/{fs.get('fetch_expected_runs')} runs"
+        for acc, fs in sorted(fetch_stats.items())
+        if fs.get("partial_fetch")
+    ]
+
     if not extraction_modes and not required_actions:
         _no_data_label(ax, "D · Extraction mode & required action")
+        if partial_notes:
+            ax.text(
+                0.5,
+                0.1,
+                "partial fetch — " + "; ".join(partial_notes),
+                ha="center",
+                va="bottom",
+                fontsize="x-small",
+                transform=ax.transAxes,
+            )
         return
 
-    # Render extraction_mode as a horizontal bar block, then required_action
-    # below with a divider for readability.
     labels: list[str] = []
     heights: list[float] = []
     colors: list[str] = []
-    palette_ext = "tab:blue"
-    palette_req = "tab:orange"
-
     for m in extraction_modes:
         labels.append(f"ext · {m}")
         heights.append(float(extraction_counts[m]))
-        colors.append(palette_ext)
+        colors.append("tab:blue")
     for a in required_actions:
         labels.append(f"req · {a}")
         heights.append(float(required_action_counts[a]))
-        colors.append(palette_req)
+        colors.append("tab:orange")
 
     ax.barh(labels, heights, color=colors)
     ax.invert_yaxis()
     ax.set_title("D · Extraction mode & required action (honest accounting)")
     ax.set_xlabel("rows")
-    # Light divider line between the two groups (legend would be redundant
-    # given the prefix tags).
+    if partial_notes:
+        ax.text(
+            0.98,
+            0.02,
+            "partial fetch — " + "; ".join(partial_notes),
+            ha="right",
+            va="bottom",
+            fontsize="x-small",
+            style="italic",
+            transform=ax.transAxes,
+        )
 
 
 def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
-    """Render the four-panel Figure A.
+    """Render the four-panel two-arm Figure A.
 
     Parameters
     ----------
@@ -203,30 +276,34 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
     metrics = json.loads(metrics_json.read_text(encoding="utf-8"))
     outdir.mkdir(parents=True, exist_ok=True)
 
-    primer_recovery = metrics.get("primer_recovery", {})
     pair_recovery = metrics.get("pair_recovery_by_status", {})
+    multi_round = metrics.get("multi_round_sensitivity", {})
+    specificity = metrics.get("specificity", {})
     n_length_recovery = metrics.get("n_length_recovery", {})
     extraction_counts = metrics.get("extraction_mode_distribution", {}).get("counts", {})
     required_action_counts = metrics.get("required_action_distribution", {}).get("counts", {})
+    fetch_stats = metrics.get("fetch_stats", {})
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 10), dpi=150)
-    _panel_a_pair_recovery_by_status(axes[0, 0], pair_recovery)
-    _panel_b_breakdown(axes[0, 1], primer_recovery)
+    _panel_a_recovery(axes[0, 0], pair_recovery, multi_round)
+    _panel_b_specificity(axes[0, 1], specificity)
     _panel_c_n_length_recovery(axes[1, 0], n_length_recovery)
-    _panel_d_distributions(axes[1, 1], extraction_counts, required_action_counts)
+    _panel_d_distributions(axes[1, 1], extraction_counts, required_action_counts, fetch_stats)
 
-    # Headline: N verified + safe-failure rate.
-    safe_failure = metrics.get("safe_failure_rate", {})
-    n_verified = metrics.get("n_verified", 0)
-    n_unverified = metrics.get("n_unverified", 0)
-    rate = safe_failure.get("rate", 0.0)
-    n_safe = safe_failure.get("n_safe_failures", 0)
+    # Headline: recovery (complete/partial on raw_standard N) + specificity
+    # false-positive count. NEVER a flat "X/11" — the set isn't a random
+    # sample, so a single recovery fraction would over-read it.
+    recovery_n = int(metrics.get("recovery_denominator", 0))
+    collapsed = _collapse_pair_counts(pair_recovery.get("counts", {}))
+    spec_n = int(specificity.get("n_evaluated", 0))
+    spec_fp = int(specificity.get("n_false_positive", 0))
 
-    parts = ["selexprep Figure A — primer inference benchmark"]
-    parts.append(f"N={n_verified} verified")
-    if n_unverified:
-        parts.append(f"{n_unverified} pending curation")
-    parts.append(f"safe-failure rate: {rate:.0%} ({n_safe}/{n_verified} rows)")
+    parts = ["selexprep Figure A — primer-inference benchmark"]
+    parts.append(
+        f"recovery: {collapsed['complete']} complete / {collapsed['partial']} partial "
+        f"of {recovery_n} raw_standard"
+    )
+    parts.append(f"specificity: {spec_fp}/{spec_n} false-positive calls on pre_trimmed")
     fig.suptitle("  ·  ".join(parts), fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
 
