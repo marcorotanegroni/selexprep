@@ -54,13 +54,15 @@ import json
 import logging
 import sys
 from collections import Counter
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 from selexprep.benchmark.equivalence import EquivalenceResult, primer_equivalent
+from selexprep.fetch.plan import FetchPlan, fastq_filenames_for_run
+from selexprep.fetch.runner import read_fetch_metadata_json
 from selexprep.library.report import LibraryReport, read_library_report_json
 
 logger = logging.getLogger(__name__)
@@ -72,8 +74,49 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
+class FetchStats:
+    """Per-accession fetch accounting, honestly inferable post-fetch.
+
+    Derived from the :class:`~selexprep.fetch.plan.FetchPlan` audit trail
+    (``fetch_metadata.json``: the PLAN, i.e. what ENA said *should* exist)
+    cross-referenced with the on-disk ``fastqs.manifest`` (R1-only, what
+    actually landed). Phase 6b.10 / Codex pass-3: the plan is a PLAN, not
+    an outcome log, so the field names stay honest — we report
+    expected / available / missing / no-fastq-url, and NEVER claim
+    ``failed_runs`` (a run with no on-disk FASTQ might be embargoed,
+    no-URL, or a genuine download failure — the plan can't tell us which).
+
+    - ``fetch_expected_runs`` — runs in the plan.
+    - ``fetch_available_runs`` — expected runs whose R1 FASTQ is on disk.
+    - ``fetch_missing_runs`` — expected minus available (includes no-URL runs).
+    - ``runs_with_no_fastq_url`` — runs whose ENA record had no
+      ``fastq_ftp`` URL (a sub-explanation for some missing runs).
+    - ``partial_fetch`` — some but not all expected runs landed
+      (``0 < available < expected``). A total miss (available == 0) is
+      NOT a partial fetch; a complete fetch (available == expected) is not
+      either.
+    """
+
+    accession: str
+    fetch_expected_runs: int = 0
+    fetch_available_runs: int = 0
+    fetch_missing_runs: int = 0
+    runs_with_no_fastq_url: int = 0
+    partial_fetch: bool = False
+
+
+@dataclass(frozen=True)
 class BenchmarkRow:
     """One accession's ground-truth + inferred-LibraryReport pair.
+
+    Phase 6b.10 adds the read-state arm label + orthogonal limitation
+    flags (Codex pass-2): ``read_state`` is ``raw_standard`` (recovery
+    arm) or ``pre_trimmed`` (specificity arm), labeled from independent
+    read-length + architecture evidence — NEVER from detect output. The
+    flags (``mono_round`` / ``partial_fetch`` / ``paired_end_r1_only`` /
+    ``demultiplexed``) carry limitations orthogonally so they aren't
+    conflated with read-state. ``fetch_stats`` is attached post-fetch by
+    :func:`attach_fetch_stats`.
 
     ``observed_counts`` and ``reference_counts`` are optional per-sequence
     count maps used by :func:`compute_count_correlation`. They are absent
@@ -96,6 +139,13 @@ class BenchmarkRow:
     library_report: LibraryReport | None
     observed_counts: dict[str, int] | None = None
     reference_counts: dict[str, int] | None = None
+    # Phase 6b.10 — read-state arm + orthogonal limitation flags.
+    read_state: str = ""  # "raw_standard" | "pre_trimmed" | ""
+    mono_round: bool = False
+    partial_fetch: bool = False
+    paired_end_r1_only: bool = False
+    demultiplexed: bool = False
+    fetch_stats: FetchStats | None = None
 
 
 @dataclass(frozen=True)
@@ -248,6 +298,36 @@ class SafeFailureRate:
 
 
 @dataclass
+class SpecificityReport:
+    """Specificity arm — no-false-call on pre-trimmed deposits.
+
+    Phase 6b.10 (Codex pass-3). Evaluated ONLY over ``read_state ==
+    "pre_trimmed"`` rows: deposits whose reads are the N-region only
+    (flanking constants trimmed off before deposit), independently
+    classified from read-length + architecture evidence. The expected
+    behavior is that selexprep emits NO primer call.
+
+    - ``n_no_false_call`` — ``primer_5p is None and primer_3p is None``
+      (or no report at all): selexprep correctly refused to fabricate a
+      primer that isn't in the reads. This is the specificity "gold".
+    - ``n_false_positive`` — selexprep emitted any primer on a
+      pre-trimmed deposit (a fabricated call).
+
+    Headline (Codex #5 wording): *"On independently classified
+    pre-trimmed deposits, selexprep made N_false/N false-positive primer
+    calls."* This does NOT claim detect *detects* pre-trimming — the
+    benchmark layer knows the read-state; detect only reports that no
+    primers were inferred.
+    """
+
+    n_evaluated: int = 0
+    n_no_false_call: int = 0
+    n_false_positive: int = 0
+    false_positive_accessions: list[str] = field(default_factory=list)
+    per_row: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
 class BenchmarkMetricsReport:
     """Top-level metrics report. Serializes to deterministic JSON.
 
@@ -274,6 +354,19 @@ class BenchmarkMetricsReport:
     required_action_distribution: RequiredActionDistribution = field(
         default_factory=RequiredActionDistribution
     )
+    # Phase 6b.10 — two-arm sensitivity/specificity reframe.
+    # recovery_denominator = n raw_standard rows (the recovery-arm
+    # denominator); recovery metrics above run ONLY on this arm.
+    recovery_denominator: int = 0
+    # specificity arm — no-false-call on pre_trimmed deposits.
+    specificity: SpecificityReport = field(default_factory=SpecificityReport)
+    # multi-round-only sensitivity sub-report (recovery arm minus
+    # mono_round rows) — so confidence-limited single-round rows don't
+    # silently deflate the headline (Codex #3: don't drop hard rows
+    # post-hoc; report them in a sub-arm).
+    multi_round_sensitivity: PairRecoveryByStatus = field(default_factory=PairRecoveryByStatus)
+    # per-accession fetch accounting (honest field names; no failed_runs).
+    fetch_stats: dict[str, FetchStats] = field(default_factory=dict)
     # Phase 6c entry point — populated by an out-of-band self-consistency
     # checker, NOT by aggregate_metrics in 6b.1.
     count_correlation: CountCorrelationReport = field(default_factory=CountCorrelationReport)
@@ -282,6 +375,11 @@ class BenchmarkMetricsReport:
 # ---------------------------------------------------------------------------
 # Loading + row filtering
 # ---------------------------------------------------------------------------
+
+
+def _truthy(value: Any) -> bool:
+    """Parse a TSV cell as a boolean (``"true"`` / ``"false"`` / blank)."""
+    return str(value).strip().lower() == "true"
 
 
 def load_ground_truth(path: Path) -> list[BenchmarkRow]:
@@ -308,9 +406,17 @@ def load_ground_truth(path: Path) -> list[BenchmarkRow]:
                 paper_pmid=r.get("paper_pmid", ""),
                 round_map_source=r.get("round_map_source", "auto") or "auto",
                 round_map_path=r.get("round_map_path", ""),
-                verified=str(r.get("verified", "")).strip().lower() == "true",
+                verified=_truthy(r.get("verified", "")),
                 notes=r.get("notes", ""),
                 library_report=None,
+                # Phase 6b.10 — read-state arm + flags (default to ""/False
+                # so older ground_truth.tsv files without these columns still
+                # parse; the arm split treats "" as neither arm).
+                read_state=str(r.get("read_state", "") or "").strip(),
+                mono_round=_truthy(r.get("mono_round", "")),
+                partial_fetch=_truthy(r.get("partial_fetch", "")),
+                paired_end_r1_only=_truthy(r.get("paired_end_r1_only", "")),
+                demultiplexed=_truthy(r.get("demultiplexed", "")),
             )
         )
     return rows
@@ -328,25 +434,10 @@ def attach_library_reports(rows: list[BenchmarkRow], reports_dir: Path) -> list[
     for row in rows:
         lr_path = reports_dir / row.accession / "library_report.json"
         lr = read_library_report_json(lr_path) if lr_path.exists() else None
-        out.append(
-            BenchmarkRow(
-                accession=row.accession,
-                library_kind=row.library_kind,
-                target_kind=row.target_kind,
-                primer_5p_truth=row.primer_5p_truth,
-                primer_3p_truth=row.primer_3p_truth,
-                n_length_truth=row.n_length_truth,
-                paper_doi=row.paper_doi,
-                paper_pmid=row.paper_pmid,
-                round_map_source=row.round_map_source,
-                round_map_path=row.round_map_path,
-                verified=row.verified,
-                notes=row.notes,
-                library_report=lr,
-                observed_counts=row.observed_counts,
-                reference_counts=row.reference_counts,
-            )
-        )
+        # ``replace`` copies every field (incl. read_state + flags +
+        # fetch_stats) so this can't silently drop new fields as the
+        # schema grows.
+        out.append(replace(row, library_report=lr))
     return out
 
 
@@ -365,6 +456,81 @@ def _filter_verified(rows: list[BenchmarkRow]) -> tuple[list[BenchmarkRow], list
         else:
             verified.append(r)
     return verified, skipped
+
+
+# ---------------------------------------------------------------------------
+# Fetch accounting (per-accession; honest field names, no failed_runs)
+# ---------------------------------------------------------------------------
+
+
+def compute_fetch_stats_from_plan(
+    accession: str, plan: FetchPlan, manifest_basenames: set[str]
+) -> FetchStats:
+    """Cross-reference a FetchPlan (what ENA said exists) against on-disk R1 FASTQs.
+
+    ``manifest_basenames`` is the set of FASTQ *basenames* present in the
+    ``fastqs.manifest`` (R1-only — R2 mates are filtered out by the
+    Snakefile's ``! -name '*_2.fastq.gz'``). A run counts as *available*
+    iff at least one of its non-R2 FASTQ filenames is in that set.
+
+    Honest semantics (Codex pass-3): the plan is a PLAN, not an outcome
+    log, so we report expected / available / missing / no-URL only —
+    never ``failed_runs`` (a missing run might be embargoed, no-URL, or a
+    genuine failure; the plan cannot disambiguate).
+    """
+    expected = len(plan.runs)
+    runs_with_no_url = sum(1 for run in plan.runs if not run.fastq_urls)
+    available = 0
+    for run in plan.runs:
+        r1_names = [n for n in fastq_filenames_for_run(run) if not n.endswith("_2.fastq.gz")]
+        if any(name in manifest_basenames for name in r1_names):
+            available += 1
+    missing = max(0, expected - available)
+    partial = 0 < available < expected
+    return FetchStats(
+        accession=accession,
+        fetch_expected_runs=expected,
+        fetch_available_runs=available,
+        fetch_missing_runs=missing,
+        runs_with_no_fastq_url=runs_with_no_url,
+        partial_fetch=partial,
+    )
+
+
+def _read_manifest_basenames(manifest_path: Path) -> set[str]:
+    """Read a ``fastqs.manifest`` (one FASTQ path per line) into basenames."""
+    basenames: set[str] = set()
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped:
+            basenames.add(Path(stripped).name)
+    return basenames
+
+
+def load_fetch_stats(reports_dir: Path, accession: str) -> FetchStats | None:
+    """Load ``fetch_metadata.json`` + ``fastqs.manifest`` for one accession.
+
+    Returns ``None`` when no ``fetch_metadata.json`` exists — fetch_stats
+    is then simply absent for that accession rather than fabricated.
+    """
+    meta_path = reports_dir / accession / "fetch_metadata.json"
+    if not meta_path.exists():
+        return None
+    plan = read_fetch_metadata_json(meta_path)
+    manifest_path = reports_dir / accession / "fastqs.manifest"
+    manifest_basenames = (
+        _read_manifest_basenames(manifest_path) if manifest_path.exists() else set()
+    )
+    return compute_fetch_stats_from_plan(accession, plan, manifest_basenames)
+
+
+def attach_fetch_stats(rows: list[BenchmarkRow], reports_dir: Path) -> list[BenchmarkRow]:
+    """Attach per-accession :class:`FetchStats` parsed from the fetch audit trail.
+
+    Mirrors :func:`attach_library_reports`. Rows with no
+    ``fetch_metadata.json`` keep ``fetch_stats=None``.
+    """
+    return [replace(row, fetch_stats=load_fetch_stats(reports_dir, row.accession)) for row in rows]
 
 
 # ---------------------------------------------------------------------------
@@ -566,6 +732,47 @@ def compute_n_length_recovery(
     return report
 
 
+def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
+    """No-false-call rate over ``read_state == "pre_trimmed"`` rows.
+
+    Correct (no false positive) iff selexprep emitted no primer —
+    ``primer_5p is None and primer_3p is None`` (or no library_report at
+    all). Any emitted primer on a pre-trimmed deposit is a false positive
+    (selexprep fabricated a constant that isn't in the reads).
+
+    Rows whose ``read_state`` is not ``"pre_trimmed"`` are skipped — they
+    belong to the recovery arm. Caller is responsible for passing the
+    verified row set; the read-state filter is applied here so the
+    function is self-contained and testable.
+    """
+    report = SpecificityReport()
+    for r in rows:
+        if r.read_state != "pre_trimmed":
+            continue
+        report.n_evaluated += 1
+        lr = r.library_report
+        primer_5p = lr.primer_5p if lr is not None else None
+        primer_3p = lr.primer_3p if lr is not None else None
+        emitted = primer_5p is not None or primer_3p is not None
+        if emitted:
+            report.n_false_positive += 1
+            report.false_positive_accessions.append(r.accession)
+            bucket = "false_positive"
+        else:
+            report.n_no_false_call += 1
+            bucket = "no_false_call"
+        report.per_row.append(
+            {
+                "accession": r.accession,
+                "bucket": bucket,
+                "primer_5p": primer_5p,
+                "primer_3p": primer_3p,
+            }
+        )
+    report.false_positive_accessions = sorted(report.false_positive_accessions)
+    return report
+
+
 def compute_count_correlation(
     rows: list[BenchmarkRow], *, top_k: int = 100
 ) -> CountCorrelationReport:
@@ -706,12 +913,44 @@ def aggregate_metrics(
         n_total=len(rows),
         skipped_unverified_accessions=sorted(skipped),
     )
-    report.primer_recovery = compute_primer_recovery(verified)
-    report.pair_recovery_by_status = compute_pair_recovery_by_status(verified)
+
+    # Phase 6b.10 — two-arm split by read_state. Recovery metrics
+    # (sensitivity) run ONLY on the raw_standard arm, where primers are
+    # physically present in the reads and recovery is even applicable.
+    # Specificity runs on the pre_trimmed arm. Rows with an empty/unknown
+    # read_state belong to neither arm and are excluded from both
+    # (they still count in the honest-accounting distributions below).
+    raw_standard = [r for r in verified if r.read_state == "raw_standard"]
+    pre_trimmed = [r for r in verified if r.read_state == "pre_trimmed"]
+
+    report.recovery_denominator = len(raw_standard)
+    report.primer_recovery = compute_primer_recovery(raw_standard)
+    report.pair_recovery_by_status = compute_pair_recovery_by_status(raw_standard)
+    report.n_length_recovery = compute_n_length_recovery(raw_standard, tolerance=n_length_tolerance)
+
+    # Multi-round-only sensitivity sub-report: recovery arm minus
+    # mono_round rows (Codex #3 — don't drop confidence-limited
+    # single-round rows post-hoc; report them in a sub-arm).
+    multi_round = [r for r in raw_standard if not r.mono_round]
+    report.multi_round_sensitivity = compute_pair_recovery_by_status(multi_round)
+
+    # Specificity arm — no-false-call on pre_trimmed deposits.
+    report.specificity = compute_specificity(pre_trimmed)
+
+    # Honest accounting runs across ALL verified rows (both arms +
+    # any unlabeled), so the distributions + safe-failure tally reflect
+    # the whole benchmark set, not just one arm.
     report.safe_failure_rate = compute_safe_failure_rate(verified)
-    report.n_length_recovery = compute_n_length_recovery(verified, tolerance=n_length_tolerance)
     report.extraction_mode_distribution = compute_extraction_mode_distribution(verified)
     report.required_action_distribution = compute_required_action_distribution(verified)
+
+    # Per-accession fetch accounting (attached by attach_fetch_stats).
+    fetch_stats: dict[str, FetchStats] = {}
+    for r in verified:
+        if r.fetch_stats is not None:
+            fetch_stats[r.accession] = r.fetch_stats
+    report.fetch_stats = fetch_stats
+
     # count_correlation deliberately not populated — Phase 6c entry point.
     return report
 
@@ -765,6 +1004,27 @@ def _safe_failure_to_dict(sf: SafeFailureRate) -> dict[str, Any]:
     }
 
 
+def _specificity_to_dict(sp: SpecificityReport) -> dict[str, Any]:
+    return {
+        "n_evaluated": sp.n_evaluated,
+        "n_no_false_call": sp.n_no_false_call,
+        "n_false_positive": sp.n_false_positive,
+        "false_positive_accessions": sp.false_positive_accessions,
+        "per_row": sorted(sp.per_row, key=lambda x: x["accession"]),
+    }
+
+
+def _fetch_stats_to_dict(fs: FetchStats) -> dict[str, Any]:
+    return {
+        "accession": fs.accession,
+        "fetch_expected_runs": fs.fetch_expected_runs,
+        "fetch_available_runs": fs.fetch_available_runs,
+        "fetch_missing_runs": fs.fetch_missing_runs,
+        "runs_with_no_fastq_url": fs.runs_with_no_fastq_url,
+        "partial_fetch": fs.partial_fetch,
+    }
+
+
 def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
     """Serialize ``report`` to deterministic JSON (sorted keys + stable ordering)."""
     payload: dict[str, Any] = {
@@ -781,6 +1041,13 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
         },
         "required_action_distribution": {
             "counts": dict(sorted(report.required_action_distribution.counts.items()))
+        },
+        # Phase 6b.10 — two-arm sensitivity/specificity fields.
+        "recovery_denominator": report.recovery_denominator,
+        "specificity": _specificity_to_dict(report.specificity),
+        "multi_round_sensitivity": _pair_recovery_to_dict(report.multi_round_sensitivity),
+        "fetch_stats": {
+            acc: _fetch_stats_to_dict(fs) for acc, fs in sorted(report.fetch_stats.items())
         },
         # Phase 6c entry point — present in schema for stability, populated
         # by a separate self-consistency checker.
@@ -807,6 +1074,7 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = load_ground_truth(args.ground_truth)
     rows = attach_library_reports(rows, args.reports_dir)
+    rows = attach_fetch_stats(rows, args.reports_dir)
     report = aggregate_metrics(rows, n_length_tolerance=args.n_length_tolerance)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     write_metrics_json(report, args.out)

@@ -84,10 +84,26 @@ rule fetch:
             "--allow-manual-review" if ROUND_MAP_SOURCE[w.accession] == "curated" else ""
         ),
     shell:
-        "selexprep fetch {wildcards.accession} "
-        "--outdir {OUTROOT}/{wildcards.accession} {params.extra_flags} && "
-        "find {OUTROOT}/{wildcards.accession} -name '*.fastq.gz' "
-        "! -name '*_2.fastq.gz' | sort > {output.manifest}"
+        # Phase 6b.10 partial-fetch fix (Codex pass-2). Snakemake runs
+        # shell: under ``set -euo pipefail``, so a bare ``fetch; rc=$?``
+        # would abort AT the fetch line on any non-zero exit (rc never
+        # captured). Scope errexit OFF only around the fetch with
+        # ``set +e`` / ``set -e`` (pipefail + nounset stay on), capture
+        # the code, then gate on evidence: require BOTH a non-empty
+        # manifest AND a non-empty fetch_metadata.json. A genuine partial
+        # download (some runs missing, e.g. PRJEB70964 17/27) proceeds
+        # with the rc surfaced to stderr; a total fetch crash (empty
+        # manifest or missing metadata) still fails the rule.
+        # if/fi only — bash brace groups collide with Snakemake's {}.
+        """
+        set +e
+        selexprep fetch {wildcards.accession} --outdir {OUTROOT}/{wildcards.accession} {params.extra_flags}
+        rc=$?
+        set -e
+        find {OUTROOT}/{wildcards.accession} -name '*.fastq.gz' ! -name '*_2.fastq.gz' | sort > {output.manifest}
+        if [ ! -s {output.manifest} ] || [ ! -s {output.marker} ]; then echo "fetch failed for {wildcards.accession} (rc=$rc): empty manifest or missing fetch_metadata.json" >&2; exit 1; fi
+        if [ "$rc" -ne 0 ]; then echo "fetch rc=$rc for {wildcards.accession} (partial download; proceeding)" >&2; fi
+        """
 
 
 def _round_map_for(accession: str) -> str:
