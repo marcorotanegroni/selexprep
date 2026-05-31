@@ -180,6 +180,48 @@ def test_paired_end_split_no_overlap() -> None:
     assert report.required_action == "READ_MERGING_RECOMMENDED"
 
 
+def test_paired_end_split_prefers_r2_over_conflicting_r1_suffix() -> None:
+    """Paired-end split must not be blocked by a strong technical R1 suffix.
+
+    PRJNA883192 has R1 evidence for the 5' insert constant and R2 evidence
+    for the 3' insert constant, but R1 also ends in a strong unrelated
+    technical suffix. R2 is the biologically correct source for the insert
+    3' constant in this layout.
+    """
+    primer_5p = "ATGCCATCCTACCAAC"
+    primer_3p = "GAGCTCTGAACTGG"  # 14 nt Tier-1 constant
+    technical_r1_suffix = "TGAACTCCAGTCACCGAATAATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAAAAAA"
+
+    r1_pools = _three_round_pool(primer_5p, technical_r1_suffix, random_len=80)
+    r2_pools = _three_round_pool(reverse_complement(primer_3p), primer_3p=None, random_len=80)
+
+    report = compute_library_report(r1_pools, read_source="R1_AND_R2", paired_mate_streams=r2_pools)
+
+    assert report.extraction_mode == "PAIRED_END_SPLIT_PRIMERS"
+    assert report.required_action == "READ_MERGING_RECOMMENDED"
+    assert report.primer_5p == primer_5p
+    assert report.primer_3p == primer_3p
+    assert report.match_rate_3p > 0.95
+    assert report.position_consistency_3p > 0.95
+
+
+def test_paired_r2_does_not_demote_single_read_when_r1_3p_agrees() -> None:
+    """If R1 already contains the same 3' primer that R2 implies, keep Row 1.
+
+    This prevents paired-end support from unnecessarily changing a full
+    single-read library into ``PAIRED_END_SPLIT_PRIMERS``.
+    """
+    r1_pools = _three_round_pool(PRIMER_5P_T7, PRIMER_3P_CCAT, random_len=30)
+    r2_pools = _three_round_pool(reverse_complement(PRIMER_3P_CCAT), primer_3p=None, random_len=80)
+
+    report = compute_library_report(r1_pools, read_source="R1_AND_R2", paired_mate_streams=r2_pools)
+
+    assert report.extraction_mode == "BOTH_PRIMERS_SINGLE_READ"
+    assert report.full_insert_recovered is True
+    assert report.required_action == "NONE"
+    assert report.primer_3p == PRIMER_3P_CCAT
+
+
 @pytest.mark.xfail(
     strict=True,
     reason=(

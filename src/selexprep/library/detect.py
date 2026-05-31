@@ -528,6 +528,33 @@ def _substring_match_rate(seqs: list[str], primer: str | None) -> float:
     return hits / total if total else 0.0
 
 
+def _contains_hamming_le1(longer: str, shorter: str) -> bool:
+    """Return True when ``shorter`` appears in ``longer`` with ≤1 mismatch."""
+    if len(shorter) > len(longer):
+        return False
+    for i in range(len(longer) - len(shorter) + 1):
+        if _hamming_le1(longer[i : i + len(shorter)], shorter):
+            return True
+    return False
+
+
+def _primer_sequences_agree(a: str | None, b: str | None) -> bool:
+    """Loose primer-equivalence check for paired-end split arbitration.
+
+    Equal-length candidates may differ by one sequencing error. Different
+    lengths are treated as agreeing only when the shorter candidate is
+    contained in the longer one, again allowing one mismatch. This lets a
+    single-read 3' call with a fuzzy ±1 boundary agree with the R2-derived
+    insert 3' primer, while rejecting unrelated technical suffixes.
+    """
+    if not a or not b:
+        return False
+    if len(a) == len(b):
+        return _hamming_le1(a, b)
+    longer, shorter = (a, b) if len(a) > len(b) else (b, a)
+    return _contains_hamming_le1(longer, shorter)
+
+
 def _persistence_score(match_rates_per_round: list[float]) -> float | None:
     """Cross-round persistence as ``1 - clip(stdev/mean, 0, 1)``.
 
@@ -648,9 +675,11 @@ def _detect_paired_split_signals(r1_seqs: list[str], r2_seqs: list[str]) -> tupl
     """Test for the paired-end split-primer pattern.
 
     Returns ``(has_paired_split, primer_3p_from_r2)``. ``has_paired_split``
-    is True when R1 carries a strong 5' primer and weak 3' primer, AND R2
-    carries a strong 5' primer (which when reverse-complemented gives the
-    real 3' primer of the insert).
+    is True when R1 carries a strong 5' primer and R2 carries a strong 5'
+    primer (which when reverse-complemented gives the real 3' primer of
+    the insert), provided R1 does not already carry an agreeing 3' primer.
+    A strong but conflicting R1 suffix is treated as technical readthrough
+    rather than a reason to ignore R2.
 
     No overlap detection in v0.1 — read merging is v0.2; until then the
     caller treats this as ``required_action=READ_MERGING_RECOMMENDED``.
@@ -662,8 +691,16 @@ def _detect_paired_split_signals(r1_seqs: list[str], r2_seqs: list[str]) -> tupl
     r1_5p_strong = r1_det.primer_5p.confidence > PRIMER_FOUND_MATCH_RATE_THRESHOLD
     r1_3p_strong = r1_det.primer_3p.confidence > PRIMER_FOUND_MATCH_RATE_THRESHOLD
     r2_5p_strong = r2_det.primer_5p.confidence > PRIMER_FOUND_MATCH_RATE_THRESHOLD
-    if r1_5p_strong and not r1_3p_strong and r2_5p_strong and r2_det.primer_5p.sequence is not None:
-        return True, reverse_complement(r2_det.primer_5p.sequence)
+    if not (r1_5p_strong and r2_5p_strong and r2_det.primer_5p.sequence is not None):
+        return False, None
+
+    primer_3p_from_r2 = reverse_complement(r2_det.primer_5p.sequence)
+    r1_3p_agrees_with_r2 = _primer_sequences_agree(
+        r1_det.primer_3p.sequence,
+        primer_3p_from_r2,
+    )
+    if not r1_3p_strong or not r1_3p_agrees_with_r2:
+        return True, primer_3p_from_r2
     return False, None
 
 
