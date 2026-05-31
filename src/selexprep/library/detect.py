@@ -64,7 +64,9 @@ logger = logging.getLogger(__name__)
 # `top_n` only if memory pressure forces it.
 DEFAULT_TOP_N: int | None = None
 DEFAULT_CONFIDENCE = 0.75
-DEFAULT_MIN_LEN = 15
+# Real Tier-1 deposits include a 14 nt library constant (PRJNA883192).
+# Keep this conservative: shorter flanks need explicit future calibration.
+DEFAULT_MIN_LEN = 14
 DEFAULT_MAX_LEN = 60
 DEFAULT_MIN_SEQS_FOR_DETECTION = 500
 BOUNDARY_SUPPORT_FLOOR = 0.55

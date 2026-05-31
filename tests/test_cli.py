@@ -564,7 +564,10 @@ def test_detect_with_round_map_emits_library_report(tmp_path: Path) -> None:
 
 def test_detect_with_paired_r2_threads_split_primer_stream(tmp_path: Path) -> None:
     primer_5p = "GGTAATACGACTCACTATAGGG"
-    primer_3p = "CCATGCATGCATGCATGCAT"
+    # PRJNA883192 regression: its 3' library constant is only 14 nt.
+    # The paired R2 stream must still recover it instead of falling back
+    # to a spurious R1 3' suffix.
+    primer_3p = "GAGCTCTGAACTGG"
     r1 = tmp_path / "round0_1.fastq.gz"
     r2 = tmp_path / "round0_2.fastq.gz"
     _write_fastq_gz(r1, _synthetic_pool(primer_5p, primer_3p=None, n=1000, random_len=80))
