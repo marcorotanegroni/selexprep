@@ -5,10 +5,10 @@ These don't execute the Snakefile (not a CI workload) — they pin the
 
 - the curated round-maps exist, are valid TSVs, and are referenced
   correctly from ground_truth.tsv;
-- PRJNA315881 stays ``auto`` (it's a multiplexed deposit, deliberately
-  not curated to a single round);
-- the Snakefile manifest enforces the R1-only paired-end policy, and the
-  fetch rule has the Phase 6b.10 partial-fetch fix;
+- PRJNA315881 is excluded until a reproducible demultiplexing step exists;
+- the Snakefile writes separate R1/R2 manifests and passes R2 through
+  ``selexprep detect --paired-r2`` instead of silently forcing paired
+  datasets into R1-only mode;
 - Phase 6b.10 two-arm reframe: every row carries a valid ``read_state``
   arm label + boolean flags; out-of-scope rows live in
   ``excluded_datasets.tsv`` (not ground_truth); read_state labels are
@@ -31,18 +31,25 @@ _EXCLUDED = _BENCH / "excluded_datasets.tsv"
 _SCREENING_LOG = _BENCH / "screening_log.tsv"
 
 # Curated rows remaining in the benchmark after the 6b.10 cleanup
-# (PRJNA935703 + PRJNA975735 were removed to excluded_datasets.tsv;
-# PRJNA315881 stays auto — it's multiplexed).
+# (PRJNA935703 + PRJNA975735 + PRJNA315881 were moved to excluded_datasets.tsv).
 _CURATED = {
     "PRJEB28411",
     "PRJNA883192",
 }
 
-# Phase 6b.10 benchmark set (post-cleanup), labeled by read-state arm.
-_RECOVERY = {"PRJDB9110", "PRJDB9111", "PRJNA883192", "PRJNA315881", "PRJEB70964"}
+# Phase 6b.10 benchmark set (post-cleanup), labeled by read-state role.
+_RECOVERY = {"PRJDB9110", "PRJDB9111", "PRJNA883192"}
 _SPECIFICITY = {"PRJEB28411", "PRJEB22637", "PRJNA990511"}
+# Adapter-collision negative control (5' constant = revcomp of a known adapter);
+# excluded from the recovery denominator (Phase 6b.10 Option-1 reclassification).
+_ADAPTER_CONTROL = {"PRJEB70964"}
+# All in-benchmark rows (any of the three roles).
+_BENCHMARK = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
 # Out-of-scope rows removed from ground_truth.tsv → excluded_datasets.tsv.
-_EXCLUDED_ACCESSIONS = {"PRJNA728693", "PRJNA935703", "PRJNA975735"}
+# PRJNA315881: round-5 pool multiplexed-by-condition (undocumented barcodes) →
+# not a fair primer-inference test (multiplexing/offset/truncation, Codex pass-4);
+# re-entrant after reproducible demux that does not use primer info.
+_EXCLUDED_ACCESSIONS = {"PRJNA728693", "PRJNA935703", "PRJNA975735", "PRJNA315881"}
 # Evidence-based, pre-detect reason vocabulary (NEVER "primers_unrecoverable").
 _REASON_VOCAB = {
     "primer_truth_unverified",
@@ -64,12 +71,15 @@ def test_exactly_these_rows_are_curated() -> None:
     assert curated == _CURATED
 
 
-def test_prjna315881_stays_auto_multiplex() -> None:
-    """PRJNA315881's SRR3279660 is a rounds-1-4 multiplexed FASTQ; mapping it
-    to one round would merge 4 rounds, so it is deliberately left auto."""
-    gt = _gt()
-    row = gt.loc[gt["accession"] == "PRJNA315881"].iloc[0]
-    assert row["round_map_source"] == "auto"
+def test_prjna315881_excluded_multiplexed_without_demux() -> None:
+    """PRJNA315881's only fetchable pool is multiplexed-by-condition (undocumented
+    barcodes), so it's not a fair primer-inference test (Codex pass-4) — removed
+    from ground_truth and recorded in excluded_datasets with reason
+    multiplexed_without_demux; re-entrant after reproducible demux."""
+    assert "PRJNA315881" not in set(_gt()["accession"])
+    ex = pd.read_csv(_EXCLUDED, sep="\t", dtype=str).fillna("").set_index("accession")
+    assert "PRJNA315881" in ex.index
+    assert ex.at["PRJNA315881", "reason"] == "multiplexed_without_demux"
 
 
 def test_curated_round_maps_exist_and_are_valid() -> None:
@@ -84,11 +94,18 @@ def test_curated_round_maps_exist_and_are_valid() -> None:
         assert len(rm) >= 1
         # round_number column is integer-valued
         rm["round_number"].astype(int)
-        # every listed file is a .fastq.gz basename, and R2 mates are NOT
-        # listed (R1-only policy — paired rows use _1 only)
+        # every listed file is a .fastq.gz basename
         for fn in rm["file"]:
             assert fn.endswith(".fastq.gz"), f"{acc}: {fn} not a fastq.gz"
-            assert not fn.endswith("_2.fastq.gz"), f"{acc}: {fn} is an R2 mate"
+        if acc == "PRJNA883192":
+            # Paired-end row: curated map must route both mates so the
+            # benchmark can pass R2 through detect instead of doing R1-only.
+            assert set(rm["file"]) == {
+                "SRR21674163_1.fastq.gz",
+                "SRR21674163_2.fastq.gz",
+                "SRR21674162_1.fastq.gz",
+                "SRR21674162_2.fastq.gz",
+            }
 
 
 def test_curated_notes_carry_inference_caveat() -> None:
@@ -99,12 +116,16 @@ def test_curated_notes_carry_inference_caveat() -> None:
         assert "not per-round biological claims" in notes, f"{acc}: missing claim caveat"
 
 
-def test_snakefile_enforces_r1_only_manifest() -> None:
-    """The manifest filter excludes R2 mates (paired-end policy). Guards
-    against a silent regression that would re-introduce R1/R2 mixing."""
+def test_snakefile_writes_separate_r1_r2_manifests() -> None:
+    """The R1 manifest excludes R2 mates, but R2 is captured separately and
+    passed via ``--paired-r2``. Guards against both old failure modes:
+    R1/R2 commingling and R2 silently discarded from Figure A."""
     text = _SNAKEFILE.read_text(encoding="utf-8")
     assert "fastqs.manifest" in text
+    assert "fastqs.r2.manifest" in text
     assert "! -name '*_2.fastq.gz'" in text
+    assert "-name '*_2.fastq.gz'" in text
+    assert "--paired-r2" in text
 
 
 def test_snakefile_detect_guards_empty_manifest() -> None:
@@ -138,13 +159,13 @@ def test_excluded_rows_removed_from_ground_truth() -> None:
     (they are NOT figure arms — they live in excluded_datasets.tsv)."""
     accessions = set(_gt()["accession"])
     assert accessions.isdisjoint(_EXCLUDED_ACCESSIONS)
-    # and the benchmark set is exactly recovery + specificity
-    assert accessions == _RECOVERY | _SPECIFICITY
+    # and the benchmark set is exactly the three roles
+    assert accessions == _BENCHMARK
 
 
 def test_every_row_has_valid_read_state_and_flags() -> None:
     gt = _gt()
-    valid_states = {"raw_standard", "pre_trimmed"}
+    valid_states = {"raw_standard", "pre_trimmed", "adapter_control"}
     flag_cols = ["mono_round", "partial_fetch", "paired_end_r1_only", "demultiplexed"]
     for _, row in gt.iterrows():
         acc = row["accession"]
@@ -159,14 +180,17 @@ def test_read_state_arms_match_expected_membership() -> None:
         assert gt.at[acc, "read_state"] == "raw_standard", f"{acc} should be recovery arm"
     for acc in _SPECIFICITY:
         assert gt.at[acc, "read_state"] == "pre_trimmed", f"{acc} should be specificity arm"
+    for acc in _ADAPTER_CONTROL:
+        assert gt.at[acc, "read_state"] == "adapter_control", f"{acc} should be adapter-control"
 
 
 def test_flag_assignments_match_plan() -> None:
     """The plan-named orthogonal flags are set on exactly the named rows."""
     gt = _gt().set_index("accession")
-    assert gt.at["PRJNA315881", "mono_round"] == "true"
+    assert gt.at["PRJNA990511", "mono_round"] == "true"
     assert gt.at["PRJEB70964", "partial_fetch"] == "true"
-    assert gt.at["PRJNA883192", "paired_end_r1_only"] == "true"
+    assert gt.at["PRJEB28411", "paired_end_r1_only"] == "false"
+    assert gt.at["PRJNA883192", "paired_end_r1_only"] == "false"
     # no row in the current set is included via reproducible demux
     assert (gt["demultiplexed"] == "true").sum() == 0
 
@@ -190,10 +214,10 @@ def test_read_state_evidence_schema_and_coverage() -> None:
     ]
     # covers exactly the benchmark set, and read_state mirrors ground_truth
     gt = _gt().set_index("accession")
-    assert set(ev["accession"]) == _RECOVERY | _SPECIFICITY
+    assert set(ev["accession"]) == _BENCHMARK
     for _, row in ev.iterrows():
         acc = row["accession"]
-        assert row["read_state"] in {"raw_standard", "pre_trimmed"}
+        assert row["read_state"] in {"raw_standard", "pre_trimmed", "adapter_control"}
         assert row["read_state"] == gt.at[acc, "read_state"], (
             f"{acc}: evidence/gt read_state mismatch"
         )
@@ -222,12 +246,12 @@ def test_screening_log_covers_full_original_pool() -> None:
     assert _SCREENING_LOG.exists()
     sl = pd.read_csv(_SCREENING_LOG, sep="\t", dtype=str).fillna("")
     assert list(sl.columns) == ["accession", "read_state", "included", "arm", "reason", "evidence"]
-    assert set(sl["accession"]) == _RECOVERY | _SPECIFICITY | _EXCLUDED_ACCESSIONS
+    assert set(sl["accession"]) == _BENCHMARK | _EXCLUDED_ACCESSIONS
 
 
 def test_screening_log_included_flags_match_arms() -> None:
     sl = pd.read_csv(_SCREENING_LOG, sep="\t", dtype=str).fillna("").set_index("accession")
-    for acc in _RECOVERY | _SPECIFICITY:
+    for acc in _BENCHMARK:
         assert sl.at[acc, "included"] == "true", f"{acc} should be included"
     for acc in _EXCLUDED_ACCESSIONS:
         assert sl.at[acc, "included"] == "false", f"{acc} should be excluded"

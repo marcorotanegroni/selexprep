@@ -1,7 +1,7 @@
 """Empirical primer / constant-region inference from FASTQ-derived sequences.
 
-Scans the longest consensus prefix/suffix of the top-N most abundant
-sequences in the **earliest** available SELEX round (round_00 preferred).
+Scans the consensus prefix/suffix of the top-N most abundant sequences in
+the **earliest** available SELEX round (round_00 preferred).
 
 **Why earliest:** naive pools have maximally diverse random regions, so
 everything the reads share at the flanks IS the primer by construction. In
@@ -9,11 +9,12 @@ late rounds the random region has collapsed to winners, making primer
 detection unreliable — you'd "detect" the winning aptamer.
 
 **Algorithm:**
-  For each candidate flank length L (from MAX_LEN down to MIN_LEN):
-    take first/last L bases of each top-N sequence
-    find the most common L-mer
-    count sequences whose flank matches within ≤ 1 Hamming distance
-    if hits / total ≥ CONFIDENCE: accept; otherwise try shorter L
+  Walk inward from each read boundary and compute the positional consensus
+  base + support. The flank boundary is the support cliff: high-support
+  constant-region positions followed by a sustained drop into the random
+  region. This avoids both old failure modes: hard-capping long T7-bearing
+  constants at 30 nt, and over-extending by one random base when a longer
+  candidate still passes Hamming ≤ 1 globally.
 
 **Phase-1 caveat:** this module is the algorithm port. Phase 2 wraps it in
 ``library/report.py`` to emit a full ``LibraryReport`` with adapter
@@ -64,8 +65,11 @@ logger = logging.getLogger(__name__)
 DEFAULT_TOP_N: int | None = None
 DEFAULT_CONFIDENCE = 0.75
 DEFAULT_MIN_LEN = 15
-DEFAULT_MAX_LEN = 30
+DEFAULT_MAX_LEN = 60
 DEFAULT_MIN_SEQS_FOR_DETECTION = 500
+BOUNDARY_SUPPORT_FLOOR = 0.55
+BOUNDARY_STRONG_POSITION_FRACTION = 0.80
+BOUNDARY_DROP_RUN = 2
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +129,71 @@ def _hamming_le1(a: str, b: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _positional_consensus(
+    sequences: list[str],
+    *,
+    is_prefix: bool,
+    max_len: int,
+    min_seqs_for_detection: int,
+) -> tuple[list[str], list[float]]:
+    """Return consensus bases and support, walking inward from one read edge.
+
+    Prefix consensus is returned left-to-right from read start. Suffix
+    consensus is returned from read end inward; callers reverse the selected
+    segment to recover the natural 5'→3' suffix sequence.
+    """
+    consensus: list[str] = []
+    supports: list[float] = []
+    for offset in range(max_len):
+        bases: list[str] = []
+        for seq in sequences:
+            if len(seq) <= offset:
+                continue
+            bases.append(seq[offset] if is_prefix else seq[-(offset + 1)])
+        if len(bases) < min_seqs_for_detection:
+            break
+        base, count = Counter(bases).most_common(1)[0]
+        consensus.append(base)
+        supports.append(count / len(bases))
+    return consensus, supports
+
+
+def _boundary_length(
+    supports: list[float],
+    *,
+    min_len: int,
+    confidence: float,
+) -> int:
+    """Choose a flank length from positional support values.
+
+    ``confidence`` remains the strong-position threshold. The lower
+    ``BOUNDARY_SUPPORT_FLOOR`` allows true constant positions with modest
+    quality decay, while ``BOUNDARY_DROP_RUN`` prevents a single noisy base
+    from truncating the flank. A candidate must still contain mostly strong
+    positions, so low-complexity or biased random regions do not become
+    primers merely by sitting above the floor.
+    """
+    if len(supports) < min_len:
+        return 0
+
+    floor = min(confidence, BOUNDARY_SUPPORT_FLOOR)
+    boundary = len(supports)
+    for i in range(len(supports) - BOUNDARY_DROP_RUN + 1):
+        window = supports[i : i + BOUNDARY_DROP_RUN]
+        if all(v < floor for v in window):
+            boundary = i
+            break
+
+    if boundary < min_len:
+        return 0
+
+    called = supports[:boundary]
+    strong = sum(1 for v in called if v >= confidence)
+    if strong / len(called) < BOUNDARY_STRONG_POSITION_FRACTION:
+        return 0
+    return boundary
+
+
 def detect_flank(
     sequences: list[str],
     is_prefix: bool,
@@ -135,19 +204,25 @@ def detect_flank(
 ) -> FlankResult:
     """Detect the longest consensus prefix (or suffix) across `sequences`.
 
-    Returns the longest L (between `min_len` and `max_len`) at which at least
-    `confidence` fraction of sequences share an L-mer within Hamming ≤ 1.
-    Returns `FlankResult(None, 0, 0.0)` if no consensus reaches `confidence`.
+    Returns the boundary-cliff consensus length between ``min_len`` and
+    ``max_len``. The reported confidence preserves the original FlankResult
+    semantics: fraction of sequences whose called flank matches the consensus
+    within Hamming ≤ 1.
     """
-    for L in range(max_len, min_len - 1, -1):
+    consensus, supports = _positional_consensus(
+        sequences,
+        is_prefix=is_prefix,
+        max_len=max_len,
+        min_seqs_for_detection=min_seqs_for_detection,
+    )
+    L = _boundary_length(supports, min_len=min_len, confidence=confidence)
+    if L:
+        selected = consensus[:L] if is_prefix else list(reversed(consensus[:L]))
+        sequence = "".join(selected)
         fragments = [(s[:L] if is_prefix else s[-L:]) for s in sequences if len(s) >= L]
-        if len(fragments) < min_seqs_for_detection:
-            continue
-        most_common, _count = Counter(fragments).most_common(1)[0]
-        hits = sum(1 for f in fragments if _hamming_le1(f, most_common))
-        frac = hits / len(fragments)
-        if frac >= confidence:
-            return FlankResult(sequence=most_common, length=L, confidence=frac)
+        if len(fragments) >= min_seqs_for_detection:
+            hits = sum(1 for f in fragments if _hamming_le1(f, sequence))
+            return FlankResult(sequence=sequence, length=L, confidence=hits / len(fragments))
     return FlankResult(sequence=None, length=0, confidence=0.0)
 
 

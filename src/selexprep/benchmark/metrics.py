@@ -79,9 +79,10 @@ class FetchStats:
 
     Derived from the :class:`~selexprep.fetch.plan.FetchPlan` audit trail
     (``fetch_metadata.json``: the PLAN, i.e. what ENA said *should* exist)
-    cross-referenced with the on-disk ``fastqs.manifest`` (R1-only, what
-    actually landed). Phase 6b.10 / Codex pass-3: the plan is a PLAN, not
-    an outcome log, so the field names stay honest — we report
+    cross-referenced with the on-disk primary-read ``fastqs.manifest``
+    (R1/single-end FASTQs; R2 mates live in ``fastqs.r2.manifest`` for
+    paired-aware detection). Phase 6b.10 / Codex pass-3: the plan is a
+    PLAN, not an outcome log, so the field names stay honest — we report
     expected / available / missing / no-fastq-url, and NEVER claim
     ``failed_runs`` (a run with no on-disk FASTQ might be embargoed,
     no-URL, or a genuine download failure — the plan can't tell us which).
@@ -262,10 +263,12 @@ class PairRecoveryByStatus:
     - ``pair_equivalent`` — both sides matched via any equivalence
       rule (``EXACT`` / ``REVCOMP`` / ``U_T_NORMALIZED`` /
       ``BARCODE_STRIPPED``).
-    - ``pair_partial``    — exactly one side matched; the other is
-      ``PARTIAL_5P`` / ``PARTIAL_3P`` / ``MISMATCH`` /
-      ``IUPAC_UNSUPPORTED``.
-    - ``pair_failed``     — neither side matched.
+    - ``pair_partial``    — at least one side carried informative recovery
+      (matched OR a boundary ``PARTIAL_5P`` / ``PARTIAL_3P``) but the pair
+      did not both fully match. Includes both-sides-PARTIAL (correct
+      regions, fuzzy boundaries) — Codex pass-4.
+    - ``pair_failed``     — NO informative recovery on either side (both
+      ``MISMATCH`` / ``IUPAC_UNSUPPORTED`` / no report).
 
     Bucketed by ``LibraryReport.status`` so the Figure A headline panel
     shows "of HIGH-confidence calls, what fraction recovered the pair
@@ -374,6 +377,9 @@ class BenchmarkMetricsReport:
     recovery_denominator: int = 0
     # specificity arm — no-false-call on pre_trimmed deposits.
     specificity: SpecificityReport = field(default_factory=SpecificityReport)
+    # adapter-control panel — no-false-call on adapter_control deposits
+    # (constant collides with a known adapter; out of the recovery denominator).
+    adapter_control: SpecificityReport = field(default_factory=SpecificityReport)
     # multi-round-only sensitivity sub-report (recovery arm minus
     # mono_round rows) — so confidence-limited single-round rows don't
     # silently deflate the headline (Codex #3: don't drop hard rows
@@ -480,12 +486,14 @@ def _filter_verified(rows: list[BenchmarkRow]) -> tuple[list[BenchmarkRow], list
 def compute_fetch_stats_from_plan(
     accession: str, plan: FetchPlan, manifest_basenames: set[str]
 ) -> FetchStats:
-    """Cross-reference a FetchPlan (what ENA said exists) against on-disk R1 FASTQs.
+    """Cross-reference a FetchPlan (what ENA said exists) against primary FASTQs.
 
     ``manifest_basenames`` is the set of FASTQ *basenames* present in the
-    ``fastqs.manifest`` (R1-only — R2 mates are filtered out by the
-    Snakefile's ``! -name '*_2.fastq.gz'``). A run counts as *available*
-    iff at least one of its non-R2 FASTQ filenames is in that set.
+    primary ``fastqs.manifest`` (R1 for paired-end, the only FASTQ for
+    single-end). R2 mates are tracked separately for detect via
+    ``fastqs.r2.manifest`` and are intentionally not needed to decide whether
+    a run landed. A run counts as *available* iff at least one of its non-R2
+    FASTQ filenames is in that set.
 
     Honest semantics (Codex pass-3): the plan is a PLAN, not an outcome
     log, so we report expected / available / missing / no-URL only —
@@ -594,6 +602,12 @@ def compute_primer_recovery(rows: list[BenchmarkRow]) -> PrimerRecoveryReport:
 _MATCHING_KINDS: frozenset[str] = frozenset(
     {"EXACT", "REVCOMP", "U_T_NORMALIZED", "BARCODE_STRIPPED"}
 )
+# Boundary partials: the correct constant region was localized but its extent
+# is off (e.g. detect under-extends a long T7-containing 5' flank). Not a full
+# match, but informative recovery (Codex pass-4) — NOT pair_failed.
+_PARTIAL_KINDS: frozenset[str] = frozenset({"PARTIAL_5P", "PARTIAL_3P"})
+# A side carries informative recovery if it matched OR was a boundary partial.
+_INFORMATIVE_KINDS: frozenset[str] = _MATCHING_KINDS | _PARTIAL_KINDS
 
 
 def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByStatus:
@@ -603,8 +617,8 @@ def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByS
 
     - both sides ``EXACT``                    → ``pair_exact``
     - both sides matched (any equivalence)    → ``pair_equivalent``
-    - exactly one side matched                → ``pair_partial``
-    - neither side matched                    → ``pair_failed``
+    - ≥1 side informative (matched/partial)   → ``pair_partial``
+    - no informative recovery either side     → ``pair_failed``
 
     ``pair_equivalent`` is the superset bucket: it includes
     ``pair_exact`` if you sum them, so the Figure A panel should display
@@ -630,15 +644,22 @@ def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByS
         both_matched = (
             eq_5p.equivalence_kind in _MATCHING_KINDS and eq_3p.equivalence_kind in _MATCHING_KINDS
         )
-        one_matched = (
-            eq_5p.equivalence_kind in _MATCHING_KINDS or eq_3p.equivalence_kind in _MATCHING_KINDS
+        # Codex pass-4: pair_failed is reserved for NO informative recovery on
+        # either side (both MISS: MISMATCH / IUPAC_UNSUPPORTED / no report).
+        # A side that matched OR was a boundary partial (correct region, fuzzy
+        # extent) is informative → the pair is at least pair_partial. This
+        # fixes the both-sides-PARTIAL case, which previously fell through to
+        # pair_failed and under-represented region-level recovery.
+        any_informative = (
+            eq_5p.equivalence_kind in _INFORMATIVE_KINDS
+            or eq_3p.equivalence_kind in _INFORMATIVE_KINDS
         )
 
         if both_exact:
             bucket = "pair_exact"
         elif both_matched:
             bucket = "pair_equivalent"
-        elif one_matched:
+        elif any_informative:
             bucket = "pair_partial"
         else:
             bucket = "pair_failed"
@@ -767,22 +788,22 @@ def compute_n_length_recovery(
     return report
 
 
-def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
-    """No-false-call rate over ``read_state == "pre_trimmed"`` rows.
+def _compute_no_false_call(rows: list[BenchmarkRow], read_state: str) -> SpecificityReport:
+    """No-false-call report over rows of a given ``read_state``.
 
     Correct (no false positive) iff selexprep emitted no primer —
-    ``primer_5p is None and primer_3p is None`` (or no library_report at
-    all). Any emitted primer on a pre-trimmed deposit is a false positive
-    (selexprep fabricated a constant that isn't in the reads).
+    ``primer_5p is None and primer_3p is None``. Any emitted primer is a
+    false positive (selexprep fabricated a constant that isn't recoverable).
+    A row with no ``library_report`` is ``not_evaluable`` (Codex pass-4) and
+    is excluded from the ``n_evaluated`` denominator.
 
-    Rows whose ``read_state`` is not ``"pre_trimmed"`` are skipped — they
-    belong to the recovery arm. Caller is responsible for passing the
-    verified row set; the read-state filter is applied here so the
-    function is self-contained and testable.
+    Shared by the specificity arm (``pre_trimmed``) and the adapter-control
+    panel (``adapter_control``): both expect a refusal, differing only in
+    WHY (pre-trimming vs adapter-collision), so the measurement is identical.
     """
     report = SpecificityReport()
     for r in rows:
-        if r.read_state != "pre_trimmed":
+        if r.read_state != read_state:
             continue
         lr = r.library_report
         if lr is None:
@@ -820,6 +841,27 @@ def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
     report.false_positive_accessions = sorted(report.false_positive_accessions)
     report.not_evaluable_accessions = sorted(report.not_evaluable_accessions)
     return report
+
+
+def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
+    """Specificity arm — no-false-call on ``read_state == "pre_trimmed"`` deposits.
+
+    Pre-trimmed reads are the N-region only, so the correct behavior is to
+    emit NO primer. Delegates to :func:`_compute_no_false_call`.
+    """
+    return _compute_no_false_call(rows, "pre_trimmed")
+
+
+def compute_adapter_control(rows: list[BenchmarkRow]) -> SpecificityReport:
+    """Adapter-control panel — no-false-call on ``read_state == "adapter_control"``.
+
+    Deposits whose constant collides with a known sequencing adapter (e.g.
+    PRJEB70964: 5' constant = revcomp(TruSeq R1)). Excluded from the recovery
+    denominator — scoring "refused to call an adapter a primer" as a recovery
+    miss would be unfair — and reported here as a NEGATIVE CONTROL where the
+    correct behavior is no primer call. Delegates to :func:`_compute_no_false_call`.
+    """
+    return _compute_no_false_call(rows, "adapter_control")
 
 
 def compute_count_correlation(
@@ -963,14 +1005,15 @@ def aggregate_metrics(
         skipped_unverified_accessions=sorted(skipped),
     )
 
-    # Phase 6b.10 — two-arm split by read_state. Recovery metrics
-    # (sensitivity) run ONLY on the raw_standard arm, where primers are
-    # physically present in the reads and recovery is even applicable.
-    # Specificity runs on the pre_trimmed arm. Rows with an empty/unknown
-    # read_state belong to neither arm and are excluded from both
-    # (they still count in the honest-accounting distributions below).
+    # Phase 6b.10 — split by read_state into benchmark roles. Recovery
+    # metrics (sensitivity) run ONLY on the raw_standard arm, where primers
+    # are physically present and recovery is even applicable. The
+    # specificity arm (pre_trimmed) and adapter-control panel
+    # (adapter_control) self-filter inside their no-false-call computations.
+    # Rows with an empty/unknown read_state belong to no role and are
+    # excluded from all of them (but still count in the honest-accounting
+    # distributions below).
     raw_standard = [r for r in verified if r.read_state == "raw_standard"]
-    pre_trimmed = [r for r in verified if r.read_state == "pre_trimmed"]
 
     report.recovery_denominator = len(raw_standard)
     report.primer_recovery = compute_primer_recovery(raw_standard)
@@ -984,7 +1027,10 @@ def aggregate_metrics(
     report.multi_round_sensitivity = compute_pair_recovery_by_status(multi_round)
 
     # Specificity arm — no-false-call on pre_trimmed deposits.
-    report.specificity = compute_specificity(pre_trimmed)
+    report.specificity = compute_specificity(verified)
+    # Adapter-control panel — no-false-call on adapter_control deposits
+    # (e.g. PRJEB70964, 5' constant = revcomp(TruSeq R1)); out of recovery.
+    report.adapter_control = compute_adapter_control(verified)
 
     # Honest accounting runs across ALL verified rows (both arms +
     # any unlabeled), so the distributions + safe-failure tally reflect
@@ -1097,6 +1143,7 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
         # Phase 6b.10 — two-arm sensitivity/specificity fields.
         "recovery_denominator": report.recovery_denominator,
         "specificity": _specificity_to_dict(report.specificity),
+        "adapter_control": _specificity_to_dict(report.adapter_control),
         "multi_round_sensitivity": _pair_recovery_to_dict(report.multi_round_sensitivity),
         "fetch_stats": {
             acc: _fetch_stats_to_dict(fs) for acc, fs in sorted(report.fetch_stats.items())

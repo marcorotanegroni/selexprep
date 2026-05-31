@@ -71,13 +71,13 @@ def _iter_sequences(fastq: Path, limit: int | None):
 
 
 def _manifest_fastqs(results_dir: Path, accession: str) -> list[Path]:
-    """R1 FASTQs for an accession, from the run's manifest (R1-only) or a glob."""
+    """Primary FASTQs for an accession, from the run manifest or a glob."""
     manifest = results_dir / accession / "fastqs.manifest"
     if manifest.exists():
         paths = [Path(ln.strip()) for ln in manifest.read_text().splitlines() if ln.strip()]
         if paths:
             return paths
-    # Fallback: glob the round dirs, excluding R2 mates (R1-only policy).
+    # Fallback: glob the round dirs, excluding R2 mates to mirror the primary manifest.
     return sorted(
         p
         for p in (results_dir / accession).glob("round_*/*.fastq.gz")
@@ -100,9 +100,19 @@ def _consensus(counters: list[Counter]) -> tuple[str, list[float]]:
 
 
 def _boundary(supports: list[float], threshold: float) -> int:
-    """First position where support drops below threshold (= end of constant)."""
+    """Position of the constant→random support cliff (= end of constant).
+
+    The boundary is the first position that drops below ``threshold`` AND
+    stays below at the next position (a *sustained* drop). The single-dip
+    guard matters because 3' constants commonly sit at ~80-86% support
+    (Illumina 3'-end quality decay), so a naive first-below test truncates
+    on one noisy position. Set ``threshold`` BELOW the constant band and
+    ABOVE the random band (~0.25-0.35 for an undoped library): the default
+    0.6 cleanly separates the two. Always confirm against the printed
+    per-position table — the table is authoritative, this is a heuristic.
+    """
     for i, s in enumerate(supports):
-        if s < threshold:
+        if s < threshold and (i + 1 >= len(supports) or supports[i + 1] < threshold):
             return i
     return len(supports)
 
@@ -217,7 +227,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--accession", action="append", required=True, help="repeatable")
     p.add_argument("--sample", type=int, default=200000, help="reads to sample (0 = all)")
     p.add_argument("--flank-len", type=int, default=45)
-    p.add_argument("--support-threshold", type=float, default=0.85)
+    p.add_argument(
+        "--support-threshold",
+        type=float,
+        default=0.6,
+        help="constant/random cliff threshold; set below the constant band "
+        "(~0.8-0.99) and above the random band (~0.25-0.35). Default 0.6.",
+    )
     p.add_argument("--out", type=Path, default=None, help="provenance TSV (appended)")
     args = p.parse_args(argv)
 
