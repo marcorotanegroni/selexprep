@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
 
 import pandas as pd
@@ -88,6 +89,32 @@ def test_detect_flank_tolerates_single_hamming_mismatch() -> None:
     # 80% exact + 20% Hamming-1 from the consensus → 100% match
     assert result.sequence is not None
     assert result.confidence == pytest.approx(1.0)
+
+
+def test_detect_primers_recovers_long_flanks_without_random_overextension() -> None:
+    """Long T7-bearing constants must not be hard-capped at 30 nt.
+
+    Regression for the Tier-1 PRJDB9110/PRJDB9111 finding: the old detector
+    searched only up to 30 nt and, when max_len was raised naively, could
+    absorb one adjacent random base because the whole candidate still matched
+    within Hamming <= 1. The boundary should stop at the support cliff.
+    """
+    rng = random.Random(7)
+    primer_5p = "TAATACGACTCACTATAGGGAGCAGGAGAGAGGTCAGATG"  # 40 nt
+    primer_3p = "CCTATGCGTGCTAGTGTGA"  # 19 nt
+    bases = "ACGT"
+    seqs = [
+        primer_5p + "".join(rng.choice(bases) for _ in range(30)) + primer_3p for _ in range(2_000)
+    ]
+
+    det = detect_primers(seqs, min_seqs_for_detection=100)
+
+    assert det is not None
+    assert det.primer_5p.sequence == primer_5p
+    assert det.primer_5p.length == 40
+    assert det.primer_3p.sequence == primer_3p
+    assert det.primer_3p.length == 19
+    assert det.estimated_random_region_len == 30
 
 
 # ----- detect_primers -----

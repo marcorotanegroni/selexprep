@@ -164,6 +164,25 @@ def test_plot_figure_a_renders_exact_and_equivalent_separately(tmp_path: Path) -
     assert png.exists()
 
 
+def test_plot_figure_a_renders_adapter_control(tmp_path: Path) -> None:
+    """Adapter-control panel surfaces in the headline when present (PRJEB70964)."""
+    payload = _make_metrics_payload()
+    payload["adapter_control"] = {
+        "n_evaluated": 1,
+        "n_no_false_call": 1,
+        "n_false_positive": 0,
+        "n_not_evaluable": 0,
+        "false_positive_accessions": [],
+        "not_evaluable_accessions": [],
+        "per_row": [],
+    }
+    metrics = tmp_path / "metrics.json"
+    metrics.write_text(json.dumps(payload), encoding="utf-8")
+    pdf, png = plot_figure_a(metrics, tmp_path / "out")
+    assert pdf.exists()
+    assert png.exists()
+
+
 def test_plot_figure_a_recovery_only_no_specificity(tmp_path: Path) -> None:
     """A recovery-only metrics set (specificity arm empty) still renders all panels."""
     payload = _make_metrics_payload()

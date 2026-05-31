@@ -32,9 +32,19 @@ Four panels arranged 2x2:
   ``required_action`` distributions across all verified rows, plus a
   fetch_stats note for partial-fetch deposits (e.g. PRJEB70964 17/27).
 
-The figure title carries the headline: complete/partial recovery on the
-``raw_standard`` N + the specificity false-positive count. NEVER a flat
-"X/11" (the set is not a random sample).
+The figure title carries the headline: exact / equivalent / partial
+recovery on the ``raw_standard`` N + the specificity false-positive count.
+NEVER a flat "X/11" (the set is not a random sample).
+
+Conservative framing (Codex pass-4) — keep two axes distinct in prose:
+**region-level localization** (detect finds where the constants are) vs
+**exact-boundary recovery** (detect gets their exact extent). On the
+re-curated RaptRanker rows detect localizes the regions but under-extends
+long T7-containing 5' flanks by ~7-10 nt → scored ``partial``, NOT
+``exact``. Do NOT describe partials as "constants correctly identified";
+say "localized the region; exact-boundary recovery incomplete, especially
+for long T7-containing 5' flanks." (A ~30 nt detect primer-length cap is a
+suspected v0.1 limitation pending investigation.)
 
 PNG byte-output is non-deterministic across matplotlib versions
 (accepted in Phase 5); the underlying ``metrics.json`` IS deterministic
@@ -304,13 +314,18 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
     collapsed = _collapse_pair_counts(pair_recovery.get("counts", {}))
     spec_n = int(specificity.get("n_evaluated", 0))
     spec_fp = int(specificity.get("n_false_positive", 0))
+    adapter_control = metrics.get("adapter_control", {})
+    ac_n = int(adapter_control.get("n_evaluated", 0))
+    ac_ok = int(adapter_control.get("n_no_false_call", 0))
 
     parts = ["selexprep Figure A — primer-inference benchmark"]
     parts.append(
         f"recovery: {collapsed['exact']} exact / {collapsed['equivalent']} equiv / "
-        f"{collapsed['partial']} partial of {recovery_n} raw_standard"
+        f"{collapsed['partial']} partial (region, fuzzy boundary) of {recovery_n} raw_standard"
     )
     parts.append(f"specificity: {spec_fp}/{spec_n} false-positive calls on pre_trimmed")
+    if ac_n:
+        parts.append(f"adapter-control: {ac_ok}/{ac_n} correct refusals")
     fig.suptitle("  ·  ".join(parts), fontsize=11)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
 

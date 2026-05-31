@@ -9,6 +9,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from selexprep.cli import app
+from selexprep.library.adapters import reverse_complement
 
 runner = CliRunner()
 
@@ -559,6 +560,46 @@ def test_detect_with_round_map_emits_library_report(tmp_path: Path) -> None:
     assert payload["primer_5p"] is not None
     assert payload["primer_3p"] is not None
     assert payload["extraction_mode"] == "BOTH_PRIMERS_SINGLE_READ"
+
+
+def test_detect_with_paired_r2_threads_split_primer_stream(tmp_path: Path) -> None:
+    primer_5p = "GGTAATACGACTCACTATAGGG"
+    primer_3p = "CCATGCATGCATGCATGCAT"
+    r1 = tmp_path / "round0_1.fastq.gz"
+    r2 = tmp_path / "round0_2.fastq.gz"
+    _write_fastq_gz(r1, _synthetic_pool(primer_5p, primer_3p=None, n=1000, random_len=80))
+    _write_fastq_gz(
+        r2,
+        _synthetic_pool(reverse_complement(primer_3p), primer_3p=None, n=1000, random_len=80),
+    )
+
+    round_map = tmp_path / "rounds.tsv"
+    round_map.write_text(
+        "file\tround_number\nround0_1.fastq.gz\t0\nround0_2.fastq.gz\t0\n",
+        encoding="utf-8",
+    )
+
+    outdir = tmp_path / "out"
+    result = runner.invoke(
+        app,
+        [
+            "detect",
+            str(r1),
+            "--paired-r2",
+            str(r2),
+            "--round-map",
+            str(round_map),
+            "--outdir",
+            str(outdir),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+    payload = json.loads((outdir / "library_report.json").read_text())
+    assert payload["read_source"] == "R1_AND_R2"
+    assert payload["extraction_mode"] == "PAIRED_END_SPLIT_PRIMERS"
+    assert payload["primer_5p"] == primer_5p
+    assert payload["primer_3p"] == primer_3p
 
 
 def test_detect_fastq_not_in_round_map_exits_with_code_2(tmp_path: Path) -> None:

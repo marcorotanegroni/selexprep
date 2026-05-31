@@ -68,11 +68,12 @@ rule fetch:
         # Replaces the old ``Path.glob`` input function in rule detect, which
         # Snakemake evaluated before fetch ran → empty file list on a fresh
         # run. The manifest is the single source of truth for which FASTQs
-        # detect consumes. The ``! -name '*_2.fastq.gz'`` filter is the
-        # paired-end policy: detect's CLI is not paired-aware (single R1
-        # stream), so we keep R1 + single-end and drop R2 mates uniformly.
-        # Paired-aware detect is a v0.2 deferral.
+        # detect consumes as the primary stream. R2 mates are recorded in a
+        # separate manifest and passed via ``selexprep detect --paired-r2`` so
+        # paired split-primer datasets are evaluated as paired-end instead of
+        # being forced into R1-only partial recovery.
         manifest=OUTROOT + "/{accession}/fastqs.manifest",
+        r2_manifest=OUTROOT + "/{accession}/fastqs.r2.manifest",
     params:
         # Pass --allow-manual-review on curated rows so fetch downloads
         # FASTQs even when ENA metadata is too sparse to auto-assign
@@ -101,6 +102,7 @@ rule fetch:
         rc=$?
         set -e
         find {OUTROOT}/{wildcards.accession} -name '*.fastq.gz' ! -name '*_2.fastq.gz' | sort > {output.manifest}
+        find {OUTROOT}/{wildcards.accession} -name '*_2.fastq.gz' | sort > {output.r2_manifest}
         if [ ! -s {output.manifest} ] || [ ! -s {output.marker} ]; then echo "fetch failed for {wildcards.accession} (rc=$rc): empty manifest or missing fetch_metadata.json" >&2; exit 1; fi
         if [ "$rc" -ne 0 ]; then echo "fetch rc=$rc for {wildcards.accession} (partial download; proceeding)" >&2; fi
         """
@@ -126,6 +128,7 @@ rule detect:
         # glob was evaluated by Snakemake before fetch executed → empty
         # fastq_args on a fresh run (Codex-caught blocker).
         manifest=OUTROOT + "/{accession}/fastqs.manifest",
+        r2_manifest=OUTROOT + "/{accession}/fastqs.r2.manifest",
     output:
         OUTROOT + "/{accession}/library_report.json",
     params:
@@ -137,7 +140,11 @@ rule detect:
         "if [ ! -s {input.manifest} ]; then "
         "echo 'empty manifest: fetch produced no FASTQs for {wildcards.accession}' >&2; "
         "exit 1; fi; "
-        "selexprep detect $(cat {input.manifest}) "
+        "r2_args=''; "
+        "if [ -s {input.r2_manifest} ]; then "
+        "while IFS= read -r fq; do r2_args=\"$r2_args --paired-r2 $fq\"; done < {input.r2_manifest}; "
+        "fi; "
+        "selexprep detect $(cat {input.manifest}) $r2_args "
         "--round-map {params.round_map} "
         "--outdir {OUTROOT}/{wildcards.accession}"
 

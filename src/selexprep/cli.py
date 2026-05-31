@@ -227,6 +227,11 @@ def detect(
         "--round-map",
         help="TSV mapping FASTQ file → round number (required for local FASTQs).",
     ),
+    paired_r2: list[Path] | None = typer.Option(
+        None,
+        "--paired-r2",
+        help="R2 FASTQ files (one or more); enables paired split-primer detection.",
+    ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
     sampling_seed: int = typer.Option(
         42, "--sampling-seed", help="Seed for primer-inference subsampling RNG."
@@ -247,6 +252,20 @@ def detect(
         )
         raise typer.Exit(code=2)
 
+    all_input_paths: list[Path] = list(fastq) + list(paired_r2 or [])
+    all_basenames = [p.name for p in all_input_paths]
+    if len(set(all_basenames)) != len(all_basenames):
+        from collections import Counter as _Counter
+
+        dups = sorted(name for name, count in _Counter(all_basenames).items() if count > 1)
+        typer.secho(
+            "detect: duplicate FASTQ basenames in inputs: "
+            f"{dups}. Round-map matching is by basename.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
+
     round_by_basename = _load_round_map(round_map)
     sequences_by_round: dict[int, list[str]] = {}
     for fq in fastq:
@@ -260,10 +279,26 @@ def detect(
             raise typer.Exit(code=2)
         sequences_by_round.setdefault(r, []).extend(_read_fastq_sequences(fq))
 
-    # Phase 2 CLI is single-end only; paired-end (R2 stream) arrives in Phase 3.
+    paired_mate_streams: dict[int, list[str]] | None = None
+    read_source = "R1"
+    if paired_r2:
+        paired_mate_streams = {}
+        read_source = "R1_AND_R2"
+        for fq in paired_r2:
+            r = round_by_basename.get(fq.name)
+            if r is None:
+                typer.secho(
+                    f"detect: R2 FASTQ {fq.name!r} not in round map {round_map}",
+                    fg=typer.colors.RED,
+                    err=True,
+                )
+                raise typer.Exit(code=2)
+            paired_mate_streams.setdefault(r, []).extend(_read_fastq_sequences(fq))
+
     report = compute_library_report(
         sequences_by_round,
-        read_source="R1",
+        read_source=read_source,  # type: ignore[arg-type]
+        paired_mate_streams=paired_mate_streams,
         sampling_seed=sampling_seed,
         max_reads_per_round=max_reads_per_round,
     )

@@ -22,6 +22,7 @@ from selexprep.benchmark.metrics import (
     BenchmarkRow,
     FetchStats,
     aggregate_metrics,
+    compute_adapter_control,
     compute_count_correlation,
     compute_extraction_mode_distribution,
     compute_fetch_stats_from_plan,
@@ -639,6 +640,39 @@ def test_compute_specificity_ignores_raw_standard_rows() -> None:
     assert report.n_evaluated == 0
 
 
+def test_compute_adapter_control_correct_refusal() -> None:
+    """Adapter-control row with null primers → no_false_call (correct refusal)."""
+    rows = [
+        _row(
+            accession="PRJ_ADAPTER",
+            read_state="adapter_control",
+            library_report=_make_lr(primer_5p=None, primer_3p=None, status="UNABLE_TO_INFER"),
+        )
+    ]
+    report = compute_adapter_control(rows)
+    assert report.n_evaluated == 1
+    assert report.n_no_false_call == 1
+    assert report.n_false_positive == 0
+
+
+def test_adapter_control_excluded_from_recovery_and_specificity() -> None:
+    """An adapter_control row is in NEITHER arm; it's tallied in adapter_control."""
+    rows = [
+        _row(accession="PRJ_RS", read_state="raw_standard"),
+        _row(
+            accession="PRJ_AC",
+            read_state="adapter_control",
+            library_report=_make_lr(primer_5p=None, primer_3p=None),
+        ),
+    ]
+    report = aggregate_metrics(rows)
+    assert report.recovery_denominator == 1  # only the raw_standard row
+    assert report.primer_recovery.n_evaluated == 1
+    assert report.specificity.n_evaluated == 0  # adapter_control is not specificity
+    assert report.adapter_control.n_evaluated == 1
+    assert report.adapter_control.n_no_false_call == 1
+
+
 def test_compute_specificity_missing_report_is_not_evaluable() -> None:
     """No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
 
@@ -819,6 +853,7 @@ def test_write_metrics_json_includes_two_arm_fields(tmp_path: Path) -> None:
     payload = json.loads(out.read_text())
     assert "recovery_denominator" in payload
     assert "specificity" in payload
+    assert "adapter_control" in payload
     assert "multi_round_sensitivity" in payload
     assert "fetch_stats" in payload
     assert payload["recovery_denominator"] == 1
@@ -827,3 +862,48 @@ def test_write_metrics_json_includes_two_arm_fields(tmp_path: Path) -> None:
     # top-level keys stay sorted (determinism contract)
     keys = list(payload.keys())
     assert keys == sorted(keys)
+
+
+# --- pair roll-up: informative-recovery rule (Codex pass-4) ----------------
+
+
+def test_pair_recovery_both_partial_is_pair_partial() -> None:
+    """Both sides PARTIAL (correct region, fuzzy boundary) → pair_partial, NOT
+    pair_failed. This is the re-curated PRJDB9110/9111 case (detect under-extends
+    the constants but localizes the right regions)."""
+    rows = [
+        _row(
+            primer_5p_truth="ACGTACGTAA",  # detect 'ACGTACGT' is a prefix → PARTIAL_5P
+            primer_3p_truth="TTGCATGCA",  # detect 'TGCATGCA' is a suffix → PARTIAL_3P
+            library_report=_make_lr(primer_5p="ACGTACGT", primer_3p="TGCATGCA", status="HIGH"),
+        )
+    ]
+    report = compute_pair_recovery_by_status(rows)
+    assert report.counts == {"HIGH": {"pair_partial": 1}}
+
+
+def test_pair_recovery_one_partial_one_miss_is_pair_partial() -> None:
+    """One informative side (PARTIAL) + one MISS → pair_partial (previously this
+    fell through to pair_failed)."""
+    rows = [
+        _row(
+            primer_5p_truth="ACGTACGTAA",  # PARTIAL_5P
+            primer_3p_truth="TGCATGCA",
+            library_report=_make_lr(primer_5p="ACGTACGT", primer_3p="CCCCCCCC", status="MEDIUM"),
+        )
+    ]
+    report = compute_pair_recovery_by_status(rows)
+    assert report.counts == {"MEDIUM": {"pair_partial": 1}}
+
+
+def test_pair_recovery_both_mismatch_is_pair_failed() -> None:
+    """No informative recovery on either side → pair_failed (unchanged anchor)."""
+    rows = [
+        _row(
+            primer_5p_truth="ACGTACGT",
+            primer_3p_truth="TGCATGCA",
+            library_report=_make_lr(primer_5p="GGGGGGGG", primer_3p="CCCCCCCC", status="LOW"),
+        )
+    ]
+    report = compute_pair_recovery_by_status(rows)
+    assert report.counts == {"LOW": {"pair_failed": 1}}
