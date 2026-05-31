@@ -90,7 +90,15 @@ class FetchStats:
     - ``fetch_available_runs`` — expected runs whose R1 FASTQ is on disk.
     - ``fetch_missing_runs`` — expected minus available (includes no-URL runs).
     - ``runs_with_no_fastq_url`` — runs whose ENA record had no
-      ``fastq_ftp`` URL (a sub-explanation for some missing runs).
+      ``fastq_ftp`` URL (an upstream-availability explanation for some
+      missing runs; cf. PRJEB70964's 10 no-URL runs).
+    - ``unassigned_missing_or_skipped`` — missing runs that DID have a URL
+      (``missing minus runs_with_no_fastq_url``). Codex pass-4: honestly
+      named — from the plan + manifest alone we cannot prove a run was
+      *skipped* for round-unassignment vs *failed* mid-download; true
+      failed-vs-skipped would need the Snakefile to persist a
+      ``fetch_result.json`` (a deferred option). cf. PRJEB22637 / PRJNA315881
+      where the missing run is an unassigned-round skip.
     - ``partial_fetch`` — some but not all expected runs landed
       (``0 < available < expected``). A total miss (available == 0) is
       NOT a partial fetch; a complete fetch (available == expected) is not
@@ -102,6 +110,7 @@ class FetchStats:
     fetch_available_runs: int = 0
     fetch_missing_runs: int = 0
     runs_with_no_fastq_url: int = 0
+    unassigned_missing_or_skipped: int = 0
     partial_fetch: bool = False
 
 
@@ -320,10 +329,15 @@ class SpecificityReport:
     primers were inferred.
     """
 
-    n_evaluated: int = 0
+    n_evaluated: int = 0  # rows WITH a report (no_false_call + false_positive)
     n_no_false_call: int = 0
     n_false_positive: int = 0
+    # Codex pass-4: a pre_trimmed row with no library_report is NOT a
+    # no-call success — it's not_evaluable (the inference run produced
+    # nothing to judge). It is excluded from the n_evaluated denominator.
+    n_not_evaluable: int = 0
     false_positive_accessions: list[str] = field(default_factory=list)
+    not_evaluable_accessions: list[str] = field(default_factory=list)
     per_row: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -486,6 +500,10 @@ def compute_fetch_stats_from_plan(
         if any(name in manifest_basenames for name in r1_names):
             available += 1
     missing = max(0, expected - available)
+    # Of the missing runs, the ones that HAD a URL (so not an upstream
+    # no-URL case) — skipped for round-unassignment or failed mid-download;
+    # the plan can't disambiguate, hence the honest name.
+    unassigned_missing_or_skipped = max(0, missing - runs_with_no_url)
     partial = 0 < available < expected
     return FetchStats(
         accession=accession,
@@ -493,6 +511,7 @@ def compute_fetch_stats_from_plan(
         fetch_available_runs=available,
         fetch_missing_runs=missing,
         runs_with_no_fastq_url=runs_with_no_url,
+        unassigned_missing_or_skipped=unassigned_missing_or_skipped,
         partial_fetch=partial,
     )
 
@@ -714,14 +733,30 @@ def compute_n_length_recovery(
     for r in rows:
         lr = r.library_report
         observed = lr.n_length_mode if lr is not None else None
+        extraction_mode = lr.extraction_mode if lr is not None else None
         per_row_entry: dict[str, Any] = {
             "accession": r.accession,
             "truth": r.n_length_truth,
             "observed": observed,
         }
-        if observed is None or r.n_length_truth <= 0:
+        # Codex pass-4: N-length recovery is only meaningful when BOTH
+        # flanks were recovered in a single read (the random region is
+        # bounded on both sides). When primers weren't recovered —
+        # UNABLE_TO_EXTRACT (null primers; n_length_mode degenerates to the
+        # raw read length) or FIVE/THREE_PRIME_ONLY (one boundary unknown)
+        # — the row is not_evaluable for N, NOT in/out of tolerance.
+        # Otherwise a null-primer row could be spuriously credited as
+        # "in tolerance" (the PRJEB70964 N=35 artifact).
+        if extraction_mode != "BOTH_PRIMERS_SINGLE_READ":
             report.n_unmeasurable += 1
             per_row_entry["bucket"] = "unmeasurable"
+            per_row_entry["reason"] = (
+                "no_report" if lr is None else f"extraction_mode={extraction_mode}"
+            )
+        elif observed is None or r.n_length_truth <= 0:
+            report.n_unmeasurable += 1
+            per_row_entry["bucket"] = "unmeasurable"
+            per_row_entry["reason"] = "missing_observed_or_truth"
         elif abs(observed - r.n_length_truth) <= tolerance:
             report.n_in_tolerance += 1
             per_row_entry["bucket"] = "in_tolerance"
@@ -749,10 +784,23 @@ def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
     for r in rows:
         if r.read_state != "pre_trimmed":
             continue
-        report.n_evaluated += 1
         lr = r.library_report
-        primer_5p = lr.primer_5p if lr is not None else None
-        primer_3p = lr.primer_3p if lr is not None else None
+        if lr is None:
+            # No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
+            report.n_not_evaluable += 1
+            report.not_evaluable_accessions.append(r.accession)
+            report.per_row.append(
+                {
+                    "accession": r.accession,
+                    "bucket": "not_evaluable",
+                    "primer_5p": None,
+                    "primer_3p": None,
+                }
+            )
+            continue
+        report.n_evaluated += 1
+        primer_5p = lr.primer_5p
+        primer_3p = lr.primer_3p
         emitted = primer_5p is not None or primer_3p is not None
         if emitted:
             report.n_false_positive += 1
@@ -770,6 +818,7 @@ def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
             }
         )
     report.false_positive_accessions = sorted(report.false_positive_accessions)
+    report.not_evaluable_accessions = sorted(report.not_evaluable_accessions)
     return report
 
 
@@ -1009,7 +1058,9 @@ def _specificity_to_dict(sp: SpecificityReport) -> dict[str, Any]:
         "n_evaluated": sp.n_evaluated,
         "n_no_false_call": sp.n_no_false_call,
         "n_false_positive": sp.n_false_positive,
+        "n_not_evaluable": sp.n_not_evaluable,
         "false_positive_accessions": sp.false_positive_accessions,
+        "not_evaluable_accessions": sp.not_evaluable_accessions,
         "per_row": sorted(sp.per_row, key=lambda x: x["accession"]),
     }
 
@@ -1021,6 +1072,7 @@ def _fetch_stats_to_dict(fs: FetchStats) -> dict[str, Any]:
         "fetch_available_runs": fs.fetch_available_runs,
         "fetch_missing_runs": fs.fetch_missing_runs,
         "runs_with_no_fastq_url": fs.runs_with_no_fastq_url,
+        "unassigned_missing_or_skipped": fs.unassigned_missing_or_skipped,
         "partial_fetch": fs.partial_fetch,
     }
 
