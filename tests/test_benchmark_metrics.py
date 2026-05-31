@@ -153,6 +153,34 @@ def test_n_length_recovery_zero_truth_treated_unmeasurable() -> None:
     assert report.n_unmeasurable == 1
 
 
+def test_n_length_recovery_gated_on_both_primers() -> None:
+    """Codex pass-4: N-length is only measurable with BOTH flanks recovered.
+
+    Rows with n_length_mode that WOULD match truth are still sent to
+    unmeasurable when primers weren't both recovered (UNABLE_TO_EXTRACT,
+    FIVE/THREE_PRIME_ONLY) — killing the null-primer "in tolerance" artifact
+    (e.g. PRJEB70964 N=35 with null primers).
+    """
+    rows = [
+        _row(
+            n_length_truth=30,
+            library_report=_make_lr(n_length_mode=30, extraction_mode="BOTH_PRIMERS_SINGLE_READ"),
+        ),
+        _row(  # would be in_tolerance, but null primers → gated to unmeasurable
+            n_length_truth=30,
+            library_report=_make_lr(n_length_mode=30, extraction_mode="UNABLE_TO_EXTRACT"),
+        ),
+        _row(  # only one flank → N not bounded → unmeasurable
+            n_length_truth=30,
+            library_report=_make_lr(n_length_mode=30, extraction_mode="FIVE_PRIME_ONLY"),
+        ),
+    ]
+    report = compute_n_length_recovery(rows, tolerance=2)
+    assert report.n_in_tolerance == 1
+    assert report.n_out_of_tolerance == 0
+    assert report.n_unmeasurable == 2
+
+
 # ---------------------------------------------------------------------------
 # Extraction mode distribution
 # ---------------------------------------------------------------------------
@@ -611,12 +639,20 @@ def test_compute_specificity_ignores_raw_standard_rows() -> None:
     assert report.n_evaluated == 0
 
 
-def test_compute_specificity_missing_report_is_no_false_call() -> None:
-    """No report ⇒ no emitted primer ⇒ not a false positive."""
+def test_compute_specificity_missing_report_is_not_evaluable() -> None:
+    """No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
+
+    A missing library_report means the inference produced nothing to judge;
+    counting it as a specificity success would inflate the headline. It is
+    excluded from the n_evaluated denominator.
+    """
     rows = [_row(accession="PRJ_PT", read_state="pre_trimmed", library_report=None)]
     report = compute_specificity(rows)
-    assert report.n_no_false_call == 1
+    assert report.n_not_evaluable == 1
+    assert report.not_evaluable_accessions == ["PRJ_PT"]
+    assert report.n_no_false_call == 0
     assert report.n_false_positive == 0
+    assert report.n_evaluated == 0
 
 
 # --- multi-round-only sensitivity sub-report -------------------------------
@@ -654,9 +690,31 @@ def test_compute_fetch_stats_partial_fetch() -> None:
     assert fs.fetch_available_runs == 2
     assert fs.fetch_missing_runs == 1
     assert fs.runs_with_no_fastq_url == 1
+    # the one missing run IS the no-URL one → nothing left unexplained
+    assert fs.unassigned_missing_or_skipped == 0
     assert fs.partial_fetch is True
     # honest accounting: never claims failed_runs (the plan is not an outcome log)
     assert not hasattr(fs, "failed_runs")
+
+
+def test_compute_fetch_stats_unassigned_missing_or_skipped() -> None:
+    """A run that HAD a URL but isn't on disk (skipped/unassigned or failed)
+    is counted under unassigned_missing_or_skipped, NOT runs_with_no_fastq_url.
+    This is the PRJEB22637 / PRJNA315881 case (unassigned-round skip)."""
+    plan = _plan(
+        "PRJ_SKIP",
+        [
+            _fetch_run("SRR1", ["ftp://e/SRR1.fastq.gz"], paired=False),  # landed
+            _fetch_run("SRR2", ["ftp://e/SRR2.fastq.gz"], paired=False),  # had URL, not on disk
+        ],
+    )
+    fs = compute_fetch_stats_from_plan("PRJ_SKIP", plan, {"SRR1.fastq.gz"})
+    assert fs.fetch_expected_runs == 2
+    assert fs.fetch_available_runs == 1
+    assert fs.fetch_missing_runs == 1
+    assert fs.runs_with_no_fastq_url == 0
+    assert fs.unassigned_missing_or_skipped == 1
+    assert fs.partial_fetch is True
 
 
 def test_compute_fetch_stats_complete_fetch_not_partial() -> None:

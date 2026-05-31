@@ -147,6 +147,23 @@ def test_plot_figure_a_renders_without_fetch_stats(tmp_path: Path) -> None:
     assert png.exists()
 
 
+def test_plot_figure_a_renders_exact_and_equivalent_separately(tmp_path: Path) -> None:
+    """Panel A keeps exact and equivalent as distinct stack segments (Codex pass-4)."""
+    payload = _make_metrics_payload()
+    payload["pair_recovery_by_status"] = {
+        "n_evaluated": 3,
+        "counts": {
+            "HIGH": {"pair_exact": 1, "pair_equivalent": 1},
+            "MEDIUM": {"pair_partial": 1},
+        },
+    }
+    metrics = tmp_path / "metrics.json"
+    metrics.write_text(json.dumps(payload), encoding="utf-8")
+    pdf, png = plot_figure_a(metrics, tmp_path / "out")
+    assert pdf.exists()
+    assert png.exists()
+
+
 def test_plot_figure_a_recovery_only_no_specificity(tmp_path: Path) -> None:
     """A recovery-only metrics set (specificity arm empty) still renders all panels."""
     payload = _make_metrics_payload()

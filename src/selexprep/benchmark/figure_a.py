@@ -17,9 +17,9 @@ and are NOT figure arms.
 Four panels arranged 2x2:
 
 - **Panel A (top-left)** — recovery arm (sensitivity). Pair recovery
-  (complete / partial / miss) over the ``raw_standard`` rows, with a
-  multi-round-only overlay so confidence-limited mono-round rows don't
-  silently deflate the headline.
+  (exact / equivalent / partial / miss, kept separate) over the
+  ``raw_standard`` rows, with a multi-round-only overlay so
+  confidence-limited mono-round rows don't silently deflate the headline.
 
 - **Panel B (top-right)** — specificity arm. False-positive primer calls
   on ``pre_trimmed`` deposits (target = 0) + the per-side (5'/3')
@@ -72,10 +72,16 @@ _REQUIRED_ACTION_ORDER: tuple[str, ...] = (
     "NO_REPORT",
 )
 
-# Recovery semantics: a recovered pair is "complete" when both constants
-# matched (exact OR via an equivalence rule), "partial" when one side
-# matched, "miss" when neither did.
-_RECOVERY_COLORS = {"complete": "tab:green", "partial": "tab:orange", "miss": "tab:red"}
+# Recovery semantics (Codex pass-4: keep exact and equivalent SEPARATE —
+# do not collapse into a single "complete"): both sides EXACT → "exact";
+# both sides matched via an equivalence rule (revcomp / U-T / barcode) →
+# "equivalent"; exactly one side matched → "partial"; neither → "miss".
+_RECOVERY_COLORS = {
+    "exact": "tab:green",
+    "equivalent": "yellowgreen",
+    "partial": "tab:orange",
+    "miss": "tab:red",
+}
 _SPECIFICITY_COLORS = {"no_false_call": "tab:green", "false_positive": "tab:red"}
 
 
@@ -85,25 +91,25 @@ def _no_data_label(ax: Any, title: str) -> None:
 
 
 def _collapse_pair_counts(counts: dict[str, dict[str, int]]) -> dict[str, int]:
-    """Sum status-bucketed pair recovery into complete / partial / miss.
+    """Sum status-bucketed pair recovery into exact / equivalent / partial / miss.
 
     ``counts`` is ``{status: {pair_exact/pair_equivalent/pair_partial/
     pair_failed: n}}`` (the ``pair_recovery_by_status`` cross-tab). The
     recovery arm cares about the pair-level outcome, not the status
-    bucket, so we collapse over statuses.
+    bucket, so we collapse over statuses — but keep exact and equivalent
+    distinct (Codex pass-4: don't fold them into one "complete").
     """
-    complete = partial = miss = 0
+    exact = equivalent = partial = miss = 0
     for bucket_counts in counts.values():
-        complete += int(bucket_counts.get("pair_exact", 0)) + int(
-            bucket_counts.get("pair_equivalent", 0)
-        )
+        exact += int(bucket_counts.get("pair_exact", 0))
+        equivalent += int(bucket_counts.get("pair_equivalent", 0))
         partial += int(bucket_counts.get("pair_partial", 0))
         miss += int(bucket_counts.get("pair_failed", 0))
-    return {"complete": complete, "partial": partial, "miss": miss}
+    return {"exact": exact, "equivalent": equivalent, "partial": partial, "miss": miss}
 
 
 def _panel_a_recovery(ax: Any, pair_recovery: dict[str, Any], multi_round: dict[str, Any]) -> None:
-    """Recovery arm: complete/partial/miss pair recovery on raw_standard.
+    """Recovery arm: exact/equivalent/partial/miss pair recovery on raw_standard.
 
     Two stacked bars — all raw_standard rows + the multi-round-only
     subset (mono-round rows excluded) — so the overlay shows whether the
@@ -120,7 +126,7 @@ def _panel_a_recovery(ax: Any, pair_recovery: dict[str, Any], multi_round: dict[
     labels = [f"raw_standard\n(all, N={n_all})", f"multi-round only\n(N={n_mr})"]
     series = [all_counts, mr_counts]
     bottoms = [0.0, 0.0]
-    for key in ("complete", "partial", "miss"):
+    for key in ("exact", "equivalent", "partial", "miss"):
         heights = [float(s.get(key, 0)) for s in series]
         ax.bar(labels, heights, bottom=bottoms, label=key, color=_RECOVERY_COLORS[key])
         bottoms = [b + h for b, h in zip(bottoms, heights, strict=True)]
@@ -290,9 +296,10 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
     _panel_c_n_length_recovery(axes[1, 0], n_length_recovery)
     _panel_d_distributions(axes[1, 1], extraction_counts, required_action_counts, fetch_stats)
 
-    # Headline: recovery (complete/partial on raw_standard N) + specificity
-    # false-positive count. NEVER a flat "X/11" — the set isn't a random
-    # sample, so a single recovery fraction would over-read it.
+    # Headline: recovery (exact/equivalent/partial on raw_standard N, kept
+    # separate per Codex pass-4) + specificity false-positive count. NEVER a
+    # flat "X/11" — the set isn't a random sample, so a single recovery
+    # fraction would over-read it.
     recovery_n = int(metrics.get("recovery_denominator", 0))
     collapsed = _collapse_pair_counts(pair_recovery.get("counts", {}))
     spec_n = int(specificity.get("n_evaluated", 0))
@@ -300,8 +307,8 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
 
     parts = ["selexprep Figure A — primer-inference benchmark"]
     parts.append(
-        f"recovery: {collapsed['complete']} complete / {collapsed['partial']} partial "
-        f"of {recovery_n} raw_standard"
+        f"recovery: {collapsed['exact']} exact / {collapsed['equivalent']} equiv / "
+        f"{collapsed['partial']} partial of {recovery_n} raw_standard"
     )
     parts.append(f"specificity: {spec_fp}/{spec_n} false-positive calls on pre_trimmed")
     fig.suptitle("  ·  ".join(parts), fontsize=11)
