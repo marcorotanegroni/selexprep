@@ -53,16 +53,22 @@ import statistics
 import subprocess
 import sys
 from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 
+_SCRIPT_PATH = "benchmarks/read_level_flanks.py"
 
-def _git_commit() -> str:
-    """Best-effort short commit + dirty flag of the repo at run time.
 
-    Appends ``-dirty`` when the working tree has uncommitted changes, so a
-    provenance row produced from un-committed edits cannot silently claim a
-    clean commit that does not contain the code that generated it. (A naked
-    ``rev-parse HEAD`` would do exactly that — false provenance.)
+def _git_commit(tracked_paths: Sequence[str] = (_SCRIPT_PATH,)) -> str:
+    """Best-effort short commit + dirty flag for provenance-critical files.
+
+    HPC benchmark worktrees normally contain untracked output directories,
+    copied logs, and scheduler scripts. A global ``git status --porcelain``
+    would mark those rows ``-dirty`` even when the script that generated the
+    provenance is exactly the committed one. Instead, mark dirty only when the
+    provenance-critical tracked files differ from ``HEAD`` (staged or
+    unstaged). This preserves the useful warning for uncommitted recipe edits
+    without letting HPC artifacts obscure the provenance signal.
     """
     try:
         rev = subprocess.run(
@@ -74,13 +80,19 @@ def _git_commit() -> str:
         ).stdout.strip()
         if not rev:
             return "unknown"
-        dirty = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        ).stdout.strip()
+        dirty = False
+        for path in tracked_paths:
+            unstaged = subprocess.run(
+                ["git", "diff", "--quiet", "--", path],
+                timeout=5,
+                check=False,
+            )
+            staged = subprocess.run(
+                ["git", "diff", "--cached", "--quiet", "--", path],
+                timeout=5,
+                check=False,
+            )
+            dirty = dirty or unstaged.returncode != 0 or staged.returncode != 0
         return rev + ("-dirty" if dirty else "")
     except Exception:
         return "unknown"

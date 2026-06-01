@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import gzip
 from pathlib import Path
+from typing import Any
 
 from benchmarks import read_level_flanks
+
+
+class _GitResult:
+    def __init__(self, stdout: str = "", returncode: int = 0) -> None:
+        self.stdout = stdout
+        self.returncode = returncode
 
 
 def _write_fastq(path: Path, seqs: list[str]) -> None:
@@ -53,3 +60,36 @@ def test_read_level_flanks_can_generate_r2_provenance(tmp_path: Path) -> None:
     text = out.read_text()
     assert "R2 mates" in text
     assert "insert 3' = revcomp(this 5' consensus)" in text
+
+
+def test_git_commit_dirty_flag_is_scoped_to_provenance_script(monkeypatch: Any) -> None:
+    """Untracked HPC artifacts must not mark the provenance script as dirty."""
+
+    def fake_run(cmd: list[str], **_: Any) -> _GitResult:
+        assert "status" not in cmd
+        if cmd[:3] == ["git", "rev-parse", "--short"]:
+            return _GitResult(stdout="50d3ca2\n")
+        if cmd[:4] == ["git", "diff", "--quiet", "--"]:
+            return _GitResult(returncode=0)
+        if cmd[:5] == ["git", "diff", "--cached", "--quiet", "--"]:
+            return _GitResult(returncode=0)
+        raise AssertionError(f"unexpected git command: {cmd}")
+
+    monkeypatch.setattr(read_level_flanks.subprocess, "run", fake_run)
+
+    assert read_level_flanks._git_commit() == "50d3ca2"
+
+
+def test_git_commit_marks_script_edits_dirty(monkeypatch: Any) -> None:
+    def fake_run(cmd: list[str], **_: Any) -> _GitResult:
+        if cmd[:3] == ["git", "rev-parse", "--short"]:
+            return _GitResult(stdout="50d3ca2\n")
+        if cmd[:4] == ["git", "diff", "--quiet", "--"]:
+            return _GitResult(returncode=1)
+        if cmd[:5] == ["git", "diff", "--cached", "--quiet", "--"]:
+            return _GitResult(returncode=0)
+        raise AssertionError(f"unexpected git command: {cmd}")
+
+    monkeypatch.setattr(read_level_flanks.subprocess, "run", fake_run)
+
+    assert read_level_flanks._git_commit() == "50d3ca2-dirty"
