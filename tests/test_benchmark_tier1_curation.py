@@ -53,11 +53,13 @@ _EXCLUDED_ACCESSIONS = {"PRJNA728693", "PRJNA935703", "PRJNA975735", "PRJNA31588
 # Evidence-based, pre-detect reason vocabulary (NEVER "primers_unrecoverable").
 _REASON_VOCAB = {
     "primer_truth_unverified",
+    "primer_truth_conflict",
     "inaccessible",
     "unsupported_architecture",
     "not_raw_reads",
     "insufficient_depth",
     "multiplexed_without_demux",
+    "boundary_ambiguous",
 }
 
 
@@ -255,6 +257,32 @@ def test_screening_log_included_flags_match_arms() -> None:
         assert sl.at[acc, "included"] == "true", f"{acc} should be included"
     for acc in _EXCLUDED_ACCESSIONS:
         assert sl.at[acc, "included"] == "false", f"{acc} should be excluded"
+
+
+# detect-inference OUTPUTS that must not leak into pre-detect evidence files
+# (inclusion-protocol hard rule 4 — non-circularity). Bare "detect" is allowed
+# (evidence may say "...NOT detect" to assert independence); these are the
+# inference outputs whose presence would be leakage.
+_FORBIDDEN_DETECT_STRINGS = (
+    "detect match",
+    "match_rate",
+    "extraction_mode",
+    "library_report",
+    "unable_to_infer",
+    "unable_to_extract",
+    "primers_unrecoverable",
+    "n_length_mode",
+)
+
+
+def test_evidence_files_have_no_detect_derived_strings() -> None:
+    """Non-circularity guard (Codex): pre-detect evidence files must not cite
+    detect's inference outputs. Pins inclusion-protocol hard rule 4 against
+    regression."""
+    for name in ("screening_log.tsv", "excluded_datasets.tsv", "read_state_evidence.tsv"):
+        text = (_BENCH / name).read_text(encoding="utf-8").lower()
+        for token in _FORBIDDEN_DETECT_STRINGS:
+            assert token not in text, f"{name}: detect-derived string {token!r} present (leakage)"
 
 
 def test_screening_log_excluded_reasons_are_evidence_based() -> None:
