@@ -2,7 +2,7 @@ accession	read_state	included	arm	reason	evidence
 PRJDB9110	raw_standard	true	recovery		read-length 88 (raw, T7 full) + paper-verified primers (Ozaki 2020 NAR)
 PRJDB9111	raw_standard	true	recovery		read-length full + paper-verified primers (Ozaki 2020 NAR)
 PRJNA883192	raw_standard	true	recovery		Paired-end raw reads; R1 134 nt + R2 read-level flank consensus available; source-verified library row (Ali 2022 Sci Rep)
-PRJNA315881	multiplexed	false		multiplexed_without_demux	round-5 pool multiplexed-by-condition (undocumented barcodes); 100nt uniform + 33M TruSeq, detect match 0.00; see excluded_datasets.tsv
+PRJNA315881	multiplexed	false		multiplexed_without_demux	round-5 pool multiplexed-by-condition (undocumented barcodes); 100nt uniform, TruSeq-adapter-heavy reads; see excluded_datasets.tsv
 PRJEB70964	adapter_control	true	adapter_control		read-length 81 (raw, partial_fetch 17/27) + paper-verified primers (NAR 2024); adapter-trap hard case
 PRJEB28411	pre_trimmed	true	specificity		read-length 40 = N40 (pre-trimmed) + paper-verified primers (Pleiko 2019 Sci Rep)
 PRJEB22637	pre_trimmed	true	specificity		read-length 50 = N50 (pre-trimmed) + paper-verified primers (Cibiel 2014 PLOS ONE)

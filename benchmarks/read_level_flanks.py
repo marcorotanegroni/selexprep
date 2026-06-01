@@ -50,12 +50,45 @@ from __future__ import annotations
 import argparse
 import gzip
 import statistics
+import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
 
+
+def _git_commit() -> str:
+    """Best-effort short commit + dirty flag of the repo at run time.
+
+    Appends ``-dirty`` when the working tree has uncommitted changes, so a
+    provenance row produced from un-committed edits cannot silently claim a
+    clean commit that does not contain the code that generated it. (A naked
+    ``rev-parse HEAD`` would do exactly that — false provenance.)
+    """
+    try:
+        rev = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        ).stdout.strip()
+        if not rev:
+            return "unknown"
+        dirty = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        ).stdout.strip()
+        return rev + ("-dirty" if dirty else "")
+    except Exception:
+        return "unknown"
+
+
 _PROVENANCE_HEADER = [
     "accession",
+    "manifest_name",
     "n_reads_sampled",
     "flank_len",
     "support_threshold",
@@ -65,6 +98,8 @@ _PROVENANCE_HEADER = [
     "consensus_3p_flank",
     "support_3p_min",
     "fastqs",
+    "script_commit",
+    "command",
     "note",
 ]
 
@@ -132,8 +167,12 @@ def _boundary(
 ) -> int:
     """Position of the constant→random support cliff (= end of constant).
 
-    Two detectors, mirroring ``selexprep.detect`` so the recipe and detect
-    agree on the boundary:
+    Two detectors (a high-support cliff + a floor/sustained-drop fallback).
+    This is a standard support-cliff heuristic; ``selexprep.detect`` uses the
+    same *class* of method internally, but the two read the FASTQ data
+    independently — neither consumes the other's output. The per-position
+    support table is the authoritative evidence; the suggested flank is
+    advisory:
 
     1. **High-support cliff** — a sharp, sustained drop from a strong
        (≥``high_baseline``) constant baseline. This catches a clean constant
@@ -262,6 +301,7 @@ def _append_provenance(out: Path, r: dict) -> None:
                 str(x)
                 for x in [
                     r["accession"],
+                    r["manifest_name"],
                     r["n_reads"],
                     r["flank_len"],
                     r["threshold"],
@@ -271,6 +311,8 @@ def _append_provenance(out: Path, r: dict) -> None:
                     r["consensus_3p_flank"],
                     f"{r['support_3p_min']:.4f}",
                     r["fastqs"],
+                    r.get("script_commit", "unknown"),
+                    r.get("command", ""),
                     (
                         "independent read-level consensus (no detect); R2 mates → "
                         "insert 3' = revcomp(this 5' consensus)"
@@ -309,6 +351,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", type=Path, default=None, help="provenance TSV (appended)")
     args = p.parse_args(argv)
 
+    command = "python " + " ".join(sys.argv)
+    commit = _git_commit()
+
     rc = 0
     for acc in args.accession:
         r = analyze(
@@ -322,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
         if r is None:
             rc = 1
             continue
+        r["command"] = command
+        r["script_commit"] = commit
         _print_tables(r)
         if args.out is not None:
             _append_provenance(args.out, r)
