@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import statistics
 import sys
 from collections import Counter
 from pathlib import Path
@@ -120,18 +121,49 @@ def _consensus(counters: list[Counter]) -> tuple[str, list[float]]:
     return "".join(bases), supports
 
 
-def _boundary(supports: list[float], threshold: float) -> int:
+def _boundary(
+    supports: list[float],
+    threshold: float,
+    *,
+    baseline_window: int = 10,
+    high_baseline: float = 0.90,
+    min_drop: float = 0.12,
+    post_max: float = 0.85,
+) -> int:
     """Position of the constant→random support cliff (= end of constant).
 
-    The boundary is the first position that drops below ``threshold`` AND
-    stays below at the next position (a *sustained* drop). The single-dip
-    guard matters because 3' constants commonly sit at ~80-86% support
-    (Illumina 3'-end quality decay), so a naive first-below test truncates
-    on one noisy position. Set ``threshold`` BELOW the constant band and
-    ABOVE the random band (~0.25-0.35 for an undoped library): the default
-    0.6 cleanly separates the two. Always confirm against the printed
-    per-position table — the table is authoritative, this is a heuristic.
+    Two detectors, mirroring ``selexprep.detect`` so the recipe and detect
+    agree on the boundary:
+
+    1. **High-support cliff** — a sharp, sustained drop from a strong
+       (≥``high_baseline``) constant baseline. This catches a clean constant
+       whose post-constant tail is *low-complexity but still above the floor*
+       (e.g. a C-rich tail at ~60%): a naive floor test would run past the
+       real cliff into it (the PRJNA883192 R2 case: 96%→79% at pos 15, then
+       a C-rich tail at 57-61%).
+    2. **Floor + sustained-drop** fallback — for noisier constants (~80-86%,
+       Illumina 3'-end decay) where no ≥0.90 baseline exists; the next-position
+       guard avoids truncating on a single noisy dip.
+
+    Set ``threshold`` below the constant band and above the random band
+    (~0.25-0.35 undoped): default 0.6. The per-position table is
+    authoritative; this is a heuristic.
     """
+    # (1) high-support baseline cliff
+    for i in range(1, len(supports)):
+        prev = supports[max(0, i - baseline_window) : i]
+        if not prev:
+            continue
+        baseline = statistics.median(prev)
+        nxt = supports[i + 1] if i + 1 < len(supports) else 0.0
+        if (
+            baseline >= high_baseline
+            and supports[i] <= baseline - min_drop
+            and supports[i] < post_max
+            and nxt < post_max
+        ):
+            return i
+    # (2) floor + sustained-drop
     for i, s in enumerate(supports):
         if s < threshold and (i + 1 >= len(supports) or supports[i + 1] < threshold):
             return i
