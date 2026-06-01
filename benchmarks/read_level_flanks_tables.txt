@@ -1,0 +1,301 @@
+
+======================================================================
+PRJDB9110  (n=840620 reads, mode_len=89)
+----------------------------------------------------------------------
+5' end (pos 0 = read start):
+  pos  0: T   99.4%  <- constant
+  pos  1: A   99.7%  <- constant
+  pos  2: A   99.3%  <- constant
+  pos  3: T   99.0%  <- constant
+  pos  4: A   99.0%  <- constant
+  pos  5: C   98.9%  <- constant
+  pos  6: G   98.8%  <- constant
+  pos  7: A   98.7%  <- constant
+  pos  8: C   98.8%  <- constant
+  pos  9: T   98.6%  <- constant
+  pos 10: C   98.6%  <- constant
+  pos 11: A   98.5%  <- constant
+  pos 12: C   98.4%  <- constant
+  pos 13: T   98.4%  <- constant
+  pos 14: A   98.4%  <- constant
+  pos 15: T   98.2%  <- constant
+  pos 16: A   98.0%  <- constant
+  pos 17: G   99.3%  <- constant
+  pos 18: G   99.5%  <- constant
+  pos 19: G   98.1%  <- constant
+  pos 20: A   97.1%  <- constant
+  pos 21: G   97.2%  <- constant
+  pos 22: C   97.0%  <- constant
+  pos 23: A   96.9%  <- constant
+  pos 24: G   98.8%  <- constant
+  pos 25: G   97.5%  <- constant
+  pos 26: A   96.4%  <- constant
+  pos 27: G   96.5%  <- constant
+  pos 28: A   96.1%  <- constant
+  pos 29: G   96.3%  <- constant
+  pos 30: A   95.9%  <- constant
+  pos 31: G   98.4%  <- constant
+  pos 32: G   96.9%  <- constant
+  pos 33: T   95.8%  <- constant
+  pos 34: C   95.7%  <- constant
+  pos 35: A   95.8%  <- constant
+  pos 36: G   95.7%  <- constant
+  pos 37: A   95.7%  <- constant
+  pos 38: T   95.5%  <- constant
+  pos 39: G   96.0%  <- constant
+  pos 40: A   37.5%  <- random?
+  pos 41: A   42.0%
+  pos 42: C   29.5%
+  pos 43: A   33.5%
+  pos 44: A   32.8%
+3' end (pos 0 = read END, reading inward):
+  - 1: A   90.4%  <- constant
+  - 2: G   90.3%  <- constant
+  - 3: T   89.6%  <- constant
+  - 4: G   89.9%  <- constant
+  - 5: T   89.3%  <- constant
+  - 6: G   89.6%  <- constant
+  - 7: A   89.7%  <- constant
+  - 8: T   88.7%  <- constant
+  - 9: C   88.0%  <- constant
+  -10: G   89.7%  <- constant
+  -11: T   88.5%  <- constant
+  -12: G   89.9%  <- constant
+  -13: C   86.6%  <- constant
+  -14: G   89.9%  <- constant
+  -15: T   87.4%  <- constant
+  -16: A   89.0%  <- constant
+  -17: T   87.7%  <- constant
+  -18: C   87.2%  <- constant
+  -19: C   87.7%  <- constant
+  -20: A   34.7%  <- random?
+  -21: G   28.6%
+  -22: A   31.0%
+  -23: C   28.4%
+  -24: A   30.7%
+  -25: A   28.9%
+  -26: G   32.7%
+  -27: G   29.2%
+  -28: G   30.9%
+  -29: A   26.7%
+  -30: G   29.2%
+  -31: G   29.3%
+  -32: A   28.5%
+  -33: G   30.4%
+  -34: G   33.9%
+  -35: G   38.5%
+  -36: A   35.9%
+  -37: A   29.2%
+  -38: T   30.1%
+  -39: A   29.1%
+  -40: T   33.2%
+  -41: T   30.2%
+  -42: A   36.7%
+  -43: A   41.4%
+  -44: A   30.7%
+  -45: A   31.4%
+
+  => read-level 5' flank: TAATACGACTCACTATAGGGAGCAGGAGAGAGGTCAGATG  (min support 95.5%, 40 nt)
+  => read-level 3' flank: CCTATGCGTGCTAGTGTGA  (min support 86.6%, 19 nt)
+
+======================================================================
+PRJDB9111  (n=467095 reads, mode_len=100)
+----------------------------------------------------------------------
+5' end (pos 0 = read start):
+  pos  0: T   99.1%  <- constant
+  pos  1: A   99.2%  <- constant
+  pos  2: A   99.4%  <- constant
+  pos  3: T   98.5%  <- constant
+  pos  4: A   98.5%  <- constant
+  pos  5: C   98.4%  <- constant
+  pos  6: G   98.4%  <- constant
+  pos  7: A   98.4%  <- constant
+  pos  8: C   98.4%  <- constant
+  pos  9: T   98.2%  <- constant
+  pos 10: C   98.2%  <- constant
+  pos 11: A   98.3%  <- constant
+  pos 12: C   98.2%  <- constant
+  pos 13: T   98.2%  <- constant
+  pos 14: A   98.2%  <- constant
+  pos 15: T   98.0%  <- constant
+  pos 16: A   98.0%  <- constant
+  pos 17: G   98.8%  <- constant
+  pos 18: G   99.5%  <- constant
+  pos 19: G   98.7%  <- constant
+  pos 20: A   97.0%  <- constant
+  pos 21: G   96.8%  <- constant
+  pos 22: A   97.9%  <- constant
+  pos 23: A   98.2%  <- constant
+  pos 24: C   96.5%  <- constant
+  pos 25: T   97.7%  <- constant
+  pos 26: T   97.9%  <- constant
+  pos 27: C   96.3%  <- constant
+  pos 28: G   96.2%  <- constant
+  pos 29: A   96.3%  <- constant
+  pos 30: C   97.8%  <- constant
+  pos 31: C   97.7%  <- constant
+  pos 32: A   96.2%  <- constant
+  pos 33: G   96.1%  <- constant
+  pos 34: A   97.7%  <- constant
+  pos 35: A   97.5%  <- constant
+  pos 36: G   95.6%  <- constant
+  pos 37: T   38.3%  <- random?
+  pos 38: C   31.3%
+  pos 39: C   29.1%
+  pos 40: C   33.6%
+  pos 41: C   33.0%
+  pos 42: C   28.5%
+  pos 43: C   29.9%
+  pos 44: C   29.8%
+3' end (pos 0 = read END, reading inward):
+  - 1: C   86.9%  <- constant
+  - 2: T   83.6%  <- constant
+  - 3: C   85.6%  <- constant
+  - 4: C   86.3%  <- constant
+  - 5: T   82.8%  <- constant
+  - 6: A   83.8%  <- constant
+  - 7: G   83.1%  <- constant
+  - 8: G   84.9%  <- constant
+  - 9: T   81.4%  <- constant
+  -10: A   83.3%  <- constant
+  -11: C   82.1%  <- constant
+  -12: A   83.9%  <- constant
+  -13: T   80.1%  <- constant
+  -14: A   84.3%  <- constant
+  -15: C   82.1%  <- constant
+  -16: G   81.2%  <- constant
+  -17: C   82.8%  <- constant
+  -18: G   81.1%  <- constant
+  -19: T   79.4%  <- constant
+  -20: G   81.0%  <- constant
+  -21: T   80.3%  <- constant
+  -22: A   80.7%  <- constant
+  -23: T   80.1%  <- constant
+  -24: C   32.0%  <- random?
+  -25: A   29.2%
+  -26: A   32.2%
+  -27: A   30.1%
+  -28: C   33.8%
+  -29: C   30.3%
+  -30: C   31.0%
+  -31: C   31.6%
+  -32: C   30.6%
+  -33: C   36.1%
+  -34: C   30.7%
+  -35: C   28.9%
+  -36: C   32.3%
+  -37: C   32.2%
+  -38: C   34.1%
+  -39: C   35.2%
+  -40: C   33.0%
+  -41: C   35.2%
+  -42: C   33.9%
+  -43: C   36.5%
+  -44: C   31.0%
+  -45: C   32.3%
+
+  => read-level 5' flank: TAATACGACTCACTATAGGGAGAACTTCGACCAGAAG  (min support 95.6%, 37 nt)
+  => read-level 3' flank: TATGTGCGCATACATGGATCCTC  (min support 79.4%, 23 nt)
+
+provenance -> benchmarks/read_level_truth_provenance.tsv
+
+======================================================================
+PRJNA883192  (n=1945073 reads, mode_len=151)
+----------------------------------------------------------------------
+5' end (pos 0 = read start):
+  pos  0: T   96.6%  <- constant
+  pos  1: C   96.3%  <- constant
+  pos  2: G   96.0%  <- constant
+  pos  3: A   96.2%  <- constant
+  pos  4: G   96.3%  <- constant
+  pos  5: T   96.9%  <- constant
+  pos  6: T   96.6%  <- constant
+  pos  7: C   95.7%  <- constant
+  pos  8: A   96.2%  <- constant
+  pos  9: G   95.9%  <- constant
+  pos 10: A   95.8%  <- constant
+  pos 11: G   95.8%  <- constant
+  pos 12: C   95.9%  <- constant
+  pos 13: T   96.3%  <- constant
+  pos 14: C   96.5%  <- constant
+  pos 15: C   79.4%  <- random?
+  pos 16: C   60.5%
+  pos 17: C   61.2%
+  pos 18: C   57.2%
+  pos 19: C   42.8%
+  pos 20: C   47.9%
+  pos 21: C   42.0%
+  pos 22: C   41.7%
+  pos 23: C   37.7%
+  pos 24: C   46.5%
+  pos 25: C   38.4%
+  pos 26: C   47.8%
+  pos 27: C   45.7%
+  pos 28: C   46.5%
+  pos 29: C   49.4%
+  pos 30: C   47.0%
+  pos 31: C   49.4%
+  pos 32: C   43.0%
+  pos 33: C   46.4%
+  pos 34: C   45.7%
+  pos 35: C   44.2%
+  pos 36: C   48.5%
+  pos 37: C   49.5%
+  pos 38: C   45.5%
+  pos 39: C   43.3%
+  pos 40: C   49.9%
+  pos 41: C   39.8%
+  pos 42: C   45.7%
+  pos 43: C   45.3%
+  pos 44: C   49.2%
+3' end (pos 0 = read END, reading inward):
+  - 1: A   49.2%  <- random?
+  - 2: T   38.4%
+  - 3: C   38.3%
+  - 4: A   36.5%
+  - 5: A   49.1%
+  - 6: G   48.2%
+  - 7: A   44.4%
+  - 8: T   41.7%
+  - 9: G   39.4%
+  -10: T   36.1%
+  -11: A   57.8%
+  -12: A   81.9%
+  -13: A   95.0%
+  -14: A   95.6%
+  -15: A   96.0%
+  -16: A   96.6%
+  -17: A   95.2%
+  -18: A   93.4%
+  -19: A   92.5%
+  -20: A   92.1%
+  -21: A   91.1%
+  -22: A   84.7%
+  -23: T   89.4%
+  -24: T   91.9%
+  -25: A   77.8%
+  -26: C   87.5%
+  -27: T   86.2%
+  -28: A   79.6%
+  -29: T   73.8%
+  -30: G   87.8%
+  -31: C   89.0%
+  -32: C   92.9%
+  -33: G   89.2%
+  -34: C   86.2%
+  -35: T   74.2%
+  -36: G   88.9%
+  -37: G   93.4%
+  -38: T   66.8%
+  -39: G   89.7%
+  -40: G   93.8%
+  -41: C   85.6%
+  -42: T   86.1%
+  -43: C   85.7%
+  -44: T   86.2%
+  -45: A   84.0%
+
+  => read-level 5' flank: TCGAGTTCAGAGCTC  (min support 95.7%, 15 nt)
+  => read-level 3' flank:   (min support 0.0%, 0 nt)
+
+provenance -> benchmarks/read_level_truth_provenance.tsv
