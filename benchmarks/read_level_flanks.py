@@ -8,7 +8,8 @@ testing detect against a truth detect itself produced).
 
 This script is that independent evidence. It is deliberately self-contained —
 **no ``selexprep`` import**, pure read inspection. For each accession it samples
-the raw R1 FASTQs (from the run's ``fastqs.manifest``) and computes
+the raw FASTQs from a run manifest (default ``fastqs.manifest`` = R1 /
+single-end; optionally ``fastqs.r2.manifest`` = R2) and computes
 position-anchored base consensus for the first ``--flank-len`` bases (5' end)
 and the last ``--flank-len`` bases (3' end), with per-position support. The
 constant region is where support stays high; it ends where support collapses
@@ -27,7 +28,17 @@ Usage (run on HPC, where the benchmark FASTQs live):
     python benchmarks/read_level_flanks.py \\
         --results-dir benchmarks/results \\
         --accession PRJDB9110 --accession PRJDB9111 \\
-        --sample 200000 --flank-len 45 --support-threshold 0.85 \\
+        --sample 200000 --flank-len 45 \\
+        --out benchmarks/read_level_truth_provenance.tsv
+
+Paired-end 3' constant (e.g. PRJNA883192, whose 3' truth lives in R2): read
+the R2 manifest instead, then reverse-complement the reported R2 5' consensus
+to get the insert's 3' flank — keeps the R2-derived truth reproducible by the
+same tool as the R1 rows, not hand-asserted:
+
+    python benchmarks/read_level_flanks.py \\
+        --results-dir benchmarks/results --accession PRJNA883192 \\
+        --manifest-name fastqs.r2.manifest --sample 0 \\
         --out benchmarks/read_level_truth_provenance.tsv
 
 The per-position tables print to stdout; the suggested flanks + support are
@@ -70,18 +81,28 @@ def _iter_sequences(fastq: Path, limit: int | None):
                     return
 
 
-def _manifest_fastqs(results_dir: Path, accession: str) -> list[Path]:
-    """Primary FASTQs for an accession, from the run manifest or a glob."""
-    manifest = results_dir / accession / "fastqs.manifest"
+def _manifest_fastqs(
+    results_dir: Path, accession: str, manifest_name: str = "fastqs.manifest"
+) -> list[Path]:
+    """FASTQs for an accession from the named run manifest (or a glob fallback).
+
+    Default ``fastqs.manifest`` is the primary (R1 / single-end) stream. Pass
+    ``manifest_name="fastqs.r2.manifest"`` to read the R2 mates — used to
+    derive a paired-end 3' constant: the reverse-complement of the R2 5'
+    consensus IS the insert's 3' flank (no detect involved). This keeps R2-
+    derived truth reproducible by the same tool as the R1-derived rows.
+    """
+    manifest = results_dir / accession / manifest_name
     if manifest.exists():
         paths = [Path(ln.strip()) for ln in manifest.read_text().splitlines() if ln.strip()]
         if paths:
             return paths
-    # Fallback: glob the round dirs, excluding R2 mates to mirror the primary manifest.
+    # Fallback glob: R2 mates for an r2 manifest, primary reads otherwise.
+    want_r2 = "r2" in manifest_name.lower()
     return sorted(
         p
         for p in (results_dir / accession).glob("round_*/*.fastq.gz")
-        if not p.name.endswith("_2.fastq.gz")
+        if p.name.endswith("_2.fastq.gz") == want_r2
     )
 
 
@@ -118,9 +139,14 @@ def _boundary(supports: list[float], threshold: float) -> int:
 
 
 def analyze(
-    results_dir: Path, accession: str, sample: int, flank_len: int, threshold: float
+    results_dir: Path,
+    accession: str,
+    sample: int,
+    flank_len: int,
+    threshold: float,
+    manifest_name: str = "fastqs.manifest",
 ) -> dict | None:
-    fastqs = _manifest_fastqs(results_dir, accession)
+    fastqs = _manifest_fastqs(results_dir, accession, manifest_name)
     if not fastqs:
         print(f"[{accession}] no FASTQs found under {results_dir / accession}", file=sys.stderr)
         return None
@@ -153,6 +179,7 @@ def analyze(
 
     return {
         "accession": accession,
+        "manifest_name": manifest_name,
         "n_reads": n,
         "flank_len": flank_len,
         "threshold": threshold,
@@ -212,7 +239,13 @@ def _append_provenance(out: Path, r: dict) -> None:
                     r["consensus_3p_flank"],
                     f"{r['support_3p_min']:.4f}",
                     r["fastqs"],
-                    "independent read-level consensus (no detect); transcribe into ground_truth.tsv",
+                    (
+                        "independent read-level consensus (no detect); R2 mates → "
+                        "insert 3' = revcomp(this 5' consensus)"
+                        if "r2" in str(r.get("manifest_name", "")).lower()
+                        else "independent read-level consensus (no detect); "
+                        "transcribe into ground_truth.tsv"
+                    ),
                 ]
             )
             + "\n"
@@ -234,12 +267,26 @@ def main(argv: list[str] | None = None) -> int:
         help="constant/random cliff threshold; set below the constant band "
         "(~0.8-0.99) and above the random band (~0.25-0.35). Default 0.6.",
     )
+    p.add_argument(
+        "--manifest-name",
+        default="fastqs.manifest",
+        help="manifest under <results>/<acc>/ to read. Default 'fastqs.manifest' "
+        "(R1/single-end). Use 'fastqs.r2.manifest' for a paired-end 3' constant: "
+        "the insert 3' flank = revcomp of the reported R2 5' consensus (no detect).",
+    )
     p.add_argument("--out", type=Path, default=None, help="provenance TSV (appended)")
     args = p.parse_args(argv)
 
     rc = 0
     for acc in args.accession:
-        r = analyze(args.results_dir, acc, args.sample, args.flank_len, args.support_threshold)
+        r = analyze(
+            args.results_dir,
+            acc,
+            args.sample,
+            args.flank_len,
+            args.support_threshold,
+            args.manifest_name,
+        )
         if r is None:
             rc = 1
             continue
