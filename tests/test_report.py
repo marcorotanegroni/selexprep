@@ -185,15 +185,30 @@ def test_paired_end_split_prefers_r2_over_conflicting_r1_suffix() -> None:
 
     PRJNA883192 has R1 evidence for the 5' insert constant and R2 evidence
     for the 3' insert constant, but R1 also ends in a strong unrelated
-    technical suffix. R2 is the biologically correct source for the insert
+    technical suffix. Its R2 primer core is followed by a C-biased random
+    shoulder; paired-split must use the high-support R2 core, not the
+    overextended shoulder, as the biologically correct source for the insert
     3' constant in this layout.
     """
     primer_5p = "ATGCCATCCTACCAAC"
-    primer_3p = "GAGCTCTGAACTGG"  # 14 nt Tier-1 constant
+    primer_3p = "GAGCTCTGAACTCGA"  # PRJNA883192 read-level R2-derived flank
     technical_r1_suffix = "TGAACTCCAGTCACCGAATAATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAAAAAA"
 
     r1_pools = _three_round_pool(primer_5p, technical_r1_suffix, random_len=80)
-    r2_pools = _three_round_pool(reverse_complement(primer_3p), primer_3p=None, random_len=80)
+    r2_core = reverse_complement(primer_3p)
+    r2_pools: dict[int, list[str]] = {}
+    for r in range(3):
+        seqs: list[str] = []
+        for i in range(1000):
+            biased_tail = [
+                "C" if i % 5 != 0 else "A",
+                "C" if i % 5 < 3 else "G",
+                "C" if i % 5 < 3 else "T",
+                "C" if i % 7 < 4 else "A",
+            ]
+            random_tail = "".join("ACGT"[((i + r * 1000) * 7 + j * 13) % 4] for j in range(76))
+            seqs.append(r2_core + "".join(biased_tail) + random_tail)
+        r2_pools[r] = seqs
 
     report = compute_library_report(r1_pools, read_source="R1_AND_R2", paired_mate_streams=r2_pools)
 
