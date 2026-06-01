@@ -117,6 +117,34 @@ def test_detect_primers_recovers_long_flanks_without_random_overextension() -> N
     assert det.estimated_random_region_len == 30
 
 
+def test_detect_flank_stops_at_high_support_cliff_before_biased_tail() -> None:
+    """A high-support primer core followed by biased random bases must not overextend.
+
+    Regression for the PRJNA883192 R2 finding: the first 15 bases were
+    a >95% consensus primer core, followed by a C-biased random-region
+    shoulder. The boundary belongs at the support cliff after the core,
+    not at the later point where the biased shoulder fully collapses.
+    """
+    primer = "TCGAGTTCAGAGCTC"  # read-level R2 prefix; revcomp = insert 3' flank
+    bases = "ACGT"
+    seqs: list[str] = []
+    for i in range(2_000):
+        biased_tail = [
+            "C" if i % 5 != 0 else "A",  # 80% C
+            "C" if i % 5 < 3 else "G",  # 60% C
+            "C" if i % 5 < 3 else "T",  # 60% C
+            "C" if i % 7 < 4 else "A",  # ~57% C
+        ]
+        random_tail = "".join(bases[(i * 7 + j * 13) % 4] for j in range(36))
+        seqs.append(primer + "".join(biased_tail) + random_tail)
+
+    result = detect_flank(seqs, is_prefix=True, min_seqs_for_detection=100)
+
+    assert result.sequence == primer
+    assert result.length == len(primer)
+    assert result.confidence > 0.95
+
+
 # ----- detect_primers -----
 
 

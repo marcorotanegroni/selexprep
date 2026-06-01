@@ -64,7 +64,7 @@ logger = logging.getLogger(__name__)
 # `top_n` only if memory pressure forces it.
 DEFAULT_TOP_N: int | None = None
 DEFAULT_CONFIDENCE = 0.75
-# Real Tier-1 deposits include a 14 nt library constant (PRJNA883192).
+# Real public deposits include 14 nt library constants.
 # Keep this conservative: shorter flanks need explicit future calibration.
 DEFAULT_MIN_LEN = 14
 DEFAULT_MAX_LEN = 60
@@ -72,6 +72,9 @@ DEFAULT_MIN_SEQS_FOR_DETECTION = 500
 BOUNDARY_SUPPORT_FLOOR = 0.55
 BOUNDARY_STRONG_POSITION_FRACTION = 0.80
 BOUNDARY_DROP_RUN = 2
+BOUNDARY_HIGH_SUPPORT_BASELINE = 0.90
+BOUNDARY_HIGH_SUPPORT_DROP = 0.12
+BOUNDARY_HIGH_SUPPORT_POST_MAX = 0.85
 
 
 # ---------------------------------------------------------------------------
@@ -178,9 +181,23 @@ def _boundary_length(
     if len(supports) < min_len:
         return 0
 
-    floor = min(confidence, BOUNDARY_SUPPORT_FLOOR)
     boundary = len(supports)
+    for i in range(min_len, len(supports) - BOUNDARY_DROP_RUN + 1):
+        prev = supports[i - min_len : i]
+        baseline = statistics.median(prev)
+        window = supports[i : i + BOUNDARY_DROP_RUN]
+        if (
+            baseline >= BOUNDARY_HIGH_SUPPORT_BASELINE
+            and supports[i] <= baseline - BOUNDARY_HIGH_SUPPORT_DROP
+            and all(v < BOUNDARY_HIGH_SUPPORT_POST_MAX for v in window)
+        ):
+            boundary = i
+            break
+
+    floor = min(confidence, BOUNDARY_SUPPORT_FLOOR)
     for i in range(len(supports) - BOUNDARY_DROP_RUN + 1):
+        if i >= boundary:
+            break
         window = supports[i : i + BOUNDARY_DROP_RUN]
         if all(v < floor for v in window):
             boundary = i

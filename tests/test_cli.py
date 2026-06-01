@@ -564,9 +564,8 @@ def test_detect_with_round_map_emits_library_report(tmp_path: Path) -> None:
 
 def test_detect_with_paired_r2_threads_split_primer_stream(tmp_path: Path) -> None:
     primer_5p = "GGTAATACGACTCACTATAGGG"
-    # PRJNA883192 regression: its 3' library constant is only 14 nt.
-    # The paired R2 stream must still recover it instead of falling back
-    # to a spurious R1 3' suffix.
+    # Short paired constants at the 14 nt floor must still be recoverable
+    # instead of falling back to a spurious R1 3' suffix.
     primer_3p = "GAGCTCTGAACTGG"
     r1 = tmp_path / "round0_1.fastq.gz"
     r2 = tmp_path / "round0_2.fastq.gz"
