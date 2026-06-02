@@ -2,6 +2,11 @@ accession	read_state	included	arm	reason	evidence
 PRJDB9110	raw_standard	true	recovery		read-length 88 (raw, T7 full) + paper-verified primers (Ozaki 2020 NAR)
 PRJDB9111	raw_standard	true	recovery		read-length full + paper-verified primers (Ozaki 2020 NAR)
 PRJNA883192	raw_standard	true	recovery		Paired-end raw reads; R1 134 nt + R2 read-level flank consensus available; source-verified library row (Ali 2022 Sci Rep)
+PRJNA615076	raw_standard	true	recovery		Paired-end raw DNA reads (~89/mate); paper-verified library (Kolm 2020 Sci Rep, E. faecalis whole-cell SELEX); forward orientation confirmed by targeted read check (R1 88% start 5' const, R2 83% revcomp 3'). Troncone 2.
+PRJNA809588	raw_standard	true	recovery		2'F-RNA islet Cell-SELEX (Van Simaeys 2022 Nat Commun); Sullenger SUL library (Supp Table 3); all 12 runs stream-checked (non-circular): 5' core ~98% + 3' core ~93% every run, 3' exact cycle-heterogeneous. Both flanks present; 3' boundary fuzzy. Troncone 2.
+PRJNA1395820	raw_standard	true	recovery		DNA Co2+ small-ion aptamer (Gao 2026 Nat Commun, HM/GO-SELEX); library Supp Table 4; stream-checked SRR36645706 (non-circular): R1 5' const 96.9%, R2 revcomp 3' 98.2%, both flanks present. New target type (small-ion). Troncone 2.
+PRJNA1068659	raw_standard	true	recovery		DNA cocaine SMALL-MOLECULE aptamer (Alkhamis 2024 JACS, Xiao lab); library SI Table S1; streamed SRR27756808 (non-circular): both constants ~90% forward, embedded in 158nt reads after HTS adapter. First small-molecule recovery row. Troncone 2.
+PRJEB62495	raw_standard	true	recovery		DNA SELEX vs Anaplasma phagocytophilum (tick-borne bacterium, infected-cell extract; Le Dortz 2024 Sci Rep); reads REVERSE-COMPLEMENT-oriented; streamed (non-circular): revcomp(3')=95%, revcomp(5')=92%. Read-orientation truth = revcomp forms. Troncone 2.
 PRJNA315881	multiplexed	false		multiplexed_without_demux	round-5 pool multiplexed-by-condition (undocumented barcodes); 100nt uniform, TruSeq-adapter-heavy reads; see excluded_datasets.tsv
 PRJEB70964	adapter_control	true	adapter_control		read-length 81 (raw, partial_fetch 17/27) + paper-verified primers (NAR 2024); adapter-trap hard case
 PRJEB28411	pre_trimmed	true	specificity		read-length 40 = N40 (pre-trimmed) + paper-verified primers (Pleiko 2019 Sci Rep)
