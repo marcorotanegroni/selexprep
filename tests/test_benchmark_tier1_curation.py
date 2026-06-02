@@ -38,7 +38,17 @@ _CURATED = {
 }
 
 # Phase 6b.10 benchmark set (post-cleanup), labeled by read-state role.
-_RECOVERY = {"PRJDB9110", "PRJDB9111", "PRJNA883192"}
+# PRJNA615076 = first Troncone-2 recovery addition (Kolm 2020, E. faecalis DNA whole-cell SELEX)
+_RECOVERY = {
+    "PRJDB9110",
+    "PRJDB9111",
+    "PRJNA883192",
+    "PRJNA615076",
+    "PRJNA809588",
+    "PRJNA1395820",
+    "PRJNA1068659",
+    "PRJEB62495",
+}
 _SPECIFICITY = {"PRJEB28411", "PRJEB22637", "PRJNA990511"}
 # Adapter-collision negative control (5' constant = revcomp of a known adapter);
 # excluded from the recovery denominator (Phase 6b.10 Option-1 reclassification).

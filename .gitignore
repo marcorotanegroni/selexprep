@@ -53,3 +53,9 @@ Thumbs.db
 scratch/
 tmp/
 *.log
+
+# Benchmark candidate-curation: local-only tools + scratch (not package content;
+# the curation decisions they produced are captured in the committed evidence
+# files: ground_truth.tsv / read_state_evidence.tsv / screening_log.tsv)
+benchmarks/screen_read_state.py
+benchmarks/*_screen.tsv
