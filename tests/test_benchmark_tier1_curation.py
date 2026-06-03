@@ -35,7 +35,6 @@ _SCREENING_LOG = _BENCH / "screening_log.tsv"
 _CURATED = {
     "PRJEB28411",
     "PRJNA883192",
-    "PRJNA1068659",
 }
 
 # Phase 6b.10 benchmark set (post-cleanup), labeled by read-state role.
@@ -47,7 +46,6 @@ _RECOVERY = {
     "PRJNA615076",
     "PRJNA809588",
     "PRJNA1395820",
-    "PRJNA1068659",
     "PRJEB62495",
 }
 _SPECIFICITY = {"PRJEB28411", "PRJEB22637", "PRJNA990511"}
@@ -60,7 +58,13 @@ _BENCHMARK = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
 # PRJNA315881: round-5 pool multiplexed-by-condition (undocumented barcodes) →
 # not a fair primer-inference test (multiplexing/offset/truncation, Codex pass-4);
 # re-entrant after reproducible demux that does not use primer info.
-_EXCLUDED_ACCESSIONS = {"PRJNA728693", "PRJNA935703", "PRJNA975735", "PRJNA315881"}
+_EXCLUDED_ACCESSIONS = {
+    "PRJNA728693",
+    "PRJNA935703",
+    "PRJNA975735",
+    "PRJNA315881",
+    "PRJNA1068659",
+}
 # Evidence-based, pre-detect reason vocabulary (NEVER "primers_unrecoverable").
 _REASON_VOCAB = {
     "primer_truth_unverified",
