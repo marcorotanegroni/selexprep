@@ -673,6 +673,29 @@ def test_adapter_control_excluded_from_recovery_and_specificity() -> None:
     assert report.adapter_control.n_no_false_call == 1
 
 
+def test_score_3p_false_excludes_circular_3p_and_scores_pair_on_5p() -> None:
+    """A read-resolved 3' (score_3p=false, e.g. PRJNA883192) must not count
+    toward 3' recovery, and the pair is classified on the paper-grounded 5'
+    alone — never pair_exact off a circular 3'."""
+    rows = [
+        _row(
+            accession="PRJ_R3",
+            read_state="raw_standard",
+            score_3p=False,
+            primer_5p_truth="ACGTACGT",
+            primer_3p_truth="TGCATGCA",
+            library_report=_make_lr(primer_5p="ACGTACGT", primer_3p="TGCATGCA"),
+        )
+    ]
+    pr = compute_primer_recovery(rows)
+    assert pr.counts_5p == {"EXACT": 1}
+    assert pr.counts_3p == {}  # circular 3' excluded from the paper-grounded tally
+    assert pr.pairs[0].score_3p is False
+    pair = compute_pair_recovery_by_status(rows)
+    # 5' EXACT, 3' not scored → pair_partial (5'-only), never pair_exact
+    assert pair.counts == {"HIGH": {"pair_partial": 1}}
+
+
 def test_compute_specificity_missing_report_is_not_evaluable() -> None:
     """No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
 

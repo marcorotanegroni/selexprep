@@ -155,6 +155,12 @@ class BenchmarkRow:
     partial_fetch: bool = False
     paired_end_r1_only: bool = False
     demultiplexed: bool = False
+    # Phase 6b.10 (Troncone 2): score the 3' side only when its truth is
+    # paper-grounded. False ⇒ the 3' truth is read-resolved/diagnostic
+    # (e.g. PRJNA883192, whose 3' truth was derived from the deposited
+    # reads), so scoring it against detect's read-derived 3' would be
+    # circular — the 5' still scores normally.
+    score_3p: bool = True
     fetch_stats: FetchStats | None = None
 
 
@@ -165,6 +171,9 @@ class PrimerSidePair:
     accession: str
     status_5p: EquivalenceResult
     status_3p: EquivalenceResult
+    # False ⇒ the 3' truth is read-resolved/diagnostic and was NOT scored
+    # toward paper-grounded recovery (the pair was classified on the 5').
+    score_3p: bool = True
 
 
 @dataclass
@@ -437,6 +446,9 @@ def load_ground_truth(path: Path) -> list[BenchmarkRow]:
                 partial_fetch=_truthy(r.get("partial_fetch", "")),
                 paired_end_r1_only=_truthy(r.get("paired_end_r1_only", "")),
                 demultiplexed=_truthy(r.get("demultiplexed", "")),
+                # score_3p defaults True; only an explicit "false" disables
+                # 3' scoring (read-resolved/diagnostic 3' truth).
+                score_3p=str(r.get("score_3p", "") or "").strip().lower() != "false",
             )
         )
     return rows
@@ -586,15 +598,24 @@ def compute_primer_recovery(rows: list[BenchmarkRow]) -> PrimerRecoveryReport:
         report.counts_5p[eq_5p.equivalence_kind] = (
             report.counts_5p.get(eq_5p.equivalence_kind, 0) + 1
         )
-        report.counts_3p[eq_3p.equivalence_kind] = (
-            report.counts_3p.get(eq_3p.equivalence_kind, 0) + 1
-        )
         bucket_5p = report.counts_by_status_5p.setdefault(status_label, {})
         bucket_5p[eq_5p.equivalence_kind] = bucket_5p.get(eq_5p.equivalence_kind, 0) + 1
-        bucket_3p = report.counts_by_status_3p.setdefault(status_label, {})
-        bucket_3p[eq_3p.equivalence_kind] = bucket_3p.get(eq_3p.equivalence_kind, 0) + 1
+        # The 3' side is tallied only when it's a paper-grounded truth. A
+        # read-resolved/diagnostic 3' (score_3p=false, e.g. PRJNA883192) would
+        # be circular to score against detect's read-derived 3', so it is
+        # excluded from the 3' recovery counts (the 5' still scores normally).
+        if r.score_3p:
+            report.counts_3p[eq_3p.equivalence_kind] = (
+                report.counts_3p.get(eq_3p.equivalence_kind, 0) + 1
+            )
+            bucket_3p = report.counts_by_status_3p.setdefault(status_label, {})
+            bucket_3p[eq_3p.equivalence_kind] = bucket_3p.get(eq_3p.equivalence_kind, 0) + 1
 
-        report.pairs.append(PrimerSidePair(accession=r.accession, status_5p=eq_5p, status_3p=eq_3p))
+        report.pairs.append(
+            PrimerSidePair(
+                accession=r.accession, status_5p=eq_5p, status_3p=eq_3p, score_3p=r.score_3p
+            )
+        )
     return report
 
 
@@ -640,20 +661,29 @@ def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByS
         eq_5p = primer_equivalent(primer_5p, r.primer_5p_truth)
         eq_3p = primer_equivalent(primer_3p, r.primer_3p_truth)
 
-        both_exact = eq_5p.equivalence_kind == "EXACT" and eq_3p.equivalence_kind == "EXACT"
-        both_matched = (
-            eq_5p.equivalence_kind in _MATCHING_KINDS and eq_3p.equivalence_kind in _MATCHING_KINDS
-        )
-        # Codex pass-4: pair_failed is reserved for NO informative recovery on
-        # either side (both MISS: MISMATCH / IUPAC_UNSUPPORTED / no report).
-        # A side that matched OR was a boundary partial (correct region, fuzzy
-        # extent) is informative → the pair is at least pair_partial. This
-        # fixes the both-sides-PARTIAL case, which previously fell through to
-        # pair_failed and under-represented region-level recovery.
-        any_informative = (
-            eq_5p.equivalence_kind in _INFORMATIVE_KINDS
-            or eq_3p.equivalence_kind in _INFORMATIVE_KINDS
-        )
+        if r.score_3p:
+            both_exact = eq_5p.equivalence_kind == "EXACT" and eq_3p.equivalence_kind == "EXACT"
+            both_matched = (
+                eq_5p.equivalence_kind in _MATCHING_KINDS
+                and eq_3p.equivalence_kind in _MATCHING_KINDS
+            )
+            # Codex pass-4: pair_failed is reserved for NO informative recovery
+            # on either side (both MISS: MISMATCH / IUPAC_UNSUPPORTED / no
+            # report). A side that matched OR was a boundary partial (correct
+            # region, fuzzy extent) is informative → the pair is at least
+            # pair_partial. This fixes the both-sides-PARTIAL case, which
+            # previously fell through to pair_failed.
+            any_informative = (
+                eq_5p.equivalence_kind in _INFORMATIVE_KINDS
+                or eq_3p.equivalence_kind in _INFORMATIVE_KINDS
+            )
+        else:
+            # Read-resolved/diagnostic 3' (score_3p=false): only the 5' is
+            # paper-grounded, so never claim a both-sides pair — classify on
+            # the 5' alone (informative 5' → pair_partial; else pair_failed).
+            both_exact = False
+            both_matched = False
+            any_informative = eq_5p.equivalence_kind in _INFORMATIVE_KINDS
 
         if both_exact:
             bucket = "pair_exact"
@@ -1074,6 +1104,7 @@ def _primer_recovery_to_dict(pr: PrimerRecoveryReport) -> dict[str, Any]:
                 "accession": p.accession,
                 "status_5p": _equivalence_result_to_dict(p.status_5p),
                 "status_3p": _equivalence_result_to_dict(p.status_3p),
+                "score_3p": p.score_3p,
             }
             for p in sorted(pr.pairs, key=lambda x: x.accession)
         ],
