@@ -35,6 +35,7 @@ _SCREENING_LOG = _BENCH / "screening_log.tsv"
 _CURATED = {
     "PRJEB28411",
     "PRJNA883192",
+    "PRJNA1068659",
 }
 
 # Phase 6b.10 benchmark set (post-cleanup), labeled by read-state role.
