@@ -5,7 +5,7 @@ Scope pivot (2026-05-22): the figure tests selexprep's **unique claim**
 NOT comparator-tool count agreement. AptaPLEX / EasyDIVER+ both require
 known primers as input; they cannot benchmark primer inference.
 
-Phase 6b.10 reframe (Codex pass-3, 4 passes + user-approved): Figure A is
+reframe: Figure A is
 a **two-arm sensitivity/specificity benchmark**, NOT a read-state
 taxonomy. The benchmark set (``ground_truth.tsv``) carries a ``read_state``
 label — ``raw_standard`` (recovery arm) or ``pre_trimmed`` (specificity
@@ -36,7 +36,7 @@ The figure title carries the headline: exact / equivalent / partial
 recovery on the ``raw_standard`` N + the specificity false-positive count.
 NEVER a flat "X/11" (the set is not a random sample).
 
-Conservative framing (Codex pass-4) — keep two axes distinct in prose:
+Conservative framing — keep two axes distinct in prose:
 **region-level localization** (detect finds where the constants are) vs
 **exact-boundary recovery** (detect gets their exact extent). On the
 re-curated RaptRanker rows detect localizes the regions but under-extends
@@ -47,7 +47,7 @@ for long T7-containing 5' flanks." (A ~30 nt detect primer-length cap is a
 suspected v0.1 limitation pending investigation.)
 
 PNG byte-output is non-deterministic across matplotlib versions
-(accepted in Phase 5); the underlying ``metrics.json`` IS deterministic
+(an accepted limitation); the underlying ``metrics.json`` IS deterministic
 and is the source of truth for downstream consumers.
 """
 
@@ -82,7 +82,7 @@ _REQUIRED_ACTION_ORDER: tuple[str, ...] = (
     "NO_REPORT",
 )
 
-# Recovery semantics (Codex pass-4: keep exact and equivalent SEPARATE —
+# Recovery semantics (keep exact and equivalent SEPARATE —
 # do not collapse into a single "complete"): both sides EXACT → "exact";
 # both sides matched via an equivalence rule (revcomp / U-T / barcode) →
 # "equivalent"; exactly one side matched → "partial"; neither → "miss".
@@ -107,7 +107,7 @@ def _collapse_pair_counts(counts: dict[str, dict[str, int]]) -> dict[str, int]:
     pair_failed: n}}`` (the ``pair_recovery_by_status`` cross-tab). The
     recovery arm cares about the pair-level outcome, not the status
     bucket, so we collapse over statuses — but keep exact and equivalent
-    distinct (Codex pass-4: don't fold them into one "complete").
+    distinct (don't fold them into one "complete").
     """
     exact = equivalent = partial = miss = 0
     for bucket_counts in counts.values():
@@ -307,7 +307,7 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
     _panel_d_distributions(axes[1, 1], extraction_counts, required_action_counts, fetch_stats)
 
     # Headline: recovery (exact/equivalent/partial on raw_standard N, kept
-    # separate per Codex pass-4) + specificity false-positive count. NEVER a
+    # separate per) + specificity false-positive count. NEVER a
     # flat "X/11" — the set isn't a random sample, so a single recovery
     # fraction would over-read it.
     recovery_n = int(metrics.get("recovery_denominator", 0))
@@ -343,7 +343,7 @@ def plot_figure_a(metrics_json: Path, outdir: Path) -> tuple[Path, Path]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Render the Phase 6 Figure A.")
+    p = argparse.ArgumentParser(description="Render Figure A.")
     p.add_argument("--metrics", required=True, type=Path)
     p.add_argument("--outdir", required=True, type=Path)
     args = p.parse_args(argv)

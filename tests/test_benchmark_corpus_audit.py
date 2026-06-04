@@ -1,4 +1,4 @@
-"""Tests for the Tier 2 corpus-audit module (Phase 6b.3a)."""
+"""Tests for the Tier 2 corpus-audit module."""
 
 from __future__ import annotations
 
@@ -85,7 +85,7 @@ def test_accessions_sha256_independent_of_order() -> None:
 
 
 def test_write_accessions_tsv_emits_two_columns_sorted(tmp_path: Path) -> None:
-    """The TSV format matches what ``selexprep run`` consumes (locked plan)."""
+    """The TSV format matches what ``selexprep run`` consumes."""
     out = tmp_path / "accessions.tsv"
     write_accessions_tsv(["PRJNA42", "PRJNA1"], out)
     text = out.read_text(encoding="utf-8")
@@ -122,7 +122,7 @@ def _write_run_summary(path: Path, rows: list[dict[str, str]]) -> None:
 def test_aggregator_inference_safe_failure_rate_excludes_fetch_failures(
     tmp_path: Path,
 ) -> None:
-    """Methodological correction (Codex + user): denominator is ONLY rows with a LibraryReport.
+    """Methodological correction: denominator is ONLY rows with a LibraryReport.
 
     Three sampled accessions; one fetch-fails outright. The safe-failure
     rate is computed over the remaining two rows that produced a
@@ -172,7 +172,7 @@ def test_aggregator_inference_safe_failure_rate_excludes_fetch_failures(
 
 
 def test_aggregator_counts_fetchable_correctly(tmp_path: Path) -> None:
-    """Anything past the fetch stage counts as fetchable (locked plan partition)."""
+    """Anything past the fetch stage counts as fetchable."""
     summary = tmp_path / "run_summary.tsv"
     _write_run_summary(
         summary,
@@ -300,7 +300,7 @@ def test_aggregator_ground_truth_overlap(tmp_path: Path) -> None:
 def test_write_audit_json_deterministic(tmp_path: Path) -> None:
     """sorted keys + stable per_accession order → bit-identical output across runs.
 
-    Also covers the Codex peer-review defensive sort: the writer re-sorts
+    Also covers that the writer re-sorts
     ``per_accession`` even if the caller already sorted upstream, so direct
     callers (tests, hand-rolled scripts) can't accidentally write
     non-deterministic ordering. We pass intentionally unsorted input here.
@@ -334,7 +334,7 @@ def test_write_audit_json_deterministic(tmp_path: Path) -> None:
     assert list(parsed.keys()) == sorted(parsed.keys())
     # flags_raised_histogram keys must be stringified ints.
     assert "0" in parsed["flags_raised_histogram"]
-    # Codex peer-review defensive sort: per_accession ordering is enforced
+    # per_accession ordering is enforced
     # by write_audit_json itself, NOT trusted from the caller. The input
     # report's per_accession was B, A (unsorted); the JSON must show A, B.
     assert [r["accession"] for r in parsed["per_accession"]] == ["A", "B"]
@@ -348,7 +348,7 @@ def test_write_audit_json_deterministic(tmp_path: Path) -> None:
 def test_aggregator_populates_catalog_denominators_when_catalog_csv_given(
     tmp_path: Path,
 ) -> None:
-    """Phase 6b.5d: --catalog wires the full-catalog denominator into the audit JSON.
+    """--catalog wires the full-catalog denominator into the audit JSON.
 
     The eligibility classifier only sees INSDC rows. Without surfacing
     the figshare/zenodo passthrough count, Figure B's title reads "X of
@@ -382,7 +382,7 @@ def test_aggregator_populates_catalog_denominators_when_catalog_csv_given(
 
 
 def test_aggregator_catalog_denominators_default_to_zero_when_omitted(tmp_path: Path) -> None:
-    """Backward compat: pre-6b.5d aggregator calls omit --catalog; denominators stay 0."""
+    """Backward compat: pre-aggregator calls omit --catalog; denominators stay 0."""
     summary = tmp_path / "run_summary.tsv"
     _write_run_summary(summary, [{"accession": "A", "status": "FETCH_FAILED"}])
     report = aggregate_audit_from_run_outputs(
@@ -397,7 +397,7 @@ def test_aggregator_catalog_denominators_default_to_zero_when_omitted(tmp_path: 
 
 
 def test_aggregator_emits_multiplex_caveat_for_no_round_structure(tmp_path: Path) -> None:
-    """Phase 6b.5d: the multiplex caveat under NO_ROUND_STRUCTURE always ships.
+    """the multiplex caveat under NO_ROUND_STRUCTURE always ships.
 
     Single-FASTQ inline-barcoded multiplexed SELEX deposits land in
     NO_ROUND_STRUCTURE because v0.1 cannot detect them without a sample
@@ -539,7 +539,7 @@ def test_main_aggregate_picks_up_sidecar(tmp_path: Path) -> None:
 
 
 def test_main_aggregate_refuses_when_no_sha_available(tmp_path: Path) -> None:
-    """Codex peer-review fix: empty reproducibility envelope is a hard refusal.
+    """empty reproducibility envelope is a hard refusal.
 
     Neither a sidecar manifest nor an explicit ``--sample-sha`` is provided.
     The CLI must refuse to emit an audit JSON with empty provenance — the
@@ -580,7 +580,7 @@ def test_main_aggregate_refuses_when_no_sha_available(tmp_path: Path) -> None:
 def test_main_aggregate_warns_on_n_sampled_mismatch(
     tmp_path: Path, capsys: pytest.CaptureFixture
 ) -> None:
-    """Codex peer-review fix: sidecar n_sampled != run summary rows → loud warning.
+    """sidecar n_sampled != run summary rows → loud warning.
 
     The audit JSON's ``n_sampled`` field semantically means "what was
     actually processed" — len(run_summary.tsv). If the sidecar says

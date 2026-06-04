@@ -1,6 +1,6 @@
 """Independent read-level flank consensus for recovery-arm ground-truth curation.
 
-Phase 6b.10 Troncone 2 (non-circularity, Codex pass-4). The recovery-arm
+(non-circularity). The recovery-arm
 ``primer_*_truth`` in ``ground_truth.tsv`` must reflect the flanks PHYSICALLY
 PRESENT in the deposited reads — and they must be derived from evidence that is
 **independent of ``selexprep detect``** (otherwise the benchmark is circular:

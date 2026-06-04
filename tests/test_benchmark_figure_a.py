@@ -1,8 +1,8 @@
 """Smoke tests for ``selexprep.benchmark.figure_a`` (two-arm Figure A).
 
-Like Phase 5's matplotlib plot tests, we only check that PDF + PNG files
+Like 's matplotlib plot tests, we only check that PDF + PNG files
 are produced — byte-determinism is not guaranteed across matplotlib
-versions (locked plan accepts this for plot files). Phase 6b.10 reframes
+versions. reframes
 the figure as a recovery / specificity two-arm benchmark; these tests
 pin the new metrics.json shape.
 """
@@ -148,7 +148,7 @@ def test_plot_figure_a_renders_without_fetch_stats(tmp_path: Path) -> None:
 
 
 def test_plot_figure_a_renders_exact_and_equivalent_separately(tmp_path: Path) -> None:
-    """Panel A keeps exact and equivalent as distinct stack segments (Codex pass-4)."""
+    """Panel A keeps exact and equivalent as distinct stack segments."""
     payload = _make_metrics_payload()
     payload["pair_recovery_by_status"] = {
         "n_evaluated": 3,

@@ -169,7 +169,7 @@ def test_reorient_fastq_gz_output_is_deterministic(tmp_path: Path) -> None:
 
 
 def test_reorient_fastq_gz_raises_on_truncated_record(tmp_path: Path) -> None:
-    """Codex Phase 3 pass 1 regression: a truncated FASTQ input must raise
+    """regression: a truncated FASTQ input must raise
     rather than silently produce a partial output. Previously it logged a
     warning + broke the loop, leaving the caller no way to detect that
     extraction was incomplete."""

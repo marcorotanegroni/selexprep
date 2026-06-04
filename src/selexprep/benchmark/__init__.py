@@ -1,4 +1,4 @@
-"""Benchmark scaffolding for Phase 6: primer-recovery metrics + Figure A.
+"""Benchmark scaffolding for primer-recovery metrics + Figure A.
 
 Public surface kept minimal — most callers should reach for the named
 functions in the submodules directly.

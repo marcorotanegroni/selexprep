@@ -16,7 +16,7 @@ detection unreliable — you'd "detect" the winning aptamer.
   constants at 30 nt, and over-extending by one random base when a longer
   candidate still passes Hamming ≤ 1 globally.
 
-**Phase-1 caveat:** this module is the algorithm port. Phase 2 wraps it in
+**Phase-1 caveat:** this module is the algorithm port. wraps it in
 ``library/report.py`` to emit a full ``LibraryReport`` with adapter
 blacklisting, cross-round persistence, extraction_mode classification, and
 sampling-seed reproducibility. The bare detection result here is the
@@ -95,7 +95,7 @@ class FlankResult:
 class PrimerDetection:
     """Algorithmic primer-flank detection result for one input pool.
 
-    This is the Phase-1 raw detection; Phase 2 wraps it in `LibraryReport`
+    This is the Phase-1 raw detection; wraps it in `LibraryReport`
     with adapter blacklisting, cross-round persistence, and `extraction_mode`.
     """
 
@@ -336,56 +336,55 @@ def earliest_round_parquet(processed_bp_dir: Path) -> Path | None:
 
 
 # ===========================================================================
-# Phase 2 — cross-round LibraryReport orchestration
+# cross-round LibraryReport orchestration
 # ===========================================================================
 #
-# Everything below this banner is Phase 2 work (the LibraryReport pipeline);
-# everything above is the Phase 1 single-pool flank detector. The split is
-# intentional: the locked plan keeps the Phase 1 functions as the bare
-# algorithmic core that Phase 2 wraps with calibration, persistence, and
-# classification. Phase 1 callers (tests, future ad-hoc tools) keep working.
+# Everything below this banner is work (the LibraryReport pipeline);
+# everything above is the single-pool flank detector. The split is
+# intentional: the design keeps the functions as the bare
+# algorithmic core that wraps with calibration, persistence, and
+# classification. callers (tests, future ad-hoc tools) keep working.
 #
-# Phase 2 calibration constants were peer-reviewed by Codex on 2026-05-20
-# (pass 1). 6 confirmed, 4 revised (POSITION_CONSISTENCY_TOLERANCE,
+# calibration constants were reviewed:
+# 6 confirmed, 4 revised (POSITION_CONSISTENCY_TOLERANCE,
 # STATUS_HIGH_CUTOFF, COMPOSITE_WEIGHTS, COMPOSITE_WEIGHTS_NO_ROUND_MAP).
 # Behavior-based tests mean any future tuning will not break the test
-# suite. Search `CALIBRATION-REVIEWED` for the post-Codex values;
-# `CALIBRATION-TODO` for what still awaits review (Phase 5 qc flags,
+# suite. Search `CALIBRATION-REVIEWED` for the reviewed values;
+# `CALIBRATION-TODO` for what still awaits review (qc flags,
 # adapter blacklist composition).
 
 # ---------------------------------------------------------------------------
-# Calibration constants — Codex pass 1 (2026-05-20)
+# Calibration constants (reviewed 2026-05-20)
 # ---------------------------------------------------------------------------
-# All Phase 2 numbers below were peer-reviewed by Codex on 2026-05-20.
-# CONFIRMED values keep their locked-plan default; REVISED values cite
-# the new evidence in their comment. Phase 6 benchmark recovery numbers
+# CONFIRMED values keep their original default; REVISED values cite
+# the new evidence in their comment. Benchmark recovery numbers
 # will provide empirical ground truth for a future tuning pass.
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.70.
-# Locked plan line 302. AptaPLEX tracks primer errors per read but does
+# CALIBRATION-REVIEWED: CONFIRMED at 0.70.
+# the design. AptaPLEX tracks primer errors per read but does
 # not publish a dataset-level threshold (AptaSUITE import docs), so 0.70
 # is a reasonable pre-benchmark default.
 PRIMER_FOUND_MATCH_RATE_THRESHOLD = 0.7
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.80.
-# Locked plan lines 303, 305. AptaPLEX supports randomized-region length
+# CALIBRATION-REVIEWED: CONFIRMED at 0.80.
+# the design, 305. AptaPLEX supports randomized-region length
 # bounds rather than exact modal fractions; 0.80 is an internal safety
 # proxy for "sharply peaked" N-region length.
 N_LENGTH_CONFIDENT_FRACTION = 0.8
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED at 0.40.
-# Locked plan line 309. Existing tools assume supplied primers and
+# CALIBRATION-REVIEWED: CONFIRMED at 0.40.
+# the design. Existing tools assume supplied primers and
 # discard primer-failure reads rather than inferring from weak evidence,
 # so refusing-to-extract at <40% on both sides is the safe default
 # (AptaTools / AptaPLEX).
 UNABLE_TO_EXTRACT_MATCH_RATE = 0.4
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): REVISED 2 → 3.
+# CALIBRATION-REVIEWED: REVISED 2 → 3.
 # AptaPLEX's default primer mismatch tolerance is 3; small public-data
 # offset noise should not over-penalize an otherwise stable flank.
 POSITION_CONSISTENCY_TOLERANCE = 3
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1):
+# CALIBRATION-REVIEWED:
 #   STATUS_HIGH_CUTOFF: REVISED 0.80 → 0.85 — "HIGH" should mean
 #     paper-grade high-confidence, harder to reach via additive
 #     secondary signals before benchmark calibration.
@@ -397,7 +396,7 @@ STATUS_HIGH_CUTOFF = 0.85
 STATUS_MEDIUM_CUTOFF = 0.60
 STATUS_LOW_CUTOFF = 0.30
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): REVISED weights.
+# CALIBRATION-REVIEWED: REVISED weights.
 # Rationale: position_consistency deserves parity with raw match rate;
 # cross-round persistence is the unique SELEX-specific signal and
 # deserves the largest weight when available; adapter_clean is already
@@ -413,7 +412,7 @@ COMPOSITE_WEIGHTS = {
     "adapter_clean": 0.05,
 }
 # Rationale: with persistence absent and status already capped at MEDIUM
-# (locked plan line 289), within-round evidence (match + position) gets
+# , within-round evidence (match + position) gets
 # equal parity weight; n_len and adapter_clean remain supporting signals.
 COMPOSITE_WEIGHTS_NO_ROUND_MAP = {
     "match_5p": 0.225,
@@ -425,7 +424,7 @@ COMPOSITE_WEIGHTS_NO_ROUND_MAP = {
     "adapter_clean": 0.05,
 }
 
-# CALIBRATION-REVIEWED (Codex 2026-05-20, pass 1): CONFIRMED.
+# CALIBRATION-REVIEWED: CONFIRMED.
 # < 5% reads reversed → FORWARD; 5-95% → MIXED; > 95% → REVERSE.
 # No published benchmark; conservative defaults that avoid overreacting
 # to contamination/index bleed and require near-unanimous reverse
@@ -433,7 +432,7 @@ COMPOSITE_WEIGHTS_NO_ROUND_MAP = {
 ORIENTATION_REVERSED_FORWARD_MAX = 0.05
 ORIENTATION_REVERSED_REVERSE_MIN = 0.95
 
-# Top-K variants surfaced in the LibraryReport (locked plan line 297: K=3).
+# Top-K variants surfaced in the LibraryReport.
 VARIANTS_TOP_K = 3
 # ADAPTER_PROBE_K is imported from selexprep.library.adapters (single source
 # of truth — same value used by count_adapter_hits and
@@ -446,7 +445,7 @@ VARIANTS_TOP_K = 3
 
 
 def _normalize_u_to_t(seq: str) -> str:
-    """Convert RNA primer notation to DNA (locked plan line 296)."""
+    """Convert RNA primer notation to DNA."""
     return seq.upper().replace("U", "T")
 
 
@@ -788,7 +787,7 @@ def compute_library_report(
 ) -> LibraryReport:
     """Compute a full ``LibraryReport`` from per-round sequence pools.
 
-    Algorithm (locked plan §Phase 2, lines 287-313):
+    Algorithm:
 
     1. Adapter-blacklist scan on the earliest round (records hits; does
        NOT filter reads).
@@ -842,7 +841,7 @@ def compute_library_report(
     # pool has the highest residual-adapter representation).
     adapter_hits = count_adapter_hits(earliest_seqs, k=ADAPTER_PROBE_K)
 
-    # Single-pool primer detection (Phase 1 algorithm) on the earliest round.
+    # Single-pool primer detection on the earliest round.
     primer_detection = detect_primers(earliest_seqs)
     if primer_detection is None:
         return _build_unable_report(
@@ -858,10 +857,10 @@ def compute_library_report(
     primer_5p_seq = primer_detection.primer_5p.sequence
     primer_3p_seq = primer_detection.primer_3p.sequence
 
-    # Drop primers that match known sequencing adapters (locked plan line 291:
+    # Drop primers that match known sequencing adapters (the design:
     # "Exclude from primer candidates"). Track which side was dropped so the
     # adapter_clean signal can faithfully report adapter-trap events even when
-    # the OTHER primer survived (Codex pass 1 fix: previously the signal was
+    # the OTHER primer survived (previously the signal was
     # 1.0 as long as ANY primer survived, hiding the trap).
     adapter_drop_5p = False
     adapter_drop_3p = False
@@ -878,7 +877,7 @@ def compute_library_report(
     # For paired-split, all 3p signals (match_rate, position_consistency,
     # variants, per-round persistence) must be measured against R2 reads at
     # R2's 5' end using ``revcomp(primer_3p)`` as the lookup — that's where the
-    # 3' adapter actually appears (Codex pass 1 fix: previously these were
+    # 3' adapter actually appears (previously these were
     # measured against R1's 3' end, where the primer cannot exist in a split
     # library by construction, giving a misleading match_rate_3p ≈ 0).
     has_paired_split = False
@@ -925,7 +924,7 @@ def compute_library_report(
     persistence = _combine_persistence(persistence_5p, persistence_3p, primer_5p_seq, primer_3p_seq)
 
     # Earliest-round signals for the report — TWO DISTINCT MEASUREMENTS
-    # (Codex pass 1 fix: previously match_rate_* was aliased to
+    # (previously match_rate_* was aliased to
     # position_consistency_*, double-counting the same evidence in the
     # composite confidence):
     #   match_rate_*           = primer appears anywhere as substring (Hamming ≤ 1)
@@ -962,7 +961,7 @@ def compute_library_report(
     # Composite confidence.
     has_round_map = len(normalized) >= 2
     if not has_round_map:
-        # Phase 6b.8 UX: single-round / final-pool input is a legitimate
+        # UX: single-round / final-pool input is a legitimate
         # and common workflow (HT-SELEX is costly; many depositors
         # sequence only the final enriched pool). It is NOT refused — but
         # the strongest SELEX-specific signal (cross-round persistence) is
@@ -982,7 +981,7 @@ def compute_library_report(
             len(normalized),
         )
     # adapter_clean = 1.0 only if NO detected candidate was dropped as an
-    # adapter (Codex pass 1 fix: previously this was "we have at least one
+    # adapter (previously this was "we have at least one
     # primer", which hid the adapter trap whenever the other side survived).
     adapter_clean_signal = 0.0 if (adapter_drop_5p or adapter_drop_3p) else 1.0
     signals: dict[str, float | None] = {

@@ -1,26 +1,25 @@
 """Sequencing-adapter blacklist used by primer inference.
 
-The locked plan (``~/.claude/plans/unified-seeking-treehouse.md`` line 291)
-requires the LibraryReport pipeline to **record** how often known
+The design requires the LibraryReport pipeline to **record** how often known
 sequencing adapters appear in the read pool, and to **exclude** those
 adapters from primer candidates. It does NOT filter reads — under-trimmed
 adapter sequences are diagnostic information, not error conditions.
 
-**v0.1 set (conservative).** Locked plan line 291 says "TruSeq R1/R2,
+**v0.1 set (conservative).** the design says "TruSeq R1/R2,
 Nextera, etc." — the v0.1 set is the two most common Illumina adapters
 encountered in HT-SELEX deposits. Expanding to Illumina P5/P7, Small RNA,
 and IonTorrent A is deferred to v0.2.
 
 **Calibration status.** The exact composition is a `# CALIBRATION-TODO`:
-the conservative set ships now; Codex review (rate-limited 2026-05-19 →
-2026-05-26) gets the final list along with Phase 6 benchmark hit-rate
+the conservative set ships now; review (rate-limited 2026-05-19 →
+2026-05-26) gets the final list along with benchmark hit-rate
 data.
 """
 
 from __future__ import annotations
 
-# CALIBRATION-TODO: locked plan line 291 ("TruSeq R1/R2, Nextera, etc.");
-# Codex confirms or extends to the full Illumina set.
+# CALIBRATION-TODO: the design ("TruSeq R1/R2, Nextera, etc.");
+# confirmed or extends to the full Illumina set.
 KNOWN_ADAPTERS: dict[str, str] = {
     # Illumina TruSeq Read 1 adapter prefix — the canonical contamination
     # probe in HT-SELEX deposits (see audit.py for the identical constant
@@ -33,10 +32,10 @@ KNOWN_ADAPTERS: dict[str, str] = {
 
 
 # Watson-Crick complement table.
-# U → A (RNA primers are reported as DNA per locked plan line 296; see
+# U → A (RNA primers are reported as DNA per the design; see
 # `selexprep.library.detect._normalize_u_to_t`).
 # IUPAC ambiguous bases (N, R, Y, ...) are explicitly unsupported in v0.1
-# per locked plan line 33 ("IUPAC unsupported in v0.1").
+# per the design ("IUPAC unsupported in v0.1").
 _COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "U": "A"}
 
 

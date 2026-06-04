@@ -1,4 +1,4 @@
-"""Unit tests for selexprep.benchmark.eligibility (Phase 6b.5b)."""
+"""Unit tests for selexprep.benchmark.eligibility."""
 
 from __future__ import annotations
 
@@ -373,9 +373,9 @@ def test_cli_classify_catalog_writes_tsv_and_distribution(tmp_path: Path) -> Non
 
 # ----- Empirical pilot regression tests -----
 #
-# The Phase 6b.4 audit pilot's 30 accessions, post-Phase 6b.5a refresh
+# The audit pilot's 30 accessions, post-refresh
 # of the catalog. These cases pin classify_plan against the empirical
-# data Codex surfaced in the per-row fetch_metadata.json inspection.
+# data surfaced in the per-row fetch_metadata.json inspection.
 
 
 def test_pilot_rapt26_is_eligible() -> None:

@@ -1,4 +1,4 @@
-"""Tests for Phase 4 override-primer + extract_diff.tsv path."""
+"""Tests for override-primer + extract_diff.tsv path."""
 
 from __future__ import annotations
 
@@ -250,16 +250,16 @@ def test_manifest_records_override_primers_when_applied(tmp_path: Path) -> None:
 
 
 # ===========================================================================
-# Codex Phase 4 pass 1 regressions (2026-05-21)
+# regressions (2026-05-21)
 # ===========================================================================
-# Locked plan line 311: --override-primer-{5p,3p} is an explicit user
+# the design: --override-primer-{5p,3p} is an explicit user
 # bypass for UNABLE_TO_INFER / UNABLE_TO_EXTRACT. To honor that, override
 # must be applied BEFORE the refusal check AND must promote the
 # classification fields the refusal check inspects.
 
 
 def test_override_with_both_primers_promotes_unable_to_extract(tmp_path: Path) -> None:
-    """Phase 4 Codex pass 1: a baseline UNABLE_TO_EXTRACT report should
+    """a baseline UNABLE_TO_EXTRACT report should
     proceed when the user explicitly passes BOTH override primers. The
     extraction_mode gets promoted to BOTH_PRIMERS_SINGLE_READ (the user
     has declared both sides), full_insert_recovered → True,

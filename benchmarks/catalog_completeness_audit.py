@@ -1,11 +1,11 @@
-"""Phase 6b.6 — one-off catalog discovery completeness audit.
+"""one-off catalog discovery completeness audit.
 
 Measures what fraction of ENA studies explicitly typed as
 ``library_strategy="SELEX"`` are accounted for by selexprep's bundled
 catalog (either present in ``bioprojects.csv`` or recorded in
 ``bioprojects_excluded.csv`` with a documented reason). This is the
 audit referenced from Figure B's narrative — the discovery-side
-counterpart to Phase 6b.3a's fetcher / inference audit.
+counterpart to 's fetcher / inference audit.
 
 **Not a recurring pipeline.** Run this when:
 
@@ -24,7 +24,7 @@ counterpart to Phase 6b.3a's fetcher / inference audit.
 - ``benchmarks/catalog_completeness_audit.tsv`` — per-accession
   diff (one row per ENA-SELEX accession with its catalog status).
 
-**Methodology** (Codex peer-reviewed + user-amended):
+**Methodology**:
 
 1. ENA Portal API at the data-type level:
    ``result=read_run&query=library_strategy="SELEX"``. This is the

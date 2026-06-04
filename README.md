@@ -12,10 +12,10 @@
 ## Status
 
 **v0.1 RC.** Full single-dataset + batch workflow is feature-complete
-and tested (601 passing tests + 1 strict-xfail reserved for v0.2 read
+and tested (636 passing tests + 1 strict-xfail reserved for v0.2 read
 merging). Tier 2 corpus audit shipped against a v0.1.6 catalog
 snapshot; catalog discovery completeness measured at 100% of
-ENA-typed-SELEX deposits in v0.1.7. The Phase 6 primer-recovery
+ENA-typed-SELEX deposits in v0.1.7. The primer-recovery
 benchmark (Figure A) is complete — paper-grounded recovery on a
 curated multi-chemistry set, alongside safe-failure and specificity
 arms. Not yet on PyPI.
@@ -49,11 +49,11 @@ supply primers**.
 | EasyDIVER+ (2025) | ✗ | ✗ — paired-end with known primers | ✗ |
 | ht-selex-demo | ✗ | ✗ — Illumina adapters only (a trap `selexprep` guards against via `known_adapter_hits`) | ✗ |
 | nf-core | ✗ (no SELEX pipelines exist) | — | — |
-| **`selexprep`** | ✓ (v0.2; catalog ships v0.1) | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
+| **`selexprep`** | ✓ — INSDC in v0.1; figshare/zenodo backends deferred | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
 
-**Benchmark headline (Phase 6):** *`selexprep` approaches
-known-primer pipelines on datasets where primer inference is
-high-confidence, while explicitly failing safe on ambiguous ones.*
+**Benchmark headline:** *on a curated, paper-grounded set, `selexprep`
+recovers SELEX primers directly from raw reads — with none supplied —
+and fails safe (no fabricated primers) where inference is ambiguous.*
 
 ## What v0.1 does
 
@@ -100,43 +100,68 @@ Concretely:
 
 ```bash
 # Dev install (PyPI release pending)
-uv pip install -e .
+uv pip install -e .          # pulls in cutadapt
+```
 
-# 0. Discover available public SELEX datasets
+**The one command.** Point `run` at a TSV of accessions — it fetches each
+dataset, infers the primers from the reads, then extracts, counts, and QCs, with
+no primers supplied:
+
+```bash
+printf 'accession\nPRJNA615076\n' > accessions.tsv
+selexprep run accessions.tsv --outdir out --resume
+```
+
+Everything lands under `out/<accession>/`: `library_report.json` (inferred
+primers + `status` / `extraction_mode` / `required_action`), `round_NN/`
+(`extracted.fasta.gz` + `counts.parquet` per round), `selexprep_manifest.json`
+(the reproducibility manifest), and `qc/` (four PNGs + `flags.yaml`); a
+corpus-level `run_summary.tsv` spans every accession. `--resume` skips datasets
+already finished, so a killed batch picks up where it left off.
+
+### Don't have accessions yet?
+
+Browse the bundled catalog of public SELEX deposits, then feed the hits to `run`:
+
+```bash
 selexprep catalog list --target IL-10RA --insdc-only
 selexprep catalog show PRJEB12345
+```
 
-# 1. Preview an accession's metadata without downloading
+### Running the stages by hand (debug / advanced)
+
+`run` chains six verbs. Drive them individually when you want to inspect an
+intermediate, re-extract with corrected primers, or handle a non-standard layout
+— here on local FASTQs you already have:
+
+```bash
+# Preview an accession's metadata without downloading
 selexprep inspect SRR12647619
 
-# 2. Detect: auto-infer primers + library structure from local FASTQs
-#    (requires a round map — cross-round persistence is the key signal)
-cat > rounds.tsv <<EOF
-file	round_number
-round_00.fastq.gz	0
-round_01.fastq.gz	1
-round_02.fastq.gz	2
-EOF
+# Detect needs a round map — cross-round persistence is the key primer signal
+printf 'file\tround_number\nround_00.fastq.gz\t0\nround_01.fastq.gz\t1\nround_02.fastq.gz\t2\n' > rounds.tsv
 selexprep detect round_00.fastq.gz round_01.fastq.gz round_02.fastq.gz \
     --round-map rounds.tsv --outdir ./out
 
-# 3. Extract: trim primers, emit per-round FASTAs + manifest
+# Extract: trim primers, emit per-round FASTAs + manifest
 selexprep extract round_00.fastq.gz round_01.fastq.gz round_02.fastq.gz \
     --library-report ./out/library_report.json \
     --round-map rounds.tsv --outdir ./out
 
-# 4. Count: per-round unique sequences -> parquet
+# Count: per-round unique sequences -> parquet
 for r in 0 1 2; do
     selexprep count ./out/round_$(printf '%02d' $r)/extracted.fasta.gz \
         --round R$r --outdir ./out
 done
 
-# 5. QC: depth-aware suspicion flags + 4 PNG plots
+# QC: depth-aware suspicion flags + 4 PNG plots
 selexprep qc ./out/selexprep_manifest.json
 ```
 
-When primer inference is ambiguous, `extract` refuses with a pointer
-to override:
+For a fully offline, runnable tour of these stages on synthetic data, see
+[`examples/01_offline_toy_pipeline.ipynb`](examples/01_offline_toy_pipeline.ipynb).
+
+When primer inference is ambiguous, `extract` refuses with a pointer to override:
 
 ```bash
 # Either edit library_report.json by hand…
@@ -152,25 +177,23 @@ selexprep extract round_*.fastq.gz \
 
 ### Only have the final pool / a single round?
 
-That's the common case — HT-SELEX is costly, so many experiments
-sequence only the final enriched pool. selexprep still works: pass a
-one-row round map and run the same `detect` → `extract` → `count` →
-`qc` flow.
+That's the common case — HT-SELEX is costly, so many experiments sequence only
+the final enriched pool. selexprep still works: `run` handles it, or by hand
+pass a one-row round map to `detect`:
 
 ```bash
 printf 'file\tround_number\nfinal_pool.fastq.gz\t0\n' > rounds.tsv
 selexprep detect final_pool.fastq.gz --round-map rounds.tsv --outdir ./out
 ```
 
-The one difference: **confidence is capped at `MEDIUM`**, because
-cross-round persistence (the strongest SELEX-specific primer signal)
-needs ≥2 rounds. `detect` logs a warning saying so, and inference falls
-back to within-round signals only (primer match rate, flank position,
-low-entropy region, adapter blacklist). Verify the inferred primers
-before trusting extraction — or, if you designed the library and
-already know the primers, pass `--override-primer-5p/3p`: extraction
-then uses your sequences directly and the inference confidence cap
-no longer applies (you're not inferring anything).
+The one difference: **confidence is capped at `MEDIUM`**, because cross-round
+persistence (the strongest SELEX-specific primer signal) needs ≥2 rounds.
+`detect` logs a warning saying so, and inference falls back to within-round
+signals only (primer match rate, flank position, low-entropy region, adapter
+blacklist). Verify the inferred primers before trusting extraction — or, if you
+designed the library and already know the primers, pass
+`--override-primer-5p/3p`: extraction then uses your sequences directly and the
+inference confidence cap no longer applies (you're not inferring anything).
 
 ## CLI surface
 
@@ -178,7 +201,7 @@ no longer applies (you're not inferring anything).
 |---|---|---|
 | `selexprep catalog list \| show \| version \| refresh` | ✅ v0.1 | Browse / refresh the bundled discovery catalog (250 entries; refresh hits live ENA). |
 | `selexprep inspect <ACC>` | ✅ v0.1 | ENA filereport REST preview — round count, `library_strategy` (SRA verbatim, not classified), file sizes + MD5s. No download. |
-| `selexprep fetch <ACC> --outdir OUT [--allow-manual-review]` | ✅ v0.1 | Download FASTQ + auto-populate round map. Partial-parseability is warn-and-skip (Phase 6b.5d); unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
+| `selexprep fetch <ACC> --outdir OUT [--allow-manual-review]` | ✅ v0.1 | Download FASTQ + auto-populate round map. Partial-parseability is warn-and-skip; unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
 | `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | ✅ v0.1 | Auto-infer primers + library structure → `library_report.json`. |
 | `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT [--sample-sheet samples.tsv] [--paired-r2 ...] [--override-primer-{5p,3p} ...] [--rebuild]` | ✅ v0.1 | Cutadapt-driven trim + strand reorient + per-round FASTA + manifest. |
 | `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | ✅ v0.1 | FASTA → counts.parquet (sequence, reads, rank, RPM). |
@@ -189,9 +212,9 @@ no longer applies (you're not inferring anything).
 
 ```
 out/
-├── library_report.json            # primer inference + extraction_mode (Phase 2)
-├── selexprep_manifest.json        # reproducibility anchor (Phase 4)
-├── trim_reports.json              # cutadapt argv + n_in/n_out per round (Phase 3)
+├── library_report.json            # primer inference + extraction_mode
+├── selexprep_manifest.json        # reproducibility anchor
+├── trim_reports.json              # cutadapt argv + n_in/n_out per round
 ├── strand_report.tsv              # only if orientation ∈ {MIXED, REVERSE}
 ├── extract_diff.tsv               # only with --rebuild + --override-primer-*
 ├── round_00/
@@ -199,7 +222,7 @@ out/
 │   │   # or partial_5p_extracted.fasta.gz (FIVE_PRIME_ONLY)
 │   │   # or partial_3p_extracted.fasta.gz (THREE_PRIME_ONLY)
 │   │   # or partial_5p_extracted_R1.fasta.gz + partial_3p_extracted_R2.fasta.gz (PAIRED_END_SPLIT_PRIMERS)
-│   └── counts.parquet             # unique sequences (Phase 5)
+│   └── counts.parquet             # unique sequences
 ├── round_NN/...
 └── qc/
     ├── flags.yaml                 # depth-aware suspicion flags
@@ -246,14 +269,14 @@ Tests assert on **behavior**, never on threshold values (e.g.
 `assert HIGH_CUTOFF == 0.85`). Tuning the numbers is therefore safe
 under the existing test suite.
 
-**Phase 2 (LibraryReport inference)** — `CALIBRATION-REVIEWED` markers
-in `library/detect.py` document the v0.1 values + rationale for each
+**LibraryReport inference** — `CALIBRATION-REVIEWED` markers in
+`library/detect.py` document the v0.1 values + rationale for each
 threshold (`STATUS_HIGH_CUTOFF`, `POSITION_CONSISTENCY_TOLERANCE`, the
 two `COMPOSITE_WEIGHTS` regimes, etc.). See `CHANGELOG.md` for the
 diff history.
 
-**Phase 5 (QC suspicion flags) + adapter blacklist composition** —
-still pending. `CALIBRATION-TODO` markers in `qc/flags.py`,
+**QC suspicion flags + adapter blacklist composition** — still
+pending. `CALIBRATION-TODO` markers in `qc/flags.py`,
 `library/adapters.py` (TruSeq + Nextera vs full Illumina set), and
 `extract/strand.py`. Inventory:
 
@@ -262,8 +285,8 @@ grep -rn "CALIBRATION-TODO" src/      # what's left to tune
 grep -rn "CALIBRATION-REVIEWED" src/  # what's already vetted with rationale
 ```
 
-Final calibration tuning will use Phase 6 benchmark recovery numbers
-(15+ known-primer datasets) as empirical ground truth.
+Calibration tuning draws on the benchmark recovery numbers as
+empirical ground truth.
 
 ## Architecture
 
@@ -306,7 +329,7 @@ Final calibration tuning will use Phase 6 benchmark recovery numbers
 
 ```bash
 # Pre-commit gates (run all four before pushing)
-uv run pytest                       # 587 + 1 xfailed
+uv run pytest                       # 636 + 1 xfailed
 uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 uv run mypy src/                     # strict on library.report

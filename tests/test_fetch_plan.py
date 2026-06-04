@@ -155,7 +155,7 @@ def test_build_fetch_plan_has_any_assigned_rounds_true_when_mixed() -> None:
 
 
 def test_build_fetch_plan_medium_single_match_library_name_not_refused() -> None:
-    """Phase 6b.4 audit-pilot regression: PRJDB19138 had 5 runs all parsing
+    """audit-pilot regression: PRJDB19138 had 5 runs all parsing
     cleanly from library_name (RAPT26-1R / RAPT26-2R / ...). Pre-fix every
     one was flagged as needs_manual_review (because base_confidence=MEDIUM
     on L3 fields), so ``none_confidence_runs`` returned all 5 and the
@@ -324,7 +324,7 @@ def test_fastq_filenames_for_run_single_vs_paired() -> None:
 def test_fastq_filenames_for_run_fallback_when_urls_empty() -> None:
     """Defensive: ``fastq_urls`` empty (rare ENA edge case) → synthesize from SRR + paired_end.
 
-    Codex pass 1 added URL-derived naming, but the synthesizing fallback
+    added URL-derived naming, but the synthesizing fallback
     survives so the resume oracle remains useful even when URLs are absent.
     """
     from selexprep.fetch.metadata import RoundRecord

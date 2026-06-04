@@ -1,11 +1,11 @@
-# selexprep Phase 6b.3a — Tier 2 corpus-audit pipeline
+# selexprep Tier 2 corpus-audit pipeline
 #
 # Scaffolding only: this Snakefile defines the DAG but is NOT executed
 # in CI. The real-data HPC run that lands ``audit_results/`` artifacts
 # (``audit_accessions.tsv`` + ``audit_metrics.json`` + ``figure_b.{pdf,png}``)
-# is the 6b.4 follow-up commit with no code changes.
+# is run separately on the HPC cluster.
 #
-# DAG (locked plan + Codex peer-review + Phase 6b.5b eligibility layer):
+# DAG (eligibility layer):
 #
 #   rule classify_catalog → eligibility.tsv (per-accession audit-eligibility
 #                            classification via ENA fetch per row)
@@ -40,7 +40,7 @@
 
 from pathlib import Path
 
-# Anchor paths to the Snakefile directory (Codex peer-review fix): otherwise
+# Anchor paths to the Snakefile directory (path fix): otherwise
 # ``snakemake -s benchmarks/audit.smk`` from the repo root looks for
 # ``ground_truth.tsv`` in the repo root and dies with a MissingInputException.
 # ``workflow.basedir`` is the standard Snakemake idiom for "the directory of
@@ -52,7 +52,7 @@ GROUND_TRUTH = str(_BENCHMARKS_DIR / "ground_truth.tsv")
 N_SAMPLE = int(config.get("n_sample", 30))
 SEED = int(config.get("seed", 42))
 # Catalog snapshot path (resolved at import time from the installed
-# package; the Phase 6b.5b classifier reads the same file).
+# package; the classifier reads the same file).
 import selexprep.catalog.reader as _cat_reader
 CATALOG_CSV = str(_cat_reader.catalog_path())
 
@@ -65,7 +65,7 @@ rule all:
 
 
 rule classify_catalog:
-    """Phase 6b.5b: classify every INSDC catalog row before sampling.
+    """classify every INSDC catalog row before sampling.
 
     Hits ENA once per accession to build a FetchPlan, then applies
     ``selexprep.benchmark.eligibility.classify_plan``. Only
@@ -130,7 +130,7 @@ rule aggregate_audit:
     output:
         OUTROOT + "/audit_metrics.json",
     params:
-        # Phase 6b.5d: pass the catalog snapshot so the aggregator can
+        # pass the catalog snapshot so the aggregator can
         # populate ``n_catalog_total`` + ``n_catalog_non_insdc_passthrough``
         # — surfacing the full-catalog denominator in the audit JSON +
         # Figure B title (the eligibility classifier only sees INSDC

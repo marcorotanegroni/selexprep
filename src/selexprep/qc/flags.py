@@ -1,18 +1,18 @@
 """Depth-aware suspicion flags for a single SELEX dataset.
 
-Locked plan lines 350-358 spec eight flags. Each is computed from the
+the design spec eight flags. Each is computed from the
 manifest's ``LibraryReport`` + the per-round ``counts.parquet`` outputs
 emitted by ``selexprep count``. The output is ``flags.yaml`` (sorted by
 flag name; deterministic).
 
 The match-rate threshold is **imported** from ``library.detect`` to keep
-the two thresholds in sync — when Codex calibration tunes
+the two thresholds in sync — when calibration tunes
 ``UNABLE_TO_EXTRACT_MATCH_RATE`` it automatically tightens the QC flag
 as well.
 
 **v0.1 scope**: ``extraction_mode_changed_across_rounds`` cannot fire
 in single-dataset mode (only one ``LibraryReport`` per manifest). It is
-a placeholder for the ``selexprep run`` batch driver (Phase 6).
+a placeholder for the ``selexprep run`` batch driver.
 """
 
 from __future__ import annotations
@@ -41,23 +41,23 @@ Severity = Literal["warn", "info"]
 # CALIBRATION-TODO constants
 # ---------------------------------------------------------------------------
 
-# CALIBRATION-TODO: locked plan line 351 ("rarefied R_n > R_{n-1}").
-# Codex confirms rarefaction depth after Phase 6 benchmark numbers.
+# CALIBRATION-TODO: the design ("rarefied R_n > R_{n-1}").
+# confirmed rarefaction depth after benchmark numbers.
 RAREFACTION_DEPTH = 10_000
 
 # Match-rate threshold for "low primer match" is the SAME number as the
 # UNABLE_TO_EXTRACT classifier threshold - imported, not redeclared.
 
-# CALIBRATION-TODO: locked plan line 353 ("> 2 modal lengths").
+# CALIBRATION-TODO: the design ("> 2 modal lengths").
 N_LENGTH_MAX_MODAL_LENGTHS = 2
 
-# CALIBRATION-TODO: locked plan line 354 ("> 20% wrong orientation").
+# CALIBRATION-TODO: the design ("> 20% wrong orientation").
 STRAND_MIX_MAX_REVERSE_FRACTION = 0.20
 
-# CALIBRATION-TODO: locked plan line 355 ("< 10k any round").
+# CALIBRATION-TODO: the design ("< 10k any round").
 LOW_TOTAL_READS_MIN = 10_000
 
-# CALIBRATION-TODO: locked plan line 356 ("> 5% of reads").
+# CALIBRATION-TODO: the design ("> 5% of reads").
 ADAPTER_CONTAMINATION_MAX_FRACTION = 0.05
 
 # Diversity rarefaction RNG seed - deterministic across reruns.
@@ -88,12 +88,12 @@ def check_unexpected_rarefied_diversity_increase(
 ) -> Flag | None:
     """Rarefied unique counts should monotonically decrease across rounds.
 
-    Locked plan line 351: an increase is suspicious - it suggests
+    the design: an increase is suspicious - it suggests
     contamination or that a "round" was actually a re-sequencing of the
     same pool. Uses rarefaction (not raw counts) so depth differences
     do not confound the comparison.
 
-    Phase 5 Codex pass 1 fix: rarefy to ``effective_depth = min(
+    rarefy to ``effective_depth = min(
     RAREFACTION_DEPTH, min_total_reads_per_round)``. The previous version
     used ``RAREFACTION_DEPTH`` as a fixed target, but ``rarefy`` returns
     the original pool unchanged when ``depth >= total`` - so a 2k-read
@@ -199,7 +199,7 @@ def check_n_length_variation_across_rounds(
 def check_strand_mix(strand_report_path: Path | None) -> Flag | None:
     """> STRAND_MIX_MAX_REVERSE_FRACTION reverse reads in any round.
 
-    The strand report is the TSV emitted by Phase 3's extract pipeline
+    The strand report is the TSV emitted by 's extract pipeline
     (only present when ``orientation in {MIXED, REVERSE}``). Missing
     file -> no flag (FORWARD orientation never emits a strand report).
     """
@@ -269,8 +269,8 @@ def check_adapter_contamination_high(
 ) -> Flag | None:
     """Any adapter's hits > ADAPTER_CONTAMINATION_MAX_FRACTION of reads.
 
-    Phase 5 Codex pass 1 fix: the numerator (``lr.known_adapter_hits``)
-    comes from Phase 2's inference pass on the EARLIEST round's
+    the numerator (``lr.known_adapter_hits``)
+    comes from 's inference pass on the EARLIEST round's
     subsampled pre-extraction reads. The denominator must match that
     measurement universe — using post-extraction ``counts.parquet``
     totals (the previous behavior) compared apples to oranges and
@@ -293,7 +293,7 @@ def check_adapter_contamination_high(
                 "reason": "denominator_unavailable",
                 "note": (
                     "trim_reports.json is missing; cannot reconstruct the "
-                    "Phase 2 inference-universe denominator. Hits are "
+                    "inference-universe denominator. Hits are "
                     "preserved as raw counts."
                 ),
                 "known_adapter_hits": {a: int(h) for a, h in lr.known_adapter_hits.items()},
@@ -301,7 +301,7 @@ def check_adapter_contamination_high(
         )
 
     # ASSUMPTION (v0.1): the lowest round number in trim_reports.json is
-    # the same round Phase 2's primer inference used. This holds in the
+    # the same round 's primer inference used. This holds in the
     # documented v0.1 CLI flow because the user passes the same FASTQ set
     # to both `detect` and `extract`, so detect's "earliest round" equals
     # min(extract's trim_reports.rounds). The assumption can BREAK in:
@@ -311,7 +311,7 @@ def check_adapter_contamination_high(
     #   - v0.2 batch driver (`selexprep run`) where multiple extract
     #     invocations may produce a Frankenstein trim_reports.json
     # Bulletproof fix (deferred to v0.2): add ``earliest_inference_round``
-    # to the LibraryReport schema in Phase 2's compute_library_report; use
+    # to the LibraryReport schema in 's compute_library_report; use
     # ``lr.earliest_inference_round`` here instead of min(trim_reports).
     # A schema bump is disproportionate for an edge case unreachable
     # through the v0.1 single-dataset CLI flow.
@@ -365,7 +365,7 @@ def check_extraction_mode_changed_across_rounds(
 ) -> Flag | None:
     """v0.1 single-dataset scope: cannot fire (one LR per manifest).
 
-    Placeholder for the ``selexprep run`` batch driver (Phase 6) which
+    Placeholder for the ``selexprep run`` batch driver which
     will compare ``extraction_mode`` across multiple manifests from the
     same SRA project.
     """
@@ -383,7 +383,7 @@ def check_extraction_mode_changed_across_rounds(
 
 def check_requires_read_merging_for_full_insert(lr: LibraryReport) -> Flag | None:
     """Informational: paired-end split-primer datasets need read merging
-    to recover the full insert (locked plan line 358)."""
+    to recover the full insert."""
     if lr.required_action != "READ_MERGING_RECOMMENDED":
         return None
     return Flag(
@@ -417,8 +417,7 @@ def compute_all_flags(
     ``trim_reports_by_round`` is the aggregated per-round ``{n_in, n_out}``
     derived from ``trim_reports.json`` (qc/runner does the parsing). Used
     by ``check_adapter_contamination_high`` to derive the correct
-    denominator (Phase 2's inference universe, not the post-extraction
-    universe). When absent, that flag degrades gracefully.
+    denominator. When absent, that flag degrades gracefully.
     """
     lr = manifest.library_report
     candidates: list[Flag | None] = [

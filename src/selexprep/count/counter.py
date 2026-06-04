@@ -329,13 +329,13 @@ def count_fasta(
 ) -> dict:
     """Count unique sequences from a primer-stripped FASTA.gz -> per-round parquet.
 
-    Phase 5 entry point: consumes the output of ``selexprep extract``
-    (Phase 3 / locked plan line 322). Output schema matches
-    :func:`count_round`: columns ``sequence``, ``reads``, ``rank``, ``rpm``.
+     entry point: consumes the output of ``selexprep extract``
+    . Output schema matches
+     :func:`count_round`: columns ``sequence``, ``reads``, ``rank``, ``rpm``.
 
-    Unlike ``count_round``, no cutadapt invocation - the input is already
-    primer-stripped by ``extract``. Pure aggregation: read FASTA, build
-    Counter, emit parquet.
+     Unlike ``count_round``, no cutadapt invocation - the input is already
+     primer-stripped by ``extract``. Pure aggregation: read FASTA, build
+     Counter, emit parquet.
     """
     counter: collections.Counter[str] = collections.Counter()
     for seq in _iter_fasta_sequences(fasta_gz):

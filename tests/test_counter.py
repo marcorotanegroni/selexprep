@@ -127,7 +127,7 @@ def test_count_round_empty_fastq(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# count_fastq_pretrimmed (Phase 5 Codex pass 1 follow-up)
+# count_fastq_pretrimmed
 # ---------------------------------------------------------------------------
 
 

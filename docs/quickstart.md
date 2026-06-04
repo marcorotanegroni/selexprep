@@ -2,7 +2,7 @@
 
 Process a single public SELEX accession from raw reads to QC — without supplying
 primers. Prefer a fully offline, hands-on version? See the [examples](examples.md):
-`01_quickstart.ipynb` runs every stage on synthetic data with no network.
+`01_offline_toy_pipeline.ipynb` runs every stage on synthetic data with no network.
 
 ## Install
 
@@ -37,7 +37,7 @@ writes everything under `out/<accession>/`:
 `run` exists because per-deposit details vary — notably **paired-end** layout
 (R1 passed positionally, R2 via `--paired-r2`) and per-round file naming. To
 drive the individual commands (`detect`, `extract`, `count`, `qc`) on a small
-local dataset, see [`01_quickstart.ipynb`](examples.md); for every flag and the
+local dataset, see [`01_offline_toy_pipeline.ipynb`](examples.md); for every flag and the
 local `--round-map` contract, see the [CLI reference](cli.md).
 
 ## When inference is uncertain

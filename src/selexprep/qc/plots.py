@@ -1,4 +1,4 @@
-"""Four per-dataset QC plots (locked plan lines 342-348).
+"""Four per-dataset QC plots.
 
 All plots write PNGs to ``<outdir>/qc/``:
 
@@ -16,7 +16,7 @@ informational.
 
 **QC artifact lifecycle**: ``flags.yaml`` and the 4 PNG plots are
 emitted AFTER ``selexprep extract`` has already sealed
-``selexprep_manifest.json`` (Phase 4). The manifest's
+``selexprep_manifest.json``. The manifest's
 ``output_sha256`` therefore does NOT include the QC outputs by design
 - they're a post-hoc QC report, not part of the immutable extract
 provenance. ``flags.yaml`` IS deterministic by construction (sorted
@@ -44,8 +44,8 @@ from selexprep.qc.diversity import shannon_entropy, top_n_coverage, unique_count
 logger = logging.getLogger(__name__)
 
 
-# CALIBRATION-TODO: not in locked plan; top-N coverage uses top-100 by
-# convention. Codex confirms.
+# CALIBRATION-TODO: not in the design; top-N coverage uses top-100 by
+# convention. confirmed.
 TOP_N_COVERAGE_N = 100
 
 _DPI = 150

@@ -1,17 +1,16 @@
-"""Phase 6b.5b — audit eligibility classifier for Tier 2 corpus audit.
+"""audit eligibility classifier for Tier 2 corpus audit.
 
 Catalog rows go through a per-accession ENA fetch + classification BEFORE
 the audit samples. The audit only samples from
 ``ELIGIBLE_HT_SELEX_ROUNDS``; other buckets are counted and reported in
 ``audit_metrics.json``'s ``catalog_classification_distribution``.
 
-Decision tree (Phase 6b.5b user amendment — per-run first, then
-per-BioProject; mixed projects exist):
+Decision tree:
 
 1. ENA fetch fails (HTTPError / ValueError / no records)
    → ``FETCH_DEAD``
 2. ALL runs use blocklisted ``library_strategy`` (defense in depth — the
-   Phase 6b.5a catalog filter should already have caught these)
+   catalog filter should already have caught these)
    → ``NON_SELEX_ASSAY``
 3. Among the compatible runs: < 2 distinct round numbers parsed
    → ``NO_ROUND_STRUCTURE`` (cross-round persistence needs ≥ 2). Note:
@@ -151,7 +150,7 @@ def classify_plan(plan: FetchPlan) -> EligibilityReport:
         )
 
     # Per-run + per-BioProject library_strategy classification (reuses
-    # the Phase 6b.5a discovery filter).
+    # the discovery filter).
     strategy_class = classify_study_by_library_strategies(plan.accession, library_strategies)
 
     if strategy_class.should_exclude:
@@ -421,7 +420,7 @@ def _cmd_classify_catalog(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Tier 2 audit eligibility classifier (Phase 6b.5b).")
+    p = argparse.ArgumentParser(description="Tier 2 audit eligibility classifier.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     classify = sub.add_parser(

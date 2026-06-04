@@ -1,7 +1,7 @@
 """Strand orientation handling for SELEX extraction.
 
-Phase 2's ``library/detect.py`` diagnoses each library's orientation
-(``FORWARD`` / ``REVERSE`` / ``MIXED``); Phase 3 acts on that diagnosis:
+'s ``library/detect.py`` diagnoses each library's orientation
+(``FORWARD`` / ``REVERSE`` / ``MIXED``); acts on that diagnosis:
 
 - ``FORWARD``: no rewriting; trim as-is.
 - ``REVERSE``: revcomp every read in the input FASTQ before trimming.
@@ -32,7 +32,7 @@ from selexprep._io import open_gzip_text_deterministic
 logger = logging.getLogger(__name__)
 
 
-# CALIBRATION-TODO: not in locked plan; Codex confirms after Phase 6
+# CALIBRATION-TODO: not in the design; confirmed after
 # benchmark recovery numbers. v0.1 emits aggregated per-round counts;
 # v0.2 may emit per-read tags for downstream filtering tools.
 STRAND_REPORT_PER_READ = False

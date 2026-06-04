@@ -11,10 +11,9 @@ Three things live here and only here:
    aliases (rather than re-typing each ``Literal[...]``) keeps the schema
    and the classifier in sync.
 2. **``LibraryReport``** — the pydantic v2 ``BaseModel``. Fields are
-   verbatim from the locked plan (``~/.claude/plans/unified-seeking-treehouse.md``
-   lines 233-285, verified at SHA 7d76392).
-3. **``_classify``** — the pure-function decision table from locked plan
-   lines 300-309, plus the status-cap rule from line 289 (no round map ⇒
+   verbatim from the design.
+3. **``_classify``** — the pure-function decision table from the design,
+   plus the status-cap rule (no round map ⇒
    status ≤ MEDIUM). Takes thresholds as kwargs so the algorithm module
    (``library/detect.py``) holds the single source of truth for
    calibration constants and tests can drive the table directly.
@@ -56,15 +55,15 @@ RequiredAction = Literal["NONE", "MANUAL_PRIMERS_REQUIRED", "READ_MERGING_RECOMM
 """Workflow guidance separate from biology (extraction_mode)."""
 
 Orientation = Literal["FORWARD", "REVERSE", "MIXED"]
-"""Strand orientation summary (diagnostic; Phase 3 acts on this)."""
+"""Strand orientation summary (diagnostic; acts on this)."""
 
 Status = Literal["HIGH", "MEDIUM", "LOW", "UNABLE_TO_INFER"]
 """Composite-confidence status. Capped at MEDIUM when no round map is
-available (locked plan line 289)."""
+available."""
 
 
 # ---------------------------------------------------------------------------
-# LibraryReport — public schema. Fields verbatim from locked plan 233-285.
+# LibraryReport — public schema. Fields verbatim from the design 233-285.
 # ---------------------------------------------------------------------------
 
 
@@ -121,7 +120,7 @@ class LibraryReport(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Classifier — locked plan lines 300-309 + line 289 (status cap).
+# Classifier — the design + status cap.
 # ---------------------------------------------------------------------------
 
 
@@ -157,8 +156,7 @@ def _classify(
     algorithm module owns the single source of truth and tests can drive
     the decision table directly.
 
-    Implements the locked decision table in plan lines 300-309 plus the
-    line-289 cap "no round map ⇒ status ≤ MEDIUM".
+    Implements the decision table plus the cap "no round map ⇒ status ≤ MEDIUM".
     """
     # Row 8 (catch-all failure): both rates below the 0.4 floor. Wins over
     # every other case — even a paired-split signal is meaningless if
@@ -311,7 +309,7 @@ def _assign_status(
 ) -> Status:
     """Map composite confidence to a Status, applying the no-round-map cap.
 
-    Locked plan line 289: "If no round map is available, cross-round
+    the design: "If no round map is available, cross-round
     persistence cannot run → ``status`` is capped at ``MEDIUM``."
     """
     if extraction_mode == "UNABLE_TO_EXTRACT":

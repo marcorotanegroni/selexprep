@@ -307,12 +307,12 @@ def test_run_extract_emits_trim_reports_json(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Codex pass 1 regressions (2026-05-21)
+# regressions (2026-05-21)
 # ---------------------------------------------------------------------------
 
 
 def test_run_extract_multi_fastq_same_round_aggregates(tmp_path: Path) -> None:
-    """Codex Phase 3 pass 1 regression: when a round has multiple input
+    """regression: when a round has multiple input
     FASTQs, all reads must end up in the per-round output (concatenated
     deterministically). Previously each iteration overwrote the same
     target file with the latest input → only the last input's reads
@@ -355,12 +355,12 @@ def test_run_extract_multi_fastq_same_round_aggregates(tmp_path: Path) -> None:
     # The bug would have produced n_b (7) — last input overwrote first.
     # The fix concatenates both, so we expect n_a + n_b = 10.
     assert n_records == n_a + n_b, (
-        f"expected {n_a + n_b} aggregated reads (Codex Phase 3 pass 1 regression), got {n_records}"
+        f"expected {n_a + n_b} aggregated reads (regression), got {n_records}"
     )
 
 
 def test_run_extract_sample_sheet_paired_end_demux_rebuilds_r2_inputs(tmp_path: Path) -> None:
-    """Codex Phase 3 pass 1 regression: when --sample-sheet is given and the
+    """regression: when --sample-sheet is given and the
     LR is PAIRED_END_SPLIT_PRIMERS, the runner must rebuild paired_r2_inputs
     from the demuxed ``_2.fastq.gz`` files. Previously only the R1 files
     were collected and paired_r2_inputs stayed at the caller's value
@@ -421,7 +421,7 @@ def test_run_extract_sample_sheet_paired_end_demux_rebuilds_r2_inputs(tmp_path: 
 
 
 def test_run_extract_sample_sheet_input_sha256_distinct_per_round(tmp_path: Path) -> None:
-    """Codex Phase 3 pass 1 follow-up: in sample-sheet mode the demuxed
+    """follow-up: in sample-sheet mode the demuxed
     inputs share basenames across rounds (``srr_1.fastq.gz`` in every
     ``round_NN/`` folder). The manifest's ``input_sha256`` must key by
     path relative to the demux dir to keep both rounds distinct;

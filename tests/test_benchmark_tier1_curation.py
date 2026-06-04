@@ -1,4 +1,4 @@
-"""Phase 6b.9 + 6b.10 integrity tests for the Tier-1 benchmark curation.
+"""+ integrity tests for the Tier-1 benchmark curation.
 
 These don't execute the Snakefile (not a CI workload) — they pin the
 *curation contract* so it can't regress silently:
@@ -9,7 +9,7 @@ These don't execute the Snakefile (not a CI workload) — they pin the
 - the Snakefile writes separate R1/R2 manifests and passes R2 through
   ``selexprep detect --paired-r2`` instead of silently forcing paired
   datasets into R1-only mode;
-- Phase 6b.10 two-arm reframe: every row carries a valid ``read_state``
+- two-arm reframe: every row carries a valid ``read_state``
   arm label + boolean flags; out-of-scope rows live in
   ``excluded_datasets.tsv`` (not ground_truth); read_state labels are
   mirrored in ``read_state_evidence.tsv``; the pre-detect screening
@@ -30,15 +30,15 @@ _READ_STATE_EVIDENCE = _BENCH / "read_state_evidence.tsv"
 _EXCLUDED = _BENCH / "excluded_datasets.tsv"
 _SCREENING_LOG = _BENCH / "screening_log.tsv"
 
-# Curated rows remaining in the benchmark after the 6b.10 cleanup
+# Curated rows remaining in the benchmark after the cleanup
 # (PRJNA935703 + PRJNA975735 + PRJNA315881 were moved to excluded_datasets.tsv).
 _CURATED = {
     "PRJEB28411",
     "PRJNA883192",
 }
 
-# Phase 6b.10 benchmark set (post-cleanup), labeled by read-state role.
-# PRJNA615076 = first Troncone-2 recovery addition (Kolm 2020, E. faecalis DNA whole-cell SELEX)
+# benchmark set (post-cleanup), labeled by read-state role.
+# PRJNA615076 = first recovery addition (Kolm 2020, E. faecalis DNA whole-cell SELEX)
 _RECOVERY = {
     "PRJDB9110",
     "PRJDB9111",
@@ -50,13 +50,13 @@ _RECOVERY = {
 }
 _SPECIFICITY = {"PRJEB28411", "PRJEB22637", "PRJNA990511"}
 # Adapter-collision negative control (5' constant = revcomp of a known adapter);
-# excluded from the recovery denominator (Phase 6b.10 Option-1 reclassification).
+# excluded from the recovery denominator.
 _ADAPTER_CONTROL = {"PRJEB70964"}
 # All in-benchmark rows (any of the three roles).
 _BENCHMARK = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
 # Out-of-scope rows removed from ground_truth.tsv → excluded_datasets.tsv.
 # PRJNA315881: round-5 pool multiplexed-by-condition (undocumented barcodes) →
-# not a fair primer-inference test (multiplexing/offset/truncation, Codex pass-4);
+# not a fair primer-inference test (multiplexing/offset/truncation);
 # re-entrant after reproducible demux that does not use primer info.
 _EXCLUDED_ACCESSIONS = {
     "PRJNA728693",
@@ -90,7 +90,7 @@ def test_exactly_these_rows_are_curated() -> None:
 
 def test_prjna315881_excluded_multiplexed_without_demux() -> None:
     """PRJNA315881's only fetchable pool is multiplexed-by-condition (undocumented
-    barcodes), so it's not a fair primer-inference test (Codex pass-4) — removed
+    barcodes), so it's not a fair primer-inference test — removed
     from ground_truth and recorded in excluded_datasets with reason
     multiplexed_without_demux; re-entrant after reproducible demux."""
     assert "PRJNA315881" not in set(_gt()["accession"])
@@ -153,7 +153,7 @@ def test_snakefile_detect_guards_empty_manifest() -> None:
 
 
 # ===========================================================================
-# Phase 6b.10 — two-arm reframe integrity
+# two-arm reframe integrity
 # ===========================================================================
 
 
@@ -291,7 +291,7 @@ _FORBIDDEN_DETECT_STRINGS = (
 
 
 def test_evidence_files_have_no_detect_derived_strings() -> None:
-    """Non-circularity guard (Codex): pre-detect evidence files must not cite
+    """Non-circularity guard: pre-detect evidence files must not cite
     detect's inference outputs. Pins inclusion-protocol hard rule 4 against
     regression."""
     for name in ("screening_log.tsv", "excluded_datasets.tsv", "read_state_evidence.tsv"):

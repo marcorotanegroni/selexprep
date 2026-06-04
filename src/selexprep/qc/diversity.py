@@ -1,9 +1,8 @@
 """Diversity helpers for QC flags + plots.
 
-Locked plan line 339 lists ``qc/diversity.py`` (rarefaction) as a Phase 5
-module. The rarefied diversity comparison is what makes
-``unexpected_rarefied_diversity_increase`` (locked plan line 351) a
-depth-aware flag rather than a raw-counts-confounded one.
+Rarefaction (sampling without replacement to a common depth) is what makes
+``unexpected_rarefied_diversity_increase`` a depth-aware flag rather than a
+raw-counts-confounded one.
 
 Public API:
 

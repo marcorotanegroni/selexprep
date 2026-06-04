@@ -1,4 +1,4 @@
-"""Benchmark metrics for the primer-inference benchmark (locked plan Phase 6, revised).
+"""Benchmark metrics for the primer-inference benchmark.
 
 Scope pivot (2026-05-22): the v0.1 benchmark headline is **paper-reported
 primer recovery from accession-derived reads**, not comparator-tool
@@ -7,7 +7,7 @@ they cannot benchmark the unique selexprep claim (primer inference from
 accession reads). The "do downstream counts agree" question can be
 answered intrinsically by comparing inferred-primer runs to
 ``--override-primer``-driven runs of selexprep itself — see
-:func:`compute_count_correlation`, kept here as a Phase 6c entry point
+:func:`compute_count_correlation`, kept here as an entry point
 but NOT called from :func:`aggregate_metrics`.
 
 Inputs are :class:`BenchmarkRow` instances that pair a ground-truth entry
@@ -34,16 +34,16 @@ Headline metrics:
 - **Distributions**: ``extraction_mode`` + ``required_action`` —
   :func:`compute_extraction_mode_distribution`,
   :func:`compute_required_action_distribution` (honest-accounting per
-  locked plan line 369).
+  the design).
 
-Codex pre-implementation amendments still folded in:
+Additional behaviors:
 
-- **Amendment 1**: ``verified=false`` rows are filtered out for all
+- ``verified=false`` rows are filtered out for all
   numerical metrics; each skip emits a stderr warning; the report
   records ``n_verified`` / ``n_unverified`` counts.
-- **Amendment 4** (count_correlation, Phase 6c entry only): Pearson via
+- ``count_correlation`` (entry only): Pearson via
   ``pandas.Series.corr``, Spearman via Pearson-of-ranks (no SciPy).
-- **Amendment 5** (count_correlation, Phase 6c entry only): union of
+- ``count_correlation`` (entry only): union of
   observed + reference sequences with zero-fill; top-K-by-reference
   Pearson labeled as secondary diagnostic only.
 """
@@ -81,7 +81,7 @@ class FetchStats:
     (``fetch_metadata.json``: the PLAN, i.e. what ENA said *should* exist)
     cross-referenced with the on-disk primary-read ``fastqs.manifest``
     (R1/single-end FASTQs; R2 mates live in ``fastqs.r2.manifest`` for
-    paired-aware detection). Phase 6b.10 / Codex pass-3: the plan is a
+    paired-aware detection). the plan is a
     PLAN, not an outcome log, so the field names stay honest — we report
     expected / available / missing / no-fastq-url, and NEVER claim
     ``failed_runs`` (a run with no on-disk FASTQ might be embargoed,
@@ -94,7 +94,7 @@ class FetchStats:
       ``fastq_ftp`` URL (an upstream-availability explanation for some
       missing runs; cf. PRJEB70964's 10 no-URL runs).
     - ``unassigned_missing_or_skipped`` — missing runs that DID have a URL
-      (``missing minus runs_with_no_fastq_url``). Codex pass-4: honestly
+      (``missing minus runs_with_no_fastq_url``). honestly
       named — from the plan + manifest alone we cannot prove a run was
       *skipped* for round-unassignment vs *failed* mid-download; true
       failed-vs-skipped would need the Snakefile to persist a
@@ -119,8 +119,8 @@ class FetchStats:
 class BenchmarkRow:
     """One accession's ground-truth + inferred-LibraryReport pair.
 
-    Phase 6b.10 adds the read-state arm label + orthogonal limitation
-    flags (Codex pass-2): ``read_state`` is ``raw_standard`` (recovery
+    Adds the read-state arm label + orthogonal limitation
+    flags: ``read_state`` is ``raw_standard`` (recovery
     arm) or ``pre_trimmed`` (specificity arm), labeled from independent
     read-length + architecture evidence — NEVER from detect output. The
     flags (``mono_round`` / ``partial_fetch`` / ``paired_end_r1_only`` /
@@ -130,7 +130,7 @@ class BenchmarkRow:
 
     ``observed_counts`` and ``reference_counts`` are optional per-sequence
     count maps used by :func:`compute_count_correlation`. They are absent
-    in Phase 6b.1 (real comparator runs land in 6b.2); the data class
+    in the standard flow (only the optional comparator path populates them); the data class
     accepts ``None`` so the scaffolding can be exercised without them.
     """
 
@@ -149,13 +149,13 @@ class BenchmarkRow:
     library_report: LibraryReport | None
     observed_counts: dict[str, int] | None = None
     reference_counts: dict[str, int] | None = None
-    # Phase 6b.10 — read-state arm + orthogonal limitation flags.
+    # read-state arm + orthogonal limitation flags.
     read_state: str = ""  # "raw_standard" | "pre_trimmed" | ""
     mono_round: bool = False
     partial_fetch: bool = False
     paired_end_r1_only: bool = False
     demultiplexed: bool = False
-    # Phase 6b.10 (Troncone 2): score the 3' side only when its truth is
+    # score the 3' side only when its truth is
     # paper-grounded. False ⇒ the 3' truth is read-resolved/diagnostic
     # (e.g. PRJNA883192, whose 3' truth was derived from the deposited
     # reads), so scoring it against detect's read-derived 3' would be
@@ -184,7 +184,7 @@ class PrimerRecoveryReport:
     breakdown by ``LibraryReport.status`` so the Figure A panels can
     label "recovery rate by inference confidence". The exact-match count
     on both sides is the headline number; partials and IUPAC-unsupported
-    are reported separately (locked plan line 365).
+    are reported separately.
     """
 
     counts_5p: dict[str, int] = field(default_factory=dict)
@@ -217,7 +217,7 @@ class NLengthRecoveryReport:
 class CountCorrelationReport:
     """Union+zero-fill correlation between selexprep counts and a reference.
 
-    Phase 6c entry point. The "reference" is selexprep run with
+    entry point. The "reference" is selexprep run with
     ``--override-primer-{5p,3p}`` set to the paper-reported truth — the
     self-consistency check (inferred-primer counts vs override-primer
     counts) replaces the original comparator-tool oracle. This dataclass
@@ -253,7 +253,7 @@ class RequiredActionDistribution:
     """Honest-accounting distribution of ``LibraryReport.required_action``.
 
     Companion to ``ExtractionModeDistribution`` — extraction_mode is
-    biology, required_action is workflow guidance (locked plan line 19).
+    biology, required_action is workflow guidance.
     Both belong in the benchmark accounting because they answer different
     questions.
     """
@@ -275,13 +275,13 @@ class PairRecoveryByStatus:
     - ``pair_partial``    — at least one side carried informative recovery
       (matched OR a boundary ``PARTIAL_5P`` / ``PARTIAL_3P``) but the pair
       did not both fully match. Includes both-sides-PARTIAL (correct
-      regions, fuzzy boundaries) — Codex pass-4.
+      regions, fuzzy boundaries).
     - ``pair_failed``     — NO informative recovery on either side (both
       ``MISMATCH`` / ``IUPAC_UNSUPPORTED`` / no report).
 
     Bucketed by ``LibraryReport.status`` so the Figure A headline panel
     shows "of HIGH-confidence calls, what fraction recovered the pair
-    exactly?" — the Codex-honest selling point.
+    exactly?" — the honest selling point.
     """
 
     counts: dict[str, dict[str, int]] = field(default_factory=dict)
@@ -322,7 +322,7 @@ class SafeFailureRate:
 class SpecificityReport:
     """Specificity arm — no-false-call on pre-trimmed deposits.
 
-    Phase 6b.10 (Codex pass-3). Evaluated ONLY over ``read_state ==
+    . Evaluated ONLY over ``read_state ==
     "pre_trimmed"`` rows: deposits whose reads are the N-region only
     (flanking constants trimmed off before deposit), independently
     classified from read-length + architecture evidence. The expected
@@ -334,7 +334,7 @@ class SpecificityReport:
     - ``n_false_positive`` — selexprep emitted any primer on a
       pre-trimmed deposit (a fabricated call).
 
-    Headline (Codex #5 wording): *"On independently classified
+    Headline: *"On independently classified
     pre-trimmed deposits, selexprep made N_false/N false-positive primer
     calls."* This does NOT claim detect *detects* pre-trimming — the
     benchmark layer knows the read-state; detect only reports that no
@@ -344,7 +344,7 @@ class SpecificityReport:
     n_evaluated: int = 0  # rows WITH a report (no_false_call + false_positive)
     n_no_false_call: int = 0
     n_false_positive: int = 0
-    # Codex pass-4: a pre_trimmed row with no library_report is NOT a
+    # a pre_trimmed row with no library_report is NOT a
     # no-call success — it's not_evaluable (the inference run produced
     # nothing to judge). It is excluded from the n_evaluated denominator.
     n_not_evaluable: int = 0
@@ -359,9 +359,9 @@ class BenchmarkMetricsReport:
 
     Scope pivot (2026-05-22): ``count_correlation`` is no longer
     populated by :func:`aggregate_metrics`; the field stays in the
-    schema as a Phase 6c entry point so the serialized JSON keeps a
+    schema as an entry point so the serialized JSON keeps a
     stable shape across versions, but it always has the default
-    (empty) values. Phase 6c will populate it via a separate
+    (empty) values. will populate it via a separate
     self-consistency check (inferred-primer vs paper-override-primer
     selexprep runs).
     """
@@ -380,7 +380,7 @@ class BenchmarkMetricsReport:
     required_action_distribution: RequiredActionDistribution = field(
         default_factory=RequiredActionDistribution
     )
-    # Phase 6b.10 — two-arm sensitivity/specificity reframe.
+    # two-arm sensitivity/specificity reframe.
     # recovery_denominator = n raw_standard rows (the recovery-arm
     # denominator); recovery metrics above run ONLY on this arm.
     recovery_denominator: int = 0
@@ -391,13 +391,13 @@ class BenchmarkMetricsReport:
     adapter_control: SpecificityReport = field(default_factory=SpecificityReport)
     # multi-round-only sensitivity sub-report (recovery arm minus
     # mono_round rows) — so confidence-limited single-round rows don't
-    # silently deflate the headline (Codex #3: don't drop hard rows
+    # silently deflate the headline (don't drop hard rows
     # post-hoc; report them in a sub-arm).
     multi_round_sensitivity: PairRecoveryByStatus = field(default_factory=PairRecoveryByStatus)
     # per-accession fetch accounting (honest field names; no failed_runs).
     fetch_stats: dict[str, FetchStats] = field(default_factory=dict)
-    # Phase 6c entry point — populated by an out-of-band self-consistency
-    # checker, NOT by aggregate_metrics in 6b.1.
+    # entry point — populated by an out-of-band self-consistency
+    # checker, NOT by aggregate_metrics in .
     count_correlation: CountCorrelationReport = field(default_factory=CountCorrelationReport)
 
 
@@ -438,7 +438,7 @@ def load_ground_truth(path: Path) -> list[BenchmarkRow]:
                 verified=_truthy(r.get("verified", "")),
                 notes=r.get("notes", ""),
                 library_report=None,
-                # Phase 6b.10 — read-state arm + flags (default to ""/False
+                # read-state arm + flags (default to ""/False
                 # so older ground_truth.tsv files without these columns still
                 # parse; the arm split treats "" as neither arm).
                 read_state=str(r.get("read_state", "") or "").strip(),
@@ -507,7 +507,7 @@ def compute_fetch_stats_from_plan(
     a run landed. A run counts as *available* iff at least one of its non-R2
     FASTQ filenames is in that set.
 
-    Honest semantics (Codex pass-3): the plan is a PLAN, not an outcome
+    Honest semantics: the plan is a PLAN, not an outcome
     log, so we report expected / available / missing / no-URL only —
     never ``failed_runs`` (a missing run might be embargoed, no-URL, or a
     genuine failure; the plan cannot disambiguate).
@@ -625,7 +625,7 @@ _MATCHING_KINDS: frozenset[str] = frozenset(
 )
 # Boundary partials: the correct constant region was localized but its extent
 # is off (e.g. detect under-extends a long T7-containing 5' flank). Not a full
-# match, but informative recovery (Codex pass-4) — NOT pair_failed.
+# match, but informative recovery — NOT pair_failed.
 _PARTIAL_KINDS: frozenset[str] = frozenset({"PARTIAL_5P", "PARTIAL_3P"})
 # A side carries informative recovery if it matched OR was a boundary partial.
 _INFORMATIVE_KINDS: frozenset[str] = _MATCHING_KINDS | _PARTIAL_KINDS
@@ -667,7 +667,7 @@ def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByS
                 eq_5p.equivalence_kind in _MATCHING_KINDS
                 and eq_3p.equivalence_kind in _MATCHING_KINDS
             )
-            # Codex pass-4: pair_failed is reserved for NO informative recovery
+            # pair_failed is reserved for NO informative recovery
             # on either side (both MISS: MISMATCH / IUPAC_UNSUPPORTED / no
             # report). A side that matched OR was a boundary partial (correct
             # region, fuzzy extent) is informative → the pair is at least
@@ -762,11 +762,11 @@ def compute_safe_failure_rate(rows: list[BenchmarkRow]) -> SafeFailureRate:
 def compute_required_action_distribution(rows: list[BenchmarkRow]) -> RequiredActionDistribution:
     """Tally ``LibraryReport.required_action`` values across rows.
 
-    Companion to :func:`compute_extraction_mode_distribution` —
-    extraction_mode is biology, required_action is workflow guidance
-    (locked plan line 19). Both belong in the honest-accounting
-    section because they answer different questions a reviewer would
-    ask.
+     Companion to :func:`compute_extraction_mode_distribution` —
+     extraction_mode is biology, required_action is workflow guidance
+    . Both belong in the honest-accounting
+     section because they answer different questions a reviewer would
+     ask.
     """
     dist = RequiredActionDistribution()
     for r in rows:
@@ -790,7 +790,7 @@ def compute_n_length_recovery(
             "truth": r.n_length_truth,
             "observed": observed,
         }
-        # Codex pass-4: N-length recovery is only meaningful when BOTH
+        # N-length recovery is only meaningful when BOTH
         # flanks were recovered in a single read (the random region is
         # bounded on both sides). When primers weren't recovered —
         # UNABLE_TO_EXTRACT (null primers; n_length_mode degenerates to the
@@ -824,7 +824,7 @@ def _compute_no_false_call(rows: list[BenchmarkRow], read_state: str) -> Specifi
     Correct (no false positive) iff selexprep emitted no primer —
     ``primer_5p is None and primer_3p is None``. Any emitted primer is a
     false positive (selexprep fabricated a constant that isn't recoverable).
-    A row with no ``library_report`` is ``not_evaluable`` (Codex pass-4) and
+    A row with no ``library_report`` is ``not_evaluable`` and
     is excluded from the ``n_evaluated`` denominator.
 
     Shared by the specificity arm (``pre_trimmed``) and the adapter-control
@@ -837,7 +837,7 @@ def _compute_no_false_call(rows: list[BenchmarkRow], read_state: str) -> Specifi
             continue
         lr = r.library_report
         if lr is None:
-            # No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
+            # No report ⇒ not_evaluable (NOT a no-call success).
             report.n_not_evaluable += 1
             report.not_evaluable_accessions.append(r.accession)
             report.per_row.append(
@@ -899,12 +899,12 @@ def compute_count_correlation(
 ) -> CountCorrelationReport:
     """Pearson + Spearman on the union of observed + reference sequences (zero-filled).
 
-    Codex amendment 5: NEVER use the intersection — it hides the
+    NEVER use the intersection — it hides the
     sequences only one tool emitted and biases agreement upward. The
     top-K Pearson is a secondary diagnostic only, computed on the
     top-K sequences by reference count.
 
-    For 6b.1 scaffolding most rows lack one or both count maps; rows
+    For scaffolding most rows lack one or both count maps; rows
     without both are excluded from the headline correlations but still
     enumerated in ``per_row`` so the metrics JSON reflects coverage
     honestly.
@@ -977,7 +977,7 @@ def compute_count_correlation(
     # pandas.Series.corr returns NaN when variance is zero (e.g., all-zero
     # column); convert to None for clean JSON.
     pearson = obs_series.corr(ref_series, method="pearson")
-    # Codex amendment 4: pandas.Series.corr(method="spearman") actually
+    # pandas.Series.corr(method="spearman") actually
     # imports scipy.stats.spearmanr lazily. To honor "no SciPy" we
     # compute Spearman ourselves as Pearson-of-ranks (the mathematical
     # definition; pandas .rank() handles ties by averaging by default).
@@ -999,7 +999,7 @@ def compute_count_correlation(
 def compute_extraction_mode_distribution(
     rows: list[BenchmarkRow],
 ) -> ExtractionModeDistribution:
-    """Tally ``LibraryReport.extraction_mode`` values across rows (locked plan line 369)."""
+    """Tally ``LibraryReport.extraction_mode`` values across rows."""
     dist = ExtractionModeDistribution()
     for r in rows:
         lr = r.library_report
@@ -1019,7 +1019,7 @@ def aggregate_metrics(
     """Top-level combiner. Filters ``verified=true`` rows and aggregates the primer-inference metrics.
 
     Scope pivot (2026-05-22): does NOT compute ``count_correlation`` —
-    that's a Phase 6c entry, populated by a separate self-consistency
+    that's an entry, populated by a separate self-consistency
     checker comparing inferred-primer vs ``--override-primer`` runs.
     The field remains in :class:`BenchmarkMetricsReport` for schema
     stability but stays at default (empty) values.
@@ -1035,7 +1035,7 @@ def aggregate_metrics(
         skipped_unverified_accessions=sorted(skipped),
     )
 
-    # Phase 6b.10 — split by read_state into benchmark roles. Recovery
+    # split by read_state into benchmark roles. Recovery
     # metrics (sensitivity) run ONLY on the raw_standard arm, where primers
     # are physically present and recovery is even applicable. The
     # specificity arm (pre_trimmed) and adapter-control panel
@@ -1051,8 +1051,8 @@ def aggregate_metrics(
     report.n_length_recovery = compute_n_length_recovery(raw_standard, tolerance=n_length_tolerance)
 
     # Multi-round-only sensitivity sub-report: recovery arm minus
-    # mono_round rows (Codex #3 — don't drop confidence-limited
-    # single-round rows post-hoc; report them in a sub-arm).
+    # mono_round rows: don't drop confidence-limited
+    # single-round rows post-hoc; report them in a sub-arm.
     multi_round = [r for r in raw_standard if not r.mono_round]
     report.multi_round_sensitivity = compute_pair_recovery_by_status(multi_round)
 
@@ -1076,7 +1076,7 @@ def aggregate_metrics(
             fetch_stats[r.accession] = r.fetch_stats
     report.fetch_stats = fetch_stats
 
-    # count_correlation deliberately not populated — Phase 6c entry point.
+    # count_correlation deliberately not populated — entry point.
     return report
 
 
@@ -1171,7 +1171,7 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
         "required_action_distribution": {
             "counts": dict(sorted(report.required_action_distribution.counts.items()))
         },
-        # Phase 6b.10 — two-arm sensitivity/specificity fields.
+        # two-arm sensitivity/specificity fields.
         "recovery_denominator": report.recovery_denominator,
         "specificity": _specificity_to_dict(report.specificity),
         "adapter_control": _specificity_to_dict(report.adapter_control),
@@ -1179,7 +1179,7 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
         "fetch_stats": {
             acc: _fetch_stats_to_dict(fs) for acc, fs in sorted(report.fetch_stats.items())
         },
-        # Phase 6c entry point — present in schema for stability, populated
+        # entry point — present in schema for stability, populated
         # by a separate self-consistency checker.
         "count_correlation": asdict(report.count_correlation),
     }
@@ -1195,7 +1195,7 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
-    p = argparse.ArgumentParser(description="Aggregate Phase 6 benchmark metrics.")
+    p = argparse.ArgumentParser(description="Aggregate benchmark metrics.")
     p.add_argument("--ground-truth", required=True, type=Path)
     p.add_argument("--reports-dir", required=True, type=Path)
     p.add_argument("--out", required=True, type=Path)

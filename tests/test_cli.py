@@ -1,4 +1,4 @@
-"""Smoke tests for the Phase 0 Typer CLI scaffold."""
+"""Smoke tests for the Typer CLI scaffold."""
 
 from __future__ import annotations
 
@@ -45,13 +45,13 @@ def test_version_flag_emits_version_string() -> None:
 def test_help_lists_all_subcommands() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    # Stub processing verbs + the Phase 1.5 catalog subapp
+    # Stub processing verbs + the catalog subapp
     for cmd in ("inspect", "fetch", "detect", "extract", "count", "qc", "run", "catalog"):
         assert cmd in result.stdout
 
 
 def test_inspect_emits_summary_when_ena_returns_data(tmp_path: Path) -> None:
-    """Phase 4: inspect now hits ENA (mocked) and prints metadata to stdout."""
+    """inspect now hits ENA (mocked) and prints metadata to stdout."""
     from unittest.mock import MagicMock, patch
 
     import requests as _requests
@@ -100,7 +100,7 @@ def test_inspect_exits_with_code_2_when_accession_unknown() -> None:
 
 
 # ===========================================================================
-# Phase 5 — `count` + `qc` CLI commands
+# `count` + `qc` CLI commands
 # ===========================================================================
 
 
@@ -150,7 +150,7 @@ def test_count_rejects_invalid_round_label(tmp_path: Path) -> None:
 
 
 def test_count_rejects_negative_round_label(tmp_path: Path) -> None:
-    """Phase 5 Codex pass 1 NB: negative integers like ``R-1`` would
+    """NB: negative integers like ``R-1`` would
     create ``round_-1/`` directories; CLI must reject."""
     fa = tmp_path / "extracted.fasta.gz"
     _write_fasta_gz(fa, ["AAAA"])
@@ -163,7 +163,7 @@ def test_count_rejects_negative_round_label(tmp_path: Path) -> None:
 
 
 def test_count_rejects_fastq_input(tmp_path: Path) -> None:
-    """Phase 5 Codex pass 1 BLOCKING: selexprep count accepts only the
+    """BLOCKING: selexprep count accepts only the
     extracted FASTA from `selexprep extract` (primer-stripped). FASTQ
     inputs would silently mis-parse, so the CLI rejects them by default
     with a clear error pointing the user at `selexprep extract` OR the
@@ -384,7 +384,7 @@ def test_no_args_shows_help() -> None:
 
 
 # ===========================================================================
-# Phase 6a — `fetch` + `run` CLI smokes (wired)
+# `fetch` + `run` CLI smokes (wired)
 # ===========================================================================
 
 
@@ -431,7 +431,7 @@ def test_run_missing_accession_column_exits_2(tmp_path: Path) -> None:
 
 
 def test_run_exits_zero_when_all_rows_fail_but_summary_written(tmp_path: Path) -> None:
-    """Phase 6b.4 HPC audit fix: per-accession failures are first-class data
+    """HPC audit fix: per-accession failures are first-class data
     captured in ``run_summary.tsv``. ``selexprep run`` is a batch driver —
     a non-zero exit when every row safely failed would conflate "the runner
     did its job and recorded refusals" (a normal operational outcome on
@@ -525,7 +525,7 @@ def test_run_command_registers_resume_and_stop_on_error_options() -> None:
 
 
 # ===========================================================================
-# Phase 2 — `detect` CLI command (Wired)
+# `detect` CLI command (Wired)
 # ===========================================================================
 
 
@@ -620,7 +620,7 @@ def test_detect_fastq_not_in_round_map_exits_with_code_2(tmp_path: Path) -> None
 
 
 # ===========================================================================
-# Phase 3 - `extract` CLI command
+# `extract` CLI command
 # ===========================================================================
 
 
@@ -677,7 +677,7 @@ def test_extract_without_round_map_or_sample_sheet_errors(tmp_path: Path) -> Non
 
 
 def test_extract_override_primer_writes_overridden_subtree(tmp_path: Path) -> None:
-    """Phase 4: --override-primer-5p without --rebuild writes to outdir/overridden/."""
+    """--override-primer-5p without --rebuild writes to outdir/overridden/."""
     import shutil as _shutil
 
     if _shutil.which("cutadapt") is None:

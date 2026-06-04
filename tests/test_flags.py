@@ -183,7 +183,7 @@ def test_adapter_contamination_denominator_unavailable() -> None:
 
 
 def test_adapter_contamination_honors_read_fraction_used_for_inference() -> None:
-    """If Phase 2 inference subsampled (e.g., used 50% of reads), the
+    """If inference subsampled (e.g., used 50% of reads), the
     denominator must scale down to match — otherwise the fraction is
     understated by 2x."""
     lr = _make_library_report(
@@ -257,7 +257,7 @@ def test_diversity_increase_positive() -> None:
 
 
 def test_diversity_increase_clamps_depth_to_min_total(tmp_path: Path) -> None:
-    """Phase 5 Codex pass 1 BLOCKING regression: rarefaction depth must
+    """BLOCKING regression: rarefaction depth must
     clamp to ``min(RAREFACTION_DEPTH, min_total_reads_per_round)``. The
     previous bug let a 2k-read round skip rarefaction entirely (the
     ``rarefy`` helper returns the original pool when ``depth >= total``)
@@ -393,7 +393,7 @@ def test_write_flags_yaml_empty_list_emits_empty_array(tmp_path: Path) -> None:
 
 
 def test_write_flags_yaml_deterministic_with_nested_evidence(tmp_path: Path) -> None:
-    """Phase 5 Codex pass 1 NB: nested dicts + lists inside `evidence`
+    """NB: nested dicts + lists inside `evidence`
     must be deterministic under YAML serialization (`safe_dump` already
     sorts top-level keys; verify the guarantee holds for nested
     structures like the ones produced by `unexpected_rarefied_diversity_increase`

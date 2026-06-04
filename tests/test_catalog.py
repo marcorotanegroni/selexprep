@@ -325,7 +325,7 @@ def test_rebuild_catalog_no_preserve_drops_enrichment_and_non_insdc(tmp_path: Pa
 
 
 def test_rebuild_catalog_excludes_all_blocklisted_studies(tmp_path: Path) -> None:
-    """Phase 6b.5a: a study whose runs are 100% RNA-Seq must be dropped
+    """a study whose runs are 100% RNA-Seq must be dropped
     from the catalog AND recorded in ``bioprojects_excluded.csv`` with
     a human-readable reason. Mixed studies (some OTHER + some RNA-Seq)
     must be KEPT — they contain real SELEX data alongside controls.

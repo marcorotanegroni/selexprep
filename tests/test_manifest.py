@@ -225,7 +225,7 @@ def test_compute_sha256s_hashes_fasta_tsv_json(tmp_path: Path) -> None:
 
 
 def test_compute_sha256s_skips_parquet(tmp_path: Path) -> None:
-    """Parquet hashes are advisory per locked plan line 28; not in
+    """Parquet hashes are advisory per the design; not in
     output_sha256."""
     pq = tmp_path / "counts.parquet"
     pq.write_bytes(b"PAR1\x00")  # not real parquet, but enough for the suffix test
@@ -240,7 +240,7 @@ def test_compute_sha256s_skips_missing_paths(tmp_path: Path) -> None:
 
 
 def test_compute_sha256s_distinct_keys_per_round_with_root(tmp_path: Path) -> None:
-    """Codex Phase 3 pass 1 regression: per-round outputs that share the
+    """regression: per-round outputs that share the
     same basename (round_00/extracted.fasta.gz vs round_01/extracted.fasta.gz)
     must NOT collide in output_sha256. Pass ``root=outdir`` to key by
     relative path; basename-only keying would last-write-wins one of them."""

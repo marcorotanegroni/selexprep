@@ -6,7 +6,7 @@
   },
   "catalog_version": "v0.1.7-snapshot-2026-05-28",
   "caveats": {
-    "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral per the locked plan). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
+    "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
   },
   "extraction_mode_distribution": {
     "BOTH_PRIMERS_SINGLE_READ": 7,

@@ -271,6 +271,25 @@ def _find_sra_cache(output_dir: Path, srr: str) -> Path | None:
     return next((p for p in candidates if p.exists()), None)
 
 
+def _skip_if_complete_else_clean(srr: str, output_dir: Path) -> bool:
+    """Shared backend preamble: make `output_dir`, then decide skip-vs-proceed.
+
+    Returns True iff valid FASTQs for `srr` are already present (caller should
+    return True early). Otherwise deletes any partial/corrupt leftovers and
+    returns False so the backend proceeds with a clean download.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fastq = iter_srr_files(output_dir, srr)
+    if fastq and all(validate_fastq_gz(p) for p in fastq):
+        logger.info("  [skip] %s already present in %s", srr, output_dir)
+        return True
+    if fastq:
+        logger.warning("  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir)
+        for p in fastq:
+            p.unlink(missing_ok=True)
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Backend: ENA-direct (DEFAULT, no external deps)
 # ---------------------------------------------------------------------------
@@ -283,19 +302,8 @@ def download_srr_ena_direct(srr: str, output_dir: Path, dry_run: bool = False) -
     against ENA's published MD5; skips redundant ``gzip -t`` when MD5
     matches.
     """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    fastq = iter_srr_files(output_dir, srr)
-    if fastq and all(validate_fastq_gz(p) for p in fastq):
-        logger.info("  [skip] %s already present in %s", srr, output_dir)
+    if _skip_if_complete_else_clean(srr, output_dir):
         return True
-    if fastq:
-        logger.warning(
-            "  %s has partial/corrupt FASTQs in %s — re-downloading via ENA-direct",
-            srr,
-            output_dir,
-        )
-        for p in fastq:
-            p.unlink(missing_ok=True)
 
     if dry_run:
         return True
@@ -391,15 +399,8 @@ def download_srr_kingfisher(srr: str, output_dir: Path, dry_run: bool = False) -
     download methods (ENA/AWS/GCP/Aspera) depending on which auxiliary
     tools are present.
     """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    fastq = iter_srr_files(output_dir, srr)
-    if fastq and all(validate_fastq_gz(p) for p in fastq):
-        logger.info("  [skip] %s already present in %s", srr, output_dir)
+    if _skip_if_complete_else_clean(srr, output_dir):
         return True
-    if fastq:
-        logger.warning("  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir)
-        for p in fastq:
-            p.unlink(missing_ok=True)
 
     methods = _kingfisher_download_methods()
     if not methods:
@@ -461,15 +462,8 @@ def download_srr_kingfisher(srr: str, output_dir: Path, dry_run: bool = False) -
 
 def download_srr_sratoolkit(srr: str, output_dir: Path, dry_run: bool = False) -> bool:
     """Download an SRR via NCBI sra-toolkit (``prefetch`` + ``fasterq-dump``)."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    fastq = iter_srr_files(output_dir, srr)
-    if fastq and all(validate_fastq_gz(p) for p in fastq):
-        logger.info("  [skip] %s already present", srr)
+    if _skip_if_complete_else_clean(srr, output_dir):
         return True
-    if fastq:
-        logger.warning("  %s has partial/corrupt FASTQs in %s — re-downloading", srr, output_dir)
-        for p in fastq:
-            p.unlink(missing_ok=True)
 
     logger.info("  sra-toolkit %s → %s", srr, output_dir)
     if dry_run:

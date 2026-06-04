@@ -1,12 +1,12 @@
 """Tests for ``selexprep.benchmark.metrics``.
 
 Covers the metric primitives (primer recovery, N-length recovery, count
-correlation, extraction-mode distribution) plus three Codex-amendment
-regression tests:
+correlation, extraction-mode distribution) plus three regression
+tests:
 
-- ``test_aggregate_skips_unverified_rows_with_warning`` — amendment 1
-- ``test_count_correlation_uses_union_with_zero_fill`` — amendment 5
-- ``test_count_correlation_top_k_secondary_diagnostic`` — amendment 5
+- ``test_aggregate_skips_unverified_rows_with_warning`` — unverified-row filtering
+- ``test_count_correlation_uses_union_with_zero_fill`` — union with zero-fill
+- ``test_count_correlation_top_k_secondary_diagnostic`` — top-K secondary diagnostic
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ def _row(accession: str = "PRJ_TEST", *, verified: bool = True, **overrides: Any
         "library_report": _make_lr(),
         "observed_counts": None,
         "reference_counts": None,
-        # Phase 6b.10: default to the recovery arm so existing recovery
+        # default to the recovery arm so existing recovery
         # tests keep exercising recovery metrics (aggregate_metrics runs
         # them only on raw_standard rows).
         "read_state": "raw_standard",
@@ -155,7 +155,7 @@ def test_n_length_recovery_zero_truth_treated_unmeasurable() -> None:
 
 
 def test_n_length_recovery_gated_on_both_primers() -> None:
-    """Codex pass-4: N-length is only measurable with BOTH flanks recovered.
+    """N-length is only measurable with BOTH flanks recovered.
 
     Rows with n_length_mode that WOULD match truth are still sent to
     unmeasurable when primers weren't both recovered (UNABLE_TO_EXTRACT,
@@ -203,12 +203,12 @@ def test_extraction_mode_distribution_counts() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Count correlation — Codex amendment 5 regressions
+# Count correlation — regressions
 # ---------------------------------------------------------------------------
 
 
 def test_count_correlation_uses_union_with_zero_fill() -> None:
-    """Codex amendment 5: correlation must be computed on the union of sequences.
+    """correlation must be computed on the union of sequences.
 
     Demonstration: a shared subset with perfectly-agreeing counts +
     disjoint unique-to-each entries.
@@ -277,7 +277,7 @@ def test_count_correlation_skips_rows_without_counts_cleanly() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Aggregator — Codex amendment 1 regression
+# Aggregator — regression
 # ---------------------------------------------------------------------------
 
 
@@ -460,7 +460,7 @@ def test_required_action_distribution_counts() -> None:
 def test_aggregate_metrics_does_not_populate_count_correlation() -> None:
     """Scope pivot: count_correlation field stays at its default (empty) values.
 
-    Phase 6c populates it via the self-consistency checker; 6b.1's
+    populates it via the self-consistency checker; 's
     aggregate_metrics deliberately skips it.
     """
     rows = [_row(observed_counts={"x": 5}, reference_counts={"x": 5})]
@@ -508,7 +508,7 @@ def test_write_metrics_json_includes_new_pivot_fields(tmp_path: Path) -> None:
     assert "pair_recovery_by_status" in payload
     assert "safe_failure_rate" in payload
     assert "required_action_distribution" in payload
-    # count_correlation remains in the schema (as the Phase 6c entry).
+    # count_correlation remains in the schema (as the entry).
     assert "count_correlation" in payload
     # safe_failure_rate has the documented shape.
     sf = payload["safe_failure_rate"]
@@ -522,7 +522,7 @@ def test_write_metrics_json_includes_new_pivot_fields(tmp_path: Path) -> None:
 
 
 # ===========================================================================
-# Phase 6b.10 — two-arm sensitivity/specificity reframe
+# two-arm sensitivity/specificity reframe
 # ===========================================================================
 
 
@@ -697,7 +697,7 @@ def test_score_3p_false_excludes_circular_3p_and_scores_pair_on_5p() -> None:
 
 
 def test_compute_specificity_missing_report_is_not_evaluable() -> None:
-    """No report ⇒ not_evaluable (NOT a no-call success — Codex pass-4).
+    """No report ⇒ not_evaluable (NOT a no-call success —).
 
     A missing library_report means the inference produced nothing to judge;
     counting it as a specificity success would inflate the headline. It is
@@ -887,7 +887,7 @@ def test_write_metrics_json_includes_two_arm_fields(tmp_path: Path) -> None:
     assert keys == sorted(keys)
 
 
-# --- pair roll-up: informative-recovery rule (Codex pass-4) ----------------
+# --- pair roll-up: informative-recovery rule ----------------
 
 
 def test_pair_recovery_both_partial_is_pair_partial() -> None:
