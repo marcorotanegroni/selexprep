@@ -1,0 +1,33 @@
+{
+  "primer_5p": null,
+  "primer_3p": null,
+  "variants_5p": [],
+  "variants_3p": [],
+  "known_adapter_hits": {
+    "NEXTERA": 8,
+    "TRUSEQ_R1": 66
+  },
+  "extraction_mode": "UNABLE_TO_EXTRACT",
+  "full_insert_recovered": false,
+  "read_source": "R1",
+  "required_action": "MANUAL_PRIMERS_REQUIRED",
+  "orientation": "FORWARD",
+  "n_length_mode": 35,
+  "n_length_distribution": {
+    "33": 147693,
+    "34": 697124,
+    "35": 8556610,
+    "36": 95237,
+    "37": 5469
+  },
+  "n_length_confidence": 0.9004936049621701,
+  "match_rate_5p": 0.0,
+  "match_rate_3p": 0.0,
+  "position_consistency_5p": 0.0,
+  "position_consistency_3p": 0.0,
+  "read_fraction_used_for_inference": 1.0,
+  "sampling_seed": 42,
+  "confidence": 0.14004936049621702,
+  "status": "UNABLE_TO_INFER",
+  "failure_reason": "Both primer match rates below 0.40 (5'=0.00, 3'=0.00)"
+}

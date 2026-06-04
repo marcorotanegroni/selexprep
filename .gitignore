@@ -59,3 +59,7 @@ tmp/
 # files: ground_truth.tsv / read_state_evidence.tsv / screening_log.tsv)
 benchmarks/screen_read_state.py
 benchmarks/*_screen.tsv
+
+# Example notebooks — transient run artifacts (the notebooks self-generate demo data)
+examples/**/demo/
+.ipynb_checkpoints/

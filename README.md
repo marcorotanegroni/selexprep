@@ -1,5 +1,9 @@
 # selexprep
 
+[![Tests](https://github.com/marcorotanegroni/selexprep/actions/workflows/tests.yml/badge.svg)](https://github.com/marcorotanegroni/selexprep/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+
 **Accession-first preprocessing for public HT-SELEX, with primer auto-inference and safe failure modes.**
 
 > *`selexprep` fills the missing preprocessing layer for public datasets by starting from accessions and empirically inferring primer/constant regions, extracting random regions, and emitting confidence-aware, reproducible count tables and manifests.*
@@ -8,12 +12,13 @@
 ## Status
 
 **v0.1 RC.** Full single-dataset + batch workflow is feature-complete
-and tested (587 passing tests + 1 strict-xfail reserved for v0.2 read
+and tested (601 passing tests + 1 strict-xfail reserved for v0.2 read
 merging). Tier 2 corpus audit shipped against a v0.1.6 catalog
 snapshot; catalog discovery completeness measured at 100% of
-ENA-typed-SELEX deposits in v0.1.7. Calibration constants are
-documented v0.1 placeholders pending Phase 6 benchmark recovery
-numbers. Not yet on PyPI.
+ENA-typed-SELEX deposits in v0.1.7. The Phase 6 primer-recovery
+benchmark (Figure A) is complete — paper-grounded recovery on a
+curated multi-chemistry set, alongside safe-failure and specificity
+arms. Not yet on PyPI.
 
 **v0.1 ships:** `catalog` (250 public SELEX entries: 125 INSDC +
 125 figshare/zenodo passthrough; 21 documented exclusions in

@@ -67,6 +67,10 @@ dev = [
   "twine",
   "types-pyyaml",
   "types-requests",
+  # Notebook re-execution check (not needed for the docs build or package runtime):
+  #   uv run --extra dev jupyter nbconvert --to notebook --execute examples/*.ipynb
+  "nbconvert",
+  "ipykernel",
 ]
 docs = ["mkdocs-material >= 9.5", "mkdocstrings[python] >= 0.25"]
 
