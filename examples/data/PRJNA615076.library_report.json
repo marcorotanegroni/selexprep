@@ -1,0 +1,105 @@
+{
+  "primer_5p": "TAGGGAAGAGAAGGACATATGAT",
+  "primer_3p": "TTGACTAGTACATGACCACTTGA",
+  "variants_5p": [
+    [
+      "TAGGGAAGAGAAGGACATATGAT",
+      96325
+    ],
+    [
+      "NNNNNNNNNNNNNNNNNNNNNNN",
+      3645
+    ],
+    [
+      "TAGGGAAGAGAAGGACATGACCA",
+      212
+    ]
+  ],
+  "variants_3p": [
+    [
+      "TTGACTAGTACATGACCACTTGA",
+      87028
+    ],
+    [
+      "NNNNNNNNNNNNNNNNNNNNNNN",
+      3645
+    ],
+    [
+      "TCTCGTATGCCGTCTTCTGCTTG",
+      2094
+    ]
+  ],
+  "known_adapter_hits": {
+    "NEXTERA": 1854,
+    "TRUSEQ_R1": 0
+  },
+  "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+  "full_insert_recovered": true,
+  "read_source": "R1_AND_R2",
+  "required_action": "NONE",
+  "orientation": "FORWARD",
+  "n_length_mode": 40,
+  "n_length_distribution": {
+    "0": 3698,
+    "2": 1,
+    "9": 2,
+    "10": 2,
+    "13": 2,
+    "14": 4,
+    "15": 4,
+    "16": 1,
+    "17": 1,
+    "18": 3,
+    "19": 1,
+    "21": 6,
+    "22": 9,
+    "23": 8,
+    "24": 7,
+    "25": 20,
+    "26": 8,
+    "27": 13,
+    "28": 30,
+    "29": 25,
+    "30": 92,
+    "31": 31,
+    "32": 70,
+    "33": 79,
+    "34": 102,
+    "35": 206,
+    "36": 254,
+    "37": 424,
+    "38": 825,
+    "39": 4463,
+    "40": 88064,
+    "41": 731,
+    "42": 2,
+    "50": 1,
+    "52": 4,
+    "56": 3,
+    "60": 2,
+    "61": 1,
+    "62": 4,
+    "63": 12,
+    "64": 3,
+    "68": 2,
+    "80": 4,
+    "84": 1,
+    "86": 7,
+    "91": 1,
+    "99": 1,
+    "102": 75,
+    "103": 290,
+    "104": 56,
+    "105": 7983
+  },
+  "n_length_confidence": 0.8181497240751407,
+  "match_rate_5p": 0.9304520708300043,
+  "match_rate_3p": 0.9293465133131422,
+  "position_consistency_5p": 0.9304520708300043,
+  "position_consistency_3p": 0.8616752448020216,
+  "read_fraction_used_for_inference": 1.0,
+  "sampling_seed": 42,
+  "confidence": 0.9234387250438688,
+  "status": "HIGH",
+  "failure_reason": null
+}

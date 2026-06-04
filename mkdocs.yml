@@ -53,7 +53,10 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quick start: quickstart.md
+  - Batch tutorial: batch.md
   - LibraryReport reference: library-report.md
   - CLI reference: cli.md
+  - API reference: api.md
+  - Examples (notebooks): examples.md
   - Limitations: limitations.md
   - v0.2 roadmap: roadmap.md

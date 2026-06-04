@@ -1,0 +1,55 @@
+{
+  "primer_5p": "GGCTTCTGGACTACCTATGC",
+  "primer_3p": "CGTGGTTACAGTCAGAGGACAGATT",
+  "variants_5p": [
+    [
+      "GGCTTCTGGACTACCTATGC",
+      350755
+    ],
+    [
+      "ACCTTCTGGACTACCTATGC",
+      976
+    ],
+    [
+      "GCTTCTGGACTACCTATGCA",
+      789
+    ]
+  ],
+  "variants_3p": [
+    [
+      "CGTGGTTACAGTCAGAGGACTGATT",
+      74297
+    ],
+    [
+      "CGTGGTTACAGTCAGAGGACAGATT",
+      62180
+    ],
+    [
+      "CGTCGTTACAGTCAGAGGACTGATT",
+      51270
+    ]
+  ],
+  "known_adapter_hits": {
+    "NEXTERA": 0,
+    "TRUSEQ_R1": 410
+  },
+  "extraction_mode": "FIVE_PRIME_ONLY",
+  "full_insert_recovered": false,
+  "read_source": "R1",
+  "required_action": "NONE",
+  "orientation": "FORWARD",
+  "n_length_mode": 40,
+  "n_length_distribution": {
+    "40": 368381
+  },
+  "n_length_confidence": 1.0,
+  "match_rate_5p": 0.9730360686354617,
+  "match_rate_3p": 0.5349081521576846,
+  "position_consistency_5p": 0.9730333540546336,
+  "position_consistency_3p": 0.5348565751219525,
+  "read_fraction_used_for_inference": 1.0,
+  "sampling_seed": 42,
+  "confidence": 0.7980020779744842,
+  "status": "MEDIUM",
+  "failure_reason": null
+}
