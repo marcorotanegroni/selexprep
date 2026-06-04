@@ -1,8 +1,8 @@
 """Cutadapt subprocess wrapper for primer-aware extraction.
 
-Locked plan (line 89): "cutadapt invoked as subprocess (CLI is the stable
+the design: "cutadapt invoked as subprocess (CLI is the stable
 contract, not the Python API)." Per-extraction-mode adapter flags are
-documented in plan lines 321-325.
+applied accordingly.
 
 **Determinism discipline.** Cutadapt's own gzip writer embeds the current
 ``mtime`` in the gzip header, breaking ``output_sha256`` reproducibility.
@@ -15,7 +15,7 @@ This module therefore:
 
 Cutadapt's structured ``--json`` report supplies ``n_in`` / ``n_out``
 counts without fragile stderr parsing. The exact argv is recorded in
-:class:`TrimReport` so the Phase 4 manifest can reproduce the invocation
+:class:`TrimReport` so the manifest can reproduce the invocation
 verbatim.
 
 Public API:
@@ -75,8 +75,7 @@ def _run_cutadapt(argv: list[str], json_report_path: Path) -> tuple[int, dict]:
     """Run cutadapt; return (return_code, parsed_json_report).
 
     Captures stderr only on failure to keep the happy path quiet. Mirrors
-    the subprocess pattern in `selexprep.count.counter._run_cutadapt` at
-    line 179 of that module.
+    the subprocess pattern in `selexprep.count.counter._run_cutadapt`.
     """
     _ensure_cutadapt()
     full = [*argv, "--json", str(json_report_path)]
@@ -269,8 +268,7 @@ def trim_paired_split(
     ``reverse_complement(real_3p)`` at its 5' end. cutadapt's paired mode
     enforces pair-sync (both reads kept or both dropped). Two separate
     FASTA outputs are emitted — joining by read ID alone without merging
-    is biologically wrong, so v0.1 keeps them split (locked plan line
-    325).
+    is biologically wrong, so v0.1 keeps them split.
     """
     out_r1_fasta_gz.parent.mkdir(parents=True, exist_ok=True)
     out_r2_fasta_gz.parent.mkdir(parents=True, exist_ok=True)

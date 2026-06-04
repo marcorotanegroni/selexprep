@@ -1,6 +1,6 @@
 """Primer-equivalence rules for benchmarking inferred primers against paper-reported truth.
 
-Implements the four locked-plan equivalence rules (line 364):
+Implements the four equivalence rules:
 
 1. **Reverse-complement**  — many papers report the RC of what the
    sequencer sees; an observed primer that revcomp-matches truth is
@@ -10,7 +10,7 @@ Implements the four locked-plan equivalence rules (line 364):
 3. **Barcode-prefix stripping** — sample-multiplex barcodes prepended to
    the 5' primer can mask the underlying primer; the curator may supply
    barcode strings to strip before comparison.
-4. **IUPAC ambiguity rejection** — locked plan line 33 says "IUPAC
+4. **IUPAC ambiguity rejection** — the design says "IUPAC
    ambiguous bases unsupported in v0.1 (counted separately)". A truth
    primer containing ``N``/``R``/``Y``/etc. is not silently fuzzy-matched;
    the result is ``IUPAC_UNSUPPORTED`` so the metric aggregator can
@@ -122,8 +122,7 @@ def primer_equivalent(
     truth
         The paper-reported primer sequence.
     allow_revcomp
-        Accept reverse-complement equivalence. Default ``True`` (locked
-        plan line 364).
+        Accept reverse-complement equivalence. Default ``True``.
     allow_ut
         Accept U↔T normalization. Default ``True``.
     strip_barcodes

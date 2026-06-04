@@ -71,7 +71,7 @@ def _stub_download_writes_files(target_dir: Path, srr: str, paired: bool) -> boo
     """A stand-in for download_srr that drops valid FASTQ.gz files.
 
     Each file is sized above ``validate_fastq_gz``'s 1024-byte minimum so
-    the Codex-pass-1 resume oracle accepts it. 800 records of 60-base
+    the resume oracle accepts it. 800 records of 60-base
     pseudo-random sequences (~80 KB raw, ~6 KB gzipped — well above
     threshold).
     """
@@ -149,14 +149,14 @@ def test_run_fetch_paired_end_emits_both_R1_R2(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Refusal paths (user peer-review point 3)
+# Refusal paths
 # ---------------------------------------------------------------------------
 
 
 def test_run_fetch_refuses_all_unassigned_without_manual_review(tmp_path: Path) -> None:
     """All-unassigned WITHOUT --allow-manual-review → refuse (safe default).
 
-    Phase 6b.9: the all-unassigned refusal is now gated by
+    the all-unassigned refusal is now gated by
     ``not allow_manual_review``. Without the flag the safe default is
     preserved — a download whose rounds can't be trusted wastes
     bandwidth, so the runner refuses.
@@ -180,7 +180,7 @@ def test_run_fetch_all_unassigned_with_manual_review_downloads(
 ) -> None:
     """All-unassigned WITH --allow-manual-review → download to round_unknown/.
 
-    Phase 6b.9 reversal: previously this also refused. Now the explicit
+    reversal: previously this also refused. Now the explicit
     opt-in means "download anyway, I'll curate rounds myself" — every run
     lands in round_unknown/, manual_review.tsv is emitted, rounds.tsv is
     present-but-empty (no trusted assignments). This is what the Tier-1
@@ -219,7 +219,7 @@ def test_run_fetch_all_unassigned_with_manual_review_downloads(
 def test_run_fetch_skips_unassigned_runs_without_manual_review_flag(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Phase 6b.5d: partial-parseability is warn-and-skip, not hard refusal.
+    """partial-parseability is warn-and-skip, not hard refusal.
 
     Previously the whole accession was refused when any run was
     unassigned and --allow-manual-review was not set. Audit cohort
@@ -265,7 +265,7 @@ def test_run_fetch_skips_unassigned_runs_without_manual_review_flag(
 def test_run_fetch_partial_parseability_majority_assigned(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Phase 6b.5d: PRJNA1244796-shaped case — 3 assigned + 2 unassigned.
+    """PRJNA1244796-shaped case — 3 assigned + 2 unassigned.
 
     Verifies the contract on a realistic mixed-parseability plan:
     download proceeds for all assigned runs, skips all unassigned runs,
@@ -336,7 +336,7 @@ def test_run_fetch_allow_manual_review_keeps_rounds_tsv_clean(tmp_path: Path) ->
 
 
 # ---------------------------------------------------------------------------
-# Resume oracle (user peer-review point 5)
+# Resume oracle
 # ---------------------------------------------------------------------------
 
 
@@ -414,7 +414,7 @@ def test_cli_fetch_refusal_exits_with_code_2(tmp_path: Path) -> None:
     with patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)):
         result = CliRunner().invoke(app, ["fetch", "PRJ", "--outdir", str(tmp_path)])
     assert result.exit_code == 2
-    # Phase 6b.4 audit-pilot fix: refusal message says "unassigned" now,
+    # audit-pilot fix: refusal message says "unassigned" now,
     # not "NONE-confidence". See tests/test_metadata.py for the
     # MEDIUM-single-match regression suite that motivated the wording
     # change.

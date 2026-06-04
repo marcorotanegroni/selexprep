@@ -1,6 +1,6 @@
 """Accession preview - ENA filereport REST without download.
 
-Locked plan line 332: ``selexprep inspect <accession>`` fetches ENA/SRA
+the design: ``selexprep inspect <accession>`` fetches ENA/SRA
 metadata only. Prints round count, ``library_strategy``,
 ``library_source``, per-run file sizes + MD5s. **The library_strategy
 field is reported verbatim from SRA - it is NOT interpreted as a
@@ -99,7 +99,7 @@ class InspectReport:
 
     Study-level metadata + per-run file info. ``library_strategy`` /
     ``library_source`` are verbatim SRA strings; do NOT treat as a
-    DNA/RNA hint (locked plan line 332).
+    DNA/RNA hint.
     """
 
     accession: str

@@ -1,4 +1,4 @@
-"""Unit tests for selexprep.fetch.library_strategy (Phase 6b.5a catalog hygiene)."""
+"""Unit tests for selexprep.fetch.library_strategy."""
 
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def test_known_blocklisted_strategies(strategy: str) -> None:
 
 
 def test_amplicon_is_compatible_empirical() -> None:
-    """Phase 6b.5a calibration: ENA's live API showed 176/10000 real
+    """calibration: ENA's live API showed 176/10000 real
     HT-SELEX runs tagged ``AMPLICON`` (e.g. PRJDB40017 NRd2 series).
     SELEX rounds ARE PCR-amplified random libraries — AMPLICON is a
     legitimate tag. The initial blocklist assumption that AMPLICON
@@ -103,7 +103,7 @@ def test_all_blocklisted_runs_excludes_study() -> None:
 
 def test_mixed_runs_keep_study_flagged_mixed() -> None:
     """SOME compatible + SOME blocklisted → study kept, flagged as mixed
-    (audit eligibility layer in 6b.5b will classify as
+    (audit eligibility layer in will classify as
     MIXED_PROJECT_NEEDS_GROUPING)."""
     c = classify_study_by_library_strategies(
         "PRJ_MIXED",
@@ -145,7 +145,7 @@ def test_singleton_blocklisted_singular_grammar() -> None:
 
 # ----- Empirical pilot regression tests -----
 #
-# The Phase 6b.4 audit pilot identified five INSDC studies that were
+# The audit pilot identified five INSDC studies that were
 # pulled into the catalog despite their runs being unambiguously not
 # SELEX. Pin those exact cases here.
 
@@ -178,9 +178,9 @@ def test_empirical_real_selex_with_other_kept() -> None:
 def test_empirical_selex_with_one_rna_control_kept_as_mixed() -> None:
     """Hypothetical: a SELEX deposit that included one RNA-Seq control run
     must NOT be dropped — the SELEX runs are real data. Mark mixed
-    instead and let the audit-eligibility layer (6b.5b) handle it.
+    instead and let the audit-eligibility layer handle it.
 
-    This is the user's key amendment: "do not treat ANY run blocklisted
+    This is the key rule: "do not treat ANY run blocklisted
     as NON_SELEX_ASSAY for the whole BioProject."
     """
     c = classify_study_by_library_strategies(

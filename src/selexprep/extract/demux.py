@@ -4,7 +4,7 @@ Some SELEX submissions pack multiple rounds into a single sequencing run, with
 each round tagged by a distinct 5' barcode. The de-pooling must be done
 before per-round counting; otherwise the rounds collide in the count tables.
 
-**v0.1 scope (Codex-locked):** sample-sheet / sample-supplied barcodes only.
+**v0.1 scope:** sample-sheet / sample-supplied barcodes only.
 Barcode inference (auto-discovery without prior knowledge) is v0.2 and not
 implemented here.
 

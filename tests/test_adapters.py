@@ -28,7 +28,7 @@ def test_reverse_complement_is_case_insensitive() -> None:
 
 
 def test_reverse_complement_treats_u_as_a_complement() -> None:
-    # RNA primers are reported as DNA (locked plan line 296). U → A in the
+    # RNA primers are reported as DNA. U → A in the
     # complement (U pairs with A).
     assert reverse_complement("AUCG") == "CGAT"
 
@@ -56,7 +56,7 @@ def test_known_adapters_rc_table_matches_revcomp() -> None:
 
 
 def test_known_adapters_includes_truseq_and_nextera() -> None:
-    # v0.1 conservative set per the locked plan.
+    # v0.1 conservative set per the design.
     assert "TRUSEQ_R1" in KNOWN_ADAPTERS
     assert "NEXTERA" in KNOWN_ADAPTERS
     assert KNOWN_ADAPTERS["TRUSEQ_R1"] == "AGATCGGAAGAGC"

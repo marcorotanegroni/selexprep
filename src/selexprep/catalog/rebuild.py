@@ -14,7 +14,7 @@ to refresh it. This module provides that path, in two layers:
   ``n_rounds_declared``) are merged forward so refreshes never erase manual
   enrichment.
 
-**Phase 6b.5a — library_strategy hygiene.** Queries now run at the **run
+**library_strategy hygiene.** Queries now run at the **run
 level** (``result=read_run``) instead of the study level so the per-run
 ``library_strategy`` field is available. Runs are grouped by study and
 each study is classified via
@@ -24,7 +24,7 @@ Studies whose runs are 100% in
 dropped from the catalog and their exclusion reason is recorded in a
 sidecar ``bioprojects_excluded.csv`` next to the main catalog file.
 Mixed studies (some compatible runs + some blocklisted) are kept; the
-Phase 6b.5b audit-eligibility layer classifies those at audit time.
+audit-eligibility layer classifies those at audit time.
 
 **Curation is intentionally NOT in scope.** The catalog reflects the public
 archives, not any single researcher's "include/exclude" decisions. Per
@@ -54,13 +54,13 @@ ENA_PORTAL = "https://www.ebi.ac.uk/ena/portal/api/search"
 #: Broader ENA queries than the thesis-specific selex_corpus.discover.py.
 #: Maximises INSDC coverage of public SELEX/aptamer studies at the cost of
 #: some noise (an "aptamer" mention in a study_title doesn't strictly mean
-#: an HT-SELEX raw-reads deposit). The Phase 6b.5a library_strategy
+#: an HT-SELEX raw-reads deposit). The library_strategy
 #: filter (per-run + per-study aggregation) drops obvious non-SELEX
-#: false positives at refresh time; the Phase 6b.5b audit-eligibility
+#: false positives at refresh time; the audit-eligibility
 #: layer classifies the rest. Users filter further at the
 #: `selexprep catalog list` stage.
 #:
-#: Phase 6b.5a — ENA's quoted-phrase syntax is **exact-token**:
+#: ENA's quoted-phrase syntax is **exact-token**:
 #: ``study_title="aptamer"`` does NOT match a title containing
 #: ``aptamers`` (the plural is a distinct token). Both singular and
 #: plural variants are listed below so studies like PRJNA935703 ("DNA
@@ -84,21 +84,21 @@ ENA_QUERIES: tuple[str, ...] = (
     'description="SELEX-seq"',
     'description="aptamer selection"',
     'description="SELEX rounds"',
-    # Phase 6b.6 — data-type positive query. The Phase 6b.6 catalog
+    # data-type positive query. The catalog
     # completeness audit found that 49.5% (51/103) of ENA studies
     # explicitly typed as ``library_strategy="SELEX"`` were missing
     # from the text-pattern-only catalog. Adding the strategy as a
     # positive query recovers them; obvious mis-labels (e.g. Onion
     # GBS, ATAC-seq deposits with library_strategy=SELEX) are filtered
     # by ``MANUAL_EXCLUSIONS`` below. The empirical AMPLICON+text-query
-    # intersection (Phase 6b.6 audit) found 26/26 already in the
+    # intersection found 26/26 already in the
     # catalog, so AMPLICON does NOT need to be promoted to a positive
     # query — text matching catches that subset.
     'library_strategy="SELEX"',
 )
 
 
-#: Phase 6b.6 — accessions ENA labels as ``library_strategy="SELEX"`` but
+#: accessions ENA labels as ``library_strategy="SELEX"`` but
 #: that are NOT aptamer HT-SELEX deposits per per-study metadata triage.
 #: These pass the library_strategy positive query above (so they'd land
 #: in the catalog) but per-study evidence (library_source, library_name,
@@ -107,13 +107,13 @@ ENA_QUERIES: tuple[str, ...] = (
 #: ``bioprojects_excluded.csv`` at refresh time with the reason string
 #: surfaced verbatim. Adding to this dict is the v0.2 path for any new
 #: mis-labels surfaced by future catalog completeness audits — the
-#: locked plan's "record reasons, not silent deletion" discipline.
+#: the design's "record reasons, not silent deletion" discipline.
 #:
 #: Each entry was verified against ENA's read_run + per-study metadata
-#: on 2026-05-28 via the Phase 6b.6 catalog completeness audit (see
+#: on 2026-05-28 via the catalog completeness audit (see
 #: ``benchmarks/catalog_completeness_audit.py``).
 MANUAL_EXCLUSIONS: dict[str, str] = {
-    # ---- Originally identified mis-labels (Codex pass 1) ----
+    # ---- Originally identified mis-labels ----
     "PRJDB19386": (
         "Onion GBS genomic sequencing (KAP NGS support project); "
         "library_source=GENOMIC across all runs (Onion_GBS_*_GENOMIC "
@@ -161,7 +161,7 @@ MANUAL_EXCLUSIONS: dict[str, str] = {
         "and library_source=GENOMIC — mis-labeled ATAC-seq libraries, "
         "not aptamer HT-SELEX"
     ),
-    # ---- gSELEX / genomic-fragment SELEX (verification pass 2) ----
+    # ---- gSELEX / genomic-fragment SELEX ----
     # All have library_source=GENOMIC (or mixed GENOMIC+SYNTHETIC) on
     # their SELEX-tagged runs, indicating the variable region is genomic-
     # fragment-derived rather than primer-flanked synthetic random
@@ -256,7 +256,7 @@ MANUAL_EXCLUSIONS: dict[str, str] = {
 #: (some studies have many); we dedupe by run_accession across queries
 #: and aggregate by study_accession.
 #:
-#: Phase 6b.5a NOTE: ENA's `result=read_run` does NOT expose
+#: NOTE: ENA's `result=read_run` does NOT expose
 #: ``study_description`` / ``first_public`` / ``last_updated`` — those
 #: are study-level fields only available with ``result=study``. As a
 #: trade-off, refresh runs without abstracts for *new* entries; existing
@@ -280,9 +280,9 @@ PUBLIC_COLS = (
     "abstract",
 )
 
-#: Schema of the Phase 6b.5a exclusion sidecar
+#: Schema of the exclusion sidecar
 #: (``bioprojects_excluded.csv``). Emitted alongside ``bioprojects.csv``
-#: so users can audit "what got filtered and why" — the locked plan
+#: so users can audit "what got filtered and why" — the design
 #: forbids silent deletion.
 EXCLUDED_COLS = (
     "bioproject_id",
@@ -319,7 +319,7 @@ def harvest_runs_from_ena(
     seen_runs: set[str] = set()
 
     for q in queries:
-        # Phase 6b.5a — bumped from 10000 to 100000. ENA returns up to
+        # bumped from 10000 to 100000. ENA returns up to
         # ~15000 runs for ``study_title="SELEX"`` alone (verified
         # 2026-05-24), so a 10k limit truncated and silently dropped
         # later-paginated studies (e.g. PRJEB70964 — alpha-synuclein SELEX,
@@ -382,7 +382,7 @@ def _enrichment_index(catalog_path: Path) -> dict[str, dict]:
     - **Hand-enrichment** (``protein_target`` / ``paper_doi`` /
       ``paper_pmid`` / ``n_rounds_declared``) — manually curated, must
       survive a refresh.
-    - **Abstract** — Phase 6b.5a: ENA's ``result=read_run`` query
+    - **Abstract** — ENA's ``result=read_run`` query
       doesn't expose ``study_description``, so abstracts can only be
       carried forward from a previous catalog snapshot. Including
       ``abstract`` in the trigger keeps entries indexed even when
@@ -433,7 +433,7 @@ def _classify_all_studies(
 ) -> dict[str, StudyStrategyClassification]:
     """Apply the per-run + per-study library_strategy classifier to every study.
 
-    Phase 6b.6: after the library_strategy classifier runs, accessions
+    after the library_strategy classifier runs, accessions
     listed in :data:`MANUAL_EXCLUSIONS` are forced into the excluded
     bucket regardless of the classifier's verdict — these are studies
     that ENA labels as ``library_strategy="SELEX"`` but per-study
@@ -458,7 +458,7 @@ def _classify_all_studies(
                 blocklisted_strategies={},
                 should_exclude=True,
                 is_mixed_strategy=False,
-                exclusion_reason=f"manual exclusion (Phase 6b.6): {MANUAL_EXCLUSIONS[acc]}",
+                exclusion_reason=f"manual exclusion: {MANUAL_EXCLUSIONS[acc]}",
             )
             continue
         classifications[acc] = classify_study_by_library_strategies(
@@ -520,7 +520,7 @@ def rebuild_catalog(
 ) -> int:
     """Refresh the catalog CSV in-place. Returns the count of bioprojects written.
 
-    Behaviour (Phase 6b.5a):
+    Behaviour:
 
     - Run every query in `queries` against ENA at the run level
       (``result=read_run``) so per-run ``library_strategy`` is available.
@@ -560,7 +560,7 @@ def rebuild_catalog(
             n_kept_mixed += 1
 
         enr = enriched.get(acc, {})
-        # Phase 6b.5a abstract fallback: ENA's read_run query doesn't
+        # abstract fallback: ENA's read_run query doesn't
         # expose study_description, so newly-discovered entries get a
         # blank abstract from ``meta``. Previously-known entries fall
         # back to the abstract preserved in the old catalog via
@@ -598,7 +598,7 @@ def rebuild_catalog(
         writer.writeheader()
         writer.writerows(rows)
 
-    # Phase 6b.5a sidecar: ``bioprojects_excluded.csv`` lives next to
+    # sidecar: ``bioprojects_excluded.csv`` lives next to
     # the main catalog file. Emitted even when empty so the schema is
     # discoverable and downstream consumers can rely on its presence.
     excluded_path = _excluded_sidecar_path(out_path)

@@ -62,7 +62,7 @@ def test_l2_conflicting_numbers_downgrade_to_medium() -> None:
     r = parse_round("SRR1", sample_title="Round 3 / Cycle 7")
     assert r.confidence == "MEDIUM"
     assert r.round_candidates == [3, 7]
-    # Phase 6b.4 audit refactor: genuine ambiguity is flagged via
+    # audit refactor: genuine ambiguity is flagged via
     # ``is_unassigned`` (computed from ``len(round_candidates) > 1``)
     # rather than the old per-record ``needs_manual_review`` field.
     assert r.is_unassigned is True
@@ -76,7 +76,7 @@ def test_l3_library_name_medium_confidence() -> None:
     assert r.round_number == 6
     assert r.confidence == "MEDIUM"
     assert r.source_field == "library_name"
-    # Phase 6b.4 audit refactor: a single unambiguous L3 parse is NOT
+    # audit refactor: a single unambiguous L3 parse is NOT
     # unassigned. Previously the field ``needs_manual_review`` was True
     # here, which caused ``FetchPlan.none_confidence_runs`` to refuse
     # fetch on accessions whose round signals only lived in library_name.
@@ -90,12 +90,12 @@ def test_l3_falls_through_to_experiment_then_design() -> None:
     assert r.is_unassigned is False
 
 
-# ----- Phase 6b.4 audit-pilot regression tests -----
+# ----- audit-pilot regression tests -----
 #
 # The N=30 Tier 2 audit pilot surfaced a policy bug: MEDIUM single-match
 # parses (RAPT26-2R, SPa19-1R, R00_N16) were treated as unassigned and
 # triggered FETCH_REFUSED on whole accessions. These tests pin the fixed
-# behavior against the empirical cases Codex found during the pilot's
+# behavior against the empirical cases found during the pilot's
 # per-accession fetch_metadata.json inspection.
 
 
@@ -150,10 +150,10 @@ def test_audit_pilot_genuine_ambiguity_still_unassigned() -> None:
     assert r.is_unassigned is True
 
 
-# ----- Phase 6b.5c — round-parser empirical pattern expansion -----
+# ----- round-parser empirical pattern expansion -----
 #
-# Each pattern below was missing from the Phase 6b.4 cascade and caused a
-# real SELEX deposit (per Codex's per-accession fetch_metadata.json
+# Each pattern below was missing from the cascade and caused a
+# real SELEX deposit (per 's per-accession fetch_metadata.json
 # inspection) to fall into NO-CONFIDENCE territory. Adding the patterns
 # moves these to HIGH/MEDIUM-confidence assignments.
 

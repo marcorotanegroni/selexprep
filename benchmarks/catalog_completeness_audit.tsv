@@ -1,17 +1,17 @@
 accession	in_catalog	in_excluded	in_neither	catalog_study_title	exclusion_reason
-PRJDB16474	False	True	False		manual exclusion (Phase 6b.6): Aspergillus oryzae KojR target genes via gSELEX-Seq (literal 'gSELEX-Seq' in title); library_source=GENOMIC; uses genomic DNA fragments as the library rather than synthetic random oligos — out of scope for selexprep's primer-flanked-N-region extraction
-PRJDB19386	False	True	False		manual exclusion (Phase 6b.6): Onion GBS genomic sequencing (KAP NGS support project); library_source=GENOMIC across all runs (Onion_GBS_*_GENOMIC library_names); library_strategy=SELEX is a submission-metadata error
+PRJDB16474	False	True	False		manual exclusion: Aspergillus oryzae KojR target genes via gSELEX-Seq (literal 'gSELEX-Seq' in title); library_source=GENOMIC; uses genomic DNA fragments as the library rather than synthetic random oligos — out of scope for selexprep's primer-flanked-N-region extraction
+PRJDB19386	False	True	False		manual exclusion: Onion GBS genomic sequencing (KAP NGS support project); library_source=GENOMIC across all runs (Onion_GBS_*_GENOMIC library_names); library_strategy=SELEX is a submission-metadata error
 PRJDB40584	True	False	False	Selection of High Sensitivity Aptamers as the Binding Molecule Equipage on gFET-Based Aptasensors for the Quantification of Staphylococcus aureus (MRSA)	
-PRJDB4462	False	True	False		manual exclusion (Phase 6b.6): Rice (Oryza sativa) root developmental transcriptomics; library_source=TRANSCRIPTOMIC across all runs; library_strategy=SELEX is a submission-metadata error
-PRJDB4820	False	True	False		manual exclusion (Phase 6b.6): Genome-wide fungal transcriptional regulation (Aspergillus nidulans) via gSELEX; library_source=GENOMIC across all 4 runs; genomic-fragment SELEX library, not synthetic-random aptamer SELEX
-PRJDB6696	False	True	False		manual exclusion (Phase 6b.6): Genome-wide fungal transcriptional regulation (Aspergillus oryzae RIB40) via gSELEX; library_source=GENOMIC across all 8 runs; genomic-fragment SELEX library, not synthetic-random aptamer SELEX
+PRJDB4462	False	True	False		manual exclusion: Rice (Oryza sativa) root developmental transcriptomics; library_source=TRANSCRIPTOMIC across all runs; library_strategy=SELEX is a submission-metadata error
+PRJDB4820	False	True	False		manual exclusion: Genome-wide fungal transcriptional regulation (Aspergillus nidulans) via gSELEX; library_source=GENOMIC across all 4 runs; genomic-fragment SELEX library, not synthetic-random aptamer SELEX
+PRJDB6696	False	True	False		manual exclusion: Genome-wide fungal transcriptional regulation (Aspergillus oryzae RIB40) via gSELEX; library_source=GENOMIC across all 8 runs; genomic-fragment SELEX library, not synthetic-random aptamer SELEX
 PRJDB7696	True	False	False	CASTing analysis of Smad3 or Smad4 overexpressed in 293T cells	
-PRJEB108136	False	True	False		manual exclusion (Phase 6b.6): Human milk protein profiling using pre-enriched RNA-sequence libraries (custom 'Kklib' libraries); library_source=SYNTHETIC but library_selection=RT-PCR and study scope is protein profiling, not aptamer HT-SELEX
+PRJEB108136	False	True	False		manual exclusion: Human milk protein profiling using pre-enriched RNA-sequence libraries (custom 'Kklib' libraries); library_source=SYNTHETIC but library_selection=RT-PCR and study scope is protein profiling, not aptamer HT-SELEX
 PRJEB111361	True	False	False	High-throughput sequencing of SELEX rounds to identify enriched aptamer sequences.	
 PRJEB14550	True	False	False	MODER: Efficient discovery of the modular structure of monomeric and dimeric transcription factor binding motifs	
 PRJEB14744	True	False	False	"Additional sequencing coverage for the study by Jolma et al 2013, “DNA-binding specificities of human Transcription factors. This new deeper sequencing data has been used in the publication ""Transcription factor family‐specific DNA shape readout revealed by quantitative specificity models”"	
 PRJEB14923	True	False	False	Multiparameter functional diversity of human C2H2 zinc finger proteins	
-PRJEB15639	False	True	False		manual exclusion (Phase 6b.6): Active transcription factor identification (ATI) assay (Mus musculus); 59 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source — gSELEX-style genome-wide TF binding survey rather than synthetic-random aptamer SELEX
+PRJEB15639	False	True	False		manual exclusion: Active transcription factor identification (ATI) assay (Mus musculus); 59 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source — gSELEX-style genome-wide TF binding survey rather than synthetic-random aptamer SELEX
 PRJEB20112	True	False	False	Background sequencing data for SELEX	
 PRJEB20652	True	False	False	Here we show how one transcription factor bind to two distinct motifs with similar binding affinities.	
 PRJEB22637	True	False	False	Cell-SELEX identify an aptamer named ACE4 against the Annexin A2	
@@ -25,7 +25,7 @@ PRJEB46967	True	False	False	In Vitro Selection of DNA Molecules Favouring Intram
 PRJEB47428	True	False	False	"HTR-SELEX rawdata for experiments performed with 23 RNA binding proteins for the study: ""PRIESSTESS: interpretable, high-performing models of the sequence and structure preferences of RNA binding proteins"""	
 PRJEB48966	True	False	False	"HT-SELEX and genomic HT-SELEX rawdata for experiments performed with 4 C2H2 zinc finger transcription factors for the study: "" Alternate binding modes of human C2H2 TFs"""	
 PRJEB49150	True	False	False	HT-SELEX data for three BEN DNA binding domain transcription factors (NACC1, NACC2, BEND3-BD4) associated with this study.	
-PRJEB50170	False	True	False		manual exclusion (Phase 6b.6): Helicase-SELEX for E. coli Rho natural substrates; library_source=GENOMIC; selection on natural transcripts (not a synthetic random library) — out of scope for selexprep's extraction
+PRJEB50170	False	True	False		manual exclusion: Helicase-SELEX for E. coli Rho natural substrates; library_source=GENOMIC; selection on natural transcripts (not a synthetic random library) — out of scope for selexprep's extraction
 PRJEB50172	True	False	False	Discovery of serotonin-inducible regulatory switches governing the activity of the Rho helicase	
 PRJEB61115	True	False	False	HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors	
 PRJEB62495	True	False	False	Aptamers against Anaplasma phagocytophilum and its host cells	
@@ -35,10 +35,10 @@ PRJEB66722	True	False	False	Defining the molecular basis of the gene regulatory 
 PRJEB70964	True	False	False	Libraries of SELEX against α-synuclein fibrillar polymorphs	
 PRJEB75580	True	False	False	HT-SELEX data for ThPOK (ZBTB7B) target specificity for wild type and K360N mutant	
 PRJEB76622	True	False	False	Genomic HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors	
-PRJEB7934	False	True	False		manual exclusion (Phase 6b.6): Heterodimeric transcription factor complex specificities (human); 199 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + 1 ChIP-Exo control — gSELEX/TF-binding survey on genomic substrates, not synthetic-random aptamer SELEX
+PRJEB7934	False	True	False		manual exclusion: Heterodimeric transcription factor complex specificities (human); 199 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + 1 ChIP-Exo control — gSELEX/TF-binding survey on genomic substrates, not synthetic-random aptamer SELEX
 PRJEB79572	True	False	False	Ultrahigh-throughput discovery of modified aptamers as specific and potent enzyme inhibitors	
 PRJEB88389	True	False	False	Helicase-SELEX mapping of Bacillus subtilis transcription terminator Rut sites	
-PRJEB9797	False	True	False		manual exclusion (Phase 6b.6): CpG methylation effects on TF binding (mouse); 194 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + ChIP-Seq runs — gSELEX/methyl-SELEX on genomic substrates
+PRJEB9797	False	True	False		manual exclusion: CpG methylation effects on TF binding (mouse); 194 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + ChIP-Seq runs — gSELEX/methyl-SELEX on genomic substrates
 PRJEB9897	True	False	False	SELMAP - SELEX Affinity Landscape Mapping of transcription factor binding sites using integrated microfluidics	
 PRJNA1013112	True	False	False	Aptameric Evolution from CRISPR Signal Conductor 1.0 to 3.0: A Paradigm Shift in Precision Oncotherapy and Genetic Engineering	
 PRJNA1045519	True	False	False	elongation T-boxzyme	
@@ -48,9 +48,9 @@ PRJNA1066781	True	False	False	GEO accession GSE253695 is currently private and i
 PRJNA1067620	True	False	False	The emergence of the stem cell-associated Sox and POU transcription factors predates animal origins (SELEX)	
 PRJNA1068659	True	False	False	High-Affinity Aptamers for In Vitro and In Vivo Cocaine Sensing	
 PRJNA1091700	True	False	False	PAM-Adjacent DNA Flexibility Tunes CRISPR-Cas12a Off-Target Binding	
-PRJNA1104196	False	True	False		manual exclusion (Phase 6b.6): AEGIS (Artificially Expanded Genetic Information System) DNA sequencing methodology (ESEGA-seq); 50 runs profiling synthetic expanded-alphabet DNA, not aptamer HT-SELEX selection rounds
+PRJNA1104196	False	True	False		manual exclusion: AEGIS (Artificially Expanded Genetic Information System) DNA sequencing methodology (ESEGA-seq); 50 runs profiling synthetic expanded-alphabet DNA, not aptamer HT-SELEX selection rounds
 PRJNA1113703	True	False	False	FOXC2 pH-dependent SELEX-seq	
-PRJNA1113781	False	True	False		manual exclusion (Phase 6b.6): High-throughput discovery of functional RNA domains; 5 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source (library_names like 'FGD3_Circ', 'Were1_Pool') — selection on natural-RNA-derived substrates, not synthetic-random aptamer SELEX
+PRJNA1113781	False	True	False		manual exclusion: High-throughput discovery of functional RNA domains; 5 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source (library_names like 'FGD3_Circ', 'Were1_Pool') — selection on natural-RNA-derived substrates, not synthetic-random aptamer SELEX
 PRJNA1119072	True	False	False	Covalent aptamer library	
 PRJNA1122221	True	False	False	RAPID-SELEX identifies high-affinity RNA targets for chromatin binding proteins PARP1 and MeCP2	
 PRJNA1151868	True	False	False	Diversity scale of library matters: Impact of mRNA library diversity scales on the discovery of macrocyclic peptides targeting a protein by the RaPID system	
@@ -60,36 +60,36 @@ PRJNA1220334	True	False	False	Homo sapiens Raw sequence reads
 PRJNA1221092	True	False	False	Targeting eIF4A with RNA Aptamers Enhances Salt Stress Tolerance in Rice Through Modulation of Translation Initiation	
 PRJNA1244358	True	False	False	Predicting the DNA binding specificity of transcription factor mutants using family-level biophysically interpretable machine learning	
 PRJNA1308116	True	False	False	Towards point-of-care test development for Bacterial Vaginosis (BV), a polymicrobial infection	
-PRJNA1338232	False	True	False		manual exclusion (Phase 6b.6): Arabidopsis thaliana NLP7 transcription-factor regulatory network study (mixed ChIP-Seq + RNA-Seq + WGS + SELEX-tagged runs across 38 samples); the SELEX-tagged subset is TF-binding selection, not aptamer HT-SELEX
+PRJNA1338232	False	True	False		manual exclusion: Arabidopsis thaliana NLP7 transcription-factor regulatory network study (mixed ChIP-Seq + RNA-Seq + WGS + SELEX-tagged runs across 38 samples); the SELEX-tagged subset is TF-binding selection, not aptamer HT-SELEX
 PRJNA1390424	True	False	False	NApt	
 PRJNA1395820	True	False	False	Magnetic field-assisted SELEX for cobalt-binding aptamers	
 PRJNA1406499	True	False	False	The mechanical code of DNA impacts its interaction with DNA gyrase	
 PRJNA1467126	True	False	False	Expedient Single-round Selection of Hyper-modified Aptamer Targeting Insulin Receptor from Over-represented Dually Nucleobase-modified DNA Libraries	
 PRJNA221564	True	False	False	Overlapping and distinct functions of CstF64 and CstF64t in mammalian mRNA 3’ processing	
-PRJNA272858	False	True	False		manual exclusion (Phase 6b.6): DNA shape recognition vs sequence (Drosophila melanogaster); 32 SELEX-tagged runs, library_source=GENOMIC across all — gSELEX on Drosophila genomic fragments, not synthetic-random aptamer SELEX
-PRJNA378233	False	True	False		manual exclusion (Phase 6b.6): Arabidopsis MADS-box homeotic protein complex DNA-binding specificity; 28 SELEX runs, library_source=GENOMIC across all — gSELEX-style TF binding survey, not synthetic-random aptamer SELEX
+PRJNA272858	False	True	False		manual exclusion: DNA shape recognition vs sequence (Drosophila melanogaster); 32 SELEX-tagged runs, library_source=GENOMIC across all — gSELEX on Drosophila genomic fragments, not synthetic-random aptamer SELEX
+PRJNA378233	False	True	False		manual exclusion: Arabidopsis MADS-box homeotic protein complex DNA-binding specificity; 28 SELEX runs, library_source=GENOMIC across all — gSELEX-style TF binding survey, not synthetic-random aptamer SELEX
 PRJNA385825	True	False	False	Natural RNA polymerase aptamers regulate transcription in E. coli [SELEX]	
 PRJNA450989	True	False	False	RNA aptamers specific for IL4-treated MSC2 cell line	
 PRJNA474677	True	False	False	LIN28 selectively modulates a subclass of let-7 microRNAs	
 PRJNA480721	True	False	False	Highly-functionalized nucleic acid polymer selections	
-PRJNA486548	False	True	False		manual exclusion (Phase 6b.6): Systematic TF binding to noncoding variants (human); 197 SELEX-tagged runs ALL library_source=GENOMIC — gSELEX-style screening of genomic noncoding regions, not synthetic-random aptamer SELEX
+PRJNA486548	False	True	False		manual exclusion: Systematic TF binding to noncoding variants (human); 197 SELEX-tagged runs ALL library_source=GENOMIC — gSELEX-style screening of genomic noncoding regions, not synthetic-random aptamer SELEX
 PRJNA491840	True	False	False	A co-evolving active site network regulates cleavage preference in LAGLIDADG homing endonucleases	
 PRJNA529538	True	False	False	In vitro isolation of class-specific oligonucleotide-based small-molecule receptors	
 PRJNA531690	True	False	False	Libraries of single-stranded oligodeoxynucleotides enriched for binding to exosomes from VCaP prostate cancer cells	
 PRJNA547810	True	False	False	Systematic profiling of in vitro binding affinity and endonuclease activity of CRISPR enzymes	
-PRJNA577206	False	True	False		manual exclusion (Phase 6b.6): Small RNA-seq under carbon/nitrogen/sulfur limitation in Arabidopsis thaliana; library_source=TRANSCRIPTOMIC, library_selection='size fractionation' across all runs; library_strategy=SELEX is a submission-metadata error
+PRJNA577206	False	True	False		manual exclusion: Small RNA-seq under carbon/nitrogen/sulfur limitation in Arabidopsis thaliana; library_source=TRANSCRIPTOMIC, library_selection='size fractionation' across all runs; library_strategy=SELEX is a submission-metadata error
 PRJNA600132	True	False	False	Preferred nucleosomal sequences enriched by NGS-SELEX	
 PRJNA604410	True	False	False	SELEX and ChIP/CLIP-Seq identification of nucleic acid sequences bound by the DDX43 KH domain (89 aa)	
-PRJNA608749	False	True	False		manual exclusion (Phase 6b.6): In vitro CRISPR enzyme binding-affinity and endonuclease-activity profiling (Cas variant 'SELEX-like' selections against substrate libraries); library_source=SYNTHETIC + library_selection=RANDOM but the selection is CRISPR off-target profiling, not aptamer HT-SELEX
+PRJNA608749	False	True	False		manual exclusion: In vitro CRISPR enzyme binding-affinity and endonuclease-activity profiling (Cas variant 'SELEX-like' selections against substrate libraries); library_source=SYNTHETIC + library_selection=RANDOM but the selection is CRISPR off-target profiling, not aptamer HT-SELEX
 PRJNA609240	True	False	False	SELEX sequencing to study DNA-binding profile of the floral homeotic MADS-domain protein SEPALLATA3	
-PRJNA611637	False	True	False		manual exclusion (Phase 6b.6): Compendium of DNA-Binding Specificities of TFs in Pseudomonas savastanoi; 184 SELEX-tagged runs ALL library_source=GENOMIC — gSELEX on bacterial genomic substrates, not synthetic-random aptamer SELEX
+PRJNA611637	False	True	False		manual exclusion: Compendium of DNA-Binding Specificities of TFs in Pseudomonas savastanoi; 184 SELEX-tagged runs ALL library_source=GENOMIC — gSELEX on bacterial genomic substrates, not synthetic-random aptamer SELEX
 PRJNA615076	True	False	False	HT-SELEX against E. faecalis	
 PRJNA616423	True	False	False	RNA polymerase II-binding aptamers in human ACRO1 satellites disrupt transcription in cis	
 PRJNA633039	True	False	False	Structure of SRSF1 RRM1 bound to RNA reveals an unexpected pendular/bimodal mode of interaction and explains its involvement in SMN1 exon7 splicing	
 PRJNA688234	True	False	False	Coagulation Factor XIII-Binding Aptamers as Bivalent Ligands Targeting Fibrin and Activated Platelets in the Thrombus	
 PRJNA729962	True	False	False	DNA protein interactome for Nuclear Receptor proteins	
-PRJNA751745	False	True	False		manual exclusion (Phase 6b.6): Glycine max (soybean) mixed ATAC-seq + RNA-seq deposit; SELEX-tagged runs have library_name='Flower ATAC-seq rep*' and library_source=GENOMIC — mis-labeled ATAC-seq libraries, not aptamer HT-SELEX
-PRJNA820961	False	True	False		manual exclusion (Phase 6b.6): FRUITFULL MADS-domain TF target gene selection (Arabidopsis); 28 SELEX-tagged runs, library_source=GENOMIC — gSELEX-style TF binding survey, not synthetic-random aptamer SELEX
+PRJNA751745	False	True	False		manual exclusion: Glycine max (soybean) mixed ATAC-seq + RNA-seq deposit; SELEX-tagged runs have library_name='Flower ATAC-seq rep*' and library_source=GENOMIC — mis-labeled ATAC-seq libraries, not aptamer HT-SELEX
+PRJNA820961	False	True	False		manual exclusion: FRUITFULL MADS-domain TF target gene selection (Arabidopsis); 28 SELEX-tagged runs, library_source=GENOMIC — gSELEX-style TF binding survey, not synthetic-random aptamer SELEX
 PRJNA830749	True	False	False	The use of high-affinity polyhistidine binders as masking probes for the selection of an NDM-1 specific aptamer	
 PRJNA847751	True	False	False	A modular XNAzyme cleaves long, structured RNAs under physiological conditions and enables allele-specific gene silencing.	
 PRJNA847930	True	False	False	A two-residue nascent strand steric gate controls synthesis of 2-O-methyl- and 2-O-2-methoxyethyl-RNA	

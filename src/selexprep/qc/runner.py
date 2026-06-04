@@ -12,7 +12,7 @@ The CLI's ``selexprep qc <manifest>`` verb is a thin wrapper around
 6. Writes ``flags.yaml`` (deterministic, sorted by flag name).
 7. Emits the 4 per-dataset PNG plots.
 
-All filesystem expectations follow the Phase 3/4 output layout - no
+All filesystem expectations follow the /4 output layout - no
 extra arguments needed in the common case.
 """
 

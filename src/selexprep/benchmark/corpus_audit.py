@@ -1,4 +1,4 @@
-"""Tier 2 corpus-audit scaffolding (Phase 6b.3a — pipeline only, no results).
+"""Tier 2 corpus-audit scaffolding.
 
 The audit answers a different question than Tier 1's curated primer-recovery
 benchmark (``benchmark.metrics`` + Figure A): given the messy public
@@ -13,7 +13,7 @@ EasyDIVER+) cannot produce this kind of audit by construction: they need
 the primer sequences as input, so they cannot be pointed at a random
 catalog accession and asked "what does the LibraryReport say?".
 
-Scope (locked plan + Phase 6b.3a):
+Scope:
 
 - ``sample_corpus(n, sources=..., exclude=..., seed=...)`` — deterministic
   uniform-random sample from the bundled catalog, INSDC-only by
@@ -21,9 +21,9 @@ Scope (locked plan + Phase 6b.3a):
 - ``write_accessions_tsv`` — emits the 2-column TSV that
   ``selexprep run`` consumes.
 - ``aggregate_audit_from_run_outputs`` — parses ``run_summary.tsv``
-  (Phase 6a batch driver) into a :class:`CorpusAuditReport` with
+  into a :class:`CorpusAuditReport` with
   EXPLICIT denominators per metric family. The methodological
-  correction (Codex peer-review + user) is that
+  correction is that
   ``inference_safe_failure_rate`` is computed only among rows with a
   LibraryReport — NEVER mixed with fetch failures, which would inflate
   the metric with ENA/network problems.
@@ -33,9 +33,9 @@ Scope (locked plan + Phase 6b.3a):
   the Snakefile ``rule sample_corpus`` and ``rule aggregate_audit`` can
   invoke this module directly.
 
-6b.3a ships **scaffolding only**. The actual HPC run that produces
+ships **scaffolding only**. The actual HPC run that produces
 ``audit_metrics.json`` + ``audit_accessions.tsv`` + ``figure_b.{pdf,png}``
-is the 6b.4 follow-up commit (no code changes). CI does NOT execute the
+is the follow-up commit (no code changes). CI does NOT execute the
 Snakefile.
 """
 
@@ -92,7 +92,7 @@ class CorpusAuditReport:
     """Tier 2 audit report — distributional metrics with explicit denominators.
 
     The denominator partition is the methodological correction from the
-    Codex peer-review + user pass: a single rate over all metrics would
+    a single rate over all metrics would
     inflate ``inference_safe_failure_rate`` with fetch failures (network /
     ENA / regional restrictions are not safe failures, they're operational
     failures). Each metric family is therefore bucketed under the
@@ -132,7 +132,7 @@ class CorpusAuditReport:
     n_with_qc_run: int = 0
     flags_raised_histogram: dict[int, int] = field(default_factory=dict)
 
-    # Phase 6b.5b: catalog-level eligibility breakdown (denominator =
+    # catalog-level eligibility breakdown (denominator =
     # the full classified catalog, NOT n_sampled). Populated when an
     # eligibility TSV is passed to the aggregator. Provides the
     # "audit-eligible vs not" layer-1 story alongside the layer-2
@@ -141,7 +141,7 @@ class CorpusAuditReport:
     n_catalog_classified: int = 0
     n_catalog_eligible: int = 0
 
-    # Phase 6b.5d: full-catalog denominator (INSDC-classified + passthrough
+    # full-catalog denominator (INSDC-classified + passthrough
     # rows). The eligibility classifier only sees INSDC rows because
     # figshare/zenodo passthrough deposits don't have ENA filereport
     # endpoints or per-run library_strategy metadata. Surfacing the total
@@ -151,7 +151,7 @@ class CorpusAuditReport:
     n_catalog_total: int = 0
     n_catalog_non_insdc_passthrough: int = 0
 
-    # Phase 6b.5d: free-form caveats block surfaced verbatim in the audit
+    # free-form caveats block surfaced verbatim in the audit
     # JSON. Currently carries the multiplex-detection caveat (NO_ROUND_STRUCTURE
     # may include single-FASTQ inline-barcoded SELEX deposits that v0.1
     # cannot detect without a user-supplied sample sheet). The aggregator
@@ -198,12 +198,12 @@ def sample_corpus(
         exclude, seed)`` quadruple always returns the same accession
         list (bit-deterministic).
     eligible_only
-        Phase 6b.5b: restrict the sampling pool to this set of
+        restrict the sampling pool to this set of
         accessions (intersected with the INSDC catalog). The audit
         Snakefile passes the ``ELIGIBLE_HT_SELEX_ROUNDS`` rows from
         the eligibility TSV here so non-eligible rows (NON_SELEX_ASSAY,
         NO_ROUND_STRUCTURE, MIXED, FETCH_DEAD) can't be drawn. ``None``
-        means no restriction (backward compat with pre-6b.5b callers).
+        means no restriction (backward compat with pre-callers).
 
     Returns
     -------
@@ -281,7 +281,7 @@ _MULTIPLEX_CAVEAT_NO_ROUND_STRUCTURE = (
     "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded "
     "multiplexed SELEX deposits that selexprep v0.1 cannot detect without a "
     "user-supplied sample sheet (multiplex auto-detection is a v0.2 "
-    "deferral per the locked plan). Visible v0.1 signals are: few runs + "
+    "deferral). Visible v0.1 signals are: few runs + "
     "library_strategy=SELEX + 0 parseable rounds. Single-run deposits with "
     "n_runs_with_round=1 are genuinely single-round and correctly classified."
 )
@@ -297,10 +297,9 @@ def aggregate_audit_from_run_outputs(
     eligibility_tsv: Path | None = None,
     catalog_csv: Path | None = None,
 ) -> CorpusAuditReport:
-    """Parse ``run_summary.tsv`` (Phase 6a batch driver) into the audit report.
+    """Parse ``run_summary.tsv`` into the audit report.
 
-    The methodological correction folded in here (Codex peer-review +
-    user pass): ``inference_safe_failure_rate`` is computed ONLY among
+    The methodological correction folded in here: ``inference_safe_failure_rate`` is computed ONLY among
     rows whose ``library_report_status`` is non-empty — i.e., detect
     produced a report at all. Mixing fetch failures into this rate
     would inflate the metric with ENA/network problems and conflate
@@ -325,7 +324,7 @@ def aggregate_audit_from_run_outputs(
         Required (not defaulted) so callers cannot forget to thread
         them through.
     eligibility_tsv
-        Phase 6b.5b: optional path to the eligibility TSV emitted by
+        optional path to the eligibility TSV emitted by
         ``selexprep.benchmark.eligibility.classify-catalog``. When
         present, the audit JSON gains
         ``catalog_classification_distribution`` (counts per
@@ -333,7 +332,7 @@ def aggregate_audit_from_run_outputs(
         ``n_catalog_classified`` + ``n_catalog_eligible`` for the
         layer-1 "what fraction of the catalog is audit-eligible" story.
     catalog_csv
-        Phase 6b.5d: optional path to ``bioprojects.csv``. When given,
+        optional path to ``bioprojects.csv``. When given,
         the audit JSON gains ``n_catalog_total`` +
         ``n_catalog_non_insdc_passthrough`` so a reviewer can read
         Figure B's "X of N audit-eligible" segment against the full
@@ -347,7 +346,7 @@ def aggregate_audit_from_run_outputs(
         sample_accessions_sha256=sample_accessions_sha256,
     )
 
-    # Phase 6b.5d: populate full-catalog denominators (when a catalog
+    # populate full-catalog denominators (when a catalog
     # path is supplied) + the multiplex caveat under NO_ROUND_STRUCTURE.
     # Both feed Figure B's title + the paper's "what the public corpus
     # looks like" narrative.
@@ -482,7 +481,7 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
     not guaranteed deterministic; the audit JSON is, by the same discipline
     used in ``benchmark.metrics.write_metrics_json``).
 
-    Defensive sort (Codex peer-review): ``per_accession`` is sorted by
+    Defensive sort: ``per_accession`` is sorted by
     accession here even if the caller already sorted upstream, so direct
     callers (tests, future hand-rolled scripts) can't accidentally write a
     non-deterministic ordering.
@@ -494,21 +493,21 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
         "sample_accessions_sha256": report.sample_accessions_sha256,
         "n_sampled": report.n_sampled,
         "n_in_ground_truth_overlap": report.n_in_ground_truth_overlap,
-        # Phase 6b.5d: full-catalog denominator (zero unless the
+        # full-catalog denominator (zero unless the
         # aggregator was given --catalog). Lets Figure B's title quote
         # the honest "X of N INSDC rows · M non-INSDC passthrough · K
         # catalog total" breakdown.
         "n_catalog_total": report.n_catalog_total,
         "n_catalog_non_insdc_passthrough": report.n_catalog_non_insdc_passthrough,
-        # Phase 6b.5b layer-1 view: catalog-level eligibility breakdown.
+        # layer-1 view: catalog-level eligibility breakdown.
         # Empty when the aggregator wasn't given an eligibility TSV
-        # (backward compat with pre-6b.5b audit runs).
+        # (backward compat with pre-audit runs).
         "n_catalog_classified": report.n_catalog_classified,
         "n_catalog_eligible": report.n_catalog_eligible,
         "catalog_classification_distribution": dict(
             sorted(report.catalog_classification_distribution.items())
         ),
-        # Phase 6b.5d: free-form caveats keyed by bucket / topic.
+        # free-form caveats keyed by bucket / topic.
         "caveats": dict(sorted(report.caveats.items())),
         "fetch_outcome_distribution": dict(sorted(report.fetch_outcome_distribution.items())),
         "n_fetchable": report.n_fetchable,
@@ -546,7 +545,7 @@ def _cmd_sample(args: argparse.Namespace) -> int:
     exclude_tuple: tuple[str, ...] = ()
     if args.exclude_ground_truth is not None:
         exclude_tuple = tuple(_read_ground_truth_accessions(args.exclude_ground_truth))
-    # Phase 6b.5b: when an eligibility TSV is provided, restrict the
+    # when an eligibility TSV is provided, restrict the
     # sampling pool to ``ELIGIBLE_HT_SELEX_ROUNDS`` accessions only.
     eligible_tuple: tuple[str, ...] | None = None
     if args.eligibility is not None:
@@ -601,7 +600,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
         if "n_sampled" in manifest:
             sidecar_n_sampled = int(manifest["n_sampled"])
 
-    # Codex peer-review fix: the function signature requires
+    # the function signature requires
     # ``sample_accessions_sha256`` (it's a positional kwarg, not a default)
     # so the audit JSON's reproducibility envelope cannot silently land
     # empty. We enforce the same at the CLI boundary: if neither the
@@ -626,7 +625,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
         catalog_csv=args.catalog,
     )
 
-    # Codex peer-review fix: the run summary's row count should match the
+    # the run summary's row count should match the
     # sidecar's ``n_sampled``. If selexprep run lost a row (a runner bug)
     # or someone re-ran with a different TSV (operator error), warn loudly
     # — the audit JSON's ``n_sampled`` represents what was actually
@@ -652,7 +651,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Tier 2 corpus-audit pipeline (Phase 6b.3a).")
+    p = argparse.ArgumentParser(description="Tier 2 corpus-audit pipeline.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sample = sub.add_parser("sample", help="Sample N INSDC accessions from the catalog.")
@@ -675,7 +674,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=None,
         help=(
-            "Phase 6b.5b: path to eligibility.tsv emitted by "
+            "Path to eligibility.tsv emitted by "
             "``selexprep.benchmark.eligibility classify-catalog``. "
             "When provided, only accessions classified as "
             "ELIGIBLE_HT_SELEX_ROUNDS are eligible for sampling."
@@ -705,7 +704,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=None,
         help=(
-            "Phase 6b.5b: path to eligibility.tsv. When provided, the "
+            "Path to eligibility.tsv. When provided, the "
             "audit JSON gains ``catalog_classification_distribution`` "
             "(layer-1 view) alongside the in-sample metrics."
         ),
@@ -715,7 +714,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=None,
         help=(
-            "Phase 6b.5d: path to bioprojects.csv. When provided, the "
+            "Path to bioprojects.csv. When provided, the "
             "audit JSON gains ``n_catalog_total`` + "
             "``n_catalog_non_insdc_passthrough`` so Figure B's title can "
             "report the honest full-catalog denominator."

@@ -13,13 +13,13 @@ artefacts ``selexprep detect`` / ``selexprep extract`` consume:
     ├── manual_review.tsv                   (only if --allow-manual-review used)
     └── fetch_metadata.json                 (audit trail; not a resume oracle)
 
-**Cardinal rule (locked plan + metadata.py:14):** never guess a round
+**Cardinal rule:** never guess a round
 assignment. NONE-confidence runs do NOT appear in ``rounds.tsv`` —
 downstream tools see only trusted assignments. The user opts in to
 ``allow_manual_review`` to download them into ``round_unknown/`` AND
 surface them in ``manual_review.tsv``.
 
-**Phase 6b.5d contract relaxation.** When some (but not all) runs are
+**contract relaxation.** When some (but not all) runs are
 NONE-confidence and ``allow_manual_review`` is False, the runner
 *skips* those runs (logging the SRRs at WARNING level) and proceeds
 with the HIGH/MEDIUM ones. Previously the runner hard-refused the
@@ -32,7 +32,7 @@ the relaxation is purely about *which* runs we attempt to download.
 If every run is NONE-confidence (no HIGH/MEDIUM rounds), the runner
 fails fast *unless* ``allow_manual_review`` is passed. Without the
 flag, refusing avoids wasting bandwidth on a download whose rounds
-can't be trusted. With it (Phase 6b.9), the user has explicitly opted
+can't be trusted. With it, the user has explicitly opted
 in to manual curation, so all runs download into ``round_unknown/``,
 ``rounds.tsv`` is emitted empty (no trusted assignments), and a
 hand-supplied round-map drives ``detect`` downstream. This is what the
@@ -104,17 +104,17 @@ def run_fetch(
 ) -> FetchResult:
     """Build a plan + download per-run FASTQs + emit round map.
 
-    Default ``backend="ena"`` matches the CLI's paper-grade default
-    (locked plan: GPL-3.0 fallback never on the silent path). Library-
-    level ``download_srr`` keeps its ``auto`` default for Python API
-    callers who want the convenience chain.
+     Default ``backend="ena"`` matches the CLI's paper-grade default
+    . Library-
+     level ``download_srr`` keeps its ``auto`` default for Python API
+     callers who want the convenience chain.
     """
     outdir.mkdir(parents=True, exist_ok=True)
 
     plan = build_fetch_plan(accession, timeout_s=timeout_s)
 
     # Refusal: no run produced a HIGH/MEDIUM round assignment at all.
-    # Phase 6b.9: gated by ``not allow_manual_review`` (consistent with the
+    # gated by ``not allow_manual_review`` (consistent with the
     # some-unassigned block below). Without the flag we refuse — a download
     # whose rounds can't be trusted wastes bandwidth. With it, the user has
     # explicitly opted in to manual curation, so we fall through: every run
@@ -144,7 +144,7 @@ def run_fetch(
             refused_reason=reason,
         )
 
-    # Phase 6b.9: all-unassigned BUT --allow-manual-review is set → proceed.
+    # all-unassigned BUT --allow-manual-review is set → proceed.
     # The download loop routes every (unassigned) run to round_unknown/ and
     # emits manual_review.tsv; rounds.tsv will be empty (no trusted rounds).
     if not plan.has_any_assigned_rounds:
@@ -156,7 +156,7 @@ def run_fetch(
             len(plan.runs),
         )
 
-    # Phase 6b.5d: partial-parseability is no longer a hard refusal.
+    # partial-parseability is no longer a hard refusal.
     # When some runs are unassigned and --allow-manual-review is NOT set,
     # log them at WARNING level and skip them in the download loop; the
     # rest of the accession proceeds normally. The hard refusal at line
@@ -183,7 +183,7 @@ def run_fetch(
 
     for run in plan.runs:
         if run.round_record.is_unassigned and not allow_manual_review:
-            # Phase 6b.5d: skip unassigned runs unless the user opted in
+            # skip unassigned runs unless the user opted in
             # to manual-review downloading. The WARNING above already
             # listed the SRRs and the reason; recording in ``skipped``
             # keeps the result shape stable.
@@ -194,7 +194,7 @@ def run_fetch(
         if run.round_record.is_unassigned:
             manual_review_srrs.append(run.srr)
 
-        # Codex pass 1 fix: skip-already-present must validate the gzip stream,
+        # skip-already-present must validate the gzip stream,
         # not just check Path.exists. A SIGKILL'd download leaves a corrupt
         # .fastq.gz on disk; bare exists() would skip it and downstream
         # detect/extract would hit gzip errors deep in the pipeline.
@@ -250,12 +250,12 @@ def check_fetch_inventory(plan: FetchPlan, outdir: Path) -> list[str]:
     """Return basenames of expected FASTQs from `plan` that are missing or corrupt.
 
     Used by the run-batch driver as the file-inventory resume oracle for
-    the fetch stage (locked plan + user peer-review point 5). Returns an
+    the fetch stage. Returns an
     empty list iff every expected FASTQ is on disk in its expected
     ``round_NN/`` / ``round_unknown/`` directory AND passes
     :func:`validate_fastq_gz` (gzip-stream integrity, min-size, ``gzip -t``).
 
-    Codex pass 1 fix: previous version used bare ``Path.exists()`` which
+    previous version used bare ``Path.exists()`` which
     would skip a SIGKILL'd corrupt partial download.
     """
     missing: list[str] = []
@@ -280,7 +280,7 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
     runs: list[FetchRun] = []
     for r in payload.get("runs", []):
         rr_data = r["round_record"]
-        # Phase 6b.4 audit refactor: ``needs_manual_review`` was removed
+        # audit refactor: ``needs_manual_review`` was removed
         # from ``RoundRecord`` (replaced by the ``is_unassigned`` property
         # computed from ``round_number`` + ``round_candidates``). Old
         # ``fetch_metadata.json`` files on disk still have the field;
@@ -310,7 +310,7 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
                 fastq_bytes=list(r.get("fastq_bytes", [])),
                 paired_end=bool(r.get("paired_end", False)),
                 round_record=round_record,
-                # Phase 6b.5b: per-run library_strategy. Old
+                # per-run library_strategy. Old
                 # fetch_metadata.json files written before the field
                 # existed default to empty string.
                 library_strategy=str(r.get("library_strategy", "")),
@@ -344,7 +344,7 @@ def _target_dir_for_run(outdir: Path, run: FetchRun) -> Path:
 def _write_rounds_tsv(path: Path, plan: FetchPlan, outdir: Path) -> None:
     """Emit `file<TAB>round_number` for HIGH/MEDIUM-confidence runs only.
 
-    Matches ``cli._load_round_map`` (line 117) format verbatim. Sorted
+    Matches ``cli._load_round_map`` format verbatim. Sorted
     by filename for determinism.
     """
     rows: list[tuple[str, int]] = []

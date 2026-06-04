@@ -11,18 +11,18 @@ import pandas as pd
 #: Persona-1 users (ML researchers / atlas builders) rely on this to know
 #: how stale the catalog is vs the upstream archives.
 #:
-#: Phase 6b.5a (2026-05-24): bumped from v0.1.5 to v0.1.6 because the
+#: (2026-05-24): bumped from v0.1.5 to v0.1.6 because the
 #: catalog now applies the per-run + per-BioProject library_strategy
 #: filter (see ``selexprep.fetch.library_strategy``), which drops
 #: 100%-blocklisted studies (RNA-Seq / ChIP-Seq / miRNA-Seq / etc.)
 #: that the broad-recall text search would otherwise pick up. Mixed
 #: studies are kept; their per-run mix is classified at audit time by
-#: Phase 6b.5b.
+#: .
 #:
-#: Phase 6b.6 (2026-05-28): bumped from v0.1.6 to v0.1.7 because the
+#: (2026-05-28): bumped from v0.1.6 to v0.1.7 because the
 #: discovery layer now includes ``library_strategy="SELEX"`` as a
 #: positive ENA query (recovering ~43 INSDC studies the text-pattern
-#: queries missed; pre-6b.6 coverage measured at 50.5% of ENA-SELEX
+#: queries missed; pre-coverage measured at 50.5% of ENA-SELEX
 #: deposits via ``benchmarks/catalog_completeness_audit.py``). 8 known
 #: mis-labeled deposits (Onion GBS, rice transcriptomics, AEGIS DNA
 #: methodology, ATAC-seq-with-SELEX-label, etc.) are forced into

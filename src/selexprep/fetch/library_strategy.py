@@ -1,12 +1,12 @@
 """Per-run + per-BioProject library_strategy classification for catalog hygiene.
 
-Phase 6b.5a — empirically motivated. The N=30 Tier 2 audit pilot found
+empirically motivated. The N=30 Tier 2 audit pilot found
 that ENA studies whose runs are unambiguously RNA-Seq / ChIP-Seq /
 miRNA-Seq / cell-treatment timecourses were ending up in the bundled
 discovery catalog because the broad-recall text search matched their
 abstracts. This module classifies them out at refresh time.
 
-**Per-run first, then per-BioProject** (Phase 6b.5a user amendment).
+**Per-run first, then per-BioProject**.
 Mixed BioProjects exist (SELEX runs alongside controls or adjacent
 assays); treating "ANY run blocklisted → exclude the whole study"
 would throw away real SELEX runs. The decision rule:
@@ -16,7 +16,7 @@ would throw away real SELEX runs. The decision rule:
 - SOME blocklisted + SOME compatible → ``should_exclude=False,
                                          is_mixed_strategy=True``
                                          (keep; the audit eligibility
-                                         layer in 6b.5b will classify
+                                         layer in will classify
                                          as MIXED_PROJECT_NEEDS_GROUPING)
 - ALL compatible                     → ``should_exclude=False,
                                          is_mixed_strategy=False``
@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 #: ENA's `library_strategy` controlled-vocabulary codes that cannot
 #: plausibly be SELEX data.
 #:
-#: **Empirical calibration (Phase 6b.5a — ENA Portal API live query on
+#: **Empirical calibration (ENA Portal API live query on
 #: 2026-05-24).** Real HT-SELEX deposits use the following CV codes:
 #:
 #: - ``SELEX``           (most common — 9824/10000 in the HT-SELEX query)
@@ -131,7 +131,7 @@ class StudyStrategyClassification:
     #: True iff at least one run was compatible AND at least one was
     #: blocklisted. The study is KEPT in the catalog (its compatible
     #: runs are real SELEX data), but flagged for the audit's
-    #: MIXED_PROJECT_NEEDS_GROUPING bucket in Phase 6b.5b.
+    #: MIXED_PROJECT_NEEDS_GROUPING bucket in .
     is_mixed_strategy: bool = False
     #: Populated iff ``should_exclude`` — written to the sidecar CSV.
     exclusion_reason: str = ""

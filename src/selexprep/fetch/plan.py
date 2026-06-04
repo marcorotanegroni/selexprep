@@ -52,7 +52,7 @@ _ENA_FETCH_FIELDS = (
 class FetchRun:
     """One sequencing run inside a fetch plan.
 
-    Phase 6b.5b adds ``library_strategy`` per-run. Previously only the
+    Adds ``library_strategy`` per-run. Previously only the
     study-level value was preserved on :class:`FetchPlan`; per-run
     granularity is required for the audit eligibility layer
     (:mod:`selexprep.benchmark.eligibility`) to detect mixed BioProjects
@@ -104,8 +104,7 @@ class FetchPlan:
     def none_confidence_runs(self) -> list[FetchRun]:
         """Runs the cascade could not safely assign a round to.
 
-        Delegates to ``RoundRecord.is_unassigned`` (Phase 6b.4 audit
-        refactor) so the criterion is named once: a run is in this list
+        Delegates to ``RoundRecord.is_unassigned`` so the criterion is named once: a run is in this list
         iff its parsed `round_number` is None OR multiple distinct round
         numbers were parsed from the same metadata text (genuine
         ambiguity). MEDIUM records with a single unambiguous parse
@@ -129,7 +128,7 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
     """Hit ENA filereport with extended fields + parse rounds per run.
 
     Single ENA round-trip; no per-run sample-attribute calls (deferred to
-    a follow-up if Phase 6b benchmarking shows the filereport fields are
+    a follow-up if benchmarking shows the filereport fields are
     insufficient).
 
     Raises:
@@ -200,7 +199,7 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
 def fastq_filenames_for_run(run: FetchRun) -> list[str]:
     """Canonical FASTQ basenames the download will produce for this run.
 
-    Codex pass 1 fix: derive directly from ``run.fastq_urls`` (the same
+    derive directly from ``run.fastq_urls`` (the same
     URLs ``download_srr_ena_direct`` uses at ``fetch/download.py:351``
     where ``dest = output_dir / Path(url_path).name``). Synthesizing
     ``{SRR}.fastq.gz`` is right for ENA's canonical naming but brittle

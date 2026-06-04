@@ -52,7 +52,7 @@ class RoundRecord:
           (``len(round_candidates) > 1``) — genuine ambiguity that
           needs a curator's eyeball before trusting any of them.
 
-        Phase 6b.4 audit fix: replaces the older ``needs_manual_review``
+        audit fix: replaces the older ``needs_manual_review``
         boolean field, which was set to ``True`` for every L3
         single-match parse (`base_confidence="MEDIUM"`) and caused
         ``FetchPlan.none_confidence_runs`` to refuse fetch on
@@ -101,7 +101,7 @@ _ROUND_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("R_digit_boundary", re.compile(r"(?:^|[\s_\-./])[Rr](\d+)(?:[\s_\-./]|$)")),
     ("C_digit_boundary", re.compile(r"(?:^|[\s_\-./])[Cc](\d+)(?:[\s_\-./]|$)")),
     ("digit_R_suffix", re.compile(r"(?:^|[\s_\-./])(\d+)[Rr](?:[\s_\-./]|$)")),
-    # Phase 6b.5c — empirical patterns surfaced by the Phase 6b.4 audit
+    # empirical patterns surfaced by the audit
     # pilot's per-accession metadata inspection. Each was a SELEX deposit
     # the original cascade missed.
     #
@@ -312,7 +312,7 @@ def _match_text_field(
         confidence = base_confidence
         notes = f"matched '{unique_patterns[0]}' in {field_name}: '{text[:120]}'"
     else:
-        # Phase 6b.4 audit fix: the only legitimate "needs review" case
+        # audit fix: the only legitimate "needs review" case
         # in this helper is genuine ambiguity (multiple distinct round
         # numbers from the same text). ``RoundRecord.is_unassigned``
         # picks this up via ``len(round_candidates) > 1`` — no per-record

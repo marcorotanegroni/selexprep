@@ -1,7 +1,7 @@
 """Typer CLI dispatcher for selexprep.
 
-Phase 0 scaffold + progressive wiring: subcommands not yet implemented exit
-with code 2. ``catalog`` (Phase 1.5) and ``detect`` (Phase 2) are live;
+scaffold + progressive wiring: subcommands not yet implemented exit
+with code 2. ``catalog`` and ``detect`` are live;
 ``inspect``/``fetch``/``extract``/``count``/``qc``/``run`` arrive in later
 phases.
 """
@@ -39,7 +39,7 @@ app.add_typer(catalog_app, name="catalog")
 
 def _not_implemented(name: str) -> None:
     typer.secho(
-        f"selexprep {name}: not yet implemented (Phase 0 scaffold).",
+        f"selexprep {name}: not yet implemented.",
         fg=typer.colors.YELLOW,
         err=True,
     )
@@ -344,12 +344,12 @@ def extract(
 ) -> None:
     """Trim primers + extract random region per round.
 
-    Phase 4: ``--override-primer-{5p,3p}`` now applies primer overrides
+    ``--override-primer-{5p,3p}`` now applies primer overrides
     via ``LibraryReport.model_copy``. Pair with ``--rebuild`` to overwrite
     the baseline outputs in place AND emit ``extract_diff.tsv`` comparing
     baseline vs override per-round read counts.
     """
-    # Basename collision check (Codex pass 1 fix): the round-map lookup is
+    # Basename collision check: the round-map lookup is
     # basename-keyed, so two input FASTQs with the same name in different
     # directories would silently overwrite each other in the lookup dict.
     # Refuse early with a clear error rather than producing a wrong result.
@@ -490,7 +490,7 @@ def count(
     ),
 ) -> None:
     """Count unique sequences from an extracted FASTA -> counts.parquet."""
-    # Phase 5 Codex pass 1: hard-reject FASTQ by default (selexprep count
+    # hard-reject FASTQ by default (selexprep count
     # accepts only EXTRACTED FASTA from `selexprep extract`, primer-stripped
     # and random-region-only). FASTQ inputs would silently get parsed as if
     # every other line is a sequence header. Power users with externally
@@ -667,7 +667,7 @@ def run(
                 err=True,
             )
 
-    # NOTE (Phase 6b.4 HPC audit fix): ``selexprep run`` is a batch driver —
+    # NOTE: ``selexprep run`` is a batch driver —
     # per-accession failures are first-class data captured in
     # ``run_summary.tsv``, which is the report. A non-zero exit here would
     # conflate "the runner did its job and recorded failures" (a normal

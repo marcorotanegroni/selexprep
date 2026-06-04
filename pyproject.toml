@@ -39,8 +39,8 @@ dependencies = [
 [project.optional-dependencies]
 ncbi = ["biopython >= 1.82", "pysradb >= 2.2"]
 fast = ["pyfastx >= 2.0"]
-# Phase 6b.1 benchmark scaffolding. Snakemake is the only opt-in dep;
-# Pearson/Spearman are computed via pandas (Codex amendment 4 — no SciPy).
+# benchmark scaffolding. Snakemake is the only opt-in dep;
+# Pearson/Spearman are computed via pandas (no SciPy).
 #
 # Pin rationale:
 # - ``snakemake >= 7.0, < 8`` — floor keeps Python 3.10 compatible (the
@@ -52,7 +52,7 @@ fast = ["pyfastx >= 2.0"]
 #   remains) and Snakemake 7 hasn't been backported. Without this pin,
 #   ``uv sync --extra bench`` on a fresh HPC venv resolves PuLP 3.x and
 #   ``snakemake --version`` crashes with AttributeError. Surfaced during
-#   the Phase 6b.4 HPC audit attempt.
+#   the HPC audit attempt.
 bench = [
   "snakemake >= 7.0, < 8",
   "pulp < 2.8",
@@ -114,7 +114,7 @@ python_version = "3.10"
 plugins = ["pydantic.mypy"]
 ignore_missing_imports = true
 # Permissive by default for v0.1 ports (focus is on functional correctness +
-# tests, not strict typing). Phase 2's centerpiece `library.report` is
+# tests, not strict typing). The centerpiece `library.report` is
 # strict — that's where type-precision matters for the LibraryReport schema.
 disable_error_code = [
   "type-arg",          # bare `dict`/`list` annotations are fine in v0.1 utility code
@@ -137,7 +137,7 @@ module = "selexprep.library.report"
 strict = true
 
 [[tool.mypy.overrides]]
-# Phase 6b.1: equivalence rules are pure functions with a typed
+# equivalence rules are pure functions with a typed
 # EquivalenceResult contract — type precision matters for the metric
 # aggregator that consumes them, same rationale as library.report.
 module = "selexprep.benchmark.equivalence"

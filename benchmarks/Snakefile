@@ -1,13 +1,13 @@
-# selexprep Phase 6b.1 — benchmark scaffolding
+# selexprep benchmark scaffolding
 #
 # Per-accession pipeline: fetch -> detect, then aggregate -> figure_a.
 # Reads ``ground_truth.tsv``; processes only ``verified=true`` rows.
 #
-# Codex pre-implementation amendments folded into this Snakefile:
+# Implementation notes:
 #  1. ``verified=false`` rows are excluded from the DAG entirely
 #     (they also get a stderr warning from the metrics aggregator).
 #  2. Only ENA/SRA/DDBJ-fetchable accessions appear here. Non-accession
-#     sources (figshare/zenodo/local-FASTQ) are out of scope for 6b.1.
+#     sources (figshare/zenodo/local-FASTQ) are out of scope.
 #  3. ``round_map_source == "curated"`` rows use the curator's
 #     ``round_map_path`` (resolved relative to ``ground_truth.tsv``)
 #     and pass ``--allow-manual-review`` to ``selexprep fetch`` so the
@@ -31,19 +31,19 @@ import pandas as pd
 #   snakemake -s benchmarks/Snakefile ...
 #   cd benchmarks && snakemake -s Snakefile ...
 #
-# This mirrors the Phase 6b.3a audit.smk path discipline.
+# This mirrors the audit.smk path discipline.
 _BENCHMARKS_DIR = Path(workflow.basedir).resolve()
 GROUND_TRUTH = str(_BENCHMARKS_DIR / "ground_truth.tsv")
 OUTROOT = str(_BENCHMARKS_DIR / "results")
 
-# Codex amendment 1: filter to verified-only rows for the Snakemake DAG.
+# filter to verified-only rows for the Snakemake DAG.
 _gt = pd.read_csv(GROUND_TRUTH, sep="\t", dtype=str).fillna("")
 _gt = _gt[_gt["verified"].str.strip().str.lower() == "true"]
 ACCESSIONS = sorted(_gt["accession"].tolist())
 ROUND_MAP_SOURCE = dict(zip(_gt["accession"], _gt["round_map_source"].replace("", "auto")))
 ROUND_MAP_PATH = dict(zip(_gt["accession"], _gt["round_map_path"]))
 
-# Codex amendment 3: resolve curated round-map paths relative to
+# resolve curated round-map paths relative to
 # ``ground_truth.tsv``'s directory so Snakemake invocations from any
 # cwd still find the files.
 _GROUND_TRUTH_DIR = _BENCHMARKS_DIR
@@ -64,7 +64,7 @@ rule fetch:
         # tolerated the f-string form but the bench extra now pins
         # ``snakemake<8`` (Python 3.10 compat with pulp<2.8).
         marker=OUTROOT + "/{accession}/fetch_metadata.json",
-        # Phase 6b.9: explicit FASTQ manifest, written AFTER fetch completes.
+        # explicit FASTQ manifest, written AFTER fetch completes.
         # Replaces the old ``Path.glob`` input function in rule detect, which
         # Snakemake evaluated before fetch ran → empty file list on a fresh
         # run. The manifest is the single source of truth for which FASTQs
@@ -78,14 +78,14 @@ rule fetch:
         # Pass --allow-manual-review on curated rows so fetch downloads
         # FASTQs even when ENA metadata is too sparse to auto-assign
         # rounds. NONE-confidence runs land in round_unknown/ and the
-        # curator's round_map_path routes them by basename. Phase 6b.9
+        # curator's round_map_path routes them by basename. The runner
         # gates the all-unassigned refusal on this flag, so curated rows
         # whose runs are ALL unassigned still download.
         extra_flags=lambda w: (
             "--allow-manual-review" if ROUND_MAP_SOURCE[w.accession] == "curated" else ""
         ),
     shell:
-        # Phase 6b.10 partial-fetch fix (Codex pass-2). Snakemake runs
+        # partial-fetch fix. Snakemake runs
         # shell: under ``set -euo pipefail``, so a bare ``fetch; rc=$?``
         # would abort AT the fetch line on any non-zero exit (rc never
         # captured). Scope errexit OFF only around the fetch with
@@ -122,11 +122,11 @@ def _round_map_for(accession: str) -> str:
 
 rule detect:
     input:
-        # Phase 6b.9: depend on the manifest (an output of rule fetch),
+        # depend on the manifest (an output of rule fetch),
         # not a Path.glob input function. This guarantees fetch ran first
         # AND that the FASTQ list reflects what's actually on disk. The old
         # glob was evaluated by Snakemake before fetch executed → empty
-        # fastq_args on a fresh run (Codex-caught blocker).
+        # fastq_args on a fresh run (blocker).
         manifest=OUTROOT + "/{accession}/fastqs.manifest",
         r2_manifest=OUTROOT + "/{accession}/fastqs.r2.manifest",
     output:

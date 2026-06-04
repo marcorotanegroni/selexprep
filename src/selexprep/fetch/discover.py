@@ -255,7 +255,7 @@ class ENAAdapter(SourceAdapter):
         queries = [query] if query else ENA_QUERIES
         bp_rows: dict[str, dict] = {}
         sample_rows: list[dict] = []
-        # Phase 6b.5a: collect per-BioProject library_strategy values so
+        # collect per-BioProject library_strategy values so
         # we can apply the same per-run + per-study classifier as the
         # ``selexprep catalog refresh`` path (see
         # ``selexprep.catalog.rebuild``). Studies whose runs are 100%
@@ -305,7 +305,7 @@ class ENAAdapter(SourceAdapter):
 
         # Apply per-study filter: drop BioProjects whose runs are 100%
         # blocklisted. Mixed studies (some compatible + some blocklisted)
-        # are KEPT; the audit-eligibility layer (Phase 6b.5b) classifies
+        # are KEPT; the audit-eligibility layer classifies
         # them downstream. See ``selexprep.fetch.library_strategy`` for
         # the decision rule.
         excluded_ids: set[str] = set()
@@ -822,7 +822,7 @@ def is_blacklisted(bp: dict, blacklist: set[str], sm_targets: list[str]) -> bool
 #: Sentinel written to `library_type_verification` when the v0.2 classifier
 #: is not installed. Distinguishes "deliberately not assessed in v0.1" from a
 #: bona fide empty string that would let downstream callers silently skip the
-#: filter. Phase 2 will replace it with a real verdict when the classifier
+#: filter. will replace it with a real verdict when the classifier
 #: lands.
 NOT_ASSESSED_V0_1 = "not_assessed_v0.1"
 

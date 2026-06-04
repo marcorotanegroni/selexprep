@@ -1,12 +1,11 @@
 """SelexprepManifestV1 - reproducibility anchor for one extraction run.
 
-Locked plan lines 162-175 spec the schema. One ``selexprep_manifest.json``
-is emitted per dataset by ``selexprep extract``; downstream tooling (Phase 5
-qc, future v0.2 AnnData export) consumes it as the single authoritative
+the design spec the schema. One ``selexprep_manifest.json``
+is emitted per dataset by ``selexprep extract``; downstream tooling consumes it as the single authoritative
 record of what happened during extraction.
 
 **Reproducibility discipline.** Output SHA256s are only guaranteed for
-FASTA / TSV / JSON outputs (locked plan line 28). Parquet hashes are
+FASTA / TSV / JSON outputs. Parquet hashes are
 pyarrow-version-dependent across releases; the manifest pins
 ``pyarrow_version`` instead, and Parquet hashes are intentionally
 absent from ``output_sha256``.
@@ -73,8 +72,8 @@ def _cutadapt_version() -> str:
 
 
 # Reproducibility-tracked files. Parquet is excluded — its hashes are
-# advisory only (locked plan line 28). FASTQ extensions are included
-# because the locked plan line 168 explicitly says "input_sha256 (FASTQ
+# advisory only. FASTQ extensions are included
+# because the design explicitly says "input_sha256 (FASTQ
 # files)"; without them ``input_sha256`` would silently stay empty for
 # the entire CLI flow.
 _HASHABLE_SUFFIXES = {".fasta", ".fa", ".fastq", ".fq", ".tsv", ".json", ".yaml"}
@@ -123,7 +122,7 @@ class SelexprepManifestV1(BaseModel):
     # Nested LibraryReport - the inference contract
     library_report: LibraryReport
 
-    # Denormalized scan fields (locked plan line 170)
+    # Denormalized scan fields
     extraction_mode: ExtractionMode
     read_source: ReadSource
     required_action: RequiredAction
@@ -155,7 +154,7 @@ def compute_sha256s(
     ``p.name``). When ``root`` is None or the path is outside it, falls back
     to the basename (suitable for inputs where each file has a unique name).
 
-    Locked plan line 28: Parquet hashes are advisory only; ``pyarrow_version``
+    the design: Parquet hashes are advisory only; ``pyarrow_version``
     pins their reproducibility.
     """
     out: dict[str, str] = {}
@@ -254,7 +253,7 @@ def build_manifest_from_extract_result(
     Computes input/output SHA256s (FASTA/TSV/JSON only), captures
     dependency versions, denormalizes the LibraryReport's classification
     fields, and assembles the manifest. ``flags`` defaults to ``[]`` —
-    Phase 5's QC layer is where they get populated.
+    's QC layer is where they get populated.
 
     ``output_root`` keys ``output_sha256`` by path relative to that root,
     preventing collision between per-round outputs that share the same

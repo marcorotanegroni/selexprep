@@ -4,11 +4,11 @@ Dispatches per ``LibraryReport.extraction_mode``, wiring the optional
 sample-sheet demux pre-step, the strand-orientation pre-step, and the
 per-mode cutadapt invocation in :mod:`selexprep.extract.trim`.
 
-**Locked-plan refusal rule** (line 311): if the LibraryReport's status is
+**Refusal rule**: if the LibraryReport's status is
 ``UNABLE_TO_INFER`` or its ``extraction_mode`` is ``UNABLE_TO_EXTRACT``,
 the runner refuses without an explicit override. No silent miscalls.
 
-**Output layout** (locked plan lines 321-326):
+**Output layout**:
 
 ::
 
@@ -22,11 +22,10 @@ the runner refuses without an explicit override. No silent miscalls.
     +- round_NN/...
     +- strand_report.tsv               (only if orientation in {MIXED, REVERSE})
     +- trim_reports.json               (per-round cutadapt argv + counts;
-                                        precursor to the Phase 4 manifest)
+                                        precursor to the manifest)
 
 Joined-counts (``joined_counts.tsv``) is NOT emitted in v0.1 - joining R1
-+R2 by read ID alone without read merging is biologically wrong (locked
-plan line 326).
++R2 by read ID alone without read merging is biologically wrong.
 """
 
 from __future__ import annotations
@@ -54,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 # How many reads per round to sample when computing the strand_report
 # distribution. Cheap QC summary; not used for any classification call
-# (Phase 2's library/detect.py already pinned orientation).
+# .
 _STRAND_REPORT_SAMPLE_PER_ROUND = 10_000
 
 
@@ -88,7 +87,7 @@ class ExtractResult:
 def _refusal_reason(library_report: LibraryReport) -> str | None:
     """Return a refusal reason if LR signals UNABLE; otherwise None.
 
-    Locked plan line 311: refuse without an explicit override; no silent
+    the design: refuse without an explicit override; no silent
     miscalls.
     """
     if library_report.status == "UNABLE_TO_INFER":
@@ -225,7 +224,7 @@ def _trim_round_single_end(
 
     For one input, calls ``trim_fn`` directly (fast path). For multiple
     inputs, trims each to a per-input temp target, then concatenates
-    deterministically into ``final_target`` (Codex pass 1 fix: previously
+    deterministically into ``final_target`` (previously
     each iteration overwrote the same target, dropping all but the last).
 
     Returns one TrimReport per input — their ``output_paths`` are rewritten
@@ -377,7 +376,7 @@ def _write_extract_diff(
     new_by_round: dict[int, dict[str, int]],
     path: Path,
 ) -> None:
-    """Write per-round comparison TSV (locked plan line 333).
+    """Write per-round comparison TSV.
 
     Columns: ``round\\tprimer_5p_baseline\\tprimer_5p_new\\tprimer_3p_baseline\\t
     primer_3p_new\\tn_in\\tn_out_baseline\\tn_out_new\\tdelta_n_out``.
@@ -425,19 +424,18 @@ def run_extract(
 ) -> ExtractResult:
     """Run the extraction pipeline for one dataset.
 
-    Phase 3 owns the cutadapt-driven trimming. Phase 4 adds:
+    owns the cutadapt-driven trimming. Adds:
 
     - ``override_primer_{5p,3p}``: clone the LibraryReport with swapped
       primer fields. Without ``rebuild`` the override outputs go to a
       separate ``<outdir>/overridden/`` subtree (avoids clobbering
       baseline). With ``rebuild`` the baseline is overwritten and an
       ``extract_diff.tsv`` is emitted comparing baseline vs new
-      per-round read counts (locked plan line 333).
-    - ``selexprep_manifest.json`` is now emitted automatically (locked
-      plan lines 162-175 / 334).
+      per-round read counts.
+    - ``selexprep_manifest.json`` is now emitted automatically.
 
     Args:
-        library_report: typed contract from Phase 2's ``compute_library_report``.
+        library_report: typed contract from 's ``compute_library_report``.
         fastq_inputs: R1 FASTQ(.gz) files (or single-end inputs).
         outdir: where outputs are written. Override-only path routes
             outputs to ``<outdir>/overridden/``.
@@ -452,8 +450,8 @@ def run_extract(
     """
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Phase 4 Codex pass 1 fix: apply override BEFORE the refusal check.
-    # The locked plan (line 311) says ``--override-primer-{5p,3p}`` is an
+    # apply override BEFORE the refusal check.
+    # The design says ``--override-primer-{5p,3p}`` is an
     # explicit user bypass for UNABLE_TO_INFER / UNABLE_TO_EXTRACT. To honor
     # that, override has to (1) replace the primer values AND (2) promote the
     # classification fields the refusal check inspects (status,
@@ -469,7 +467,7 @@ def run_extract(
 
         # Warn (but don't refuse) if an override matches a known sequencing
         # adapter prefix — the user typed it explicitly, so respect the
-        # escape-hatch semantics, but surface the foot-gun (Codex pass 1
+        # escape-hatch semantics, but surface the foot-gun (
         # non-blocking).
         for label, primer in (("5p", override_primer_5p), ("3p", override_primer_3p)):
             if primer and matches_known_adapter_prefix(primer):
@@ -518,14 +516,14 @@ def run_extract(
         )
 
     # Refusal check happens AFTER override so the user's explicit escape
-    # hatch can clear the UNABLE state (locked plan line 311).
+    # hatch can clear the UNABLE state.
     refusal = _refusal_reason(library_report)
     if refusal is not None:
         logger.warning("Refusing to extract: %s", refusal)
         return ExtractResult(skipped_reason=refusal)
 
     # When override is set but rebuild is NOT, redirect outputs to a
-    # subtree to avoid clobbering the baseline (locked plan: rebuild
+    # subtree to avoid clobbering the baseline (the design: rebuild
     # required to overwrite).
     if has_override and not rebuild:
         outdir = outdir / "overridden"
@@ -541,14 +539,14 @@ def run_extract(
     round_inputs: dict[int, list[Path]] | None = None
     input_root: Path | None = None  # set in sample-sheet mode so manifest
     # input_sha256 keys are relative to demux dir (demuxed basenames
-    # collide across rounds — Codex pass 1 follow-up fix).
+    # collide across rounds — follow-up fix).
     if sample_sheet is not None:
         demux_dir = outdir / "demux"
         demux_dir.mkdir(parents=True, exist_ok=True)
         demux_sample_sheet(sample_sheet, out_root=demux_dir)
         # After demux, per-round files live under demux/round_NN/<srr>.fastq.gz
         # (single-end) or demux/round_NN/<srr>_1.fastq.gz (paired-end).
-        # We collect BOTH R1 and R2 paths here (Codex pass 1 fix: previously
+        # We collect BOTH R1 and R2 paths here (previously
         # paired_r2_inputs was never rebuilt from demux outputs, so
         # PAIRED_END_SPLIT_PRIMERS + --sample-sheet failed with "requires
         # --paired-r2 inputs"). And we build round_inputs path-aware
@@ -701,12 +699,12 @@ def run_extract(
         strand_module.write_strand_report(strand_distributions, strand_report_path)
         all_outputs.append(strand_report_path)
 
-    # Emit trim reports JSON (Phase 3; the manifest builder hashes it too).
+    # Emit trim reports JSON.
     trim_reports_path = outdir / "trim_reports.json"
     _write_trim_reports(trim_reports, trim_reports_path)
     all_outputs.append(trim_reports_path)
 
-    # Phase 4: emit extract_diff.tsv when we have a baseline to compare against.
+    # emit extract_diff.tsv when we have a baseline to compare against.
     extract_diff_path: Path | None = None
     if baseline_for_diff is not None:
         baseline_lr, baseline_by_round = baseline_for_diff
@@ -721,7 +719,7 @@ def run_extract(
         )
         all_outputs.append(extract_diff_path)
 
-    # Phase 4: emit the reproducibility manifest.
+    # emit the reproducibility manifest.
     # Collate input paths (R1 + R2 if paired).
     input_paths: list[Path] = list(fastq_inputs)
     if paired_r2_inputs is not None:

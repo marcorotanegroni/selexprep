@@ -6,8 +6,7 @@ Each accession runs through the full pipeline as a self-contained
 sub-directory under ``outdir/<accession>/`` so a SIGKILL mid-batch
 leaves a partially-completed state ``--resume`` can pick up from.
 
-**Stage-by-stage resume oracles** (locked plan + user peer-review
-point 5; file-inventory based, not sentinel-flag based):
+**Stage-by-stage resume oracles**:
 
 | Stage   | Oracle                                                              |
 |---------|---------------------------------------------------------------------|
@@ -17,21 +16,21 @@ point 5; file-inventory based, not sentinel-flag based):
 | count   | per-round ``round_NN/counts.parquet`` (granular: only missing rounds re-run) |
 | qc      | ``qc/flags.yaml`` exists                                            |
 
-**Paired-end handling** (user peer-review point 1): FASTQs are grouped
+**Paired-end handling**: FASTQs are grouped
 by ENA naming convention — ``<srr>_1.fastq.gz`` = R1,
 ``<srr>_2.fastq.gz`` = R2. R1-only sequences feed
 ``compute_library_report``'s primary stream; R2 sequences are passed
 as ``paired_mate_streams``; both are threaded through ``run_extract``
 as ``paired_r2_inputs``. No commingled detect inputs.
 
-**Split-primer skip** (user peer-review point 2): if the inferred
+**Split-primer skip**: if the inferred
 ``LibraryReport.required_action == "READ_MERGING_RECOMMENDED"`` (i.e.,
 ``PAIRED_END_SPLIT_PRIMERS``, ``full_insert_recovered=False``), count
 and qc are skipped and status records
 ``SKIPPED_READ_MERGING_RECOMMENDED``. Joining R1+R2 by read ID alone
-would produce misleading half-insert counts (locked plan line 325).
+would produce misleading half-insert counts.
 
-**Manual-review separation** (user peer-review point 3): inherited
+**Manual-review separation**: inherited
 from ``selexprep.fetch.runner.run_fetch`` — NONE-confidence runs land
 in ``round_unknown/`` and ``manual_review.tsv``; ``rounds.tsv``
 contains HIGH/MEDIUM only.
@@ -85,7 +84,7 @@ RunStatus = Literal[
     "EXTRACT_FAILED",
     "COUNT_FAILED",
     "QC_FAILED",
-    # Codex pass 1 fix: a truly-unexpected exception that escaped the
+    # a truly-unexpected exception that escaped the
     # per-stage try/except blocks should not be misreported as
     # EXTRACT_FAILED. Used only by the outer except in run_batch.
     "UNEXPECTED_FAILURE",
@@ -170,7 +169,7 @@ def run_batch(
                 timeout_s=timeout_s,
             )
         except Exception as e:
-            # Codex pass 1 fix: this is the outer safety net for exceptions
+            # this is the outer safety net for exceptions
             # that escaped EVERY per-stage try/except (i.e., a truly-
             # unexpected programming error or OS condition). It must NOT
             # claim EXTRACT_FAILED — that misreports an unrelated failure
@@ -252,7 +251,7 @@ def _process_one_accession(
                 notes=f"resume read failed: {type(e).__name__}: {e}",
             )
     else:
-        # Codex pass 1 fix: HTTPError / RequestException / ValueError from
+        # HTTPError / RequestException / ValueError from
         # build_fetch_plan or download_srr must be classified as FETCH_FAILED,
         # not bubble up to the outer except (which would mislabel them).
         try:
@@ -446,7 +445,7 @@ def _process_one_accession(
 
 
 def _fetch_inventory_complete(acc_dir: Path) -> bool:
-    """Resume oracle for fetch (user peer-review point 5)."""
+    """Resume oracle for fetch."""
     metadata_path = acc_dir / "fetch_metadata.json"
     rounds_tsv = acc_dir / "rounds.tsv"
     if not metadata_path.exists():
@@ -578,7 +577,7 @@ def _extracted_filename_for_mode(mode: str) -> str | None:
 def _count_yaml_flags(yaml_path: Path) -> int:
     """Count flag entries in a resumed flags.yaml.
 
-    Codex pass 1 fix: ``write_flags_yaml`` uses ``safe_dump(sort_keys=True)``
+    ``write_flags_yaml`` uses ``safe_dump(sort_keys=True)``
     which sorts dict keys alphabetically per entry, so the first line of an
     entry can be ``- evidence:`` rather than ``- name:`` whenever an
     ``evidence`` key is non-empty. The previous ``startswith("- name:")``

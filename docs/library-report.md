@@ -4,7 +4,7 @@
 what primers were found, how confident the call is, and what to do next. The key
 design choice: **biology, workflow, and file layout are separate axes**, read
 together. The full pydantic schema is in the [API reference](api.md); worked
-real examples are in [`02_library_report.ipynb`](examples.md).
+real examples are in [`02_library_report_interpretation.ipynb`](examples.md).
 
 ## Fields
 

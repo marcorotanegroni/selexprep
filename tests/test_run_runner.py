@@ -66,7 +66,7 @@ def _row(srr: str, *, sample_title: str, paired: bool = False) -> dict:
 def _write_fastq(path: Path, n_records: int = 800) -> None:
     """Drop a deterministic gzipped FASTQ at `path` (synthetic; primer-irrelevant).
 
-    Sized above ``validate_fastq_gz``'s 1024-byte floor — the Codex-pass-1
+    Sized above ``validate_fastq_gz``'s 1024-byte floor — the
     resume oracle rejects smaller files as potentially-corrupt.
     """
     import random as _random
@@ -167,7 +167,7 @@ def test_run_batch_refuses_missing_accession_column(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Fetch refusal paths (user peer-review point 3)
+# Fetch refusal paths
 # ---------------------------------------------------------------------------
 
 
@@ -183,12 +183,12 @@ def test_run_batch_records_fetch_refused_status_for_all_none_runs(tmp_path: Path
     row = report.rows[0]
     assert row.status == "FETCH_REFUSED"
     assert row.last_stage_completed == "fetch"
-    # Phase 6b.4 audit-pilot fix: refusal note says "unassigned" now.
+    # audit-pilot fix: refusal note says "unassigned" now.
     assert "unassigned" in row.notes
 
 
 # ---------------------------------------------------------------------------
-# Paired-end handling (user peer-review point 1)
+# Paired-end handling
 # ---------------------------------------------------------------------------
 
 
@@ -233,7 +233,7 @@ def test_run_batch_paired_end_threads_R2_through_detect_and_extract(tmp_path: Pa
 
 
 # ---------------------------------------------------------------------------
-# Split-primer skip (user peer-review point 2)
+# Split-primer skip
 # ---------------------------------------------------------------------------
 
 
@@ -273,7 +273,7 @@ def test_run_batch_split_primer_skips_count_and_qc(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Resume oracles (user peer-review point 5)
+# Resume oracles
 # ---------------------------------------------------------------------------
 
 
@@ -473,7 +473,7 @@ def test_run_batch_emits_run_summary_tsv_sorted_by_accession(tmp_path: Path) -> 
 
 
 # ---------------------------------------------------------------------------
-# Manual-review separation (user peer-review point 3)
+# Manual-review separation
 # ---------------------------------------------------------------------------
 
 
@@ -508,14 +508,14 @@ def test_run_batch_with_manual_review_keeps_rounds_tsv_clean(tmp_path: Path) -> 
 
 
 # ===========================================================================
-# Codex pass 1 regression tests
+# regression tests
 # ===========================================================================
 
 
 def test_run_batch_fetch_http_error_records_FETCH_FAILED_not_extract_failed(
     tmp_path: Path,
 ) -> None:
-    """Codex pass 1 blocking fix: HTTPError from build_fetch_plan must NOT
+    """blocking fix: HTTPError from build_fetch_plan must NOT
     surface as EXTRACT_FAILED via the outer except. Stage-classify it as
     FETCH_FAILED inside the fetch block.
     """
@@ -538,7 +538,7 @@ def test_run_batch_fetch_http_error_records_FETCH_FAILED_not_extract_failed(
 def test_run_batch_corrupt_fastq_is_redownloaded_by_resume_oracle(
     tmp_path: Path,
 ) -> None:
-    """Codex pass 1 blocking fix: a corrupt .fastq.gz (passes Path.exists()
+    """blocking fix: a corrupt .fastq.gz (passes Path.exists()
     but fails gzip -t) must trigger re-download on --resume.
     """
     rows = [_row("SRR_C", sample_title="Round 0")]
@@ -591,7 +591,7 @@ def test_run_batch_corrupt_fastq_is_redownloaded_by_resume_oracle(
 
 
 def test_run_batch_count_yaml_flags_uses_yaml_parser(tmp_path: Path) -> None:
-    """Codex pass 1 non-blocking fix: a flags.yaml whose first key is
+    """non-blocking fix: a flags.yaml whose first key is
     'evidence' (sort-keys=True) must still be counted correctly on resume.
     """
     from selexprep.run.runner import _count_yaml_flags
@@ -617,7 +617,7 @@ def test_run_batch_count_yaml_flags_uses_yaml_parser(tmp_path: Path) -> None:
 
 
 def test_fastq_filenames_for_run_derives_from_urls() -> None:
-    """Codex pass 1 non-blocking fix: filenames should derive from URLs
+    """non-blocking fix: filenames should derive from URLs
     (matching ``download_srr_ena_direct`` semantics), not be synthesized
     from the SRR + paired_end flag.
     """
@@ -652,7 +652,7 @@ def test_fastq_filenames_for_run_derives_from_urls() -> None:
 
 
 def test_run_batch_unexpected_error_uses_unexpected_failure_status(tmp_path: Path) -> None:
-    """Codex pass 1 blocking fix sanity check: an exception that escapes
+    """blocking fix sanity check: an exception that escapes
     every per-stage try/except is classified as UNEXPECTED_FAILURE — never
     EXTRACT_FAILED (which would falsely point at the extract stage).
     """

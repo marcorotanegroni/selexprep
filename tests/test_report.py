@@ -2,15 +2,15 @@
 
 Each test asserts on the **behavior** of ``compute_library_report`` —
 ``extraction_mode``, ``required_action``, ``status`` — never on threshold
-constants. When the Codex calibration review tunes numbers in
+constants. When the calibration review tunes numbers in
 ``selexprep.library.detect``, these tests must stay green.
 
 The test pools rely on the existing ``_synthetic_pool`` helper from
 ``tests/test_detect.py``; it is redefined here so the two test modules
 stay independent.
 
-One test per row of the locked classification table (plan lines 300-309)
-plus the edge cases listed in the Phase 2 plan (status cap, adapter
+One test per row of the classification table, plus the edge cases
+(status cap, adapter
 blacklist demotion, orientation, U→T, determinism, schema smoke).
 """
 
@@ -74,7 +74,7 @@ def _three_round_pool(
 
 
 # ===========================================================================
-# Classification-table coverage (locked plan lines 300-309)
+# Classification-table coverage
 # ===========================================================================
 
 
@@ -281,7 +281,7 @@ def test_both_match_rates_low_returns_unable() -> None:
 
 
 # ===========================================================================
-# Edge cases (Phase 2 plan)
+# Edge cases
 # ===========================================================================
 
 
@@ -290,12 +290,12 @@ def test_status_capped_medium_no_round_map() -> None:
     pools = {0: _synthetic_pool(PRIMER_5P_T7, PRIMER_3P_CCAT, n=1000)}
     report = compute_library_report(pools, read_source="R1")
 
-    # With persistence dropped, status caps at MEDIUM per locked plan line 289.
+    # With persistence dropped, status caps at MEDIUM per the design.
     assert report.status in ("MEDIUM", "LOW", "UNABLE_TO_INFER")
 
 
 def test_single_round_caps_status_and_warns(caplog: pytest.LogCaptureFixture) -> None:
-    """Phase 6b.8 single-round UX: explicit anti-regression of the MEDIUM cap.
+    """single-round UX: explicit anti-regression of the MEDIUM cap.
 
     A strong, clean single-round pool would score HIGH on within-round
     signals alone — but the cap in ``report._assign_status`` must force it
@@ -479,10 +479,10 @@ def test_below_detection_floor_returns_unable() -> None:
 
 
 # ===========================================================================
-# Codex pass 1 regressions (2026-05-20)
+# regressions (2026-05-20)
 # ===========================================================================
 # Three bug fixes that survived to v0.1 RC and were caught in the second
-# Codex review of Phase 2:
+# review of
 #   1. match_rate_* was aliased to position_consistency_* (double-count).
 #   2. adapter_clean_signal ignored the drop flag (hid the adapter trap).
 #   3. paired-split mode measured 3p signals against R1 instead of R2.
@@ -490,7 +490,7 @@ def test_below_detection_floor_returns_unable() -> None:
 
 
 def test_match_rate_distinct_from_position_consistency() -> None:
-    """Codex pass 1 regression #1: match_rate (substring anywhere, Hamming ≤ 1)
+    """regression #1: match_rate (substring anywhere, Hamming ≤ 1)
     and position_consistency (substring at flank ± tolerance) must NOT be
     aliased. Place the primer 10 nt past the read start; with tolerance=3
     the flank check fails but the substring check passes."""
@@ -516,7 +516,7 @@ def test_match_rate_distinct_from_position_consistency() -> None:
 
 
 def test_adapter_clean_flag_demotes_confidence_when_primer_dropped() -> None:
-    """Codex pass 1 regression #2: when a detected primer matches a known
+    """regression #2: when a detected primer matches a known
     sequencing adapter and gets dropped, adapter_clean must register the
     event (0.0) even if the OTHER primer survived. Previously the signal
     was "1.0 if any primer survived", which hid the adapter trap."""
@@ -544,7 +544,7 @@ def test_adapter_clean_flag_demotes_confidence_when_primer_dropped() -> None:
 
 
 def test_paired_split_match_rate_3p_reflects_r2_not_r1() -> None:
-    """Codex pass 1 regression #3: in paired-end split mode, match_rate_3p
+    """regression #3: in paired-end split mode, match_rate_3p
     + position_consistency_3p + variants_3p must reflect R2 evidence
     (where ``revcomp(primer_3p)`` actually appears at R2's 5' end) — NOT
     R1's 3' end, where the 3' adapter cannot exist by construction."""

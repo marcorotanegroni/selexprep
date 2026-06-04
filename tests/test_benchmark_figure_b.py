@@ -1,10 +1,8 @@
 """Smoke tests for ``selexprep.benchmark.figure_b`` (4-panel Figure B).
 
-Mirrors ``tests/test_benchmark_figure_a.py``. Like Phase 5's matplotlib
+Mirrors ``tests/test_benchmark_figure_a.py``. Like 's matplotlib
 plot tests, we only check that PDF + PNG files are produced — byte
-determinism is not guaranteed across matplotlib versions (locked plan
-accepts this for plot files; audit_metrics.json IS the deterministic
-source of truth).
+determinism is not guaranteed across matplotlib versions.
 """
 
 from __future__ import annotations
@@ -117,19 +115,19 @@ def test_plot_figure_b_handles_unexpected_status_label(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Phase 6b.5b + 6b.5d title segments
+# + title segments
 # ---------------------------------------------------------------------------
 
 
 def test_build_title_omits_eligibility_segment_when_classifier_did_not_run() -> None:
-    """Pre-6b.5b audit JSON (n_catalog_classified=0) → title has no layer-1 segment."""
+    """Pre-audit JSON (n_catalog_classified=0) → title has no layer-1 segment."""
     title = _build_title(_make_audit_payload())
     assert "audit-eligible" not in title
     assert "selexprep Figure B" in title
 
 
 def test_build_title_includes_insdc_only_eligibility_segment_without_catalog() -> None:
-    """6b.5b-but-not-6b.5d (eligibility set, catalog total absent) → INSDC-only segment."""
+    """-but-not-(eligibility set, catalog total absent) → INSDC-only segment."""
     payload = _make_audit_payload()
     payload["n_catalog_classified"] = 95
     payload["n_catalog_eligible"] = 24
@@ -141,7 +139,7 @@ def test_build_title_includes_insdc_only_eligibility_segment_without_catalog() -
 
 
 def test_build_title_includes_full_catalog_denominator_when_present() -> None:
-    """Phase 6b.5d: --catalog populates n_catalog_total + non-INSDC count → full segment."""
+    """--catalog populates n_catalog_total + non-INSDC count → full segment."""
     payload = _make_audit_payload()
     payload["n_catalog_classified"] = 95
     payload["n_catalog_eligible"] = 24
