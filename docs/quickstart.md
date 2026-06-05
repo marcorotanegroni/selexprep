@@ -10,6 +10,8 @@ primers. Prefer a fully offline, hands-on version? See the [examples](examples.m
 pip install selexprep        # pulls in cutadapt
 ```
 
+Working from a clone? `uv pip install -e .` from the repo root.
+
 ## Preview, then run
 
 ```bash
