@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import html
 import io
 import json
 import logging
@@ -43,6 +44,22 @@ import requests
 import yaml
 
 logger = logging.getLogger(__name__)
+
+
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _clean_abstract(text: str) -> str:
+    """Strip HTML tags/entities and collapse whitespace from an abstract.
+
+    Zenodo/figshare records often carry HTML-formatted descriptions; this
+    normalizes them to plain single-line text for the catalog CSV.
+    """
+    if not text:
+        return text
+    text = _HTML_TAG_RE.sub(" ", text)
+    text = html.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -1091,7 +1108,7 @@ def run_discovery(
 
     all_bp = _classify_all(all_bp)
 
-    bp_abstracts = {bp["bioproject_id"]: bp.get("abstract", "") for bp in all_bp}
+    bp_abstracts = {bp["bioproject_id"]: _clean_abstract(bp.get("abstract", "")) for bp in all_bp}
     seed_overrides = load_seed_overrides(seed_file)
     all_rounds = _parse_rounds(
         all_samples,

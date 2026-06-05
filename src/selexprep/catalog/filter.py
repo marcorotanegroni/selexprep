@@ -30,6 +30,21 @@ def is_insdc_accession(accession: str) -> bool:
     return bool(INSDC_PREFIX_RE.match(accession or ""))
 
 
+_DISCOVERY_ONLY_PREFIXES = ("zenodo:", "figshare:", "utexas:")
+
+
+def is_discovery_only(accession: str) -> bool:
+    """True iff ``accession`` is a non-fetchable discovery-only catalog pointer.
+
+    These rows (``zenodo:*``, ``figshare:*``, ``utexas:*``) reference published
+    HT-SELEX data hosted outside INSDC, so ``fetch`` / ``run`` cannot retrieve
+    them as raw FASTQ in v0.1. Unlike :func:`is_insdc_accession` (which only
+    matches study-level prefixes), this is safe to call on run-level accessions
+    (SRR/ERR/DRR) — they are not discovery-only.
+    """
+    return (accession or "").startswith(_DISCOVERY_ONLY_PREFIXES)
+
+
 def filter_catalog(
     df: pd.DataFrame,
     target: str | None = None,

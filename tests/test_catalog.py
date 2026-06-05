@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest import mock
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 from selexprep.catalog import catalog_version, filter_catalog, load_catalog
@@ -152,6 +153,39 @@ def test_cli_catalog_show_known_accession() -> None:
 def test_cli_catalog_show_unknown_accession_exits_nonzero() -> None:
     result = runner.invoke(catalog_app, ["show", "PRJNOTREAL"])
     assert result.exit_code != 0
+
+
+def test_cli_catalog_list_marks_fetchability() -> None:
+    """`list` surfaces a fetchable column; non-INSDC rows read 'discovery-only'."""
+    result = runner.invoke(catalog_app, ["list", "--source", "zenodo", "--limit", "5"])
+    assert result.exit_code == 0
+    assert "fetchable" in result.stdout
+    assert "discovery-only" in result.stdout
+
+
+def test_cli_catalog_show_marks_discovery_only() -> None:
+    """`show` on a non-INSDC pointer flags it as discovery-only."""
+    df = load_catalog()
+    disc = df[df["bioproject_id"].str.startswith(("zenodo:", "figshare:"))]
+    assert not disc.empty, "expected at least one discovery-only catalog row"
+    result = runner.invoke(catalog_app, ["show", disc.iloc[0]["bioproject_id"]])
+    assert result.exit_code == 0
+    assert "discovery-only" in result.stdout
+
+
+def test_inspect_accession_refuses_discovery_only() -> None:
+    """Non-INSDC discovery pointers are refused before any network call."""
+    from selexprep.fetch.inspect import inspect_accession
+
+    with pytest.raises(ValueError, match="discovery-only"):
+        inspect_accession("zenodo:99999")
+
+
+def test_run_fetch_refuses_discovery_only(tmp_path: Path) -> None:
+    from selexprep.fetch import run_fetch
+
+    with pytest.raises(ValueError, match="discovery-only"):
+        run_fetch("zenodo:99999", tmp_path)
 
 
 def test_cli_catalog_version() -> None:

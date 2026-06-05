@@ -60,6 +60,6 @@ tmp/
 benchmarks/screen_read_state.py
 benchmarks/*_screen.tsv
 
-# Example notebooks — transient run artifacts (the notebooks self-generate demo data)
-examples/**/demo/
+# Example run artifacts — notebooks self-generate demo/, run_public_accession.sh writes demo_public/
+examples/**/demo*/
 .ipynb_checkpoints/
