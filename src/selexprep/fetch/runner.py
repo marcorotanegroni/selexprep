@@ -109,6 +109,15 @@ def run_fetch(
      level ``download_srr`` keeps its ``auto`` default for Python API
      callers who want the convenience chain.
     """
+    from selexprep.catalog.filter import is_discovery_only
+
+    if is_discovery_only(accession):
+        raise ValueError(
+            f"{accession!r} is a discovery-only catalog pointer (non-INSDC: "
+            "figshare/zenodo/utexas) and cannot be fetched as raw FASTQ in v0.1. "
+            "Only INSDC accessions (PRJNA/PRJDB/PRJEB/SRP/ERP/DRP) are retrievable."
+        )
+
     outdir.mkdir(parents=True, exist_ok=True)
 
     plan = build_fetch_plan(accession, timeout_s=timeout_s)

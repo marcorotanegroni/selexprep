@@ -6,7 +6,7 @@ from pathlib import Path
 
 import typer
 
-from selexprep.catalog.filter import filter_catalog
+from selexprep.catalog.filter import filter_catalog, is_discovery_only
 from selexprep.catalog.reader import catalog_version, load_catalog
 
 app = typer.Typer(
@@ -58,10 +58,12 @@ def list_catalog(
         insdc_only=insdc_only,
     )
     n_total = len(filtered)
-    head = filtered.head(limit)
+    head = filtered.head(limit).copy()
+    head["fetchable"] = [
+        "discovery-only" if is_discovery_only(bp) else "yes" for bp in head["bioproject_id"]
+    ]
 
-    cols = list(_DEFAULT_LIST_COLS)
-    # Truncate long titles in the listing view
+    cols = [*_DEFAULT_LIST_COLS, "fetchable"]
     if not head.empty:
         typer.echo(head[cols].to_string(index=False))
     else:
@@ -91,6 +93,10 @@ def show_bp(
         if not val:
             continue
         typer.echo(f"{col}: {val}")
+    if is_discovery_only(accession):
+        typer.echo("fetchable: discovery-only (non-INSDC; not retrievable in v0.1)")
+    else:
+        typer.echo("fetchable: yes (INSDC; use `selexprep fetch` / `run`)")
 
 
 @app.command("version")

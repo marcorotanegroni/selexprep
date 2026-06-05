@@ -128,6 +128,10 @@ selexprep catalog list --target IL-10RA --insdc-only
 selexprep catalog show PRJEB12345
 ```
 
+INSDC accessions are fetchable; figshare/zenodo rows are discovery-only
+pointers (flagged in the `fetchable` column) that `run` can't retrieve in v0.1
+— `--insdc-only` filters to just the retrievable ones.
+
 ### Running the stages by hand (debug / advanced)
 
 `run` chains six verbs. Drive them individually when you want to inspect an

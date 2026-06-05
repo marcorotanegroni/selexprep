@@ -136,6 +136,15 @@ def inspect_accession(accession: str, *, timeout_s: int = 30) -> InspectReport:
     - ``requests.HTTPError`` on non-2xx (network / 404 unknown accession)
     - ``ValueError`` if ENA returns an empty record set
     """
+    from selexprep.catalog.filter import is_discovery_only
+
+    if is_discovery_only(accession):
+        raise ValueError(
+            f"{accession!r} is a discovery-only catalog pointer (non-INSDC: "
+            "figshare/zenodo/utexas) and cannot be fetched as raw FASTQ in v0.1. "
+            "Only INSDC accessions (PRJNA/PRJDB/PRJEB/SRP/ERP/DRP) are retrievable."
+        )
+
     rows = query_ena_filereport(accession, fields=_ENA_FIELDS, timeout_s=timeout_s)
 
     runs: list[RunFileInfo] = []
