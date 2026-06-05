@@ -4,8 +4,8 @@
 
 > `selexprep` is not another aptamer-analysis suite. It is the missing accession-to-clean-library preprocessing layer, with primer inference, uncertainty reporting, random-region extraction, and reproducible outputs.
 
-!!! warning "Pre-release"
-    v0.1 is a release candidate (not yet on PyPI). See the [GitHub repo](https://github.com/marcorotanegroni/selexprep) for status.
+!!! note "v0.1"
+    Install with `pip install selexprep`. Source and issues on [GitHub](https://github.com/marcorotanegroni/selexprep).
 
 ## Sections
 

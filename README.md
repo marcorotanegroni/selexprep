@@ -1,125 +1,86 @@
 # selexprep
 
 [![Tests](https://github.com/marcorotanegroni/selexprep/actions/workflows/tests.yml/badge.svg)](https://github.com/marcorotanegroni/selexprep/actions/workflows/tests.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/marcorotanegroni/selexprep/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 
-**Accession-first preprocessing for public HT-SELEX, with primer auto-inference and safe failure modes.**
+**Accession-first preprocessing for public HT-SELEX, with primer auto-inference
+and safe failure modes.**
 
-> *`selexprep` fills the missing preprocessing layer for public datasets by starting from accessions and empirically inferring primer/constant regions, extracting random regions, and emitting confidence-aware, reproducible count tables and manifests.*
->
+Give `selexprep` a public accession (or your own FASTQs) and it **infers the
+primer/constant regions from the reads**, strips them, and emits clean per-round
+random-region FASTAs + count tables — with an explicit confidence level and a
+reproducible manifest. When it can't infer the library with confidence, it
+**says so and refuses to guess** rather than emitting fabricated primers.
 
-## Status
+It's the step *before* the existing SELEX toolchain. Tools like FASTAptameR,
+AptaSUITE, RaptGen, and AptaTrans assume you already have trimmed reads and
+already know your primers. `selexprep` produces exactly those inputs, starting
+from a raw public deposit.
 
-**v0.1 RC.** Full single-dataset + batch workflow is feature-complete
-and tested (636 passing tests + 1 strict-xfail reserved for v0.2 read
-merging). Tier 2 corpus audit shipped against a v0.1.6 catalog
-snapshot; catalog discovery completeness measured at 100% of
-ENA-typed-SELEX deposits in v0.1.7. The primer-recovery
-benchmark (Figure A) is complete — paper-grounded recovery on a
-curated multi-chemistry set, alongside safe-failure and specificity
-arms. Not yet on PyPI.
+```
+  accession ──▶ fetch ──▶ detect ────▶ extract ───▶ count ────▶ qc
+ (or local             (infer        (trim per     (unique     (flags +
+  FASTQs)               primers)      round)        seqs)       4 plots)
+```
 
-**v0.1 ships:** `catalog` (250 public SELEX entries: 125 INSDC +
-125 figshare/zenodo passthrough; 21 documented exclusions in
-`bioprojects_excluded.csv`) · `inspect` (ENA metadata preview) ·
-`fetch` (accession download with relaxed partial-parseability
-contract) · `detect` (primer inference) · `extract` (cutadapt-driven
-trimming + paired-end + strand handling) · `count` (per-round unique
-sequences) · `qc` (suspicion flags + 4 PNG plots) · `run` (batch
-driver across many accessions with `--resume`).
+`run` chains the whole thing for you; the individual verbs (`fetch`, `detect`,
+`extract`, `count`, `qc`) are there for when you need to drive one stage by hand.
 
-**v0.2 deferrals:** read merging for paired-end full-insert recovery ·
-multiplex auto-detection (v0.1 needs a user-supplied sample sheet) ·
-figshare/zenodo fetch backends · `SELEXPREP_CATALOG_PATH` env var
-for user-supplied catalogs · AnnData export · BibTeX auto-citation ·
-library-type classification.
+> **Status — v0.1.** Feature-complete and CI-tested (Python 3.10 / 3.11 / 3.12),
+> with one strict-xfail reserved for v0.2 read merging. Full inventory in
+> [What v0.1 ships](#what-v01-ships).
 
-## Why it exists (the gap)
+---
 
-No maintained, pip-installable Python tool takes a public HT-SELEX
-accession or local FASTQ and produces trimmed per-round FASTAs +
-count tables + a provenance manifest **without requiring the user to
-supply primers**.
+## Install
 
-| Tool | Accession fetch? | Primer auto-inference? | Safe failure mode? |
-|---|---|---|---|
-| AptaSUITE (CLI + GUI) | ✗ | ✗ — user supplies | ✗ |
-| FASTAptameR | ✗ — consumes already-trimmed | ✗ | ✗ |
-| EasyDIVER+ (2025) | ✗ | ✗ — paired-end with known primers | ✗ |
-| ht-selex-demo | ✗ | ✗ — Illumina adapters only (a trap `selexprep` guards against via `known_adapter_hits`) | ✗ |
-| nf-core | ✗ (no SELEX pipelines exist) | — | — |
-| **`selexprep`** | ✓ — INSDC in v0.1; figshare/zenodo backends deferred | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
+```bash
+pip install selexprep        # pulls in cutadapt, the only external dependency
+selexprep --version
+```
 
-**Benchmark headline:** *on a curated, paper-grounded set, `selexprep`
-recovers SELEX primers directly from raw reads — with none supplied —
-and fails safe (no fabricated primers) where inference is ambiguous.*
-
-## What v0.1 does
-
-> *`selexprep` converts public or local HT-SELEX reads into primer-stripped
-> random-region FASTA/FASTQ files, per-round count tables, QC reports,
-> and provenance manifests, with explicit primer-inference confidence
-> and safe failure modes.*
-
-Concretely:
-
-1. **Discovers** public SELEX BioProjects from a bundled catalog (250
-   entries: text-pattern queries + `library_strategy="SELEX"` positive
-   query — measured at 100% coverage of ENA-typed-SELEX deposits, with
-   21 documented exclusions for mis-labeled and gSELEX/genomic-fragment
-   variants; `selexprep catalog list / show`).
-2. **Infers** the SELEX library structure — primer pair, N-region
-   length, orientation, paired-end layout — directly from read content,
-   using **cross-round persistence** (a true primer appears at a
-   similar rate across all rounds; late-round-enriched aptamer motifs
-   do not).
-3. **Reports** inference confidence in a typed `LibraryReport`
-   (pydantic, strict-mypy) with explicit `extraction_mode`,
-   `read_source`, `required_action`, `full_insert_recovered`, and
-   `status`. No silent miscalls — ambiguous datasets surface as
-   `UNABLE_TO_INFER`, and `extract` refuses without an explicit
-   override.
-4. **Extracts** the random region per round via cutadapt (subprocess;
-   CLI is the stable contract). Output filenames distinguish full
-   inserts (`extracted.fasta.gz`) from one-sided partials
-   (`partial_5p_extracted.fasta.gz` / `partial_3p_extracted.fasta.gz`)
-   to protect downstream ML pipelines from accidentally mixing them.
-5. **Counts** unique sequences per round (raw reads + RPM + rank,
-   parquet output) for downstream consumption by FASTAptameR /
-   RaptGen-UI / AptaTrans.
-6. **QC**: depth-aware suspicion flags (rarefied diversity, not raw
-   counts; primer match per round; N-length variation; strand mix;
-   adapter contamination; …) plus four per-dataset PNG plots.
-7. **Manifests** every run in a versioned pydantic
-   `SelexprepManifestV1` with SHA256s of FASTA/TSV/JSON outputs,
-   dependency-version pins, CLI argv capture, and the full nested
-   `LibraryReport` — making reruns byte-identical and audits trivial.
+Python 3.10+. The only external tool is `cutadapt`, installed automatically.
+Working from a clone instead? `uv pip install -e .` from the repo root.
 
 ## Quick start
 
-```bash
-# Dev install (PyPI release pending)
-uv pip install -e .          # pulls in cutadapt
-```
-
-**The one command.** Point `run` at a TSV of accessions — it fetches each
-dataset, infers the primers from the reads, then extracts, counts, and QCs, with
-no primers supplied:
+**One accession, no primers supplied.** The whole pipeline is **one command**.
+Write a TSV listing one or more accessions, then point `run` at it. It fetches
+each dataset, infers the primers from the read content, then extracts, counts,
+and QCs — with nothing about the library supplied by you:
 
 ```bash
 printf 'accession\nPRJNA615076\n' > accessions.tsv
-selexprep run accessions.tsv --outdir out --resume
+selexprep run accessions.tsv --outdir out
 ```
 
-Everything lands under `out/<accession>/`: `library_report.json` (inferred
-primers + `status` / `extraction_mode` / `required_action`), `round_NN/`
-(`extracted.fasta.gz` + `counts.parquet` per round), `selexprep_manifest.json`
-(the reproducibility manifest), and `qc/` (four PNGs + `flags.yaml`); a
-corpus-level `run_summary.tsv` spans every accession. `--resume` skips datasets
-already finished, so a killed batch picks up where it left off.
+That's the happy path. Everything for each accession lands under
+`out/<accession>/`:
 
-### Don't have accessions yet?
+| Output | What it is |
+|---|---|
+| `library_report.json` | inferred primers + `status` (`HIGH` / `MEDIUM` / `LOW` / `UNABLE_TO_INFER`) |
+| `round_NN/extracted.fasta.gz` | primer-stripped random region, one folder per round |
+| `round_NN/counts.parquet` | unique sequences per round (reads, rank, RPM) |
+| `qc/flags.yaml` + 4 PNGs | depth-aware QC flags + diagnostic plots |
+| `selexprep_manifest.json` | reproducibility manifest (output hashes, dependency versions, CLI argv) |
+
+A corpus-level `out/run_summary.tsv` spans every accession. If a batch is
+interrupted, re-run the **same** command with `--resume` and finished datasets
+are skipped.
+
+> **Watch it run, offline, in under a minute.**
+> [`examples/01_offline_toy_pipeline.ipynb`](https://github.com/marcorotanegroni/selexprep/blob/main/examples/01_offline_toy_pipeline.ipynb)
+> executes the full `detect → extract → count → qc` path on a tiny synthetic
+> library — no network, no accession, no HPC. It's the fastest way to *see* what
+> each stage produces before pointing the tool at real data.
+
+## Common situations
+
+The situations people actually hit. Find yours.
+
+### "I don't have an accession yet"
 
 Browse the bundled catalog of public SELEX deposits, then feed the hits to `run`:
 
@@ -128,62 +89,67 @@ selexprep catalog list --target IL-10RA --insdc-only
 selexprep catalog show PRJEB12345
 ```
 
-INSDC accessions are fetchable; figshare/zenodo rows are discovery-only
-pointers (flagged in the `fetchable` column) that `run` can't retrieve in v0.1
-— `--insdc-only` filters to just the retrievable ones.
+INSDC accessions are fetchable; figshare/zenodo rows are discovery-only pointers
+(flagged in the `fetchable` column) that `run` can't retrieve in v0.1 —
+`--insdc-only` filters the list to just the retrievable ones.
 
-### Running the stages by hand (debug / advanced)
+### "I only have my own local FASTQs"
 
-`run` chains six verbs. Drive them individually when you want to inspect an
-intermediate, re-extract with corrected primers, or handle a non-standard layout
-— here on local FASTQs you already have:
+`run` is for accessions; for files already on disk, drive the stages yourself.
+This is also how you inspect an intermediate or re-extract with corrected
+primers:
 
 ```bash
-# Preview an accession's metadata without downloading
-selexprep inspect SRR12647619
-
-# Detect needs a round map — cross-round persistence is the key primer signal
+# detect needs a round map — cross-round persistence is the key primer signal
 printf 'file\tround_number\nround_00.fastq.gz\t0\nround_01.fastq.gz\t1\nround_02.fastq.gz\t2\n' > rounds.tsv
+
 selexprep detect round_00.fastq.gz round_01.fastq.gz round_02.fastq.gz \
     --round-map rounds.tsv --outdir ./out
 
-# Extract: trim primers, emit per-round FASTAs + manifest
 selexprep extract round_00.fastq.gz round_01.fastq.gz round_02.fastq.gz \
-    --library-report ./out/library_report.json \
-    --round-map rounds.tsv --outdir ./out
+    --library-report ./out/library_report.json --round-map rounds.tsv --outdir ./out
 
-# Count: per-round unique sequences -> parquet
 for r in 0 1 2; do
-    selexprep count ./out/round_$(printf '%02d' $r)/extracted.fasta.gz \
-        --round R$r --outdir ./out
+    selexprep count ./out/round_$(printf '%02d' $r)/extracted.fasta.gz --round R$r --outdir ./out
 done
 
-# QC: depth-aware suspicion flags + 4 PNG plots
 selexprep qc ./out/selexprep_manifest.json
 ```
 
-For a fully offline, runnable tour of these stages on synthetic data, see
-[`examples/01_offline_toy_pipeline.ipynb`](examples/01_offline_toy_pipeline.ipynb).
+The runnable, annotated version of exactly this path is
+[`examples/01_offline_toy_pipeline.ipynb`](https://github.com/marcorotanegroni/selexprep/blob/main/examples/01_offline_toy_pipeline.ipynb);
+every flag and the `--round-map` contract are in the [CLI reference](https://github.com/marcorotanegroni/selexprep/blob/main/docs/cli.md).
 
-When primer inference is ambiguous, `extract` refuses with a pointer to override:
+### "My reads are paired-end (R1 + R2)"
+
+Common for modern Illumina SELEX — and **handled for you from an accession**:
+`run` detects the paired layout at fetch time and threads R2 through with no
+extra flags. By hand on local files, list the **R1** files in the round map and
+the matching **R2** files via `--paired-r2`, in the same order, one R2 per R1:
 
 ```bash
-# Either edit library_report.json by hand…
-# …or pass overrides at the CLI:
-selexprep extract round_*.fastq.gz \
-    --library-report ./out/library_report.json \
-    --round-map rounds.tsv \
-    --override-primer-5p GGTAATACGACTCACTATAGGG \
-    --override-primer-3p CCATGCATGCATGCATGCAT \
-    --rebuild --outdir ./out
-# Emits extract_diff.tsv comparing baseline vs override per round.
+printf 'file\tround_number\nr0_R1.fastq.gz\t0\nr1_R1.fastq.gz\t1\n' > rounds.tsv
+
+selexprep detect r0_R1.fastq.gz r1_R1.fastq.gz \
+    --paired-r2 r0_R2.fastq.gz r1_R2.fastq.gz \
+    --round-map rounds.tsv --outdir ./out
+
+selexprep extract r0_R1.fastq.gz r1_R1.fastq.gz \
+    --paired-r2 r0_R2.fastq.gz r1_R2.fastq.gz \
+    --library-report ./out/library_report.json --round-map rounds.tsv --outdir ./out
 ```
 
-### Only have the final pool / a single round?
+If the 5' primer sits on R1 and the 3' on R2, `detect` reports
+`extraction_mode: PAIRED_END_SPLIT_PRIMERS` and `extract` writes the two trimmed
+sides separately (`partial_5p_extracted_R1…` + `partial_3p_extracted_R2…`). v0.1
+stops there on purpose: stitching the sides into one full-length insert is **read
+merging, a v0.2 item**, so `count`/`qc` are skipped for split-primer rounds
+rather than counting half-inserts.
 
-That's the common case — HT-SELEX is costly, so many experiments sequence only
-the final enriched pool. selexprep still works: `run` handles it, or by hand
-pass a one-row round map to `detect`:
+### "I only have the final enriched pool (a single round)"
+
+The common case — HT-SELEX is costly, so many experiments sequence only the
+final pool. `selexprep` still works; pass a one-row round map:
 
 ```bash
 printf 'file\tround_number\nfinal_pool.fastq.gz\t0\n' > rounds.tsv
@@ -192,27 +158,52 @@ selexprep detect final_pool.fastq.gz --round-map rounds.tsv --outdir ./out
 
 The one difference: **confidence is capped at `MEDIUM`**, because cross-round
 persistence (the strongest SELEX-specific primer signal) needs ≥2 rounds.
-`detect` logs a warning saying so, and inference falls back to within-round
-signals only (primer match rate, flank position, low-entropy region, adapter
-blacklist). Verify the inferred primers before trusting extraction — or, if you
-designed the library and already know the primers, pass
-`--override-primer-5p/3p`: extraction then uses your sequences directly and the
-inference confidence cap no longer applies (you're not inferring anything).
+`detect` warns and falls back to within-round signals (primer match rate, flank
+position, low-entropy region, adapter blacklist). Verify the inferred primers
+before trusting extraction — or, if you designed the library and know the
+primers, pass them with `--override-primer-5p/3p` and the confidence cap no
+longer applies (you're not inferring anything).
 
-## CLI surface
+### "detect returned UNABLE_TO_INFER"
 
-| Command | Status | What it does |
-|---|---|---|
-| `selexprep catalog list \| show \| version \| refresh` | ✅ v0.1 | Browse / refresh the bundled discovery catalog (250 entries; refresh hits live ENA). |
-| `selexprep inspect <ACC>` | ✅ v0.1 | ENA filereport REST preview — round count, `library_strategy` (SRA verbatim, not classified), file sizes + MD5s. No download. |
-| `selexprep fetch <ACC> --outdir OUT [--allow-manual-review]` | ✅ v0.1 | Download FASTQ + auto-populate round map. Partial-parseability is warn-and-skip; unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
-| `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | ✅ v0.1 | Auto-infer primers + library structure → `library_report.json`. |
-| `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT [--sample-sheet samples.tsv] [--paired-r2 ...] [--override-primer-{5p,3p} ...] [--rebuild]` | ✅ v0.1 | Cutadapt-driven trim + strand reorient + per-round FASTA + manifest. |
-| `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | ✅ v0.1 | FASTA → counts.parquet (sequence, reads, rank, RPM). |
-| `selexprep qc <manifest> [--counts-dir DIR] [--outdir OUT]` | ✅ v0.1 | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
-| `selexprep run <accessions.tsv> --outdir OUT --resume` | ✅ v0.1 | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. Drives both Tier 1 (Figure A) and Tier 2 (audit) pipelines. |
+By design, `extract` then **refuses rather than guessing**. Supply the primers
+explicitly:
 
-## Output layout (after a full single-dataset run)
+```bash
+selexprep extract round_*.fastq.gz \
+    --library-report ./out/library_report.json --round-map rounds.tsv \
+    --override-primer-5p GGTAATACGACTCACTATAGGG \
+    --override-primer-3p CCATGCATGCATGCATGCAT \
+    --rebuild --outdir ./out
+# --rebuild emits extract_diff.tsv comparing baseline vs override per round.
+```
+
+You can also edit `library_report.json` by hand and re-run without overrides.
+
+> **Multiplexed deposit** (several samples or targets pooled in one FASTQ)? v0.1
+> doesn't auto-split them — pass a `--sample-sheet` to `extract` in place of
+> `--round-map`. Auto-demultiplexing is a v0.2 item.
+
+## CLI reference
+
+The core pipeline is `inspect → fetch → detect → extract → count → qc`; `run`
+batches it and `catalog` browses the discovery catalog. Every command supports
+`--help`; full reference in [`docs/cli.md`](https://github.com/marcorotanegroni/selexprep/blob/main/docs/cli.md).
+
+| Command | What it does |
+|---|---|
+| `selexprep inspect <ACC>` | ENA metadata preview — round count, `library_strategy` (SRA verbatim), file sizes + MD5s. No download. |
+| `selexprep fetch <ACC> --outdir OUT` | Download FASTQ + auto-populate `rounds.tsv`. Unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
+| `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | Auto-infer primers + library structure → `library_report.json`. |
+| `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT` | Cutadapt trim + strand reorient + per-round FASTA + manifest. Accepts `--paired-r2`, `--sample-sheet`, `--override-primer-{5p,3p}`, `--rebuild`. |
+| `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | FASTA → `counts.parquet` (sequence, reads, rank, RPM). |
+| `selexprep qc <manifest> --outdir OUT` | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
+| `selexprep run <accessions.tsv> --outdir OUT [--resume]` | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. |
+| `selexprep catalog list \| show \| version \| refresh` | Browse / refresh the bundled discovery catalog (250 entries; `refresh` hits live ENA). |
+
+## Full output layout
+
+After a complete single-dataset run:
 
 ```
 out/
@@ -236,26 +227,62 @@ out/
     └── per_round_panel.png        # unique seqs + Shannon entropy + top-100 coverage
 ```
 
-## Determinism + reproducibility
+Output filenames deliberately distinguish full inserts (`extracted.fasta.gz`)
+from one-sided partials (`partial_5p_…` / `partial_3p_…`) so downstream ML
+pipelines never accidentally mix them.
 
-All `.fasta.gz`, `.tsv`, and `.json` outputs are **byte-deterministic**
-given the same `--sampling-seed`: gzip headers are written with
-`mtime=0`, JSON keys are sorted with int-keyed dicts in numeric (not
-lexical) order, and TSV rows are sorted. Two runs with identical
-inputs + seed produce identical SHA256s; the manifest's
-`output_sha256` field is the audit anchor.
+---
 
-Parquet hashes are **advisory** (not guaranteed across pyarrow
-versions; the manifest pins `pyarrow_version` instead).
+## Why it exists (the gap)
 
-PNG plots are **informational** (matplotlib output is not
-byte-deterministic across versions). They do not contribute to
-`output_sha256`.
+No maintained, pip-installable Python tool takes a public HT-SELEX accession or
+local FASTQ and produces trimmed per-round FASTAs + count tables + a provenance
+manifest **without requiring the user to supply primers**.
+
+| Tool | Accession fetch? | Primer auto-inference? | Safe failure mode? |
+|---|---|---|---|
+| AptaSUITE (CLI + GUI) | ✗ | ✗ — user supplies | ✗ |
+| FASTAptameR | ✗ — consumes already-trimmed | ✗ | ✗ |
+| EasyDIVER+ (2025) | ✗ | ✗ — paired-end with known primers | ✗ |
+| ht-selex-demo | ✗ | ✗ — Illumina adapters only (a trap `selexprep` guards against via `known_adapter_hits`) | ✗ |
+| nf-core | ✗ (no SELEX pipelines exist) | — | — |
+| **`selexprep`** | ✓ — INSDC in v0.1; figshare/zenodo deferred | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
+
+The core inference idea: **a true primer appears at a similar rate across all
+rounds; late-round-enriched aptamer motifs do not.** `detect` exploits this
+cross-round persistence to separate constants from binders, and reports its
+confidence in a typed `LibraryReport` (pydantic, strict-mypy) with explicit
+`extraction_mode`, `read_source`, `required_action`, `full_insert_recovered`,
+and `status` — no silent miscalls.
+
+**Benchmark headline:** *on a curated, paper-grounded set, `selexprep` recovers
+SELEX primers directly from raw reads — with none supplied — and fails safe (no
+fabricated primers) where inference is ambiguous.* See
+[Benchmarks](#benchmarks).
+
+## What v0.1 ships
+
+`catalog` (250 public SELEX entries: 125 INSDC + 125 figshare/zenodo
+passthrough; 21 documented exclusions in `bioprojects_excluded.csv`) · `inspect`
+(ENA metadata preview) · `fetch` (accession download with relaxed
+partial-parseability contract) · `detect` (primer inference) · `extract`
+(cutadapt-driven trimming + paired-end + strand handling) · `count` (per-round
+unique sequences) · `qc` (suspicion flags + 4 PNG plots) · `run` (batch driver
+with `--resume`).
+
+Catalog discovery completeness is measured at **100% of ENA-typed-SELEX
+deposits** in the v0.1.7 snapshot, with 21 documented exclusions for mis-labeled
+and gSELEX/genomic-fragment variants.
+
+**Deferred to v0.2:** read merging for paired-end full-insert recovery ·
+multiplex auto-detection (v0.1 needs a user-supplied sample sheet) ·
+figshare/zenodo fetch backends · `SELEXPREP_CATALOG_PATH` env var for
+user-supplied catalogs · AnnData export · BibTeX auto-citation · library-type
+classification.
 
 ## What v0.1 does *not* do
 
-By design — these are handled by mature existing tools that consume
-`selexprep`'s outputs:
+By design — these are handled by mature tools that consume `selexprep`'s outputs:
 
 | Step | Use |
 |---|---|
@@ -266,74 +293,52 @@ By design — these are handled by mature existing tools that consume
 | Aptamer design | MAWS · RNAtranslator |
 | Read merging (paired-end full-insert recovery) | bbmerge · vsearch · pear (v0.2 hook) |
 
+## Determinism + reproducibility
+
+All `.fasta.gz`, `.tsv`, and `.json` outputs are **byte-deterministic** given
+the same `--sampling-seed`: gzip headers use `mtime=0`, JSON keys are sorted
+(int keys in numeric order), TSV rows are sorted. Two runs with identical inputs
++ seed produce identical SHA256s; the manifest's `output_sha256` is the audit
+anchor.
+
+Parquet hashes are **advisory** (not guaranteed across pyarrow versions — the
+manifest pins `pyarrow_version` instead). PNG plots are **informational**
+(matplotlib output isn't byte-deterministic) and don't contribute to
+`output_sha256`.
+
+## Benchmarks
+
+Two-tier benchmark under [`benchmarks/`](https://github.com/marcorotanegroni/selexprep/blob/main/benchmarks/README.md):
+
+- **Tier 1 — Figure A** (`Snakefile` + `ground_truth.tsv`): curated
+  primer-recovery validation against paper-reported primers (N=11
+  source-verified accessions, modality-diverse).
+- **Tier 2 — Figure B** (`audit.smk`): corpus utility audit over a random sample
+  of audit-eligible INSDC catalog rows. Shipped artifacts under
+  `benchmarks/audit_results/`; the reproducibility envelope (catalog version +
+  sample sha256 + seed) is committed.
+- **Catalog completeness audit** (`catalog_completeness_audit.py`): re-runnable
+  script diffing `bioprojects.csv` against ENA's `library_strategy="SELEX"` set.
+  Snapshot: 100% discovery / 79.6% auditable (82/103).
+
 ## Calibration status
 
 Tests assert on **behavior**, never on threshold values (e.g.
-`assert report.status == "HIGH"` for high-match-rate inputs, never
-`assert HIGH_CUTOFF == 0.85`). Tuning the numbers is therefore safe
-under the existing test suite.
-
-**LibraryReport inference** — `CALIBRATION-REVIEWED` markers in
-`library/detect.py` document the v0.1 values + rationale for each
-threshold (`STATUS_HIGH_CUTOFF`, `POSITION_CONSISTENCY_TOLERANCE`, the
-two `COMPOSITE_WEIGHTS` regimes, etc.). See `CHANGELOG.md` for the
-diff history.
-
-**QC suspicion flags + adapter blacklist composition** — still
-pending. `CALIBRATION-TODO` markers in `qc/flags.py`,
-`library/adapters.py` (TruSeq + Nextera vs full Illumina set), and
-`extract/strand.py`. Inventory:
+`assert report.status == "HIGH"`, never `assert HIGH_CUTOFF == 0.85`), so tuning
+the numbers is safe under the suite. `CALIBRATION-REVIEWED` markers in
+`library/detect.py` document vetted v0.1 thresholds with rationale;
+`CALIBRATION-TODO` markers (in `qc/flags.py`, `library/adapters.py`,
+`extract/strand.py`) flag what's still pending.
 
 ```bash
 grep -rn "CALIBRATION-TODO" src/      # what's left to tune
 grep -rn "CALIBRATION-REVIEWED" src/  # what's already vetted with rationale
 ```
 
-Calibration tuning draws on the benchmark recovery numbers as
-empirical ground truth.
-
-## Architecture
-
-```
-                     ┌──────────────────┐
-                     │  catalog         │
-                     │  (250 entries;   │
-                     │   v0.1.7)        │
-                     └────────┬─────────┘
-                              │
-                              ▼
-   ┌─────────────┐    ┌──────────────┐    ┌───────────────┐
-   │  inspect    │    │   fetch      │    │  detect       │
-   │  (ENA REST  │    │  (ENA REST   │    │ (LibraryReport│
-   │   preview)  │    │   download)  │───►│  schema)      │
-   └─────────────┘    └──────────────┘    └───────┬───────┘
-                                                  │
-                              ┌───────────────────┘
-                              ▼
-                     ┌────────────────────┐     ┌──────────────────────┐
-                     │  extract           │     │ manifest             │
-                     │  (cutadapt + PE +  │────►│ (SelexprepManifestV1 │
-                     │   strand)          │     │  reproducibility)    │
-                     └────────┬───────────┘     └──────────────────────┘
-                              │
-                              ▼
-                     ┌────────────────────┐
-                     │  count             │
-                     │  (FASTA → parquet) │
-                     └────────┬───────────┘
-                              │
-                              ▼
-                     ┌────────────────────┐
-                     │  qc                │
-                     │  (8 flags + 4 PNG) │
-                     └────────────────────┘
-```
-
 ## Development
 
 ```bash
-# Pre-commit gates (run all four before pushing)
-uv run pytest                       # 636 + 1 xfailed
+uv run pytest                       # full suite + 1 reserved xfail
 uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 uv run mypy src/                     # strict on library.report
@@ -341,30 +346,6 @@ uv run mypy src/                     # strict on library.report
 
 CI matrix: Python 3.10 / 3.11 / 3.12.
 
-## Benchmarks
-
-Two-tier benchmark under `benchmarks/`:
-
-- **Tier 1 — Figure A** (`Snakefile` + `ground_truth.tsv`): curated
-  primer-recovery validation against paper-reported primers (N=11
-  source-verified accessions, modality-diverse).
-- **Tier 2 — Figure B** (`audit.smk`): a corpus utility audit over a
-  random sample of audit-eligible INSDC catalog rows. Shipped audit
-  artifacts live in `benchmarks/audit_results/`; reproducibility
-  envelope (catalog version + sample sha256 + seed) is committed.
-- **Catalog completeness audit** (`catalog_completeness_audit.py`):
-  re-runnable one-off script that diffs `bioprojects.csv` against
-  ENA's `library_strategy="SELEX"` set. Current snapshot:
-  100% discovery / 79.6% auditable (82/103) with 21 documented
-  exclusions for mis-labels + gSELEX variants.
-
-See [`benchmarks/README.md`](benchmarks/README.md) for the methodology
-and curation notes.
-
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
-
-## Changelog
-
-Full development log: [`CHANGELOG.md`](CHANGELOG.md).
+MIT. See [`LICENSE`](https://github.com/marcorotanegroni/selexprep/blob/main/LICENSE). Full development log in [`CHANGELOG.md`](https://github.com/marcorotanegroni/selexprep/blob/main/CHANGELOG.md).
