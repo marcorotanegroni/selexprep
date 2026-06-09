@@ -136,7 +136,7 @@ def test_curated_notes_carry_inference_caveat() -> None:
 def test_snakefile_writes_separate_r1_r2_manifests() -> None:
     """The R1 manifest excludes R2 mates, but R2 is captured separately and
     passed via ``--paired-r2``. Guards against both old failure modes:
-    R1/R2 commingling and R2 silently discarded from Figure A."""
+    R1/R2 commingling and R2 silently discarded from the Tier 1 benchmark."""
     text = _SNAKEFILE.read_text(encoding="utf-8")
     assert "fastqs.manifest" in text
     assert "fastqs.r2.manifest" in text

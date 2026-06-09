@@ -2,7 +2,7 @@
 #
 # Scaffolding only: this Snakefile defines the DAG but is NOT executed
 # in CI. The real-data HPC run that lands ``audit_results/`` artifacts
-# (``audit_accessions.tsv`` + ``audit_metrics.json`` + ``figure_b.{pdf,png}``)
+# (``audit_accessions.tsv`` + ``audit_metrics.json`` + ``table_audit.md``)
 # is run separately on the HPC cluster.
 #
 # DAG (eligibility layer):
@@ -15,7 +15,7 @@
 #   rule aggregate_audit  → audit_metrics.json (includes
 #                            catalog_classification_distribution from the
 #                            full catalog classification)
-#   rule figure_b         → figure_b.{pdf,png}
+#   rule figure_b         → table_audit.md
 #
 # Methodological correction folded into ``rule aggregate_audit``:
 # ``inference_safe_failure_rate`` is computed ONLY among rows with a
@@ -59,8 +59,7 @@ CATALOG_CSV = str(_cat_reader.catalog_path())
 
 rule all:
     input:
-        OUTROOT + "/figure_b.pdf",
-        OUTROOT + "/figure_b.png",
+        OUTROOT + "/table_audit.md",
         OUTROOT + "/audit_metrics.json",
 
 
@@ -133,7 +132,7 @@ rule aggregate_audit:
         # pass the catalog snapshot so the aggregator can
         # populate ``n_catalog_total`` + ``n_catalog_non_insdc_passthrough``
         # — surfacing the full-catalog denominator in the audit JSON +
-        # Figure B title (the eligibility classifier only sees INSDC
+        # audit-table caption (the eligibility classifier only sees INSDC
         # rows, so without this segment a reviewer reads "X of N
         # audit-eligible" as "X of all catalog rows").
         catalog=CATALOG_CSV,
@@ -151,8 +150,7 @@ rule figure_b:
     input:
         OUTROOT + "/audit_metrics.json",
     output:
-        pdf=OUTROOT + "/figure_b.pdf",
-        png=OUTROOT + "/figure_b.png",
+        OUTROOT + "/table_audit.md",
     shell:
         "python -m selexprep.benchmark.figure_b "
         "--audit {input} --outdir {OUTROOT}"

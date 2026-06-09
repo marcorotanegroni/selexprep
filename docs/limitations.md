@@ -9,7 +9,7 @@ v0.1 is intentionally narrow. The following are NOT supported and are deferred t
 - **Clustering, motif discovery, binding-affinity prediction.** Handled by FASTAptameR, MEME / RaptGen-UI, RaptGen / DeepSELEX / AptaTrans respectively — `selexprep` outputs feed into these.
 - **Parquet bit-identical reproducibility across `pyarrow` versions.** Only FASTA/TSV/JSON hashes are guaranteed deterministic; Parquet hashes are version-pinned in the manifest as advisory.
 
-## Benchmark (Figure A) — how to read the recovery numbers
+## Benchmark (Tier 1 scorecard) — how to read the recovery numbers
 
 The primer-recovery benchmark scores recovery of the **paper-reported** primer from **real deposited reads**. A few honest caveats for interpreting it:
 

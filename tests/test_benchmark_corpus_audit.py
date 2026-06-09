@@ -351,7 +351,7 @@ def test_aggregator_populates_catalog_denominators_when_catalog_csv_given(
     """--catalog wires the full-catalog denominator into the audit JSON.
 
     The eligibility classifier only sees INSDC rows. Without surfacing
-    the figshare/zenodo passthrough count, Figure B's title reads "X of
+    the figshare/zenodo passthrough count, the audit table's caption reads "X of
     N audit-eligible" implicitly meaning "X of all catalog rows" — which
     is wrong when N is the INSDC subset. This test pins the contract: a
     synthetic catalog with 2 INSDC + 3 passthrough rows must yield

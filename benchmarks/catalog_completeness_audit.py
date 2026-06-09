@@ -4,8 +4,8 @@ Measures what fraction of ENA studies explicitly typed as
 ``library_strategy="SELEX"`` are accounted for by selexprep's bundled
 catalog (either present in ``bioprojects.csv`` or recorded in
 ``bioprojects_excluded.csv`` with a documented reason). This is the
-audit referenced from Figure B's narrative — the discovery-side
-counterpart to 's fetcher / inference audit.
+audit referenced from Tier 2's narrative — the discovery-side
+counterpart to the fetcher / inference audit.
 
 **Not a recurring pipeline.** Run this when:
 

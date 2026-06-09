@@ -1,10 +1,7 @@
-"""Smoke tests for ``selexprep.benchmark.figure_a`` (two-arm Figure A).
+"""Tests for ``selexprep.benchmark.figure_a`` — the Tier 1 scorecard table emitter.
 
-Like 's matplotlib plot tests, we only check that PDF + PNG files
-are produced — byte-determinism is not guaranteed across matplotlib
-versions. reframes
-the figure as a recovery / specificity two-arm benchmark; these tests
-pin the new metrics.json shape.
+``figure_a.py`` now emits a per-deposit Markdown scorecard (Table 1), not a bar chart:
+``metrics.json`` (outcomes) joined with ``ground_truth.tsv`` (descriptors).
 """
 
 from __future__ import annotations
@@ -12,189 +9,115 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from selexprep.benchmark.figure_a import plot_figure_a
+from selexprep.benchmark.figure_a import build_scorecard, emit_scorecard
+from selexprep.benchmark.metrics import load_ground_truth
 
 
-def _make_metrics_payload() -> dict:
-    """A populated two-arm metrics.json (5 recovery + 3 specificity shape)."""
+def _metrics() -> dict:
+    """A two-arm metrics.json: 2 recovery (one with read-resolved 3') + 2 controls."""
     return {
-        "recovery_denominator": 3,
+        "recovery_denominator": 2,
         "pair_recovery_by_status": {
-            "n_evaluated": 3,
-            "counts": {
-                "HIGH": {"pair_exact": 2},
-                "MEDIUM": {"pair_partial": 1},
-            },
-        },
-        "multi_round_sensitivity": {
-            "n_evaluated": 2,
-            "counts": {"HIGH": {"pair_exact": 2}},
+            "counts": {"HIGH": {"pair_exact": 1}, "MEDIUM": {"pair_partial": 1}}
         },
         "primer_recovery": {
-            "n_evaluated": 3,
-            "counts_5p": {"EXACT": 2, "PARTIAL_5P": 1},
-            "counts_3p": {"EXACT": 2, "MISMATCH": 1},
+            "pairs": [
+                {
+                    "accession": "REC1",
+                    "score_3p": True,
+                    "status_5p": {"equivalence_kind": "EXACT", "matched": True},
+                    "status_3p": {"equivalence_kind": "EXACT", "matched": True},
+                },
+                {
+                    "accession": "REC2",
+                    "score_3p": False,
+                    "status_5p": {"equivalence_kind": "EXACT", "matched": True},
+                    "status_3p": {"equivalence_kind": "MISMATCH", "matched": False},
+                },
+            ]
         },
         "specificity": {
-            "n_evaluated": 3,
-            "n_no_false_call": 3,
+            "n_evaluated": 1,
             "n_false_positive": 0,
-            "false_positive_accessions": [],
             "per_row": [
-                {"accession": a, "bucket": "no_false_call", "primer_5p": None, "primer_3p": None}
-                for a in ("PRJEB28411", "PRJEB22637", "PRJNA990511")
+                {
+                    "accession": "SPEC1",
+                    "bucket": "no_false_call",
+                    "primer_5p": None,
+                    "primer_3p": None,
+                }
             ],
         },
-        "n_length_recovery": {
-            "n_in_tolerance": 2,
-            "n_out_of_tolerance": 1,
-            "n_unmeasurable": 0,
-            "tolerance": 2,
-        },
-        "extraction_mode_distribution": {
-            "counts": {
-                "BOTH_PRIMERS_SINGLE_READ": 2,
-                "FIVE_PRIME_ONLY": 1,
-                "UNABLE_TO_EXTRACT": 3,
-            }
-        },
-        "required_action_distribution": {
-            "counts": {
-                "NONE": 2,
-                "MANUAL_PRIMERS_REQUIRED": 3,
-            }
-        },
-        "fetch_stats": {
-            "PRJEB70964": {
-                "accession": "PRJEB70964",
-                "fetch_expected_runs": 27,
-                "fetch_available_runs": 17,
-                "fetch_missing_runs": 10,
-                "runs_with_no_fastq_url": 0,
-                "partial_fetch": True,
-            }
+        "adapter_control": {
+            "n_evaluated": 1,
+            "n_no_false_call": 1,
+            "per_row": [
+                {
+                    "accession": "ADPT1",
+                    "bucket": "no_false_call",
+                    "primer_5p": None,
+                    "primer_3p": None,
+                }
+            ],
         },
     }
 
 
-def test_plot_figure_a_writes_pdf_and_png(tmp_path: Path) -> None:
+_GROUND_TRUTH = (
+    "accession\tlibrary_kind\ttarget_kind\tverified\tread_state\tscore_3p\tnotes\n"
+    "REC1\tDNA\tprotein\ttrue\traw_standard\t\tfirst recovery\n"
+    "REC2\tRNA\tcell\ttrue\traw_standard\tfalse\tread-resolved 3'\n"
+    "SPEC1\tDNA\tprotein\ttrue\tpre_trimmed\t\tpre-trimmed\n"
+    "ADPT1\t2'-F-Py RNA\tprotein\ttrue\tadapter_control\t\tadapter collision\n"
+    "UNVER\tDNA\tprotein\tfalse\traw_standard\t\tunverified — excluded\n"
+)
+
+
+def _write(tmp_path: Path) -> tuple[Path, Path]:
     metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(_make_metrics_payload()), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-    assert pdf.name == "figure_a.pdf"
-    assert png.name == "figure_a.png"
-    # 4-panel figure produces non-trivial PDF + PNG output.
-    assert pdf.stat().st_size > 5000
-    assert png.stat().st_size > 5000
+    metrics.write_text(json.dumps(_metrics()), encoding="utf-8")
+    gt = tmp_path / "ground_truth.tsv"
+    gt.write_text(_GROUND_TRUTH, encoding="utf-8")
+    return metrics, gt
 
 
-def test_plot_figure_a_handles_empty_metrics(tmp_path: Path) -> None:
-    """No data → still emits both files with the 'no data' labels in every panel."""
-    empty = {"n_verified": 0, "n_unverified": 0, "n_total": 0}
+def test_emit_scorecard_writes_table_1(tmp_path: Path) -> None:
+    metrics, gt = _write(tmp_path)
+    out = emit_scorecard(metrics, gt, tmp_path / "o")
+    assert out.name == "table_1.md"
+    text = out.read_text(encoding="utf-8")
+    assert "Table 1" in text
+    assert "| Accession | Chemistry | Target | Arm | 5' | 3' | Note |" in text
+    # factual headline (counts only)
+    assert "1 exact" in text
+    assert "false-positive calls" in text
+    # verified deposits present; the unverified row excluded
+    for acc in ("REC1", "REC2", "SPEC1", "ADPT1"):
+        assert acc in text
+    assert "UNVER" not in text
+    # control rows refuse; the read-resolved 3' row is scored on 5'
+    assert "correct refusal" in text
+    assert "3' read-resolved → scored on 5'" in text
+
+
+def test_scorecard_groups_by_arm(tmp_path: Path) -> None:
+    _, gt = _write(tmp_path)
+    rows = build_scorecard(_metrics(), load_ground_truth(gt))
+    arms = [r["arm"] for r in rows]
+    rank = {"recovery": 0, "specificity": 1, "adapter-control": 2}
+    assert arms == sorted(arms, key=lambda a: rank[a])
+    # recovery rows carry the equivalence outcome; controls carry null/null
+    by_acc = {r["accession"]: r for r in rows}
+    assert by_acc["REC1"]["five"] == "EXACT"
+    assert by_acc["REC2"]["three"] == "—"  # read-resolved → not scored
+    assert by_acc["SPEC1"]["five"] == "null"
+
+
+def test_emit_scorecard_empty_metrics_still_writes_table(tmp_path: Path) -> None:
+    _, gt = _write(tmp_path)
     metrics = tmp_path / "empty.json"
-    metrics.write_text(json.dumps(empty), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_a_renders_specificity_false_positive(tmp_path: Path) -> None:
-    """The specificity arm renders a false-positive call (red bar path)."""
-    payload = _make_metrics_payload()
-    payload["specificity"] = {
-        "n_evaluated": 3,
-        "n_no_false_call": 2,
-        "n_false_positive": 1,
-        "false_positive_accessions": ["PRJEB22637"],
-        "per_row": [
-            {
-                "accession": "PRJEB28411",
-                "bucket": "no_false_call",
-                "primer_5p": None,
-                "primer_3p": None,
-            },
-            {
-                "accession": "PRJEB22637",
-                "bucket": "false_positive",
-                "primer_5p": "ACGT",
-                "primer_3p": None,
-            },
-            {
-                "accession": "PRJNA990511",
-                "bucket": "no_false_call",
-                "primer_5p": None,
-                "primer_3p": None,
-            },
-        ],
-    }
-    metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_a_renders_without_fetch_stats(tmp_path: Path) -> None:
-    """The partial-fetch note path is optional — absent fetch_stats still renders."""
-    payload = _make_metrics_payload()
-    payload.pop("fetch_stats")
-    metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_a_renders_exact_and_equivalent_separately(tmp_path: Path) -> None:
-    """Panel A keeps exact and equivalent as distinct stack segments."""
-    payload = _make_metrics_payload()
-    payload["pair_recovery_by_status"] = {
-        "n_evaluated": 3,
-        "counts": {
-            "HIGH": {"pair_exact": 1, "pair_equivalent": 1},
-            "MEDIUM": {"pair_partial": 1},
-        },
-    }
-    metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_a_renders_adapter_control(tmp_path: Path) -> None:
-    """Adapter-control panel surfaces in the headline when present (PRJEB70964)."""
-    payload = _make_metrics_payload()
-    payload["adapter_control"] = {
-        "n_evaluated": 1,
-        "n_no_false_call": 1,
-        "n_false_positive": 0,
-        "n_not_evaluable": 0,
-        "false_positive_accessions": [],
-        "not_evaluable_accessions": [],
-        "per_row": [],
-    }
-    metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_a_recovery_only_no_specificity(tmp_path: Path) -> None:
-    """A recovery-only metrics set (specificity arm empty) still renders all panels."""
-    payload = _make_metrics_payload()
-    payload["specificity"] = {
-        "n_evaluated": 0,
-        "n_no_false_call": 0,
-        "n_false_positive": 0,
-        "false_positive_accessions": [],
-        "per_row": [],
-    }
-    metrics = tmp_path / "metrics.json"
-    metrics.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_a(metrics, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
+    metrics.write_text("{}", encoding="utf-8")
+    out = emit_scorecard(metrics, gt, tmp_path / "o")
+    text = out.read_text(encoding="utf-8")
+    assert "| Accession | Chemistry | Target | Arm | 5' | 3' | Note |" in text
+    assert "REC1" in text  # descriptors still come from ground_truth

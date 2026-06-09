@@ -12,7 +12,7 @@ use on your own local FASTQs.
 
 > The demo library is *synthetic* (planted constants), so it proves the pipeline
 > runs deterministically end-to-end — not how accurate inference is on messy real
-> reads. For that evidence, see Figure A under [`../benchmarks/`](../benchmarks/).
+> reads. For that evidence, see the Tier 1 scorecard under [`../benchmarks/`](../benchmarks/).
 
 ### 2. Run it for real — one public accession
 

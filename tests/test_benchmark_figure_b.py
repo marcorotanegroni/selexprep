@@ -1,8 +1,7 @@
-"""Smoke tests for ``selexprep.benchmark.figure_b`` (4-panel Figure B).
+"""Tests for ``selexprep.benchmark.figure_b`` — the Tier 2 audit table emitter.
 
-Mirrors ``tests/test_benchmark_figure_a.py``. Like 's matplotlib
-plot tests, we only check that PDF + PNG files are produced — byte
-determinism is not guaranteed across matplotlib versions.
+``figure_b.py`` now emits a Markdown summary table of the corpus-audit distributions
+(``audit_metrics.json``), not a bar chart.
 """
 
 from __future__ import annotations
@@ -10,9 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
-from selexprep.benchmark.figure_b import _build_title, plot_figure_b
+from selexprep.benchmark.figure_b import _build_title, emit_audit_table
 
 
 def _make_audit_payload() -> dict:
@@ -47,93 +44,58 @@ def _make_audit_payload() -> dict:
     }
 
 
-def test_plot_figure_b_writes_pdf_and_png(tmp_path: Path) -> None:
+def test_emit_audit_table_writes_md(tmp_path: Path) -> None:
     audit = tmp_path / "audit.json"
     audit.write_text(json.dumps(_make_audit_payload()), encoding="utf-8")
-    pdf, png = plot_figure_b(audit, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-    assert pdf.name == "figure_b.pdf"
-    assert png.name == "figure_b.png"
-    assert pdf.stat().st_size > 5000
-    assert png.stat().st_size > 5000
+    out = emit_audit_table(audit, tmp_path / "out")
+    assert out.name == "table_audit.md"
+    text = out.read_text(encoding="utf-8")
+    assert "public-corpus audit" in text
+    assert "Fetch outcomes" in text
+    assert "| OK | 20 |" in text
+    assert "| HIGH | 12 |" in text
+    assert "Inference safe-failure rate:** 30% (6/20)" in text
 
 
-def test_plot_figure_b_handles_empty_audit(tmp_path: Path) -> None:
-    """No data → still emits both files with 'no data' labels in every panel."""
+def test_emit_audit_table_handles_empty(tmp_path: Path) -> None:
+    """No data → still emits a table (with (no data) rows), no crash."""
     audit = tmp_path / "empty.json"
     audit.write_text(json.dumps({"n_sampled": 0}), encoding="utf-8")
-    pdf, png = plot_figure_b(audit, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
+    out = emit_audit_table(audit, tmp_path / "out")
+    text = out.read_text(encoding="utf-8")
+    assert "public-corpus audit" in text
+    assert "(no data)" in text
 
 
-@pytest.mark.parametrize(
-    "status_bucket",
-    ["HIGH", "MEDIUM", "LOW", "UNABLE_TO_INFER"],
-)
-def test_plot_figure_b_supports_all_status_buckets(tmp_path: Path, status_bucket: str) -> None:
-    """Each LibraryReport.status bucket appears in Panel B without errors."""
-    audit = tmp_path / "audit.json"
-    payload = _make_audit_payload()
-    payload["library_report_status_distribution"] = {status_bucket: 5}
-    payload["n_with_library_report"] = 5
-    audit.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_b(audit, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_b_renders_with_safe_failure_rate(tmp_path: Path) -> None:
-    """The inference safe-failure overlay is the unique distinguishing metric.
-
-    We don't assert text content in the rendered raster (matplotlib's
-    PNG output is environment-dependent), but the render path must
-    survive when the rate is populated — the overlay annotation block
-    is on the same matplotlib axes as Panel D.
-    """
-    audit = tmp_path / "audit.json"
-    payload = _make_audit_payload()
-    payload["inference_safe_failure_rate"] = 0.42
-    payload["n_inference_safe_failures"] = 4
-    audit.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_b(audit, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
-
-
-def test_plot_figure_b_handles_unexpected_status_label(tmp_path: Path) -> None:
-    """Forward-compatibility: a status the canonical order doesn't anticipate
-    still renders (sorted alphabetically among the extras)."""
+def test_emit_audit_table_handles_unexpected_status_label(tmp_path: Path) -> None:
+    """Forward-compatibility: an unanticipated category still renders (extras appended)."""
     audit = tmp_path / "audit.json"
     payload = _make_audit_payload()
     payload["fetch_outcome_distribution"]["NEW_FUTURE_STATUS"] = 3
     audit.write_text(json.dumps(payload), encoding="utf-8")
-    pdf, png = plot_figure_b(audit, tmp_path / "out")
-    assert pdf.exists()
-    assert png.exists()
+    text = emit_audit_table(audit, tmp_path / "out").read_text(encoding="utf-8")
+    assert "| NEW_FUTURE_STATUS | 3 |" in text
 
 
 # ---------------------------------------------------------------------------
-# + title segments
+# caption (_build_title) segments
 # ---------------------------------------------------------------------------
 
 
 def test_build_title_omits_eligibility_segment_when_classifier_did_not_run() -> None:
-    """Pre-audit JSON (n_catalog_classified=0) → title has no layer-1 segment."""
+    """Pre-audit JSON (n_catalog_classified=0) → caption has no layer-1 segment."""
     title = _build_title(_make_audit_payload())
     assert "audit-eligible" not in title
-    assert "selexprep Figure B" in title
+    assert "selexprep public-corpus audit" in title
 
 
 def test_build_title_includes_insdc_only_eligibility_segment_without_catalog() -> None:
-    """-but-not-(eligibility set, catalog total absent) → INSDC-only segment."""
+    """Eligibility set but catalog total absent → INSDC-only segment."""
     payload = _make_audit_payload()
     payload["n_catalog_classified"] = 95
     payload["n_catalog_eligible"] = 24
     title = _build_title(payload)
     assert "24 of 95 INSDC rows audit-eligible" in title
-    # No full-catalog segment when n_catalog_total absent.
     assert "non-INSDC passthrough" not in title
     assert "catalog total" not in title
 

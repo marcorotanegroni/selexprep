@@ -1,9 +1,9 @@
 # selexprep benchmark
 
 This directory holds selexprep's benchmark: two tiers plus a standalone
-catalog-completeness audit. `metrics.json` / `audit_metrics.json` (deterministic,
-sorted-key JSON) are the source of truth; the paper presents them as a
-per-deposit **scorecard table** and a corpus-audit **summary table**.
+catalog-completeness audit. Each tier emits deterministic, sorted-key JSON —
+`metrics.json` (Tier 1) and `audit_metrics.json` (Tier 2) — which the paper
+presents as a per-deposit **scorecard table** and a corpus-audit **summary table**.
 
 - **Tier 1 — primer recovery** (`Snakefile` + `ground_truth.tsv`): per-deposit
   recovery of paper-reported primers from accession-derived reads, on 11
@@ -14,7 +14,7 @@ per-deposit **scorecard table** and a corpus-audit **summary table**.
 - **Catalog-completeness audit** (`catalog_completeness_audit.py`): diffs
   `bioprojects.csv` against ENA's `library_strategy="SELEX"` set.
 
-Tier 1 + Tier 2 share metric/figure entry points under `src/selexprep/benchmark/`.
+Tier 1 + Tier 2 share metric/table entry points under `src/selexprep/benchmark/`.
 
 ## What this benchmark tests
 
@@ -45,7 +45,8 @@ informative partial recovery — on all 7 evaluable recovery deposits (3 exact,
 4 partial), and made zero false-positive primer calls on the 4 primer-absent /
 adapter-collision controls.*
 
-The 11 source-verified deposits, by arm (full per-row scores in `metrics.json`):
+The 11 source-verified deposits, by arm (the table below is the per-row scorecard;
+`snakemake -s Snakefile` regenerates it as `metrics.json`):
 
 | Accession | Chemistry | Target | Arm | `status` | 5′ / 3′ | Note |
 |---|---|---|---|---|---|---|
@@ -165,13 +166,17 @@ Snakemake is in the optional `bench` extra:
 ```bash
 uv sync --extra bench            # or: pip install -e ".[bench]"
 
-snakemake -s Snakefile --cores 4         # Tier 1 → metrics.json + figure
+snakemake -s Snakefile --cores 4         # Tier 1 → metrics.json + table_1.md
 snakemake -s Snakefile --cores 1 --dry-run
-snakemake -s audit.smk  --cores 4        # Tier 2 → audit_metrics.json + figure
+snakemake -s audit.smk  --cores 4        # Tier 2 → audit_metrics.json + table_audit.md
 ```
 
-CI does not execute the Snakefiles (real-data fetch is heavy); the committed
-`metrics.json` / `audit_results/` are the reference outputs.
+CI does not execute the Snakefiles (real-data fetch is heavy). Tier 1's
+`metrics.json` + `table_1.md` are **regenerated on demand** (`snakemake -s Snakefile`) —
+they are reproducible outputs of the committed code + `ground_truth.tsv`, not
+committed artifacts. Tier 2 ships its result-of-record under `audit_results/`
+(with the reproducibility envelope above), because its deterministic sample is
+pinned to a catalog snapshot and so is not trivially regenerable.
 
 ## Curation methodology + candidate worklist
 
