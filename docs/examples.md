@@ -20,4 +20,4 @@ needed — the reports are bundled under `examples/data/`.
 
 !!! note
     Neither notebook is a performance benchmark. Recovery performance on
-    paper-documented deposits is reported in **Figure A** (`benchmarks/`).
+    paper-documented deposits is reported in the **Tier 1 scorecard** (`benchmarks/`).

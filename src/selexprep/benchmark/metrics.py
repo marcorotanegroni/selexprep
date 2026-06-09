@@ -13,8 +13,8 @@ but NOT called from :func:`aggregate_metrics`.
 Inputs are :class:`BenchmarkRow` instances that pair a ground-truth entry
 (from ``benchmarks/ground_truth.tsv``) with a ``LibraryReport`` (from
 ``selexprep detect`` output). The top-level :func:`aggregate_metrics`
-returns a :class:`BenchmarkMetricsReport` that the Figure A plot consumes
-and that ``metrics.json`` serializes.
+returns a :class:`BenchmarkMetricsReport` that the Table 1 scorecard emitter
+consumes and that ``metrics.json`` serializes.
 
 Headline metrics:
 
@@ -181,7 +181,7 @@ class PrimerRecoveryReport:
     """Aggregate primer-recovery counts.
 
     Each ``EquivalenceKind`` gets its own count for 5' and 3', plus a
-    breakdown by ``LibraryReport.status`` so the Figure A panels can
+    breakdown by ``LibraryReport.status`` so the scorecard can
     label "recovery rate by inference confidence". The exact-match count
     on both sides is the headline number; partials and IUPAC-unsupported
     are reported separately.
@@ -279,7 +279,7 @@ class PairRecoveryByStatus:
     - ``pair_failed``     — NO informative recovery on either side (both
       ``MISMATCH`` / ``IUPAC_UNSUPPORTED`` / no report).
 
-    Bucketed by ``LibraryReport.status`` so the Figure A headline panel
+    Bucketed by ``LibraryReport.status`` so the scorecard headline
     shows "of HIGH-confidence calls, what fraction recovered the pair
     exactly?" — the honest selling point.
     """
@@ -642,9 +642,8 @@ def compute_pair_recovery_by_status(rows: list[BenchmarkRow]) -> PairRecoveryByS
     - no informative recovery either side     → ``pair_failed``
 
     ``pair_equivalent`` is the superset bucket: it includes
-    ``pair_exact`` if you sum them, so the Figure A panel should display
-    them as stacked bars (exact at the bottom, equivalent-but-not-exact
-    on top) to avoid double-counting.
+    ``pair_exact`` if you sum them, so a consumer should report exact and
+    equivalent-but-not-exact separately to avoid double-counting.
 
     Rows with no ``library_report`` are bucketed under
     ``status == "NO_REPORT"`` and counted as ``pair_failed`` —
@@ -1024,7 +1023,7 @@ def aggregate_metrics(
     The field remains in :class:`BenchmarkMetricsReport` for schema
     stability but stays at default (empty) values.
 
-    The Figure A plot consumes the returned report (via the
+    The Table 1 scorecard emitter consumes the returned report (via the
     ``metrics.json`` serialization).
     """
     verified, skipped = _filter_verified(rows)

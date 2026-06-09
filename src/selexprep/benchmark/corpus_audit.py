@@ -1,7 +1,7 @@
 """Tier 2 corpus-audit scaffolding.
 
 The audit answers a different question than Tier 1's curated primer-recovery
-benchmark (``benchmark.metrics`` + Figure A): given the messy public
+benchmark (``benchmark.metrics`` + the Tier 1 scorecard): given the messy public
 HT-SELEX corpus surfaced by selexprep's bundled discovery catalog, what
 fraction of accessions can be fetched at all, what fraction reach
 HIGH-confidence primer inference, what fraction safely refuse, and how
@@ -104,7 +104,7 @@ class CorpusAuditReport:
     - **qc**          (``n_with_qc_run``): for rows that reached qc, how
       many flags were raised?
 
-    Each panel in Figure B labels its denominator in the subtitle so a
+    Each section of the audit table labels its denominator so a
     reviewer never has to guess the normalization.
     """
 
@@ -145,7 +145,7 @@ class CorpusAuditReport:
     # rows). The eligibility classifier only sees INSDC rows because
     # figshare/zenodo passthrough deposits don't have ENA filereport
     # endpoints or per-run library_strategy metadata. Surfacing the total
-    # here keeps Figure B's title honest — without it, a reviewer reads
+    # here keeps the audit table's caption honest — without it, a reviewer reads
     # "X of N audit-eligible" as "X of all catalog rows" rather than
     # "X of the N rows that the classifier can act on".
     n_catalog_total: int = 0
@@ -155,7 +155,7 @@ class CorpusAuditReport:
     # JSON. Currently carries the multiplex-detection caveat (NO_ROUND_STRUCTURE
     # may include single-FASTQ inline-barcoded SELEX deposits that v0.1
     # cannot detect without a user-supplied sample sheet). The aggregator
-    # populates this; consumers (Figure B, Application Note) read it.
+    # populates this; consumers (the audit table, Application Note) read it.
     caveats: dict[str, str] = field(default_factory=dict)
 
     # Traceability — the parsed per-accession rows with ground-truth
@@ -335,7 +335,7 @@ def aggregate_audit_from_run_outputs(
         optional path to ``bioprojects.csv``. When given,
         the audit JSON gains ``n_catalog_total`` +
         ``n_catalog_non_insdc_passthrough`` so a reviewer can read
-        Figure B's "X of N audit-eligible" segment against the full
+        the audit table's "X of N audit-eligible" segment against the full
         catalog denominator rather than the implicit INSDC-only one.
         ``None`` leaves both fields at 0 (backward compat).
     """
@@ -348,7 +348,7 @@ def aggregate_audit_from_run_outputs(
 
     # populate full-catalog denominators (when a catalog
     # path is supplied) + the multiplex caveat under NO_ROUND_STRUCTURE.
-    # Both feed Figure B's title + the paper's "what the public corpus
+    # Both feed the audit table's caption + the paper's "what the public corpus
     # looks like" narrative.
     if catalog_csv is not None and catalog_csv.exists():
         from selexprep.catalog.filter import is_insdc_accession
@@ -477,9 +477,9 @@ def aggregate_audit_from_run_outputs(
 def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
     """Serialize the audit report to deterministic JSON (sorted keys + stable ordering).
 
-    The JSON is the source of truth for Figure B (matplotlib byte-output is
-    not guaranteed deterministic; the audit JSON is, by the same discipline
-    used in ``benchmark.metrics.write_metrics_json``).
+    The JSON is the source of truth for the audit table — deterministic
+    sorted-key output, by the same discipline used in
+    ``benchmark.metrics.write_metrics_json``.
 
     Defensive sort: ``per_accession`` is sorted by
     accession here even if the caller already sorted upstream, so direct
@@ -494,7 +494,7 @@ def write_audit_json(report: CorpusAuditReport, path: Path) -> None:
         "n_sampled": report.n_sampled,
         "n_in_ground_truth_overlap": report.n_in_ground_truth_overlap,
         # full-catalog denominator (zero unless the
-        # aggregator was given --catalog). Lets Figure B's title quote
+        # aggregator was given --catalog). Lets the audit table's caption quote
         # the honest "X of N INSDC rows · M non-INSDC passthrough · K
         # catalog total" breakdown.
         "n_catalog_total": report.n_catalog_total,
@@ -716,7 +716,7 @@ def main(argv: list[str] | None = None) -> int:
         help=(
             "Path to bioprojects.csv. When provided, the "
             "audit JSON gains ``n_catalog_total`` + "
-            "``n_catalog_non_insdc_passthrough`` so Figure B's title can "
+            "``n_catalog_non_insdc_passthrough`` so the audit table's caption can "
             "report the honest full-catalog denominator."
         ),
     )

@@ -1,32 +1,11 @@
-"""Figure B — Tier 2 public-corpus audit for the Application Note.
+"""Tier 2 public-corpus audit summary (Application Note **supplement**).
 
-Mirrors :mod:`selexprep.benchmark.figure_a`'s 2x2 panel layout but
-answers a different question: across a sampled subset of the public
-HT-SELEX corpus, what does selexprep say? No per-row ground truth —
-distributional metrics only.
-
-Methodological correction from the EACH panel labels its denominator in the panel subtitle so a reviewer
-never has to guess the normalization. Two distinct denominators live
-in the same figure:
-
-- ``n_sampled`` — every sampled INSDC accession, used by Panel A
-  (fetch outcomes). Includes rows that never produced a LibraryReport.
-- ``n_with_library_report`` — only the rows where ``detect`` actually
-  ran and emitted a report, used by Panels B/C/D. Mixing fetch failures
-  with inference failures would inflate the inference safe-failure
-  metric with ENA/network problems.
-
-The figure title carries:
-
-- ``n_sampled``
-- ``n_fetchable`` (rows past the fetch stage)
-- ``n_with_library_report`` (rows that produced a LibraryReport)
-- catalog version
-- sample seed
-
-so a reviewer can read the headline numbers without digging into the
-JSON. The audit JSON is the source of truth — PNG byte-output is not
-guaranteed deterministic across matplotlib versions.
+Emits a Markdown summary of the descriptive corpus audit from the deterministic
+``audit_metrics.json``: the fetch-outcome / inference-confidence / extraction-mode
+/ required-action distributions and the inference safe-failure rate, with the
+reproducibility envelope (catalog version, sample seed). No per-row ground truth
+— distributional metrics only. A **table, not a chart**; ``audit_metrics.json``
+is the source of truth.
 """
 
 from __future__ import annotations
@@ -37,16 +16,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
 logger = logging.getLogger(__name__)
 
-
-# Stable, ordered buckets so the visual order doesn't reshuffle between
-# runs. Mirrors :mod:`selexprep.benchmark.figure_a` conventions.
+# Stable category order so the table rows don't reshuffle between runs.
 _STATUS_ORDER: tuple[str, ...] = ("HIGH", "MEDIUM", "LOW", "UNABLE_TO_INFER")
 _EXTRACTION_MODE_ORDER: tuple[str, ...] = (
     "BOTH_PRIMERS_SINGLE_READ",
@@ -60,9 +32,6 @@ _REQUIRED_ACTION_ORDER: tuple[str, ...] = (
     "MANUAL_PRIMERS_REQUIRED",
     "READ_MERGING_RECOMMENDED",
 )
-# Run-status order is loose; we sort by descending count at render time
-# and only fix the order of "OK" and the well-known failure modes when
-# they appear so the bar layout stays readable.
 _FETCH_OUTCOME_ORDER: tuple[str, ...] = (
     "OK",
     "SKIPPED_READ_MERGING_RECOMMENDED",
@@ -77,18 +46,13 @@ _FETCH_OUTCOME_ORDER: tuple[str, ...] = (
 )
 
 
-def _no_data_label(ax: Any, title: str) -> None:
-    ax.set_title(f"{title} (no data)")
-    ax.text(0.5, 0.5, "no data", ha="center", va="center", transform=ax.transAxes)
-
-
 def _ordered_categories(
     counts: dict[str, int], canonical_order: tuple[str, ...]
 ) -> tuple[list[str], list[int]]:
-    """Return (labels, values) following canonical order, then any extras alphabetically.
+    """Return (labels, values) in canonical order, then any extras alphabetically.
 
-    Extras can appear if the runner ever emits a status the canonical
-    order doesn't anticipate (a forward-compatibility safety net).
+    Extras can appear if the runner emits a status the canonical order doesn't
+    anticipate (a forward-compatibility safety net).
     """
     in_order = [k for k in canonical_order if k in counts]
     extras = sorted(k for k in counts if k not in set(canonical_order))
@@ -97,104 +61,24 @@ def _ordered_categories(
     return labels, values
 
 
-def _panel_a_fetch_outcomes(ax: Any, audit: dict[str, Any]) -> None:
-    """Panel A · Fetch outcomes · denominator = n_sampled."""
-    counts: dict[str, int] = audit.get("fetch_outcome_distribution", {})
-    n_sampled = int(audit.get("n_sampled", 0))
-    if not counts:
-        _no_data_label(ax, "A · Fetch outcomes")
-        return
-    labels, values = _ordered_categories(counts, _FETCH_OUTCOME_ORDER)
-    ax.bar(labels, values)
-    ax.set_title(f"A · Fetch outcomes\nN={n_sampled} sampled INSDC accessions")
-    ax.set_ylabel("rows")
-    ax.tick_params(axis="x", labelrotation=30)
-
-
-def _panel_b_inference_confidence(ax: Any, audit: dict[str, Any]) -> None:
-    """Panel B · Inference confidence · denominator = n_with_library_report."""
-    counts: dict[str, int] = audit.get("library_report_status_distribution", {})
-    n_lr = int(audit.get("n_with_library_report", 0))
-    if not counts:
-        _no_data_label(ax, "B · Inference confidence")
-        return
-    labels, values = _ordered_categories(counts, _STATUS_ORDER)
-    ax.bar(labels, values)
-    ax.set_title(
-        "B · Inference confidence (LibraryReport.status)\n"
-        f"N={n_lr} rows reaching LibraryReport (denominator excludes fetch failures)"
-    )
-    ax.set_ylabel("rows")
-
-
-def _panel_c_extraction_mode(ax: Any, audit: dict[str, Any]) -> None:
-    """Panel C · Extraction mode · denominator = n_with_library_report."""
-    counts: dict[str, int] = audit.get("extraction_mode_distribution", {})
-    n_lr = int(audit.get("n_with_library_report", 0))
-    if not counts:
-        _no_data_label(ax, "C · Extraction mode")
-        return
-    labels, values = _ordered_categories(counts, _EXTRACTION_MODE_ORDER)
-    ax.barh(labels, values)
-    ax.invert_yaxis()
-    ax.set_title(f"C · Extraction mode (honest accounting)\nN={n_lr} rows reaching LibraryReport")
-    ax.set_xlabel("rows")
-
-
-def _panel_d_required_action(ax: Any, audit: dict[str, Any]) -> None:
-    """Panel D · Required action + safe-failure overlay · denominator = n_with_library_report."""
-    counts: dict[str, int] = audit.get("required_action_distribution", {})
-    n_lr = int(audit.get("n_with_library_report", 0))
-    rate = float(audit.get("inference_safe_failure_rate", 0.0))
-    n_safe = int(audit.get("n_inference_safe_failures", 0))
-    if not counts:
-        _no_data_label(ax, "D · Required action")
-        return
-    labels, values = _ordered_categories(counts, _REQUIRED_ACTION_ORDER)
-    ax.barh(labels, values)
-    ax.invert_yaxis()
-    ax.set_title(f"D · Required action (workflow guidance)\nN={n_lr} rows reaching LibraryReport")
-    ax.set_xlabel("rows")
-    # Inference safe-failure rate as overlay annotation — the unique
-    # distinguishing metric vs known-primer pipelines, prominent in
-    # the panel that's most informative about it.
-    annotation = f"inference safe-failure rate: {rate:.0%} ({n_safe}/{n_lr})"
-    ax.text(
-        0.98,
-        0.05,
-        annotation,
-        ha="right",
-        va="bottom",
-        transform=ax.transAxes,
-        fontsize="small",
-        bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": "gray"},
-    )
-
-
 def _build_title(audit: dict[str, Any]) -> str:
-    """Build Figure B's suptitle string from a parsed audit JSON payload.
+    """Build the audit caption string from a parsed audit JSON payload.
 
-    Factored out for unit-testing (matplotlib figure state is awkward
-    to assert against; the title text is the user-visible artifact).
+    Factored out for unit-testing — the caption is the user-visible summary.
     """
     n_sampled = int(audit.get("n_sampled", 0))
     n_fetchable = int(audit.get("n_fetchable", 0))
     n_lr = int(audit.get("n_with_library_report", 0))
     catalog_version = audit.get("catalog_version") or "unspecified"
     sample_seed = audit.get("sample_seed", 42)
-    # layer-1: eligibility-stage counts. Empty when the
-    # audit was generated by a pre-aggregator (backward compat).
+    # layer-1 eligibility-stage counts (empty when generated by a pre-aggregator).
     n_catalog_classified = int(audit.get("n_catalog_classified", 0))
     n_catalog_eligible = int(audit.get("n_catalog_eligible", 0))
-    # full-catalog denominator (INSDC + passthrough). Zero
-    # when the aggregator was run pre-(no --catalog) so the title
-    # falls back to the layer-1 INSDC-only segment.
+    # full-catalog denominator (INSDC + passthrough); zero when run without --catalog.
     n_catalog_total = int(audit.get("n_catalog_total", 0))
     n_catalog_non_insdc = int(audit.get("n_catalog_non_insdc_passthrough", 0))
 
-    title_parts = [
-        "selexprep Figure B — public-corpus audit",
-    ]
+    title_parts = ["selexprep public-corpus audit"]
     if n_catalog_classified > 0:
         layer_1 = f"{n_catalog_eligible} of {n_catalog_classified} INSDC rows audit-eligible"
         if n_catalog_total > 0:
@@ -209,54 +93,67 @@ def _build_title(audit: dict[str, Any]) -> str:
     return "  ·  ".join(title_parts)
 
 
-def plot_figure_b(audit_json: Path, outdir: Path) -> tuple[Path, Path]:
-    """Render the four-panel Figure B.
+def _dist_table(title: str, counts: dict[str, int], order: tuple[str, ...]) -> list[str]:
+    """Markdown lines for one distribution table (heading + 2-column table)."""
+    labels, values = _ordered_categories(counts, order)
+    lines = [f"**{title}**", "", "| Category | Rows |", "|---|---|"]
+    if labels:
+        lines += [f"| {label} | {value} |" for label, value in zip(labels, values, strict=True)]
+    else:
+        lines.append("| (no data) | 0 |")
+    lines.append("")
+    return lines
 
-    Parameters
-    ----------
-    audit_json
-        Path to an ``audit_metrics.json`` produced by
-        :func:`selexprep.benchmark.corpus_audit.write_audit_json`.
-    outdir
-        Directory to write ``figure_b.{pdf,png}`` into.
 
-    Returns
-    -------
-    A tuple ``(pdf_path, png_path)``.
-    """
+def emit_audit_table(audit_json: Path, outdir: Path) -> Path:
+    """Write ``table_audit.md`` — the Tier 2 corpus-audit summary. Returns its path."""
     audit = json.loads(audit_json.read_text(encoding="utf-8"))
     outdir.mkdir(parents=True, exist_ok=True)
 
-    fig, axes = plt.subplots(2, 2, figsize=(13, 11), dpi=150)
-    _panel_a_fetch_outcomes(axes[0, 0], audit)
-    _panel_b_inference_confidence(axes[0, 1], audit)
-    _panel_c_extraction_mode(axes[1, 0], audit)
-    _panel_d_required_action(axes[1, 1], audit)
+    n_lr = int(audit.get("n_with_library_report", 0))
+    rate = float(audit.get("inference_safe_failure_rate", 0.0))
+    n_safe = int(audit.get("n_inference_safe_failures", 0))
 
-    fig.suptitle(_build_title(audit), fontsize=11)
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    lines = [
+        "# Supplementary Table — public-corpus audit",
+        "",
+        f"_{_build_title(audit)}_",
+        "",
+    ]
+    lines += _dist_table(
+        "Fetch outcomes (denominator = sampled accessions)",
+        audit.get("fetch_outcome_distribution", {}),
+        _FETCH_OUTCOME_ORDER,
+    )
+    lines += _dist_table(
+        "Inference confidence — LibraryReport.status (denominator = rows with a LibraryReport)",
+        audit.get("library_report_status_distribution", {}),
+        _STATUS_ORDER,
+    )
+    lines += _dist_table(
+        "Extraction mode (rows with a LibraryReport)",
+        audit.get("extraction_mode_distribution", {}),
+        _EXTRACTION_MODE_ORDER,
+    )
+    lines += _dist_table(
+        "Required action (rows with a LibraryReport)",
+        audit.get("required_action_distribution", {}),
+        _REQUIRED_ACTION_ORDER,
+    )
+    lines += [f"**Inference safe-failure rate:** {rate:.0%} ({n_safe}/{n_lr})", ""]
 
-    pdf_path = outdir / "figure_b.pdf"
-    png_path = outdir / "figure_b.png"
-    fig.savefig(pdf_path, bbox_inches="tight")
-    fig.savefig(png_path, bbox_inches="tight")
-    plt.close(fig)
-    return pdf_path, png_path
-
-
-# ---------------------------------------------------------------------------
-# CLI entry (called by the audit Snakefile's figure_b rule)
-# ---------------------------------------------------------------------------
+    out_path = outdir / "table_audit.md"
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+    return out_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Render Figure B.")
+    p = argparse.ArgumentParser(description="Emit the Tier 2 corpus-audit summary table.")
     p.add_argument("--audit", required=True, type=Path)
     p.add_argument("--outdir", required=True, type=Path)
     args = p.parse_args(argv)
-    pdf, png = plot_figure_b(args.audit, args.outdir)
-    print(f"wrote {pdf}")
-    print(f"wrote {png}")
+    out_path = emit_audit_table(args.audit, args.outdir)
+    print(f"wrote {out_path}")
     return 0
 
 
@@ -264,4 +161,4 @@ if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
 
 
-__all__ = ["main", "plot_figure_b"]
+__all__ = ["emit_audit_table", "main"]

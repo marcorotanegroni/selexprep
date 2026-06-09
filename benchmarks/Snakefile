@@ -51,8 +51,7 @@ _GROUND_TRUTH_DIR = _BENCHMARKS_DIR
 
 rule all:
     input:
-        OUTROOT + "/figure_a.pdf",
-        OUTROOT + "/figure_a.png",
+        OUTROOT + "/table_1.md",
         OUTROOT + "/metrics.json",
 
 
@@ -164,10 +163,10 @@ rule compute_metrics:
 
 rule figure_a:
     input:
-        OUTROOT + "/metrics.json",
+        metrics=OUTROOT + "/metrics.json",
+        ground_truth=GROUND_TRUTH,
     output:
-        pdf=OUTROOT + "/figure_a.pdf",
-        png=OUTROOT + "/figure_a.png",
+        OUTROOT + "/table_1.md",
     shell:
         "python -m selexprep.benchmark.figure_a "
-        "--metrics {input} --outdir {OUTROOT}"
+        "--metrics {input.metrics} --ground-truth {input.ground_truth} --outdir {OUTROOT}"
