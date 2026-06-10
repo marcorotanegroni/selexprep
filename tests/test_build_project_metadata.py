@@ -146,3 +146,60 @@ def test_bundled_curated_files_are_valid() -> None:
     assert all(r["study_type"] == "aptamer_selection" for r in proj), (
         "verified rows are all aptamer selections"
     )
+
+
+def _write_round(acc_dir: Path, round_name: str, reads: list[int]) -> None:
+    import pandas as pd
+
+    d = acc_dir / round_name
+    d.mkdir(parents=True)
+    pd.DataFrame({"sequence": [f"S{i}" for i in range(len(reads))], "reads": reads}).to_parquet(
+        d / "counts.parquet", index=False
+    )
+
+
+def test_load_trajectory_from_run_outputs(tmp_path: Path) -> None:
+    """Trajectory recomputed from round_*/counts.parquet (the `selexprep run` layout)."""
+    acc_dir = tmp_path / "PRJTEST"
+    _write_round(acc_dir, "round_00", [1, 1, 2])  # 3 unique, 4 reads, 2 singletons
+    _write_round(acc_dir, "round_01", [10, 5])  # 2 unique, 15 reads, 0 singletons
+    _write_round(acc_dir, "round_unknown", [3])  # string-labelled round sorts last
+
+    traj = bpm.load_trajectory(tmp_path, "PRJTEST")
+    assert traj is not None
+    assert [r["round"] for r in traj] == [0, 1, "unknown"]  # numeric ascending, label last
+    assert traj[0]["n_reads"] == 4 and traj[0]["n_unique"] == 3
+    assert traj[0]["singleton_frac"] == 2 / 3
+    assert traj[1]["singleton_frac"] == 0.0
+
+
+def test_load_trajectory_absent_is_none(tmp_path: Path) -> None:
+    assert bpm.load_trajectory(tmp_path, "NOT_RUN") is None  # no per-round counts -> rounds: null
+
+
+def test_write_json_preserves_attached_trajectory(tmp_path: Path) -> None:
+    rows = bpm.build_rows(
+        catalog={
+            "PRJX": dict.fromkeys(
+                (
+                    "study_title",
+                    "protein_target",
+                    "target_organism",
+                    "n_rounds_declared",
+                    "paper_doi",
+                    "paper_pmid",
+                ),
+                "",
+            )
+        },
+        descriptors={},
+        project_ann={},
+        catalog_ann={},
+        oa={},
+    )
+    rows[0]["rounds"] = [{"round": 0, "n_reads": 4, "n_unique": 3, "singleton_frac": 0.5}]
+    import json
+
+    path = tmp_path / "m.json"
+    bpm.write_json(rows, path)
+    assert json.loads(path.read_text(encoding="utf-8"))[0]["rounds"][0]["n_reads"] == 4
