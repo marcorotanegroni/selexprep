@@ -1,0 +1,240 @@
+accession	study_type	target	selection_format	n_rounds	paper_doi
+PRJDB19098	aptamer_selection	Recombinant human FGF-9	HT-SELEX		
+PRJDB19137	aptamer_selection	Recombinant mouse ST2	HT-SELEX		
+PRJDB19138	aptamer_selection	Recombinant human FGF-9	HT-SELEX		
+PRJDB19139	aptamer_selection	Recombinant human LH	HT-SELEX		
+PRJDB19140	aptamer_selection	Recombinant human LH	HT-SELEX		
+PRJDB19141	aptamer_selection	Recombinant human LH	HT-SELEX		
+PRJDB40016	aptamer_selection	Recombinant RBD-His protein	HT-SELEX		
+PRJDB40017	aptamer_selection	Recombinant rhNR4A1	HT-SELEX		
+PRJDB40584	aptamer_selection	Staphylococcus aureus (MRSA)			
+PRJDB7696	tf_ht_selex	Smad3 / Smad4	CASTing		
+PRJEB111361	aptamer_selection	Plasmodium falciparum lactate dehydrogenase (Pf-LDH)	SELEX		
+PRJEB14550	tf_ht_selex	Human transcription factors (batch)	HT-SELEX		
+PRJEB14744	tf_ht_selex	Human transcription factors (batch)	HT-SELEX		
+PRJEB14923	tf_ht_selex	Human C2H2 zinc finger proteins (batch)	HT-SELEX		
+PRJEB20112	method_or_other		SELEX		
+PRJEB20652	tf_ht_selex	Transcription factor (unnamed)	HT-SELEX		
+PRJEB22684	tf_ht_selex	Transcription factors on nucleosomal DNA (batch)	HT-SELEX		
+PRJEB25690	method_or_other		HT-SELEX		
+PRJEB25907	tf_ht_selex	Human RNA binding proteins (batch)	HTR-SELEX		
+PRJEB28303	aptamer_selection	Clear cell renal cell carcinoma (ccRCC) cells	differential cell-SELEX		
+PRJEB29730	tf_ht_selex	Ciona robusta transcription factors (batch)	HT-SELEX		
+PRJEB38961	tf_ht_selex	Sall4 (C2H2 zinc finger domain)	HT-SELEX		
+PRJEB46967	method_or_other		in vitro selection		
+PRJEB47428	tf_ht_selex	23 RNA binding proteins (batch)	HTR-SELEX		
+PRJEB48966	tf_ht_selex	4 C2H2 zinc finger transcription factors (batch)	HT-SELEX; GHT-SELEX		
+PRJEB49150	tf_ht_selex	NACC1, NACC2, BEND3 (BEN domain)	HT-SELEX		
+PRJEB50172	method_or_other	Rho helicase	SELEX		
+PRJEB51212	tf_ht_selex	Sall4 (C2H2 zinc finger domains)	HT-SELEX		
+PRJEB51473	tf_ht_selex	SALL4 (DNA binding domain, WT + mutant)	HT-SELEX		
+PRJEB61115	tf_ht_selex	Human transcription factors (batch)	GHT-SELEX		
+PRJEB62756	tf_ht_selex	FOXL2 (+ C134W variant)	SELEX (ssRNA + dsDNA)		
+PRJEB65950	tf_ht_selex	Transcription factors (batch)	HT-SELEX		
+PRJEB66722	tf_ht_selex	Transcription factors (batch)	HT-SELEX		
+PRJEB75580	tf_ht_selex	ThPOK / ZBTB7B (WT + K360N)	HT-SELEX		
+PRJEB76622	tf_ht_selex	Human transcription factors (batch)	GHT-SELEX		
+PRJEB79572	aptamer_selection	Enzyme inhibitors (unspecified)	modified-aptamer SELEX		
+PRJEB88389	method_or_other	Rho helicases (E. coli and B. subtilis)	Helicase-SELEX		
+PRJEB98610	aptamer_selection	Fluorogenic dye (light-up aptamer)			
+PRJEB9897	tf_ht_selex	Transcription factors (batch)	SELMAP (microfluidic SELEX)		
+PRJNA1013112	method_or_other		SELEX		
+PRJNA1013173	aptamer_selection	Human PD-L1	SELEX		
+PRJNA1045519	method_or_other				
+PRJNA1061493	aptamer_selection	Levofloxacin	SELEX		
+PRJNA1064871	aptamer_selection	Aspergillus niger	whole-cell SELEX		
+PRJNA1066781	method_or_other				
+PRJNA1067620	tf_ht_selex	Sox and POU transcription factors	SELEX		
+PRJNA1068659	aptamer_selection	Cocaine	SELEX		
+PRJNA1090029	method_or_other				
+PRJNA1091700	method_or_other	FnCas12a			
+PRJNA1113703	tf_ht_selex	FOXC2	SELEX-seq		
+PRJNA1119072	aptamer_selection	Mouse IgG1			
+PRJNA1121376	method_or_other				
+PRJNA1122221	tf_ht_selex	PARP1, MeCP2	RAPID-SELEX		
+PRJNA1151868	method_or_other		RaPID (mRNA display)		
+PRJNA1159731	tf_ht_selex	SigA (M. tuberculosis)	SELEX		
+PRJNA1176306	method_or_other		SELEX		
+PRJNA1188194	method_or_other	Morphine and apixaban	Motif-SELEX		
+PRJNA1206477	method_or_other		CRISPR-Hybrid directed evolution		
+PRJNA1212714	method_or_other	PKR (protein kinase R)	SELEX (circRNA)		
+PRJNA1220334	method_or_other				
+PRJNA1221092	aptamer_selection	eIF4A	SELEX		
+PRJNA1244358	tf_ht_selex	Transcription factor mutants (batch)	HT-SELEX		
+PRJNA1244796	tf_ht_selex	Transcription factors on nucleosomes (batch)	SELEX-seq		
+PRJNA1246497	aptamer_selection	eEF1	SELEX		
+PRJNA1308116	aptamer_selection	Gardnerella vaginalis (bacterial vaginosis)			
+PRJNA1346116	method_or_other				
+PRJNA1376488	aptamer_selection	SARS-CoV-2	SELEX		
+PRJNA1390424	aptamer_selection				
+PRJNA1406499	method_or_other	DNA gyrase			
+PRJNA1467126	aptamer_selection	Insulin receptor	modified-aptamer SELEX (single-round)		
+PRJNA221564	tf_ht_selex	CstF64, CstF64t	SELEX		
+PRJNA251822	tf_ht_selex	SUVR5	SELEX		
+PRJNA315881	aptamer_selection	Interleukin 10 receptor alpha (IL-10RA)			
+PRJNA321551	aptamer_selection	CCR7	cell-SELEX	9	
+PRJNA360902	tf_ht_selex	Ciona robusta transcription factors (batch)	SELEX-seq		
+PRJNA379022	tf_ht_selex	Androgen receptor, glucocorticoid receptor	SELEX-seq		
+PRJNA385825	aptamer_selection	RNA polymerase (E. coli)	SELEX		
+PRJNA450989	aptamer_selection	IL4-treated MSC2 cell line	cell-SELEX		
+PRJNA474677	tf_ht_selex	LIN28	SELEX		
+PRJNA480721	method_or_other				
+PRJNA491840	method_or_other	LAGLIDADG homing endonucleases			
+PRJNA529538	aptamer_selection	Small molecules (class-specific)	SELEX		
+PRJNA531690	aptamer_selection	VCaP prostate cancer cell exosomes	cell-SELEX		
+PRJNA547810	method_or_other	CRISPR enzymes			
+PRJNA564266	aptamer_selection	Salmonella paratyphi A	whole-cell SELEX		
+PRJNA600132	method_or_other	Recombinant histone octamers (human, P. falciparum, E. cuniculi)	NGS-SELEX		
+PRJNA604410	tf_ht_selex	DDX43 KH domain	SELEX		
+PRJNA609240	tf_ht_selex	SEPALLATA3 (SEP3)	SELEX		
+PRJNA616423	aptamer_selection	RNA polymerase II	SELEX		
+PRJNA633039	tf_ht_selex	SRSF1 (RRM1)	SELEX		
+PRJNA672779	method_or_other				
+PRJNA688234	aptamer_selection	Coagulation Factor XIII	SELEX		
+PRJNA728693	method_or_other		RE-SELEX		
+PRJNA729962	tf_ht_selex	Nuclear receptor proteins (batch)	SELEX		
+PRJNA741127	tf_ht_selex	Fkh1, Fkh2, Hcm1, Fhl1	SELEX-seq		
+PRJNA786208	method_or_other	beta-catenin			
+PRJNA830749	aptamer_selection	NDM-1	SELEX (masked)		
+PRJNA847751	method_or_other				
+PRJNA847930	method_or_other				
+PRJNA854957	method_or_other				
+PRJNA862494	tf_ht_selex	Coronavirus nucleocapsid protein	SELEX		
+PRJNA866368	tf_ht_selex	PTBP1	SELEX		
+PRJNA86771	method_or_other				
+PRJNA887057	method_or_other	beta-catenin			
+PRJNA887059	method_or_other	beta-catenin			
+PRJNA905424	method_or_other				
+PRJNA911774	method_or_other				
+PRJNA916521	method_or_other	FOXM1	AptaChC-seq		
+PRJNA932049	aptamer_selection	Pyoverdine	SELEX (2'F-RNA)		
+PRJNA935703	aptamer_selection	Pyoverdine (Pf-5)	SELEX		
+PRJNA947642	aptamer_selection	Small molecules (multiple)	SELEX		
+PRJNA952942	aptamer_selection	ATP, glucose	Capture-SELEX		
+PRJNA957781	tf_ht_selex	AP-1 (homodimer)	SELEX-seq		
+PRJNA975735	aptamer_selection	SARS-CoV-2	SELEX		
+figshare:1029831	aptamer_selection	Glycosylated HA1 of H5 avian influenza virus			10.1371/journal.pone.0097574
+figshare:1057388	aptamer_selection	Streptavidin			10.1371/journal.pone.0099964
+figshare:1085380	aptamer_selection	c-Jun (DNA-bound)			10.1371/journal.pone.0101015
+figshare:1088113	method_or_other	Thrombin			10.1371/journal.pone.0100572
+figshare:1163744	aptamer_selection	Soybean mosaic virus (SMV)			10.1371/journal.pone.0106805
+figshare:121169	aptamer_selection	Vascular smooth muscle cells (A7r5)	cell-SELEX		10.1371/journal.pone.0043836
+figshare:121661	tf_ht_selex	PapX (putative transcription factor)	TFAST		10.1371/journal.pone.0042761
+figshare:126214	aptamer_selection	Lup an 1 (lupin allergen)			10.1371/journal.pone.0035253
+figshare:1278496	aptamer_selection	Francisella tularensis			10.1371/journal.pone.0114622
+figshare:12850622	aptamer_selection	Human PD1	Hybrid SELEX		10.1080/08820139.2020.1744639
+figshare:1286507	aptamer_selection	Trypanosoma cruzi TESA	TESA-SELEX	21	10.1371/journal.pntd.0003451
+figshare:130054	method_or_other				10.1371/journal.pone.0029604
+figshare:131490	method_or_other		microfluidic SELEX		10.1371/journal.pone.0027051
+figshare:14057938	aptamer_selection	L-Serine (root exudate)			10.1021/acs.jafc.0c06796
+figshare:15016342	aptamer_selection	Spherical gold nanoparticles	CompELS		10.1021/acs.langmuir.1c01053
+figshare:17135972	aptamer_selection	Growth differentiation factor 9 (GDF9)			10.26686/wgtn.17135972.v1
+figshare:17207107	method_or_other		CE-SELEX		10.1021/acs.analchem.1c03661
+figshare:17207110	method_or_other		CE-SELEX		10.1021/acs.analchem.1c03661
+figshare:19376361	aptamer_selection	Disease biomarker (unspecified)			10.1021/acsomega.2c00769
+figshare:19753851	aptamer_selection	Patulin			10.1021/acs.jafc.2c01591
+figshare:21158899	aptamer_selection	Nonylphenol			10.26686/wgtn.21158899
+figshare:21234387	method_or_other				10.1371/journal.pcbi.1010561
+figshare:21234402	method_or_other				10.1371/journal.pcbi.1010561
+figshare:2161948	aptamer_selection	HBsAg (hepatitis B surface antigen)	MB-SELEX		10.1021/acsami.5b01180
+figshare:2168464	aptamer_selection	Small drugs (small molecules)	Capture-SELEX		10.1021/acscombsci.5b00023
+figshare:2169673	aptamer_selection	Metastatic cancer cells	cell-SELEX		10.1021/acs.analchem.5b00637
+figshare:2216530	aptamer_selection	Anti-zearalenone monoclonal antibody			10.1021/jf503733g
+figshare:22339771	method_or_other				10.26686/wgtn.22339771
+figshare:2242786	aptamer_selection	T-2 toxin	GO-SELEX		10.1021/jf5032058
+figshare:22770526	aptamer_selection	Aflatoxin M1			10.1021/acs.jafc.3c01586
+figshare:2351575	aptamer_selection	rhVEGF165	CE-SELEX		10.1021/ac401875h
+figshare:237466	aptamer_selection	AGR2			10.1371/journal.pone.0046393
+figshare:2428999	aptamer_selection	Salmonella typhimurium	whole-cell SELEX		10.1021/jf400767d
+figshare:24367699	aptamer_selection	Mammalian prion proteins			
+figshare:24560508	method_or_other				10.1021/jacs.3c09497
+figshare:2471755	aptamer_selection	Bacteria			10.1021/ac302902s
+figshare:2481958	method_or_other				10.1021/ac301899h
+figshare:2482003	aptamer_selection	Salmonella enteritidis			10.1021/ac302217u
+figshare:24969538	aptamer_selection	Guanine, xanthine, hypoxanthine, adenine			10.1021/acschembio.3c00660
+figshare:26509028	method_or_other	Small molecules	nuclease-assisted SELEX		10.1021/jacs.4c00748
+figshare:27201197	method_or_other				10.1021/acs.analchem.4c02984
+figshare:28161287	aptamer_selection	Viral RNA frameshift element	SELEX (2'F)		10.1021/acs.biochem.4c00606
+figshare:28785430	method_or_other	Small molecules			10.1021/acs.analchem.5c00251
+figshare:29236055	method_or_other	Small molecules			10.1021/acs.analchem.4c04603
+figshare:29595120	aptamer_selection	Glioblastoma cells	3D cell-SELEX		10.1021/acsbiomaterials.5c00504
+figshare:29756624	aptamer_selection	C-type lectin-like molecule-1 (CLL-1/CLEC12A)			10.3389/fbioe.2025.1601453
+figshare:30423278	aptamer_selection	PSMA	Baited SELEX		10.1021/jacs.5c13307
+figshare:31282718	method_or_other				10.1021/acs.analchem.5c04084
+figshare:31335535	aptamer_selection	Phalloidin			10.1021/acs.analchem.5c07072
+figshare:3155101	aptamer_selection	Estrogen receptor alpha (ER-alpha)			10.1371/journal.pone.0153001
+figshare:3188482	aptamer_selection	Salmonella enterica Typhimurium	whole-cell SELEX		10.1021/acscombsci.5b00123
+figshare:3239092	method_or_other		non-SELEX		10.1021/ja056943j
+figshare:3353293	method_or_other		CE		10.1021/ja037832s
+figshare:4675996	aptamer_selection	Clenbuterol hydrochloride	immobilized-library SELEX		10.1021/acs.jafc.6b04951
+figshare:5195515	aptamer_selection	ATP	Apta-Seq (genomic SELEX)		10.1021/acschembio.7b00001
+figshare:5430670	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430703	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430718	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430736	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430751	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430784	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:5430796	aptamer_selection	LAG3	HT-SELEX		10.1371/journal.pone.0185169
+figshare:6023456	aptamer_selection	RNA polymerase II	genomic SELEX		10.1371/journal.pone.0194438
+figshare:7018646	aptamer_selection	Prostate cancer			10.1021/acsomega.8b01464
+figshare:7069022	aptamer_selection	Saxitoxin, domoic acid, tetrodotoxin	MB-SELEX		10.1021/acs.jafc.8b02771
+figshare:7146335	method_or_other		CompELS		10.1021/acscombsci.8b00048
+figshare:7228433	aptamer_selection	Atrazine (herbicide)			10.1021/acsomega.8b01859
+figshare:771228	method_or_other		STACS		10.1371/journal.pone.0071798
+figshare:771239	method_or_other		cell-SELEX		10.1371/journal.pone.0071798
+figshare:7972784	aptamer_selection	Plasmodium falciparum HMGB1 HMG-box			10.1371/journal.pone.0211756
+figshare:8118461	aptamer_selection	Histamine			10.1021/acs.analchem.9b00075
+figshare:902248	aptamer_selection	Trypanosoma cruzi TESA	TESA-SELEX		10.1371/journal.pntd.0002650
+figshare:976460	method_or_other	Human soluble growth factors	cell-SELEX		10.1371/journal.pone.0093052
+figshare:986154	aptamer_selection	E-selectin (P-selectin cross-reactivity)			10.1371/journal.pone.0093173
+zenodo:10040600	not_selex				
+zenodo:10612073	not_selex				
+zenodo:1168878	method_or_other				10.1021/acs.analchem.7b02102
+zenodo:13684933	not_selex				
+zenodo:13995669	method_or_other	Burkholderia glumae virulence protein			
+zenodo:14272347	method_or_other	Steroids (small-molecule family)			
+zenodo:14272647	method_or_other	Steroids (small-molecule family)			
+zenodo:14272757	method_or_other	Steroids (small-molecule family)			
+zenodo:14281818	not_selex				
+zenodo:14598631	method_or_other	Antibiotics			10.3390/s22103684
+zenodo:14598734	method_or_other	Ampicillin			10.3390/CSAC2023-14875
+zenodo:14599255	method_or_other	Oxytetracycline			10.3390/biom13091363
+zenodo:14599416	method_or_other	Tetracycline			10.3390/IECB2023-14597
+zenodo:14689104	method_or_other	Hepatitis C virus RNA			10.2174/1381612043382675
+zenodo:15065216	not_selex				
+zenodo:15294875	not_selex				
+zenodo:15555251	tf_ht_selex	Transcription factors (Codebook-MEX, batch)			
+zenodo:15619991	tf_ht_selex	Transcription factors (Codebook, batch)	GHT-SELEX		
+zenodo:15620252	tf_ht_selex	Transcription factors (Codebook, batch)	HT-SELEX		
+zenodo:15733619	method_or_other				
+zenodo:15781226	method_or_other				
+zenodo:15831294	aptamer_selection	Kavain			
+zenodo:17311531	aptamer_selection	Vancomycin			10.17811/ruo_datasets.80707
+zenodo:17432573	not_selex				10.1016/j.xpro.2024.103433
+zenodo:17533332	not_selex				
+zenodo:18199595	method_or_other	Ochratoxin A (OTA)			
+zenodo:18719585	method_or_other				
+zenodo:19109198	method_or_other	Small molecules and peptides			
+zenodo:19223322	not_selex				10.1016/j.aca.2024.342325
+zenodo:19432013	method_or_other		CompELS		
+zenodo:19547634	method_or_other				
+zenodo:3634978	not_selex				
+zenodo:4450582	tf_ht_selex	Cyp33 (PPIE)	RNA SELEX		
+zenodo:4938913	method_or_other	Rotavirus genome segments			10.5061/dryad.vp312
+zenodo:53137	method_or_other	Dopamine			10.1039/c5an00480b
+zenodo:5707360	method_or_other	Cancer cells	cell-SELEX		10.36811/ijho.2021.110023
+zenodo:6332928	method_or_other	Testosterone			10.1016/j.talanta.2021.123121
+zenodo:6341687	method_or_other	Thrombin			
+zenodo:6586738	not_selex		HT-SELEX		
+zenodo:6587005	tf_ht_selex	bZIP dimers			10.7554/eLife.19272
+zenodo:6958314	aptamer_selection	HMGB1 (Plasmodium falciparum)			10.1371/journal.pone.0211756
+zenodo:7350428	method_or_other	Ochratoxin A (OTA)			
+zenodo:7572933	method_or_other				
+zenodo:7573218	method_or_other	Blood biomarkers			
+zenodo:7629808	method_or_other				
+zenodo:7922963	method_or_other				
+zenodo:7991884	method_or_other	Tetracycline			
+zenodo:8106594	method_or_other	Human myeloperoxidase (MPO)	ProSELEX		10.1038/s41557-023-01207-z
+zenodo:8253891	not_selex				
+zenodo:8330867	method_or_other	Theophylline			
+zenodo:8387047	method_or_other				

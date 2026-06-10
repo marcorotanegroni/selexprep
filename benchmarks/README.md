@@ -159,6 +159,34 @@ Exclusions split into submission-metadata mis-labels + gSELEX/genomic-fragment
 variants; per-row reason strings live in
 `selexprep.catalog.rebuild.MANUAL_EXCLUSIONS`.
 
+## Project metadata table
+
+`build_project_metadata.py` emits a static, browsable table of *experiment
+characteristics* — one row per catalog deposit — joined so each source owns one
+slice of the truth and they never drift:
+
+```bash
+uv run python -m benchmarks.build_project_metadata        # hits OpenAlex; --no-network caps tier at ABSTRACT
+```
+
+Outputs: `project_metadata.csv` (flat) + `project_metadata.json` (with a
+reserved `rounds` slot for the future per-round trajectory). Every row carries
+two honesty signals so a reader always knows how a value was obtained:
+
+- **`curation_level`** — `verified` (the 11 benchmark deposits, primer-checked
+  against the paper) / `extracted` (target, `study_type`, format derived from the
+  ENA/DDBJ or figshare/Zenodo **title/abstract only — review-grade, not
+  full-paper-verified**) / `none`.
+- **`metadata_tier`** — `RECORD_ONLY` (no linked paper) / `ABSTRACT` / `FULL_TEXT`
+  (open access). Paper DOIs for figshare/Zenodo deposits are resolved from their
+  host APIs (the catalog rarely stores them); OA status from OpenAlex.
+
+`study_type` ∈ {`aptamer_selection`, `tf_ht_selex`, `method_or_other`,
+`not_selex`}. The curated source columns live in `project_annotations.tsv`
+(verified 11) and `catalog_annotations.tsv` (everything else); the OpenAlex /
+host-API lookups are cached in git-ignored `.oa_cache.json` /
+`.discovery_doi_cache.json`.
+
 ## Reproducing
 
 Snakemake is in the optional `bench` extra:

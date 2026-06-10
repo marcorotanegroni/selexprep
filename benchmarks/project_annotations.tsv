@@ -1,0 +1,12 @@
+accession	study_type	target	selection_format	counter_selection
+PRJEB22637	aptamer_selection	Cells over-expressing endothelin type B receptor (ETBR); ligand later identified as Annexin A2	cell-SELEX	mock cells (negative selection)
+PRJEB28411	aptamer_selection	Clear-cell renal cell carcinoma (ccRCC) RCC-MF cells	differential cell-SELEX	RC-124 non-malignant kidney cells
+PRJDB9110	aptamer_selection	Human transglutaminase 2 (TG2)	HT-SELEX	
+PRJDB9111	aptamer_selection	Human integrin alpha-V beta-3	HT-SELEX	
+PRJEB70964	aptamer_selection	Alpha-synuclein fibrillar polymorphs		
+PRJNA990511	aptamer_selection	African swine fever virus (ASFV) p30 protein	MB-SELEX (magnetic-bead)	
+PRJNA883192	aptamer_selection	Eosinophil peroxidase (EPX)		
+PRJNA615076	aptamer_selection	Enterococcus faecalis DSM-20478 (whole cells)	whole-cell SELEX	
+PRJNA809588	aptamer_selection	Human pancreatic islet cells	cell-SELEX; toggle-SELEX	
+PRJNA1395820	aptamer_selection	Divalent cobalt ion (Co2+)	HM-SELEX; GO-SELEX	
+PRJEB62495	aptamer_selection	Anaplasma phagocytophilum (infected-cell extract)	cell-SELEX (infected-cell extract)	

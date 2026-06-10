@@ -60,6 +60,10 @@ tmp/
 benchmarks/screen_read_state.py
 benchmarks/*_screen.tsv
 
+# Project-metadata builder API caches (regenerable from OpenAlex / figshare / Zenodo)
+benchmarks/.oa_cache.json
+benchmarks/.discovery_doi_cache.json
+
 # Example run artifacts — notebooks self-generate demo/, run_public_accession.sh writes demo_public/
 examples/**/demo*/
 .ipynb_checkpoints/
