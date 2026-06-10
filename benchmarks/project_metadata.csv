@@ -1,0 +1,306 @@
+accession,study_type,target,target_class,chemistry,n_random,selection_format,counter_selection,target_organism,n_rounds,study_title,paper_doi,paper_pmid,paper_linked,paper_oa,paper_oa_url,metadata_tier,curation_level
+PRJDB19098,aptamer_selection,Recombinant human FGF-9,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant human FGF-9,,,false,,,RECORD_ONLY,extracted
+PRJDB19137,aptamer_selection,Recombinant mouse ST2,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant mouse ST2,,,false,,,RECORD_ONLY,extracted
+PRJDB19138,aptamer_selection,Recombinant human FGF-9,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant human FGF-9 with 30mer library,,,false,,,RECORD_ONLY,extracted
+PRJDB19139,aptamer_selection,Recombinant human LH,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant human LH,,,false,,,RECORD_ONLY,extracted
+PRJDB19140,aptamer_selection,Recombinant human LH,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant human LH with 3% doped library,,,false,,,RECORD_ONLY,extracted
+PRJDB19141,aptamer_selection,Recombinant human LH,,,,HT-SELEX,,synthetic construct,,HT-SELEX against reombinant human LH with 8% doped library,,,false,,,RECORD_ONLY,extracted
+PRJDB40016,aptamer_selection,Recombinant RBD-His protein,,,,HT-SELEX,,,,HT-SELEX against recombinant RBD-His protein,,,false,,,RECORD_ONLY,extracted
+PRJDB40017,aptamer_selection,Recombinant rhNR4A1,,,,HT-SELEX,,,,HT-SELEX against recombinant rhNR4A1,,,false,,,RECORD_ONLY,extracted
+PRJDB40584,aptamer_selection,Staphylococcus aureus (MRSA),,,,,,synthetic construct,,Selection of High Sensitivity Aptamers as the Binding Molecule Equipage on gFET-Based Aptasensors for the Quantification of Staphylococcus aureus (MRSA),,,false,,,RECORD_ONLY,extracted
+PRJDB7696,tf_ht_selex,Smad3 / Smad4,,,,CASTing,,Homo sapiens,,CASTing analysis of Smad3 or Smad4 overexpressed in 293T cells,,,false,,,RECORD_ONLY,extracted
+PRJDB9110,aptamer_selection,Human transglutaminase 2 (TG2),protein,RNA,30,HT-SELEX,,synthetic construct,,HT-SELEX against human transglutaminase 2,10.1093/nar/gkaa484,32537639,true,true,https://doi.org/10.1093/nar/gkaa484,FULL_TEXT,verified
+PRJDB9111,aptamer_selection,Human integrin alpha-V beta-3,protein,RNA,40,HT-SELEX,,synthetic construct,,HT-SELEX against human intergrin alphaV beta3,10.1093/nar/gkaa484,32537639,true,true,https://doi.org/10.1093/nar/gkaa484,FULL_TEXT,verified
+PRJEB111361,aptamer_selection,Plasmodium falciparum lactate dehydrogenase (Pf-LDH),,,,SELEX,,synthetic construct,,High-throughput sequencing of SELEX rounds to identify enriched aptamer sequences.,,,false,,,RECORD_ONLY,extracted
+PRJEB14550,tf_ht_selex,Human transcription factors (batch),,,,HT-SELEX,,synthetic construct,,MODER: Efficient discovery of the modular structure of monomeric and dimeric transcription factor binding motifs,,,false,,,RECORD_ONLY,extracted
+PRJEB14744,tf_ht_selex,Human transcription factors (batch),,,,HT-SELEX,,synthetic construct,,"Additional sequencing coverage for the study by Jolma et al 2013, “DNA-binding specificities of human Transcription factors. This new deeper sequencing data has been used in the publication ""Transcription factor family‐specific DNA shape readout revealed by quantitative specificity models”",,,false,,,RECORD_ONLY,extracted
+PRJEB14923,tf_ht_selex,Human C2H2 zinc finger proteins (batch),,,,HT-SELEX,,synthetic construct,,Multiparameter functional diversity of human C2H2 zinc finger proteins,,,false,,,RECORD_ONLY,extracted
+PRJEB20112,method_or_other,,,,,SELEX,,synthetic construct,,Background sequencing data for SELEX,,,false,,,RECORD_ONLY,extracted
+PRJEB20652,tf_ht_selex,Transcription factor (unnamed),,,,HT-SELEX,,synthetic construct,,Here we show how one transcription factor bind to two distinct motifs with similar binding affinities.,,,false,,,RECORD_ONLY,extracted
+PRJEB22637,aptamer_selection,Cells over-expressing endothelin type B receptor (ETBR); ligand later identified as Annexin A2,cell,2'-F-Py RNA,50,cell-SELEX,mock cells (negative selection),synthetic construct,,Cell-SELEX identify an aptamer named ACE4 against the Annexin A2,10.1371/journal.pone.0087002,24489826,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0087002&type=printable,FULL_TEXT,verified
+PRJEB22684,tf_ht_selex,Transcription factors on nucleosomal DNA (batch),,,,HT-SELEX,,synthetic construct,,Analysis of transcription factor binding on nucleosomal DNA,,,false,,,RECORD_ONLY,extracted
+PRJEB25690,method_or_other,,,,,HT-SELEX,,Homo sapiens,,Accurate and Sensitive Quantification of Protein-DNA Binding Affinity,,,false,,,RECORD_ONLY,extracted
+PRJEB25907,tf_ht_selex,Human RNA binding proteins (batch),,,,HTR-SELEX,,synthetic construct,,Binding specificities of human RNA binding proteins towards structured and linear RNA sequences,,,false,,,RECORD_ONLY,extracted
+PRJEB28303,aptamer_selection,Clear cell renal cell carcinoma (ccRCC) cells,,,,differential cell-SELEX,,synthetic construct,,Differential binding cell-SELEX: method for identification of cell specific aptamers by high throughput sequencing,,,false,,,RECORD_ONLY,extracted
+PRJEB28411,aptamer_selection,Clear-cell renal cell carcinoma (ccRCC) RCC-MF cells,cell,DNA,40,differential cell-SELEX,RC-124 non-malignant kidney cells,synthetic construct,,Differential binding cell-SELEX: method for identification of cell specific aptamers by high throughput sequencing,10.1038/s41598-019-44654-w,31148584,true,true,https://www.nature.com/articles/s41598-019-44654-w.pdf,FULL_TEXT,verified
+PRJEB29730,tf_ht_selex,Ciona robusta transcription factors (batch),,,,HT-SELEX,,Ciona robusta,,HT-SELEX dataset of Ciona robusta transcription factors,,,false,,,RECORD_ONLY,extracted
+PRJEB38961,tf_ht_selex,Sall4 (C2H2 zinc finger domain),,,,HT-SELEX,,synthetic construct,,HT-SELEX of recombinant C2H2 zinc finger domain of Sall4,,,false,,,RECORD_ONLY,extracted
+PRJEB46967,method_or_other,,,,,in vitro selection,,synthetic construct,,In Vitro Selection of DNA Molecules Favouring Intramolecular Circularization by DNA Ligase,,,false,,,RECORD_ONLY,extracted
+PRJEB47428,tf_ht_selex,23 RNA binding proteins (batch),,,,HTR-SELEX,,synthetic construct,,"HTR-SELEX rawdata for experiments performed with 23 RNA binding proteins for the study: ""PRIESSTESS: interpretable, high-performing models of the sequence and structure preferences of RNA binding proteins""",,,false,,,RECORD_ONLY,extracted
+PRJEB48966,tf_ht_selex,4 C2H2 zinc finger transcription factors (batch),,,,HT-SELEX; GHT-SELEX,,Homo sapiens,,"HT-SELEX and genomic HT-SELEX rawdata for experiments performed with 4 C2H2 zinc finger transcription factors for the study: "" Alternate binding modes of human C2H2 TFs""",,,false,,,RECORD_ONLY,extracted
+PRJEB49150,tf_ht_selex,"NACC1, NACC2, BEND3 (BEN domain)",,,,HT-SELEX,,synthetic construct,,"HT-SELEX data for three BEN DNA binding domain transcription factors (NACC1, NACC2, BEND3-BD4) associated with this study.",,,false,,,RECORD_ONLY,extracted
+PRJEB50172,method_or_other,Rho helicase,,,,SELEX,,synthetic construct,,Discovery of serotonin-inducible regulatory switches governing the activity of the Rho helicase,,,false,,,RECORD_ONLY,extracted
+PRJEB51212,tf_ht_selex,Sall4 (C2H2 zinc finger domains),,,,HT-SELEX,,synthetic construct,,HT-SELEX of recombinant C2H2 zinc finger domains of Sall4,,,false,,,RECORD_ONLY,extracted
+PRJEB51473,tf_ht_selex,"SALL4 (DNA binding domain, WT + mutant)",,,,HT-SELEX,,synthetic construct,,HT-SELEX of wild-type and mutated versions of recombinant DNA binding domain of SALL4,,,false,,,RECORD_ONLY,extracted
+PRJEB61115,tf_ht_selex,Human transcription factors (batch),,,,GHT-SELEX,,synthetic construct,,HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors,,,false,,,RECORD_ONLY,extracted
+PRJEB62495,aptamer_selection,Anaplasma phagocytophilum (infected-cell extract),cell,DNA,40,cell-SELEX (infected-cell extract),,synthetic construct,,Aptamers against Anaplasma phagocytophilum and its host cells,10.1038/s41598-024-52808-8,38291133,true,true,https://www.nature.com/articles/s41598-024-52808-8.pdf,FULL_TEXT,verified
+PRJEB62756,tf_ht_selex,FOXL2 (+ C134W variant),,,,SELEX (ssRNA + dsDNA),,synthetic construct,,ssRNA and dbDNA SELEX against FOXL2 and the oncogenic variant C134W (mutFOXl2),,,false,,,RECORD_ONLY,extracted
+PRJEB65950,tf_ht_selex,Transcription factors (batch),,,,HT-SELEX,,Homo sapiens,,Water-mediated interactions enable transcription factors to specifically recognize dinucleotides,,,false,,,RECORD_ONLY,extracted
+PRJEB66722,tf_ht_selex,Transcription factors (batch),,,,HT-SELEX,,Homo sapiens,,Defining the molecular basis of the gene regulatory code,,,false,,,RECORD_ONLY,extracted
+PRJEB70964,aptamer_selection,Alpha-synuclein fibrillar polymorphs,protein,2'-F-Py RNA,35,,,synthetic construct,,Libraries of SELEX against α-synuclein fibrillar polymorphs,10.1093/nar/gkae544,38917326,true,true,https://academic.oup.com/nar/advance-article-pdf/doi/10.1093/nar/gkae544/58329796/gkae544.pdf,FULL_TEXT,verified
+PRJEB75580,tf_ht_selex,ThPOK / ZBTB7B (WT + K360N),,,,HT-SELEX,,Homo sapiens,,HT-SELEX data for ThPOK (ZBTB7B) target specificity for wild type and K360N mutant,,,false,,,RECORD_ONLY,extracted
+PRJEB76622,tf_ht_selex,Human transcription factors (batch),,,,GHT-SELEX,,Homo sapiens,,Genomic HT-SELEX data for: GHT-SELEX demonstrates unexpectedly high intrinsic sequence specificity of human transcription factors,,,false,,,RECORD_ONLY,extracted
+PRJEB79572,aptamer_selection,Enzyme inhibitors (unspecified),,,,modified-aptamer SELEX,,synthetic construct,,Ultrahigh-throughput discovery of modified aptamers as specific and potent enzyme inhibitors,,,false,,,RECORD_ONLY,extracted
+PRJEB88389,method_or_other,Rho helicases (E. coli and B. subtilis),,,,Helicase-SELEX,,Bacillus subtilis subsp. subtilis str. 168,,Helicase-SELEX mapping of Bacillus subtilis transcription terminator Rut sites,,,false,,,RECORD_ONLY,extracted
+PRJEB98610,aptamer_selection,Fluorogenic dye (light-up aptamer),,,,,,synthetic construct,,oShark: a modified light-up aptamer for use in challenging conditions,,,false,,,RECORD_ONLY,extracted
+PRJEB9897,tf_ht_selex,Transcription factors (batch),,,,SELMAP (microfluidic SELEX),,synthetic construct,,SELMAP - SELEX Affinity Landscape Mapping of transcription factor binding sites using integrated microfluidics,,,false,,,RECORD_ONLY,extracted
+PRJNA1013112,method_or_other,,,,,SELEX,,Rattus norvegicus,,Aptameric Evolution from CRISPR Signal Conductor 1.0 to 3.0: A Paradigm Shift in Precision Oncotherapy and Genetic Engineering,,,false,,,RECORD_ONLY,extracted
+PRJNA1013173,aptamer_selection,Human PD-L1,,,,SELEX,,Homo sapiens,,Identify aptamers binding human PD-L1 protein by SELEX,,,false,,,RECORD_ONLY,extracted
+PRJNA1045519,method_or_other,,,,,,,Bacillus subtilis,,elongation T-boxzyme,,,false,,,RECORD_ONLY,extracted
+PRJNA1061493,aptamer_selection,Levofloxacin,,,,SELEX,,synthetic construct,,Sensing levofloxacin with an RNA aptamer as bioreceptor,,,false,,,RECORD_ONLY,extracted
+PRJNA1064871,aptamer_selection,Aspergillus niger,,,,whole-cell SELEX,,Aspergillus niger,,NGS whole-cell SELEX against Aspergillus niger,,,false,,,RECORD_ONLY,extracted
+PRJNA1066781,method_or_other,,,,,,,Escherichia coli,,"GEO accession GSE253695 is currently private and is scheduled to be released on Dec 31, 2026.",,,false,,,RECORD_ONLY,extracted
+PRJNA1067620,tf_ht_selex,Sox and POU transcription factors,,,,SELEX,,synthetic construct,,The emergence of the stem cell-associated Sox and POU transcription factors predates animal origins (SELEX),,,false,,,RECORD_ONLY,extracted
+PRJNA1068659,aptamer_selection,Cocaine,,,,SELEX,,synthetic construct,,High-Affinity Aptamers for In Vitro and In Vivo Cocaine Sensing,,,false,,,RECORD_ONLY,extracted
+PRJNA1090029,method_or_other,,,,,,,Homo sapiens,,An aptamer-mediated base editing platform for simultaneous knock-in and multiple gene knockout for allogeneic CAR-T cells generation,,,false,,,RECORD_ONLY,extracted
+PRJNA1091700,method_or_other,FnCas12a,,,,,,synthetic construct,,PAM-Adjacent DNA Flexibility Tunes CRISPR-Cas12a Off-Target Binding,,,false,,,RECORD_ONLY,extracted
+PRJNA1113703,tf_ht_selex,FOXC2,,,,SELEX-seq,,synthetic construct,,FOXC2 pH-dependent SELEX-seq,,,false,,,RECORD_ONLY,extracted
+PRJNA1119072,aptamer_selection,Mouse IgG1,,,,,,synthetic construct,,Covalent aptamer library,,,false,,,RECORD_ONLY,extracted
+PRJNA1121376,method_or_other,,,,,,,Homo sapiens,,An aptamer-mediated base editing platform for simultaneous knock-in and multiple gene knockout for allogeneic CAR-T cells generation,,,false,,,RECORD_ONLY,extracted
+PRJNA1122221,tf_ht_selex,"PARP1, MeCP2",,,,RAPID-SELEX,,synthetic construct,,RAPID-SELEX identifies high-affinity RNA targets for chromatin binding proteins PARP1 and MeCP2,,,false,,,RECORD_ONLY,extracted
+PRJNA1151868,method_or_other,,,,,RaPID (mRNA display),,,,Diversity scale of library matters: Impact of mRNA library diversity scales on the discovery of macrocyclic peptides targeting a protein by the RaPID system,,,false,,,RECORD_ONLY,extracted
+PRJNA1159731,tf_ht_selex,SigA (M. tuberculosis),,,,SELEX,,Mycobacterium tuberculosis H37Rv,,SELEX-based method for identification of SigA-specific promoters in Mycobacterium tuberculosis H37Rv,,,false,,,RECORD_ONLY,extracted
+PRJNA1176306,method_or_other,,,,,SELEX,,synthetic construct,,Aptamer sequence library from SELEX,,,false,,,RECORD_ONLY,extracted
+PRJNA1188194,method_or_other,Morphine and apixaban,,,,Motif-SELEX,,synthetic construct,,Improving Aptamer Affinity and Determining Sequence-Activity Relationships via Motif-SELEX,,,false,,,RECORD_ONLY,extracted
+PRJNA1206477,method_or_other,,,,,CRISPR-Hybrid directed evolution,,Escherichia coli str. K-12 substr. MG1655,,CRISPR-Hybrid: A CRISPR-Mediated Intracellular Directed Evolution Platform for RNA Aptamers,,,false,,,RECORD_ONLY,extracted
+PRJNA1212714,method_or_other,PKR (protein kinase R),,,,SELEX (circRNA),,Homo sapiens,,Therapeutic circRNA aptamer alleviates PKR-associated osteoarthritis,,,false,,,RECORD_ONLY,extracted
+PRJNA1220334,method_or_other,,,,,,,Homo sapiens,,Homo sapiens Raw sequence reads,,,false,,,RECORD_ONLY,extracted
+PRJNA1221092,aptamer_selection,eIF4A,,,,SELEX,,Oryza sativa,,Targeting eIF4A with RNA Aptamers Enhances Salt Stress Tolerance in Rice Through Modulation of Translation Initiation,,,false,,,RECORD_ONLY,extracted
+PRJNA1244358,tf_ht_selex,Transcription factor mutants (batch),,,,HT-SELEX,,Homo sapiens,,Predicting the DNA binding specificity of transcription factor mutants using family-level biophysically interpretable machine learning,,,false,,,RECORD_ONLY,extracted
+PRJNA1244796,tf_ht_selex,Transcription factors on nucleosomes (batch),,,,SELEX-seq,,synthetic construct,,DNA bendability regulates transcription factor binding to nucleosomes [PIONEAR-seq and SELEX-seq],,,false,,,RECORD_ONLY,extracted
+PRJNA1246497,aptamer_selection,eEF1,,,,SELEX,,synthetic construct,,Aptamer mediated modulation of eEF1 enhances salt stress tolerance in rice,,,false,,,RECORD_ONLY,extracted
+PRJNA1308116,aptamer_selection,Gardnerella vaginalis (bacterial vaginosis),,,,,,Gardnerella vaginalis,,"Towards point-of-care test development for Bacterial Vaginosis (BV), a polymicrobial infection",,,false,,,RECORD_ONLY,extracted
+PRJNA1346116,method_or_other,,,,,,,Homo sapiens,,A modular strategy for extracellular vesicle-mediated CRISPR-Cas9 delivery through aptamer-based loading and UV-activated cargo release,,,false,,,RECORD_ONLY,extracted
+PRJNA1376488,aptamer_selection,SARS-CoV-2,,,,SELEX,,synthetic metagenome,,High-throughput sequencing data from four systematic evolution of ligands by exponential enrichment (SELEX) rounds,,,false,,,RECORD_ONLY,extracted
+PRJNA1390424,aptamer_selection,,,,,,,Severe acute respiratory syndrome coronavirus 2,,NApt,,,false,,,RECORD_ONLY,extracted
+PRJNA1395820,aptamer_selection,Divalent cobalt ion (Co2+),small molecule,DNA,40,HM-SELEX; GO-SELEX,,,,Magnetic field-assisted SELEX for cobalt-binding aptamers,10.1038/s41467-026-70871-9,,true,true,https://doi.org/10.1038/s41467-026-70871-9,FULL_TEXT,verified
+PRJNA1406499,method_or_other,DNA gyrase,,,,,,,,The mechanical code of DNA impacts its interaction with DNA gyrase,,,false,,,RECORD_ONLY,extracted
+PRJNA1467126,aptamer_selection,Insulin receptor,,,,modified-aptamer SELEX (single-round),,,,Expedient Single-round Selection of Hyper-modified Aptamer Targeting Insulin Receptor from Over-represented Dually Nucleobase-modified DNA Libraries,,,false,,,RECORD_ONLY,extracted
+PRJNA221564,tf_ht_selex,"CstF64, CstF64t",,,,SELEX,,synthetic construct,,Overlapping and distinct functions of CstF64 and CstF64t in mammalian mRNA 3’ processing,,,false,,,RECORD_ONLY,extracted
+PRJNA251822,tf_ht_selex,SUVR5,,,,SELEX,,Arabidopsis thaliana,,The SET-domain protein SUVR5 mediates H3K9me2 deposition and silencing at stimulus response genes in a DNA methylation independent manner [SELEX],,,false,,,RECORD_ONLY,extracted
+PRJNA315881,aptamer_selection,Interleukin 10 receptor alpha (IL-10RA),,,,,,Homo sapiens,5,Interleukin 10 receptor alpha chain (IL-10RA) Raw sequence reads,10.1093/nar/gkv308,25870409,true,true,https://doi.org/10.1093/nar/gkv308,FULL_TEXT,extracted
+PRJNA321551,aptamer_selection,CCR7,,,,cell-SELEX,,Homo sapiens,9,Raw sequence reads from CELL-SELEX experiment targeting CCR7 (9 rounds of selection),10.1016/j.cels.2016.07.003,27467247,true,true,http://www.cell.com/article/S2405471216302204/pdf,FULL_TEXT,extracted
+PRJNA360902,tf_ht_selex,Ciona robusta transcription factors (batch),,,,SELEX-seq,,Ciona robusta,,Ciona robusta SELEX-seq dataset,,,false,,,RECORD_ONLY,extracted
+PRJNA379022,tf_ht_selex,"Androgen receptor, glucocorticoid receptor",,,,SELEX-seq,,Homo sapiens,,Androgen and glucocorticoid receptor SELEX-seq libraries,,,false,,,RECORD_ONLY,extracted
+PRJNA385825,aptamer_selection,RNA polymerase (E. coli),,,,SELEX,,Escherichia coli,,Natural RNA polymerase aptamers regulate transcription in E. coli [SELEX],,,false,,,RECORD_ONLY,extracted
+PRJNA450989,aptamer_selection,IL4-treated MSC2 cell line,,,,cell-SELEX,,synthetic RNA,,RNA aptamers specific for IL4-treated MSC2 cell line,,,false,,,RECORD_ONLY,extracted
+PRJNA474677,tf_ht_selex,LIN28,,,,SELEX,,synthetic construct,,LIN28 selectively modulates a subclass of let-7 microRNAs,,,false,,,RECORD_ONLY,extracted
+PRJNA480721,method_or_other,,,,,,,synthetic construct,,Highly-functionalized nucleic acid polymer selections,,,false,,,RECORD_ONLY,extracted
+PRJNA491840,method_or_other,LAGLIDADG homing endonucleases,,,,,,Escherichia coli K-12,,A co-evolving active site network regulates cleavage preference in LAGLIDADG homing endonucleases,,,false,,,RECORD_ONLY,extracted
+PRJNA529538,aptamer_selection,Small molecules (class-specific),,,,SELEX,,synthetic construct,,In vitro isolation of class-specific oligonucleotide-based small-molecule receptors,,,false,,,RECORD_ONLY,extracted
+PRJNA531690,aptamer_selection,VCaP prostate cancer cell exosomes,,,,cell-SELEX,,synthetic construct,,Libraries of single-stranded oligodeoxynucleotides enriched for binding to exosomes from VCaP prostate cancer cells,,,false,,,RECORD_ONLY,extracted
+PRJNA547810,method_or_other,CRISPR enzymes,,,,,,synthetic organism,,Systematic profiling of in vitro binding affinity and endonuclease activity of CRISPR enzymes,,,false,,,RECORD_ONLY,extracted
+PRJNA564266,aptamer_selection,Salmonella paratyphi A,,,,whole-cell SELEX,,Salmonella enterica subsp. enterica serovar Paratyphi A,,ssDNA aptamers targeting Salmonella paratyphi A [SELEX],,,false,,,RECORD_ONLY,extracted
+PRJNA600132,method_or_other,"Recombinant histone octamers (human, P. falciparum, E. cuniculi)",,,,NGS-SELEX,,Homo sapiens,,Preferred nucleosomal sequences enriched by NGS-SELEX,,,false,,,RECORD_ONLY,extracted
+PRJNA604410,tf_ht_selex,DDX43 KH domain,,,,SELEX,,synthetic construct,,SELEX and ChIP/CLIP-Seq identification of nucleic acid sequences bound by the DDX43 KH domain (89 aa),,,false,,,RECORD_ONLY,extracted
+PRJNA609240,tf_ht_selex,SEPALLATA3 (SEP3),,,,SELEX,,Arabidopsis thaliana,,SELEX sequencing to study DNA-binding profile of the floral homeotic MADS-domain protein SEPALLATA3,,,false,,,RECORD_ONLY,extracted
+PRJNA615076,aptamer_selection,Enterococcus faecalis DSM-20478 (whole cells),cell,DNA,40,whole-cell SELEX,,Enterococcus faecalis,,HT-SELEX against E. faecalis,10.1038/s41598-020-77221-9,33262379,true,true,https://www.nature.com/articles/s41598-020-77221-9.pdf,FULL_TEXT,verified
+PRJNA616423,aptamer_selection,RNA polymerase II,,,,SELEX,,Homo sapiens,,RNA polymerase II-binding aptamers in human ACRO1 satellites disrupt transcription in cis,,,false,,,RECORD_ONLY,extracted
+PRJNA633039,tf_ht_selex,SRSF1 (RRM1),,,,SELEX,,Homo sapiens,,Structure of SRSF1 RRM1 bound to RNA reveals an unexpected pendular/bimodal mode of interaction and explains its involvement in SMN1 exon7 splicing,,,false,,,RECORD_ONLY,extracted
+PRJNA672779,method_or_other,,,,,,,synthetic metagenome,,Machine-learning-guided aptamer discovery,,,false,,,RECORD_ONLY,extracted
+PRJNA688234,aptamer_selection,Coagulation Factor XIII,,,,SELEX,,synthetic construct,,Coagulation Factor XIII-Binding Aptamers as Bivalent Ligands Targeting Fibrin and Activated Platelets in the Thrombus,,,false,,,RECORD_ONLY,extracted
+PRJNA728693,method_or_other,,,,,RE-SELEX,,synthetic construct,,RE-SELEX: Restriction Enzyme-Based Evolution of Structure-Switching Aptamer Biosensors,,,false,,,RECORD_ONLY,extracted
+PRJNA729962,tf_ht_selex,Nuclear receptor proteins (batch),,,,SELEX,,Homo sapiens,,DNA protein interactome for Nuclear Receptor proteins,,,false,,,RECORD_ONLY,extracted
+PRJNA741127,tf_ht_selex,"Fkh1, Fkh2, Hcm1, Fhl1",,,,SELEX-seq,,synthetic construct,,"DNA Binding Specificities of Fkh1, Fkh2, Hcm1, and Fhl1 Revealed by SELEX-seq",,,false,,,RECORD_ONLY,extracted
+PRJNA786208,method_or_other,beta-catenin,,,,,,Homo sapiens,,CUT&RUN Sequencing of EZH2 binding sites in HEK293T cells expressing a Dual-specificity Aptamer that specifically increases O-GlcNAcylation on beta-catenin,,,false,,,RECORD_ONLY,extracted
+PRJNA809588,aptamer_selection,Human pancreatic islet cells,cell,2'-F-Py RNA,40,cell-SELEX; toggle-SELEX,,synthetic construct,,Selection of RNA aptamers against human islets by SELEX and toggle SELEX,10.1038/s41467-022-29377-3,35383192,true,true,https://www.nature.com/articles/s41467-022-29377-3.pdf,FULL_TEXT,verified
+PRJNA830749,aptamer_selection,NDM-1,,,,SELEX (masked),,synthetic construct,,The use of high-affinity polyhistidine binders as masking probes for the selection of an NDM-1 specific aptamer,,,false,,,RECORD_ONLY,extracted
+PRJNA847751,method_or_other,,,,,,,synthetic metagenome,,"A modular XNAzyme cleaves long, structured RNAs under physiological conditions and enables allele-specific gene silencing.",,,false,,,RECORD_ONLY,extracted
+PRJNA847930,method_or_other,,,,,,,synthetic metagenome,,A two-residue nascent strand steric gate controls synthesis of 2-O-methyl- and 2-O-2-methoxyethyl-RNA,,,false,,,RECORD_ONLY,extracted
+PRJNA854957,method_or_other,,,,,,,synthetic construct,,Generating experimentally unrelated target molecule binding nucleic-acid polymers using machine learning,,,false,,,RECORD_ONLY,extracted
+PRJNA862494,tf_ht_selex,Coronavirus nucleocapsid protein,,,,SELEX,,Escherichia coli,,The highly conserved RNA-binding specificity of nucleocapsid protein facilitates the identification of drugs with broad anti-coronavirus activity.,,,false,,,RECORD_ONLY,extracted
+PRJNA866368,tf_ht_selex,PTBP1,,,,SELEX,,synthetic construct,,Capture RIC-seq reveals positional rules of PTBP1-associated RNA loops in splicing regulation [SELEX],,,false,,,RECORD_ONLY,extracted
+PRJNA86771,method_or_other,,,,,,,Homo sapiens,,Homo sapiens High Throughput Sequencing,,,false,,,RECORD_ONLY,extracted
+PRJNA883192,aptamer_selection,Eosinophil peroxidase (EPX),protein,DNA,40,,,synthetic construct,,A sputum bioassay for airway eosinophilia using an eosinophil peroxidase aptamer,10.1038/s41598-022-26949-7,36577785,true,true,https://www.nature.com/articles/s41598-022-26949-7.pdf,FULL_TEXT,verified
+PRJNA887057,method_or_other,beta-catenin,,,,,,Homo sapiens,,"CUT&RUN Sequencing of EZH2 binding sites in HEK293T cells expressing a Dual-specificity Aptamer that specifically increases O-GlcNAcylation on beta-catenin, when beta-catein was knocked-down",,,false,,,RECORD_ONLY,extracted
+PRJNA887059,method_or_other,beta-catenin,,,,,,Homo sapiens,,CUT&RUN Sequencing of EZH2 binding sites in HEK293T cells expressing a Dual-specificity Aptamer that specifically increases O-GlcNAcylation on beta-catenin when O-GlcNAc transferase was inhibited,,,false,,,RECORD_ONLY,extracted
+PRJNA905424,method_or_other,,,,,,,synthetic construct,,High-Throughput Quantitative Binding Analysis of DNA Aptamers using Exonucleases,,,false,,,RECORD_ONLY,extracted
+PRJNA911774,method_or_other,,,,,,,synthetic construct,,Systematic Study of in vitro Selection Stringency Reveals How to Enrich High-Affinity Aptamers,,,false,,,RECORD_ONLY,extracted
+PRJNA916521,method_or_other,FOXM1,,,,AptaChC-seq,,Homo sapiens,,Antibody-Free and Fast Profiling of Transcription Factor Binding Sites Using Aptamer-Guided Chromatin Cleavage with Sequencing (AptaChC-seq),,,false,,,RECORD_ONLY,extracted
+PRJNA932049,aptamer_selection,Pyoverdine,,,,SELEX (2'F-RNA),,synthetic construct,,"Selection, development and structural characterization of 2' FY-RNA aptamers for pyoverdine",,,false,,,RECORD_ONLY,extracted
+PRJNA935703,aptamer_selection,Pyoverdine (Pf-5),,,,SELEX,,synthetic construct,,DNA aptamers for detection of pyoverdine pf5,,,false,,,RECORD_ONLY,extracted
+PRJNA947642,aptamer_selection,Small molecules (multiple),,,,SELEX,,synthetic construct,,A Functional Group-Guided Approach to Aptamers for Small Molecules,,,false,,,RECORD_ONLY,extracted
+PRJNA952942,aptamer_selection,"ATP, glucose",,,,Capture-SELEX,,synthetic construct,,Screening aptamer switches for ATP and glucose,,,false,,,RECORD_ONLY,extracted
+PRJNA957781,tf_ht_selex,AP-1 (homodimer),,,,SELEX-seq,,synthetic construct,,SELEX-seq of AP1 homodimer,,,false,,,RECORD_ONLY,extracted
+PRJNA975735,aptamer_selection,SARS-CoV-2,,,,SELEX,,Severe acute respiratory syndrome coronavirus 2,,SELEX based aptamers: An excellent diagnostic and entry inhibitor therapeutic for SARS-CoV-2,,,false,,,RECORD_ONLY,extracted
+PRJNA990511,aptamer_selection,African swine fever virus (ASFV) p30 protein,protein,DNA,40,MB-SELEX (magnetic-bead),,synthetic construct,,"DNA aptamer of ASFV p30, SELEX library sequencing",10.1038/s41598-024-53619-7,38374125,true,true,https://www.nature.com/articles/s41598-024-53619-7.pdf,FULL_TEXT,verified
+figshare:1029831,aptamer_selection,Glycosylated HA1 of H5 avian influenza virus,,,,,,,,RNA library for SELEX and RNA aptamer sequences.,10.1371/journal.pone.0097574,,true,,,ABSTRACT,extracted
+figshare:1057388,aptamer_selection,Streptavidin,,,,,,,,Support Vector Machine Classification of Streptavidin-Binding Aptamers,10.1371/journal.pone.0099964,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0099964&type=printable,FULL_TEXT,extracted
+figshare:1085380,aptamer_selection,c-Jun (DNA-bound),,,,,,,,Selection of ssDNA aptamers targeting DNA-bound cJun.,10.1371/journal.pone.0101015,,true,,,ABSTRACT,extracted
+figshare:1088113,method_or_other,Thrombin,,,,,,,,Single-Step Selection of Bivalent Aptamers Validated by Comparison with SELEX Using High-Throughput Sequencing,10.1371/journal.pone.0100572,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0100572&type=printable,FULL_TEXT,extracted
+figshare:1163744,aptamer_selection,Soybean mosaic virus (SMV),,,,,,,,"Aptamer sequences obtained from 4<sup>th</sup>, 7<sup>th</sup> and 9<sup>th</sup> round of SELEX for SMV.",10.1371/journal.pone.0106805,,true,,,ABSTRACT,extracted
+figshare:121169,aptamer_selection,Vascular smooth muscle cells (A7r5),,,,cell-SELEX,,,,"Rapid Identification of Cell-Specific, Internalizing RNA Aptamers with Bioinformatics Analyses of a Cell-Based Aptamer Selection",10.1371/journal.pone.0043836,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0043836&type=printable,FULL_TEXT,extracted
+figshare:121661,tf_ht_selex,PapX (putative transcription factor),,,,TFAST,,,,A Novel Approach for Transcription Factor Analysis Using SELEX with High-Throughput Sequencing (TFAST),10.1371/journal.pone.0042761,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0042761&type=printable,FULL_TEXT,extracted
+figshare:126214,aptamer_selection,Lup an 1 (lupin allergen),,,,,,,,DNA Aptamers against the Lup an 1 Food Allergen,10.1371/journal.pone.0035253,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0035253&type=printable,FULL_TEXT,extracted
+figshare:1278496,aptamer_selection,Francisella tularensis,,,,,,,,Repeat DNA sequences and number of clones from sequenced aptamer pool<sup>a</sup>.,10.1371/journal.pone.0114622,,true,,,ABSTRACT,extracted
+figshare:12850622,aptamer_selection,Human PD1,,,,Hybrid SELEX,,,,Development and Evaluation of Novel Aptamers Specific for Human PD1 Using Hybrid Systematic Evolution of Ligands by Exponential Enrichment Approach,10.1080/08820139.2020.1744639,,true,,,ABSTRACT,extracted
+figshare:1286507,aptamer_selection,Trypanosoma cruzi TESA,,,,TESA-SELEX,,,21,Sequence of monoclonal aptamers obtained at Round 21 TESA SELEx and binding to <i>T. cruzi</i> TESA preparations.,10.1371/journal.pntd.0003451,,true,,,ABSTRACT,extracted
+figshare:130054,method_or_other,,,,,,,,,Probing the SELEX Process with Next-Generation Sequencing,10.1371/journal.pone.0029604,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0029604&type=printable,FULL_TEXT,extracted
+figshare:131490,method_or_other,,,,,microfluidic SELEX,,,,Probing the Limits of Aptamer Affinity with a Microfluidic SELEX Platform,10.1371/journal.pone.0027051,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0027051&type=printable,FULL_TEXT,extracted
+figshare:14057938,aptamer_selection,L-Serine (root exudate),,,,,,,,Selection of DNA Aptamers for Root Exudate l‑Serine Using Multiple Selection Strategies,10.1021/acs.jafc.0c06796,,true,,,ABSTRACT,extracted
+figshare:15016342,aptamer_selection,Spherical gold nanoparticles,,,,CompELS,,,,"Competition-Enhanced Ligand Selection to Screen for
+DNA Aptamers for Spherical Gold Nanoparticles",10.1021/acs.langmuir.1c01053,,true,,,ABSTRACT,extracted
+figshare:17135972,aptamer_selection,Growth differentiation factor 9 (GDF9),,,,,,,,Development and identification of candidate aptamers for growth differentiation factor 9,10.26686/wgtn.17135972.v1,,true,true,https://figshare.com/articles/thesis/Development_and_identification_of_candidate_aptamers_for_growth_differentiation_factor_9/17135972,FULL_TEXT,extracted
+figshare:17207107,method_or_other,,,,,CE-SELEX,,,,"Investigating the Influences of Random-Region Length
+on Aptamer Selection Efficiency Based on Capillary Electrophoresis–SELEX
+and High-Throughput Sequencing",10.1021/acs.analchem.1c03661,,true,,,ABSTRACT,extracted
+figshare:17207110,method_or_other,,,,,CE-SELEX,,,,"Investigating the Influences of Random-Region Length
+on Aptamer Selection Efficiency Based on Capillary Electrophoresis–SELEX
+and High-Throughput Sequencing",10.1021/acs.analchem.1c03661,,true,,,ABSTRACT,extracted
+figshare:19376361,aptamer_selection,Disease biomarker (unspecified),,,,,,,,"Integration of an Expression Platform in the SELEX
+Cycle to Select DNA Aptamer Binding to a Disease Biomarker",10.1021/acsomega.2c00769,,true,,,ABSTRACT,extracted
+figshare:19753851,aptamer_selection,Patulin,,,,,,,,"Bio-Layer Interferometry-Based SELEX and Label-Free
+Detection of Patulin Using Generated Aptamer",10.1021/acs.jafc.2c01591,,true,,,ABSTRACT,extracted
+figshare:21158899,aptamer_selection,Nonylphenol,,,,,,,,The Study of SELEX Methodology in the Generation of Aptamers for Environmental Contaminant Nonylphenol,10.26686/wgtn.21158899,,true,true,https://openaccess.wgtn.ac.nz/articles/thesis/The_Study_of_SELEX_Methodology_in_the_Generation_of_Aptamers_for_Environmental_Contaminant_Nonylphenol/21158899/1/files/37515592.pdf,FULL_TEXT,extracted
+figshare:21234387,method_or_other,,,,,,,,,Schematic view of the SELEX experiment and the RBM-based analysis.,10.1371/journal.pcbi.1010561,,true,,,ABSTRACT,extracted
+figshare:21234402,method_or_other,,,,,,,,,Sketches of the fitness and inferred landscapes.,10.1371/journal.pcbi.1010561,,true,,,ABSTRACT,extracted
+figshare:2161948,aptamer_selection,HBsAg (hepatitis B surface antigen),,,,MB-SELEX,,,,"Selection
+of HBsAg-Specific DNA Aptamers Based on Carboxylated Magnetic Nanoparticles
+and Their Application in the Rapid and Simple Detection of Hepatitis
+B Virus Infection",10.1021/acsami.5b01180,,true,,,ABSTRACT,extracted
+figshare:2168464,aptamer_selection,Small drugs (small molecules),,,,Capture-SELEX,,,,"More DNA–Aptamers for Small Drugs: A Capture–SELEX
+Coupled with Surface Plasmon Resonance and High-Throughput Sequencing",10.1021/acscombsci.5b00023,,true,,,ABSTRACT,extracted
+figshare:2169673,aptamer_selection,Metastatic cancer cells,,,,cell-SELEX,,,,"Evolution of DNA Aptamers through in Vitro Metastatic-Cell-Based
+Systematic Evolution of Ligands by Exponential Enrichment for Metastatic
+Cancer Recognition and Imaging",10.1021/acs.analchem.5b00637,,true,,,ABSTRACT,extracted
+figshare:2216530,aptamer_selection,Anti-zearalenone monoclonal antibody,,,,,,,,"Screening
+of Single-Stranded DNA (ssDNA) Aptamers
+against a Zearalenone Monoclonal Antibody and Development of a ssDNA-Based
+Enzyme-Linked Oligonucleotide Assay for Determination of Zearalenone
+in Corn",10.1021/jf503733g,,true,,,ABSTRACT,extracted
+figshare:22339771,method_or_other,,,,,,,,,Novel Strategies for Gold Nanoparticle Based Aptamer Selection,10.26686/wgtn.22339771,,true,true,https://openaccess.wgtn.ac.nz/articles/thesis/Novel_Strategies_for_Gold_Nanoparticle_Based_Aptamer_Selection/22339771/1/files/39745066.pdf,FULL_TEXT,extracted
+figshare:2242786,aptamer_selection,T-2 toxin,,,,GO-SELEX,,,,"Screening
+and Identification of DNA Aptamers against
+T‑2 Toxin Assisted by Graphene Oxide",10.1021/jf5032058,,true,,,ABSTRACT,extracted
+figshare:22770526,aptamer_selection,Aflatoxin M1,,,,,,,,"Screening of a High-Affinity Aptamer for Aflatoxin
+M<sub>1</sub> and Development of Its Colorimetric Aptasensor",10.1021/acs.jafc.3c01586,,true,,,ABSTRACT,extracted
+figshare:2351575,aptamer_selection,rhVEGF165,,,,CE-SELEX,,,,"Tracking the Emergence of High Affinity Aptamers for
+rhVEGF<sub>165</sub> During Capillary Electrophoresis-Systematic Evolution
+of Ligands by Exponential Enrichment Using High Throughput Sequencing",10.1021/ac401875h,,true,,,ABSTRACT,extracted
+figshare:237466,aptamer_selection,AGR2,,,,,,,,Schematics of systematic evolution of DNA aptamers against AGR2.,10.1371/journal.pone.0046393,,true,,,ABSTRACT,extracted
+figshare:2428999,aptamer_selection,Salmonella typhimurium,,,,whole-cell SELEX,,,,"Selection and Characterization of Aptamers against Salmonella typhimurium Using Whole-Bacterium Systemic
+Evolution of Ligands by Exponential Enrichment (SELEX)",10.1021/jf400767d,,true,,,ABSTRACT,extracted
+figshare:24367699,aptamer_selection,Mammalian prion proteins,,,,,,,,Application of a novel in vitro selection technique to isolate and characterise high affinity DNA aptamers binding mammalian prion proteins,,,false,,,RECORD_ONLY,extracted
+figshare:24560508,method_or_other,,,,,,,,,"Functionally
+Enhanced XNA Aptamers Discovered by Parallelized
+Library Screening",10.1021/jacs.3c09497,,true,,,ABSTRACT,extracted
+figshare:2471755,aptamer_selection,Bacteria,,,,,,,,"Aptamer-Based Viability
+Impedimetric Sensor for Bacteria",10.1021/ac302902s,,true,,,ABSTRACT,extracted
+figshare:2481958,method_or_other,,,,,,,,,"In Vitro Selection of
+Highly Efficient G‑Quadruplex-Based DNAzymes",10.1021/ac301899h,,true,,,ABSTRACT,extracted
+figshare:2482003,aptamer_selection,Salmonella enteritidis,,,,,,,,"Aptamer-Based Impedimetric
+Sensor for Bacterial Typing",10.1021/ac302217u,,true,,,ABSTRACT,extracted
+figshare:24969538,aptamer_selection,"Guanine, xanthine, hypoxanthine, adenine",,,,,,,,"Affinity-Guided Coevolution of Aptamers for Guanine,
+Xanthine, Hypoxanthine, and Adenine",10.1021/acschembio.3c00660,,true,,,ABSTRACT,extracted
+figshare:26509028,method_or_other,Small molecules,,,,nuclease-assisted SELEX,,,,"Rapid Nuclease-Assisted
+Selection of High-Affinity
+Small-Molecule Aptamers",10.1021/jacs.4c00748,,true,,,ABSTRACT,extracted
+figshare:27201197,method_or_other,,,,,,,,,"Streamlining RNA Aptamer Selection via Unique Molecular
+Identifiers and High-Throughput Sequencing",10.1021/acs.analchem.4c02984,,true,,,ABSTRACT,extracted
+figshare:28161287,aptamer_selection,Viral RNA frameshift element,,,,SELEX (2'F),,,,"Selection of
+a Fluorinated Aptamer Targeting the Viral
+RNA Frameshift Element with Different Chiralities",10.1021/acs.biochem.4c00606,,true,,,ABSTRACT,extracted
+figshare:28785430,method_or_other,Small molecules,,,,,,,,"T5 Exonuclease
+Improves the Identification of Aptamers
+Specific for Small Molecules from the Early Screening Library",10.1021/acs.analchem.5c00251,,true,,,ABSTRACT,extracted
+figshare:29236055,method_or_other,Small molecules,,,,,,,,"High-Performance Selection of Small-Molecule Nucleic
+Acid Aptamers and Their Applications",10.1021/acs.analchem.4c04603,,true,,,ABSTRACT,extracted
+figshare:29595120,aptamer_selection,Glioblastoma cells,,,,3D cell-SELEX,,,,"Enhanced
+Glioblastoma-Targeted Aptamer Discovery by
+3D Cell-SELEX with Hyaluronic Acid Hydrogel",10.1021/acsbiomaterials.5c00504,,true,,,ABSTRACT,extracted
+figshare:29756624,aptamer_selection,C-type lectin-like molecule-1 (CLL-1/CLEC12A),,,,,,,,Supplementary file 1_Design and development of an aptamer targeting C-type lectin-like molecule-1 as a biomarker for acute myeloid leukemia: a SELEX approach.zip,10.3389/fbioe.2025.1601453,,true,,,ABSTRACT,extracted
+figshare:30423278,aptamer_selection,PSMA,,,,Baited SELEX,,,,"Baited SELEX: Drug-Directed
+Selection of Aptamers
+to PSMA for <i>In Vivo</i> Targeting of Prostate Cancer
+Xenografts in Mice",10.1021/jacs.5c13307,,true,,,ABSTRACT,extracted
+figshare:31282718,method_or_other,,,,,,,,,"Wet–Dry–Wet
+Experiments Enable Simultaneous
+Aptamer Isolation and Critical Binding Domain Identification",10.1021/acs.analchem.5c04084,,true,,,ABSTRACT,extracted
+figshare:31335535,aptamer_selection,Phalloidin,,,,,,,,"Selection of
+a High-Affinity Aptamer for Phalloidin
+and Application in a Dual-Mode LRET/Colorimetric Aptasensor",10.1021/acs.analchem.5c07072,,true,,,ABSTRACT,extracted
+figshare:3155101,aptamer_selection,Estrogen receptor alpha (ER-alpha),,,,,,,,Monitoring the aptamer enrichment.,10.1371/journal.pone.0153001,,true,,,ABSTRACT,extracted
+figshare:3188482,aptamer_selection,Salmonella enterica Typhimurium,,,,whole-cell SELEX,,,,"Selection and Characterization of Aptamers Using a
+Modified Whole Cell Bacterium SELEX for the Detection of <i>Salmonella
+enterica</i> Serovar Typhimurium",10.1021/acscombsci.5b00123,,true,,,ABSTRACT,extracted
+figshare:3239092,method_or_other,,,,,non-SELEX,,,,Non-SELEX Selection of Aptamers,10.1021/ja056943j,,true,,,ABSTRACT,extracted
+figshare:3353293,method_or_other,,,,,CE,,,,In Vitro Evolution of Functional DNA Using Capillary Electrophoresis,10.1021/ja037832s,,true,,,ABSTRACT,extracted
+figshare:4675996,aptamer_selection,Clenbuterol hydrochloride,,,,immobilized-library SELEX,,,,"Selection and Application of ssDNA Aptamers against
+Clenbuterol Hydrochloride Based on ssDNA Library Immobilized SELEX",10.1021/acs.jafc.6b04951,,true,,,ABSTRACT,extracted
+figshare:5195515,aptamer_selection,ATP,,,,Apta-Seq (genomic SELEX),,,,"Multiplex Aptamer Discovery through Apta-Seq and Its
+Application to ATP Aptamers Derived from Human-Genomic SELEX",10.1021/acschembio.7b00001,,true,,,ABSTRACT,extracted
+figshare:5430670,aptamer_selection,LAG3,,,,HT-SELEX,,,,Identification of LAG3 high affinity aptamers by HT-SELEX and Conserved Motif Accumulation (CMA),10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430703,aptamer_selection,LAG3,,,,HT-SELEX,,,,Proposed workflow to identify high affinity aptamers using HT-SELEX combined with Conserved Motif Accumulation (CMA).,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430718,aptamer_selection,LAG3,,,,HT-SELEX,,,,HT-SELEX Aptamer selection analysis.,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430736,aptamer_selection,LAG3,,,,HT-SELEX,,,,Analysis of conserved sequence motifs in LAG3 aptamers.,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430751,aptamer_selection,LAG3,,,,HT-SELEX,,,,Binding affinity and specificity of LAG3 aptamers.,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430784,aptamer_selection,LAG3,,,,HT-SELEX,,,,LAG3 Apt1 binds to LAG3-expressing cells.,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:5430796,aptamer_selection,LAG3,,,,HT-SELEX,,,,LAG3 Apt1 enhances T-cell activation in vitro.,10.1371/journal.pone.0185169,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0185169&type=printable,FULL_TEXT,extracted
+figshare:6023456,aptamer_selection,RNA polymerase II,,,,genomic SELEX,,,,Genomic SELEX RNA Pol II binding RNAs.,10.1371/journal.pone.0194438,,true,,,ABSTRACT,extracted
+figshare:7018646,aptamer_selection,Prostate cancer,,,,,,,,"Novel Method for Structure–Activity Relationship
+of Aptamer Sequences for Human Prostate Cancer",10.1021/acsomega.8b01464,,true,,,ABSTRACT,extracted
+figshare:7069022,aptamer_selection,"Saxitoxin, domoic acid, tetrodotoxin",,,,MB-SELEX,,,,"Magnetic Separation-Based Multiple SELEX for Effectively
+Selecting Aptamers against Saxitoxin, Domoic Acid, and Tetrodotoxin",10.1021/acs.jafc.8b02771,,true,,,ABSTRACT,extracted
+figshare:7146335,method_or_other,,,,,CompELS,,,,"Competition-Enhanced Ligand Selection to Identify
+DNA Aptamers",10.1021/acscombsci.8b00048,,true,,,ABSTRACT,extracted
+figshare:7228433,aptamer_selection,Atrazine (herbicide),,,,,,,,"In Vitro Selection and Characterization of a Single-Stranded
+DNA Aptamer Against the Herbicide Atrazine",10.1021/acsomega.8b01859,,true,,,ABSTRACT,extracted
+figshare:771228,method_or_other,,,,,STACS,,,,The STACS procedure.,10.1371/journal.pone.0071798,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0071798&type=printable,FULL_TEXT,extracted
+figshare:771239,method_or_other,,,,,cell-SELEX,,,,Development of an Efficient Targeted Cell-SELEX Procedure for DNA Aptamer Reagents,10.1371/journal.pone.0071798,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0071798&type=printable,FULL_TEXT,extracted
+figshare:7972784,aptamer_selection,Plasmodium falciparum HMGB1 HMG-box,,,,,,,,NGS allows the identification of aptamer motifs and their evolution during SELEX.,10.1371/journal.pone.0211756,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0211756&type=printable,FULL_TEXT,extracted
+figshare:8118461,aptamer_selection,Histamine,,,,,,,,"High Affinity Aptamer for the Detection of the Biogenic
+Amine Histamine",10.1021/acs.analchem.9b00075,,true,,,ABSTRACT,extracted
+figshare:902248,aptamer_selection,Trypanosoma cruzi TESA,,,,TESA-SELEX,,,,Sequence of TESA binding aptamers.,10.1371/journal.pntd.0002650,,true,,,ABSTRACT,extracted
+figshare:976460,method_or_other,Human soluble growth factors,,,,cell-SELEX,,,,Cell-SELEX procedure implemented by ectopic expression of human soluble growth factors on yeast cell surface.,10.1371/journal.pone.0093052,,true,,,ABSTRACT,extracted
+figshare:986154,aptamer_selection,E-selectin (P-selectin cross-reactivity),,,,,,,,Systematic Evolution of Ligands by Exponential Enrichment (SELEX).,10.1371/journal.pone.0093173,,true,,,ABSTRACT,extracted
+zenodo:10040600,not_selex,,,,,,,,,The dynamics of protein-RNA interfaces using all-atom molecular dynamics simulations,10.5281/zenodo.10040600,,true,true,https://doi.org/10.5281/zenodo.10040600,FULL_TEXT,extracted
+zenodo:10612073,not_selex,,,,,,,,,The Impact of Patterns in Linkage Disequilibrium and Sequencing Quality on the Imprint of Balancing Selection,10.5281/zenodo.10612073,,true,true,https://doi.org/10.5281/zenodo.10612073,FULL_TEXT,extracted
+zenodo:1168878,method_or_other,,,,,,,,,Antibody-Templated Assembly of an RNA Mimic of Green Fluorescent Protein,10.1021/acs.analchem.7b02102,,true,true,https://pubs.acs.org/doi/pdf/10.1021/acs.analchem.7b02102,FULL_TEXT,extracted
+zenodo:13684933,not_selex,,,,,,,,,RECENT DEVELOPMENTS IN APTAMER TECHNOLOGY FOR THE TARGETED IDENTIFICATION OF SPECIFIC CANCER BIOMARKERS,10.5281/zenodo.13684933,,true,true,https://doi.org/10.5281/zenodo.13684933,FULL_TEXT,extracted
+zenodo:13995669,method_or_other,Burkholderia glumae virulence protein,,,,,,,,In silico Designed Aptamer for the Detection of Bacteria Leaf Blight Disease in Paddy by Targeting the Virulence Protein,10.5281/zenodo.13995669,,true,true,https://doi.org/10.5281/zenodo.13995669,FULL_TEXT,extracted
+zenodo:14272347,method_or_other,Steroids (small-molecule family),,,,,,,,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,10.5281/zenodo.14272347,,true,true,https://doi.org/10.5281/zenodo.14272347,FULL_TEXT,extracted
+zenodo:14272647,method_or_other,Steroids (small-molecule family),,,,,,,,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,10.5281/zenodo.14272647,,true,true,https://doi.org/10.5281/zenodo.14272647,FULL_TEXT,extracted
+zenodo:14272757,method_or_other,Steroids (small-molecule family),,,,,,,,Structure-enhanced Deep Learning Accelerates Aptamer Selection for Small Molecule Families like Steroids,10.5281/zenodo.14272757,,true,true,https://doi.org/10.5281/zenodo.14272757,FULL_TEXT,extracted
+zenodo:14281818,not_selex,,,,,,,,,zibin-zhao/DL-SELEX: v1.0.1,10.5281/zenodo.14281818,,true,true,https://doi.org/10.5281/zenodo.14281818,FULL_TEXT,extracted
+zenodo:14598631,method_or_other,Antibiotics,,,,,,,,Electrochemical Aptasensors for Antibiotics Detection: Recent Achievements and Applications for Monitoring Food Safety,10.3390/s22103684,,true,true,https://www.mdpi.com/1424-8220/22/10/3684/pdf?version=1652344722,FULL_TEXT,extracted
+zenodo:14598734,method_or_other,Ampicillin,,,,,,,,Smartphone-Addressable Paper-Based Devices for the Colorimetric Detection of Ampicillin Based on Salt-Induced Aggregation of Gold Nanoparticles,10.3390/CSAC2023-14875,,true,true,https://www.mdpi.com/2673-4591/48/1/40/pdf?version=1698299958,FULL_TEXT,extracted
+zenodo:14599255,method_or_other,Oxytetracycline,,,,,,,,Comparative Analysis of pH and Target-Induced Conformational Changes of an Oxytetracycline Aptamer in Solution Phase and Surface-Immobilized Form,10.3390/biom13091363,,true,true,https://www.mdpi.com/2218-273X/13/9/1363/pdf?version=1694086023,FULL_TEXT,extracted
+zenodo:14599416,method_or_other,Tetracycline,,,,,,,,Developing a Sensitive Method for the Electrochemical Determination of Tetracycline Using MB-Tagged Aptamers on Gold Electrode Substrates,10.3390/IECB2023-14597,,true,true,https://www.mdpi.com/2673-4591/35/1/38/pdf?version=1687681527,FULL_TEXT,extracted
+zenodo:14689104,method_or_other,Hepatitis C virus RNA,,,,,,,,"Three Properties of the Hepatitis C Virus RNA Genome Related to Antiviral Strategies Based on RNA-Therapeutics: Variability, Structural Conformation and tRNA Mimicry",10.2174/1381612043382675,,true,false,,ABSTRACT,extracted
+zenodo:15065216,not_selex,,,,,,,,,UltraGen_All_Archives,10.5281/zenodo.15065216,,true,true,https://doi.org/10.5281/zenodo.15065216,FULL_TEXT,extracted
+zenodo:15294875,not_selex,,,,,,,,,UltraGen_All_Archives,10.5281/zenodo.15294875,,true,true,https://doi.org/10.5281/zenodo.15294875,FULL_TEXT,extracted
+zenodo:15555251,tf_ht_selex,"Transcription factors (Codebook-MEX, batch)",,,,,,,,MEX-Archipelago data,10.5281/zenodo.15555251,,true,true,https://doi.org/10.5281/zenodo.15555251,FULL_TEXT,extracted
+zenodo:15619991,tf_ht_selex,"Transcription factors (Codebook, batch)",,,,GHT-SELEX,,,,Codebook MEX Supplementary Dataset 3,10.5281/zenodo.15619991,,true,true,https://doi.org/10.5281/zenodo.15619991,FULL_TEXT,extracted
+zenodo:15620252,tf_ht_selex,"Transcription factors (Codebook, batch)",,,,HT-SELEX,,,,Codebook MEX Supplementary Dataset 2,10.5281/zenodo.15620252,,true,true,https://doi.org/10.5281/zenodo.15620252,FULL_TEXT,extracted
+zenodo:15733619,method_or_other,,,,,,,,,DEVELOPMENT OF FLUORESCENT METHODS TO DETERMINE DISSOCIATION CONSTANT FOR SINGLE STRANDED DNA BIOSENSORS,10.5281/zenodo.15733619,,true,true,https://doi.org/10.5281/zenodo.15733619,FULL_TEXT,extracted
+zenodo:15781226,method_or_other,,,,,,,,,Data for TRAFICA model training and evaluation,10.5281/zenodo.15781226,,true,true,https://doi.org/10.5281/zenodo.15781226,FULL_TEXT,extracted
+zenodo:15831294,aptamer_selection,Kavain,,,,,,,,ON THE DEVELOPMENT OF A SSDNA – BASED BIOSENSOR FOR THE DETECTION OF R – (+) – KAVAIN,10.5281/zenodo.15831294,,true,true,https://doi.org/10.5281/zenodo.15831294,FULL_TEXT,extracted
+zenodo:17311531,aptamer_selection,Vancomycin,,,,,,,,"Disposable electrochemical aptasensor for rapid and selective vancomycin detection in clinical samples: Bridging affinity selection, computational modeling and clinical validation",10.17811/ruo_datasets.80707,,true,true,https://doi.org/10.17811/ruo_datasets.80707,FULL_TEXT,extracted
+zenodo:17432573,not_selex,,,,,,,,,A protocol for in vivo RNA labeling and visualization in tobacco pollen tubes,10.1016/j.xpro.2024.103433,,true,true,https://doi.org/10.1016/j.xpro.2024.103433,FULL_TEXT,extracted
+zenodo:17533332,not_selex,,,,,,,,,"A Validated suite of tools for assessing fish origin, quality (freshness) and safety, including detection of antibiotics, toxins and pathogens (D4.1)",10.5281/zenodo.17533332,,true,true,https://doi.org/10.5281/zenodo.17533332,FULL_TEXT,extracted
+zenodo:18199595,method_or_other,Ochratoxin A (OTA),,,,,,,,Assessing Molecular Dynamics in Predicting Aptamer–Ligand Binding Thermodynamics: Insights from the OTA Binding Aptamers,10.5281/zenodo.18199595,,true,true,https://doi.org/10.5281/zenodo.18199595,FULL_TEXT,extracted
+zenodo:18719585,method_or_other,,,,,,,,,"NGS data of rationally designed, structurally rich DNA aptamer screening libraries",10.5281/zenodo.18719585,,true,true,,FULL_TEXT,extracted
+zenodo:19109198,method_or_other,Small molecules and peptides,,,,,,,,Bioelectronical devices based on graphene FETs with aptamers for detection of small molecules and peptides,10.5281/zenodo.19109198,,true,true,https://doi.org/10.5281/zenodo.19109198,FULL_TEXT,extracted
+zenodo:19223322,not_selex,,,,,,,,,A review on magnetic beads-based SELEX technologies: Applications from small to large target molecules,10.1016/j.aca.2024.342325,,true,false,,ABSTRACT,extracted
+zenodo:19432013,method_or_other,,,,,CompELS,,,,"Dataset for ""CompELS vs. SELEX: Comparative Aptamer Discovery Integrating Rational Libraries and Enzymatic Elution""",10.5281/zenodo.19432013,,true,true,https://doi.org/10.5281/zenodo.19432013,FULL_TEXT,extracted
+zenodo:19547634,method_or_other,,,,,,,,,Surface plasmon resonance assay for screening diverse aptamer-target interactions,10.5281/zenodo.19547634,,true,true,https://doi.org/10.5281/zenodo.19547634,FULL_TEXT,extracted
+zenodo:3634978,not_selex,,,,,,,,,bioinform/QBC_Single_Cell_Analysis_NGS: Release for Communications Biology Submission,10.5281/zenodo.3634978,,true,true,https://zenodo.org/record/3634978,FULL_TEXT,extracted
+zenodo:4450582,tf_ht_selex,Cyp33 (PPIE),,,,RNA SELEX,,,,Cyp33 RNA SELEX,10.5281/zenodo.4450582,,true,true,https://zenodo.org/record/4450582,FULL_TEXT,extracted
+zenodo:4938913,method_or_other,Rotavirus genome segments,,,,,,,,Data from: Protein-mediated RNA folding governs sequence-specific interactions between rotavirus genome segments,10.5061/dryad.vp312,,true,true,https://doi.org/10.5061/dryad.vp312,FULL_TEXT,extracted
+zenodo:53137,method_or_other,Dopamine,,,,,,,,Surface state of the dopamine RNA aptamer affects specific recognition and binding of dopamine by the aptamer-modified electrodes,10.1039/c5an00480b,,true,true,https://pubs.rsc.org/en/content/articlepdf/2015/an/c5an00480b,FULL_TEXT,extracted
+zenodo:5707360,method_or_other,Cancer cells,,,,cell-SELEX,,,,Nucleic Acids Aptamer Application in Diagnosis and Therapy of Cancer  Based on Cell-SELEX Technology,10.36811/ijho.2021.110023,,true,true,https://www.raftpubs.com//pdf/ijho_raft1023.pdf,FULL_TEXT,extracted
+zenodo:6332928,method_or_other,Testosterone,,,,,,,,Novel electrochemiluminescent assay for the aptamer-based detection of testosterone,10.1016/j.talanta.2021.123121,,true,false,,ABSTRACT,extracted
+zenodo:6341687,method_or_other,Thrombin,,,,,,,,"Data for ""Generative and interpretable machine learning for aptamer design and analysis of in vitro sequence selection""",10.5281/zenodo.6341687,,true,true,https://zenodo.org/record/6341687,FULL_TEXT,extracted
+zenodo:6586738,not_selex,,,,,HT-SELEX,,,,"Software for ""Pantier et al. High-throughput sequencing SELEX (HT-SELEX) for the determination of DNA-binding protein specificities in vitro""",10.5281/zenodo.6586738,,true,true,https://zenodo.org/record/6586738,FULL_TEXT,extracted
+zenodo:6587005,tf_ht_selex,bZIP dimers,,,,,,,,Combinatorial bZIP dimers display complex DNA-binding specificity landscapes,10.7554/eLife.19272,,true,true,https://doi.org/10.7554/elife.19272,FULL_TEXT,extracted
+zenodo:6958314,aptamer_selection,HMGB1 (Plasmodium falciparum),,,,,,,,DNA aptamers for the recognition of HMGB1 from Plasmodium falciparum,10.1371/journal.pone.0211756,,true,true,https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0211756&type=printable,FULL_TEXT,extracted
+zenodo:7350428,method_or_other,Ochratoxin A (OTA),,,,,,,,Experimental investigation of aptamer-mycotoxin interaction on graphene field-effect transistor biosensor,10.5281/zenodo.7350428,,true,true,https://zenodo.org/record/7350428,FULL_TEXT,extracted
+zenodo:7572933,method_or_other,,,,,,,,,Aptamers at work – effective neutralization of SARS-CoV-2 and identifying protein biomarkers in biofluids using highly parallelized RNA aptamer screens.,10.5281/zenodo.7572933,,true,true,https://zenodo.org/record/7572933,FULL_TEXT,extracted
+zenodo:7573218,method_or_other,Blood biomarkers,,,,,,,,"Aptamer-based blood profiling for diagnosis, treatment evaluation and disease severity prediction",10.5281/zenodo.7573218,,true,true,https://doi.org/10.5281/zenodo.7573218,FULL_TEXT,extracted
+zenodo:7629808,method_or_other,,,,,,,,,"Preliminary  results, oDIN oLIVER project February 2023, Laborotory of Jørgen Kjems, Aarhus University",10.5281/zenodo.7629808,,true,true,https://zenodo.org/record/7629808,FULL_TEXT,extracted
+zenodo:7922963,method_or_other,,,,,,,,,DEEP LEARNING-BASED SEQUENCE GENERATION OF SINGLE-STRANDED DNA APTAMERS,10.5281/zenodo.7922963,,true,true,https://zenodo.org/record/7922963,FULL_TEXT,extracted
+zenodo:7991884,method_or_other,Tetracycline,,,,,,,,__RNA-aptamer-tetracyclin-binding-site_structure_MD_GEC_31-05-2023.png,10.5281/zenodo.7991884,,true,true,https://zenodo.org/record/7991884,FULL_TEXT,extracted
+zenodo:8106594,method_or_other,Human myeloperoxidase (MPO),,,,ProSELEX,,,,Raw data of high-dimensional aptamer selection generated by ProSELEX,10.1038/s41557-023-01207-z,,true,,,ABSTRACT,extracted
+zenodo:8253891,not_selex,,,,,,,,,DNA-encoded library enabled discovery of proximity-inducing small molecules,10.5281/zenodo.8253891,,true,true,https://zenodo.org/record/8253891,FULL_TEXT,extracted
+zenodo:8330867,method_or_other,Theophylline,,,,,,,,Mechanism of ligand binding to theophylline RNA aptamer,10.5281/zenodo.8330867,,true,true,https://figshare.com/articles/journal_contribution/Mechanism_of_Ligand_Binding_to_Theophylline_RNA_Aptamer/25003000,FULL_TEXT,extracted
+zenodo:8387047,method_or_other,,,,,,,,,UTexas Aptamer Dataset,10.5281/zenodo.8387047,,true,true,https://zenodo.org/record/8387047,FULL_TEXT,extracted
