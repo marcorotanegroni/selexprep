@@ -163,7 +163,7 @@ def test_load_trajectory_from_run_outputs(tmp_path: Path) -> None:
     acc_dir = tmp_path / "PRJTEST"
     _write_round(acc_dir, "round_00", [1, 1, 2])  # 3 unique, 4 reads, 2 singletons
     _write_round(acc_dir, "round_01", [10, 5])  # 2 unique, 15 reads, 0 singletons
-    _write_round(acc_dir, "round_unknown", [3])  # string-labelled round sorts last
+    _write_round(acc_dir, "round_unknown", [3])  # run skips this dir; loader handles it if present
 
     traj = bpm.load_trajectory(tmp_path, "PRJTEST")
     assert traj is not None
@@ -175,6 +175,34 @@ def test_load_trajectory_from_run_outputs(tmp_path: Path) -> None:
 
 def test_load_trajectory_absent_is_none(tmp_path: Path) -> None:
     assert bpm.load_trajectory(tmp_path, "NOT_RUN") is None  # no per-round counts -> rounds: null
+
+
+def test_load_trajectory_flat_layout(tmp_path: Path) -> None:
+    """The standalone counter's flat ``round_NN.counts.parquet`` is also accepted."""
+    import pandas as pd
+
+    acc_dir = tmp_path / "PRJFLAT"
+    acc_dir.mkdir()
+    for label, reads in (("round_00", [1, 1]), ("round_01", [4])):
+        pd.DataFrame({"sequence": [f"S{i}" for i in range(len(reads))], "reads": reads}).to_parquet(
+            acc_dir / f"{label}.counts.parquet", index=False
+        )
+    traj = bpm.load_trajectory(tmp_path, "PRJFLAT")
+    assert traj is not None
+    assert [r["round"] for r in traj] == [0, 1]
+    assert traj[0]["n_reads"] == 2 and traj[0]["singleton_frac"] == 1.0
+
+
+def test_load_trajectory_empty_round(tmp_path: Path) -> None:
+    """A present-but-empty parquet yields a zero-read round, not a crash."""
+    import pandas as pd
+
+    acc_dir = tmp_path / "PRJEMPTY"
+    d = acc_dir / "round_00"
+    d.mkdir(parents=True)
+    pd.DataFrame({"sequence": [], "reads": []}).to_parquet(d / "counts.parquet", index=False)
+    traj = bpm.load_trajectory(tmp_path, "PRJEMPTY")
+    assert traj == [{"round": 0, "n_reads": 0, "n_unique": 0, "singleton_frac": 0.0}]
 
 
 def test_write_json_preserves_attached_trajectory(tmp_path: Path) -> None:
