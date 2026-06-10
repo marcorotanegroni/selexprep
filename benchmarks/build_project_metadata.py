@@ -294,29 +294,48 @@ def write_csv(rows: list[dict[str, Any]], path: Path) -> None:
             writer.writerow([_csv_cell(row[c]) for c in COLUMNS])
 
 
-def load_trajectory(results_dir: Path, accession: str) -> list[dict[str, Any]] | None:
-    """Per-round enrichment trajectory for one deposit from ``selexprep run`` outputs.
+def _round_label(name: str) -> str:
+    """``round_07`` / ``round_07.counts.parquet`` / ``round_unknown`` -> ``07`` / ``unknown``."""
+    base = name.replace(".counts.parquet", "")
+    return base.split("_", 1)[1] if "_" in base else base
 
-    Reads ``<results_dir>/<accession>/round_*/counts.parquet`` (the layout the
-    ``run`` driver writes) and recomputes per-round depth/diversity from the
-    ``reads`` column — the same derivation the counter uses for cached rounds.
-    Returns ``None`` when no per-round counts exist for the accession, so the
+
+def load_trajectory(results_dir: Path, accession: str) -> list[dict[str, Any]] | None:
+    """Per-round enrichment trajectory for one deposit from a count output tree.
+
+    Accepts **both** count layouts: the per-round directories ``selexprep run``
+    writes (``<acc>/round_NN/counts.parquet``) and the standalone counter's flat
+    files (``<acc>/round_NN.counts.parquet``). Per-round depth/diversity is
+    recomputed from the ``reads`` column — the same derivation the counter uses
+    for cached rounds. Returns ``None`` when no per-round counts exist, so the
     JSON keeps ``rounds: null`` for deposits that were never counted.
+
+    Known limitations (faithful to what the writer produces, not bugs here):
+    - **Multi-target deposits** — ``run`` pools all targets into one ``round_NN/``,
+      so the trajectory is the aggregated curve, not per-target.
+    - **Zero-read rounds** — the counter writes no parquet for a round that has
+      zero reads, so such a round is absent from the trajectory.
     """
     acc_dir = results_dir / accession
     if not acc_dir.is_dir():
         return None
     import pandas as pd  # lazy: only needed when --results-dir is supplied
 
+    # Collect one parquet per round label across both layouts (dir wins on a tie).
+    parquets: dict[str, Path] = {}
+    for entry in sorted(acc_dir.glob("round_*")):
+        if entry.is_dir() and (entry / "counts.parquet").is_file():
+            parquets.setdefault(_round_label(entry.name), entry / "counts.parquet")
+    for flat in sorted(acc_dir.glob("round_*.counts.parquet")):
+        parquets.setdefault(_round_label(flat.name), flat)
+    if not parquets:
+        return None
+
     rounds: list[dict[str, Any]] = []
-    for round_dir in sorted(acc_dir.glob("round_*")):
-        parquet = round_dir / "counts.parquet"
-        if not parquet.is_file():
-            continue
+    for label, parquet in parquets.items():
         reads = pd.read_parquet(parquet, columns=["reads"])["reads"].to_numpy()
         n_unique = int(reads.size)
         n_singletons = int((reads == 1).sum())
-        label = round_dir.name.split("_", 1)[1]  # "00".."NN" or "unknown"
         rounds.append(
             {
                 "round": int(label) if label.isdigit() else label,
@@ -325,8 +344,6 @@ def load_trajectory(results_dir: Path, accession: str) -> list[dict[str, Any]] |
                 "singleton_frac": (n_singletons / n_unique) if n_unique else 0.0,
             }
         )
-    if not rounds:
-        return None
     # numeric rounds first (ascending), then any string labels (e.g. "unknown")
     rounds.sort(key=lambda r: (isinstance(r["round"], str), r["round"]))
     return rounds
