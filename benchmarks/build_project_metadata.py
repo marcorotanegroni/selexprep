@@ -30,18 +30,22 @@ they never drift:
 stated in the source", never a guessed value.
 
 The per-round enrichment trajectory (n_reads / n_unique / singleton_frac per
-round) is a later addition that needs a count pass over the deposits; the JSON
-layout already reserves a ``rounds`` key per project for it.
+round) is populated into each deposit's ``rounds`` slot from ``--results-dir``
+(a ``selexprep run`` output tree); deposits with no count run keep
+``rounds: null``. The trajectory is nested, so it lives in the JSON only — the
+CSV stays flat.
 
 **Output:**
 
 - ``benchmarks/project_metadata.csv``  — one flat row per deposit.
-- ``benchmarks/project_metadata.json`` — same rows, with a reserved ``rounds`` slot.
+- ``benchmarks/project_metadata.json`` — same rows, plus a per-round ``rounds``
+  trajectory (null until ``--results-dir`` is supplied).
 
 Usage::
 
     python -m benchmarks.build_project_metadata                  # bundled defaults, hits OpenAlex
     python -m benchmarks.build_project_metadata --no-network     # offline; tier capped at ABSTRACT
+    python -m benchmarks.build_project_metadata --results-dir out/  # + per-round trajectory
 """
 
 from __future__ import annotations
@@ -290,9 +294,47 @@ def write_csv(rows: list[dict[str, Any]], path: Path) -> None:
             writer.writerow([_csv_cell(row[c]) for c in COLUMNS])
 
 
+def load_trajectory(results_dir: Path, accession: str) -> list[dict[str, Any]] | None:
+    """Per-round enrichment trajectory for one deposit from ``selexprep run`` outputs.
+
+    Reads ``<results_dir>/<accession>/round_*/counts.parquet`` (the layout the
+    ``run`` driver writes) and recomputes per-round depth/diversity from the
+    ``reads`` column — the same derivation the counter uses for cached rounds.
+    Returns ``None`` when no per-round counts exist for the accession, so the
+    JSON keeps ``rounds: null`` for deposits that were never counted.
+    """
+    acc_dir = results_dir / accession
+    if not acc_dir.is_dir():
+        return None
+    import pandas as pd  # lazy: only needed when --results-dir is supplied
+
+    rounds: list[dict[str, Any]] = []
+    for round_dir in sorted(acc_dir.glob("round_*")):
+        parquet = round_dir / "counts.parquet"
+        if not parquet.is_file():
+            continue
+        reads = pd.read_parquet(parquet, columns=["reads"])["reads"].to_numpy()
+        n_unique = int(reads.size)
+        n_singletons = int((reads == 1).sum())
+        label = round_dir.name.split("_", 1)[1]  # "00".."NN" or "unknown"
+        rounds.append(
+            {
+                "round": int(label) if label.isdigit() else label,
+                "n_reads": int(reads.sum()),
+                "n_unique": n_unique,
+                "singleton_frac": (n_singletons / n_unique) if n_unique else 0.0,
+            }
+        )
+    if not rounds:
+        return None
+    # numeric rounds first (ascending), then any string labels (e.g. "unknown")
+    rounds.sort(key=lambda r: (isinstance(r["round"], str), r["round"]))
+    return rounds
+
+
 def write_json(rows: list[dict[str, Any]], path: Path) -> None:
-    # The trajectory pass will populate ``rounds`` with per-round counts.
-    payload = [{**row, "rounds": None} for row in rows]
+    # ``rounds`` carries the per-round trajectory, or null for un-counted deposits.
+    payload = [{**row, "rounds": row.get("rounds")} for row in rows]
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
@@ -313,6 +355,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--mailto", default=None, help="contact email for the OpenAlex polite pool")
     parser.add_argument("--timeout", type=float, default=15.0)
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=None,
+        help="a `selexprep run` output dir; populates each deposit's per-round trajectory "
+        "from <results-dir>/<accession>/round_*/counts.parquet (else rounds stays null)",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -342,6 +391,13 @@ def main(argv: list[str] | None = None) -> int:
         catalog_ann=catalog_ann,
         oa=oa,
     )
+
+    if args.results_dir is not None:
+        n_with = 0
+        for row in rows:
+            row["rounds"] = load_trajectory(args.results_dir, row["accession"])
+            n_with += row["rounds"] is not None
+        logger.info("trajectory: per-round counts attached for %d/%d deposits", n_with, len(rows))
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = args.out_dir / "project_metadata.csv"

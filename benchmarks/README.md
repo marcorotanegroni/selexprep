@@ -167,11 +167,16 @@ slice of the truth and they never drift:
 
 ```bash
 uv run python -m benchmarks.build_project_metadata        # hits OpenAlex; --no-network caps tier at ABSTRACT
+uv run python -m benchmarks.build_project_metadata --results-dir out/   # + per-round trajectory
 ```
 
-Outputs: `project_metadata.csv` (flat) + `project_metadata.json` (with a
-reserved `rounds` slot for the future per-round trajectory). Every row carries
-two honesty signals so a reader always knows how a value was obtained:
+Outputs: `project_metadata.csv` (flat) + `project_metadata.json` (same rows plus
+a per-round `rounds` trajectory). Passing `--results-dir` (a `selexprep run`
+output tree) populates each deposit's `rounds` with `{n_reads, n_unique,
+singleton_frac}` per cycle, recomputed from `<acc>/round_*/counts.parquet`;
+deposits with no count run keep `rounds: null`. The trajectory is nested, so it
+lives in the JSON only — the CSV stays flat. Every row carries two honesty
+signals so a reader always knows how a value was obtained:
 
 - **`curation_level`** — `verified` (the 11 benchmark deposits, primer-checked
   against the paper) / `extracted` (target, `study_type`, format derived from the
