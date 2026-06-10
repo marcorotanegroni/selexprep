@@ -231,3 +231,47 @@ def test_write_json_preserves_attached_trajectory(tmp_path: Path) -> None:
     path = tmp_path / "m.json"
     bpm.write_json(rows, path)
     assert json.loads(path.read_text(encoding="utf-8"))[0]["rounds"][0]["n_reads"] == 4
+
+
+def test_round_structure_categories() -> None:
+    rs = bpm.round_structure
+    assert rs("PRJX", [{"round": 0}, {"round": 1}], "OK") == "multi"
+    assert rs("PRJX", [{"round": 0}], "OK") == "mono"
+    assert rs("PRJX", None, "FETCH_REFUSED") == "unassigned"  # INSDC the run refused
+    assert rs("figshare:1", None, "") == "not_fetchable"
+    assert rs("zenodo:9", None, "") == "not_fetchable"
+    assert rs("PRJX", None, "") == ""  # INSDC not yet counted
+
+
+def test_load_run_status(tmp_path: Path) -> None:
+    (tmp_path / "run_summary.tsv").write_text(
+        "accession\tstatus\tnotes\nPRJA\tOK\t\nPRJB\tFETCH_REFUSED\tno round\n", encoding="utf-8"
+    )
+    assert bpm.load_run_status(tmp_path) == {"PRJA": "OK", "PRJB": "FETCH_REFUSED"}
+    assert bpm.load_run_status(tmp_path / "nope") == {}  # absent summary -> empty
+
+
+def test_build_rows_sets_round_structure_default() -> None:
+    """build_rows seeds round_structure (not_fetchable for discovery, '' for INSDC)."""
+    catalog = {
+        k: dict.fromkeys(
+            (
+                "study_title",
+                "protein_target",
+                "target_organism",
+                "n_rounds_declared",
+                "paper_doi",
+                "paper_pmid",
+            ),
+            "",
+        )
+        for k in ("PRJX", "zenodo:1")
+    }
+    rows = {
+        r["accession"]: r
+        for r in bpm.build_rows(
+            catalog=catalog, descriptors={}, project_ann={}, catalog_ann={}, oa={}
+        )
+    }
+    assert rows["PRJX"]["round_structure"] == ""
+    assert rows["zenodo:1"]["round_structure"] == "not_fetchable"

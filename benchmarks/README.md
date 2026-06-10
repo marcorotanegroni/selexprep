@@ -175,8 +175,12 @@ a per-round `rounds` trajectory). Passing `--results-dir` (a `selexprep run`
 output tree) populates each deposit's `rounds` with `{n_reads, n_unique,
 singleton_frac}` per cycle, recomputed from `<acc>/round_*/counts.parquet`;
 deposits with no count run keep `rounds: null`. The trajectory is nested, so it
-lives in the JSON only — the CSV stays flat. Every row carries two honesty
-signals so a reader always knows how a value was obtained:
+lives in the JSON only — the CSV stays flat. A scalar **`round_structure`**
+column summarises it in both files and disambiguates the overloaded null:
+`multi` / `mono` (counted), `unassigned` (run refused — no round parsable from
+metadata), `not_fetchable` (discovery-only deposit), or empty (INSDC not yet
+counted). Every row also carries two honesty signals so a reader always knows
+how a value was obtained:
 
 - **`curation_level`** — `verified` (the 11 benchmark deposits, primer-checked
   against the paper) / `extracted` (target, `study_type`, format derived from the

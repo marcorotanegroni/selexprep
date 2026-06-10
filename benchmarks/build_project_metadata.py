@@ -33,7 +33,9 @@ The per-round enrichment trajectory (n_reads / n_unique / singleton_frac per
 round) is populated into each deposit's ``rounds`` slot from ``--results-dir``
 (a ``selexprep run`` output tree); deposits with no count run keep
 ``rounds: null``. The trajectory is nested, so it lives in the JSON only — the
-CSV stays flat.
+CSV stays flat. A scalar ``round_structure`` column summarises it for both:
+``multi`` / ``mono`` (counted), ``unassigned`` (run refused: no parsable round),
+``not_fetchable`` (discovery-only deposit), or empty (INSDC not yet counted).
 
 **Output:**
 
@@ -93,6 +95,7 @@ COLUMNS = [
     "paper_oa_url",
     "metadata_tier",
     "curation_level",
+    "round_structure",
 ]
 
 
@@ -240,6 +243,9 @@ def build_rows(
                 "paper_oa_url": oa_url or "",
                 "metadata_tier": metadata_tier(doi, is_oa),
                 "curation_level": curation,
+                # default (no run yet): not_fetchable for discovery, "" for INSDC;
+                # main() overwrites with multi/mono/unassigned once a run is supplied.
+                "round_structure": round_structure(acc, None, ""),
             }
         )
     return rows
@@ -349,6 +355,37 @@ def load_trajectory(results_dir: Path, accession: str) -> list[dict[str, Any]] |
     return rounds
 
 
+_DISCOVERY_PREFIXES = ("figshare:", "zenodo:", "utexas:")
+
+
+def load_run_status(results_dir: Path) -> dict[str, str]:
+    """``<results_dir>/run_summary.tsv`` -> {accession: status}, or {} when absent."""
+    summary = results_dir / "run_summary.tsv"
+    if not summary.is_file():
+        return {}
+    with summary.open(encoding="utf-8", newline="") as fh:
+        return {
+            r["accession"].strip(): r.get("status", "").strip()
+            for r in csv.DictReader(fh, delimiter="\t")
+        }
+
+
+def round_structure(accession: str, rounds: list[dict[str, Any]] | None, run_status: str) -> str:
+    """Scalar round-structure summary for the flat CSV (disambiguates ``rounds: null``).
+
+    ``multi`` / ``mono`` from the trajectory; ``not_fetchable`` for discovery-only
+    deposits; ``unassigned`` when ``run`` refused an INSDC deposit (no parsable
+    round); ``""`` for an INSDC deposit not yet counted.
+    """
+    if rounds:
+        return "multi" if len(rounds) >= 2 else "mono"
+    if accession.startswith(_DISCOVERY_PREFIXES):
+        return "not_fetchable"
+    if run_status == "FETCH_REFUSED":
+        return "unassigned"
+    return ""
+
+
 def write_json(rows: list[dict[str, Any]], path: Path) -> None:
     # ``rounds`` carries the per-round trajectory, or null for un-counted deposits.
     payload = [{**row, "rounds": row.get("rounds")} for row in rows]
@@ -409,11 +446,14 @@ def main(argv: list[str] | None = None) -> int:
         oa=oa,
     )
 
+    run_status = load_run_status(args.results_dir) if args.results_dir else {}
+    n_with = 0
+    for row in rows:
+        acc = row["accession"]
+        row["rounds"] = load_trajectory(args.results_dir, acc) if args.results_dir else None
+        row["round_structure"] = round_structure(acc, row["rounds"], run_status.get(acc, ""))
+        n_with += row["rounds"] is not None
     if args.results_dir is not None:
-        n_with = 0
-        for row in rows:
-            row["rounds"] = load_trajectory(args.results_dir, row["accession"])
-            n_with += row["rounds"] is not None
         logger.info("trajectory: per-round counts attached for %d/%d deposits", n_with, len(rows))
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -430,6 +470,10 @@ def main(argv: list[str] | None = None) -> int:
     logger.info("curation_level: %s", _counts("curation_level", ("verified", "extracted", "none")))
     logger.info(
         "metadata_tier:  %s", _counts("metadata_tier", ("FULL_TEXT", "ABSTRACT", "RECORD_ONLY"))
+    )
+    logger.info(
+        "round_structure: %s",
+        _counts("round_structure", ("multi", "mono", "unassigned", "not_fetchable")),
     )
     return 0
 
