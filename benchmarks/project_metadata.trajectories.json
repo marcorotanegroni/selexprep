@@ -18,8 +18,45 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 31471,
+        "n_unique": 27030,
+        "singleton_frac": 0.8945985941546429
+      },
+      {
+        "round": 2,
+        "n_reads": 35375,
+        "n_unique": 30374,
+        "singleton_frac": 0.8925725949825508
+      },
+      {
+        "round": 3,
+        "n_reads": 43369,
+        "n_unique": 37502,
+        "singleton_frac": 0.8965655165057863
+      },
+      {
+        "round": 4,
+        "n_reads": 42152,
+        "n_unique": 36010,
+        "singleton_frac": 0.8889475145792836
+      },
+      {
+        "round": 5,
+        "n_reads": 31376,
+        "n_unique": 25858,
+        "singleton_frac": 0.870020883285637
+      },
+      {
+        "round": 6,
+        "n_reads": 42790,
+        "n_unique": 26641,
+        "singleton_frac": 0.7555271949251154
+      }
+    ]
   },
   {
     "accession": "PRJDB19137",
@@ -40,8 +77,57 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 0,
+        "n_reads": 409353,
+        "n_unique": 329210,
+        "singleton_frac": 0.8413626560554054
+      },
+      {
+        "round": 1,
+        "n_reads": 147376,
+        "n_unique": 103684,
+        "singleton_frac": 0.8382971335982408
+      },
+      {
+        "round": 2,
+        "n_reads": 332422,
+        "n_unique": 199067,
+        "singleton_frac": 0.8289369910633103
+      },
+      {
+        "round": 3,
+        "n_reads": 252550,
+        "n_unique": 105147,
+        "singleton_frac": 0.7688093811521013
+      },
+      {
+        "round": 4,
+        "n_reads": 216991,
+        "n_unique": 49525,
+        "singleton_frac": 0.6776779404341242
+      },
+      {
+        "round": 5,
+        "n_reads": 305984,
+        "n_unique": 50552,
+        "singleton_frac": 0.718032916600728
+      },
+      {
+        "round": 6,
+        "n_reads": 287627,
+        "n_unique": 19863,
+        "singleton_frac": 0.6160197351860243
+      },
+      {
+        "round": 7,
+        "n_reads": 202313,
+        "n_unique": 21378,
+        "singleton_frac": 0.7221910375152025
+      }
+    ]
   },
   {
     "accession": "PRJDB19138",
@@ -62,8 +148,39 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 2,
+        "n_reads": 151529,
+        "n_unique": 149855,
+        "singleton_frac": 0.9893630509492509
+      },
+      {
+        "round": 3,
+        "n_reads": 171508,
+        "n_unique": 167870,
+        "singleton_frac": 0.9798534580330017
+      },
+      {
+        "round": 4,
+        "n_reads": 175299,
+        "n_unique": 91892,
+        "singleton_frac": 0.7956296522004092
+      },
+      {
+        "round": 5,
+        "n_reads": 206365,
+        "n_unique": 43450,
+        "singleton_frac": 0.7276409666283083
+      },
+      {
+        "round": 6,
+        "n_reads": 118121,
+        "n_unique": 18258,
+        "singleton_frac": 0.7305838536531931
+      }
+    ]
   },
   {
     "accession": "PRJDB19139",
@@ -84,8 +201,33 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 585774,
+        "n_unique": 513711,
+        "singleton_frac": 0.9093050372680359
+      },
+      {
+        "round": 2,
+        "n_reads": 618646,
+        "n_unique": 554339,
+        "singleton_frac": 0.9210681550459195
+      },
+      {
+        "round": 3,
+        "n_reads": 666410,
+        "n_unique": 552280,
+        "singleton_frac": 0.8485550807561382
+      },
+      {
+        "round": 4,
+        "n_reads": 1051780,
+        "n_unique": 549040,
+        "singleton_frac": 0.7286190441497887
+      }
+    ]
   },
   {
     "accession": "PRJDB19140",
@@ -106,8 +248,27 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 454196,
+        "n_unique": 68435,
+        "singleton_frac": 0.8283188426974502
+      },
+      {
+        "round": 2,
+        "n_reads": 182613,
+        "n_unique": 18594,
+        "singleton_frac": 0.8046681725287728
+      },
+      {
+        "round": 3,
+        "n_reads": 274190,
+        "n_unique": 24682,
+        "singleton_frac": 0.8234340815168949
+      }
+    ]
   },
   {
     "accession": "PRJDB19141",
@@ -128,8 +289,27 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 397276,
+        "n_unique": 246501,
+        "singleton_frac": 0.908385767197699
+      },
+      {
+        "round": 2,
+        "n_reads": 180871,
+        "n_unique": 28164,
+        "singleton_frac": 0.8411092174407044
+      },
+      {
+        "round": 3,
+        "n_reads": 234963,
+        "n_unique": 22617,
+        "singleton_frac": 0.8126188265464032
+      }
+    ]
   },
   {
     "accession": "PRJDB40016",
@@ -150,8 +330,39 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 1170821,
+        "n_unique": 1018973,
+        "singleton_frac": 0.8767042895150313
+      },
+      {
+        "round": 2,
+        "n_reads": 478859,
+        "n_unique": 419711,
+        "singleton_frac": 0.8843513751128753
+      },
+      {
+        "round": 3,
+        "n_reads": 429514,
+        "n_unique": 340822,
+        "singleton_frac": 0.8684327889631538
+      },
+      {
+        "round": 4,
+        "n_reads": 687881,
+        "n_unique": 68698,
+        "singleton_frac": 0.6880549652100498
+      },
+      {
+        "round": 5,
+        "n_reads": 580383,
+        "n_unique": 37381,
+        "singleton_frac": 0.614857815467751
+      }
+    ]
   },
   {
     "accession": "PRJDB40017",
@@ -194,7 +405,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -238,8 +449,63 @@
     "paper_oa_url": "https://doi.org/10.1093/nar/gkaa484",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 0,
+        "n_reads": 127071,
+        "n_unique": 125374,
+        "singleton_frac": 0.9867117584188109
+      },
+      {
+        "round": 1,
+        "n_reads": 81431,
+        "n_unique": 80194,
+        "singleton_frac": 0.9850986358081651
+      },
+      {
+        "round": 2,
+        "n_reads": 40878,
+        "n_unique": 40310,
+        "singleton_frac": 0.9863805507318283
+      },
+      {
+        "round": 3,
+        "n_reads": 81681,
+        "n_unique": 80501,
+        "singleton_frac": 0.9859753294990125
+      },
+      {
+        "round": 4,
+        "n_reads": 72300,
+        "n_unique": 55472,
+        "singleton_frac": 0.9284143351600808
+      },
+      {
+        "round": 5,
+        "n_reads": 97135,
+        "n_unique": 32466,
+        "singleton_frac": 0.8394320211914003
+      },
+      {
+        "round": 6,
+        "n_reads": 90381,
+        "n_unique": 13726,
+        "singleton_frac": 0.7640973335276118
+      },
+      {
+        "round": 7,
+        "n_reads": 45443,
+        "n_unique": 6015,
+        "singleton_frac": 0.7162094763092269
+      },
+      {
+        "round": 8,
+        "n_reads": 93729,
+        "n_unique": 8594,
+        "singleton_frac": 0.7310914591575518
+      }
+    ]
   },
   {
     "accession": "PRJDB9111",
@@ -260,8 +526,33 @@
     "paper_oa_url": "https://doi.org/10.1093/nar/gkaa484",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 3,
+        "n_reads": 118970,
+        "n_unique": 114864,
+        "singleton_frac": 0.976563588243488
+      },
+      {
+        "round": 4,
+        "n_reads": 97458,
+        "n_unique": 58925,
+        "singleton_frac": 0.8884174798472635
+      },
+      {
+        "round": 5,
+        "n_reads": 97123,
+        "n_unique": 33992,
+        "singleton_frac": 0.8296069663450224
+      },
+      {
+        "round": 6,
+        "n_reads": 68369,
+        "n_unique": 20902,
+        "singleton_frac": 0.8161419959812458
+      }
+    ]
   },
   {
     "accession": "PRJEB111361",
@@ -282,8 +573,33 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 5,
+        "n_reads": 302008,
+        "n_unique": 262014,
+        "singleton_frac": 0.9838710908577404
+      },
+      {
+        "round": 6,
+        "n_reads": 1053785,
+        "n_unique": 486090,
+        "singleton_frac": 0.9267481330617787
+      },
+      {
+        "round": 7,
+        "n_reads": 2203451,
+        "n_unique": 331144,
+        "singleton_frac": 0.8645906312661561
+      },
+      {
+        "round": 8,
+        "n_reads": 2228377,
+        "n_unique": 202634,
+        "singleton_frac": 0.8669324989883238
+      }
+    ]
   },
   {
     "accession": "PRJEB14550",
@@ -370,7 +686,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -502,7 +818,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -524,7 +840,7 @@
     "paper_oa_url": "https://www.nature.com/articles/s41598-019-44654-w.pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -590,7 +906,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -678,7 +994,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -766,8 +1082,63 @@
     "paper_oa_url": "https://www.nature.com/articles/s41598-024-52808-8.pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 4,
+        "n_reads": 367260,
+        "n_unique": 360103,
+        "singleton_frac": 0.9808054917620792
+      },
+      {
+        "round": 5,
+        "n_reads": 62451,
+        "n_unique": 55661,
+        "singleton_frac": 0.9129552110095039
+      },
+      {
+        "round": 6,
+        "n_reads": 349380,
+        "n_unique": 290938,
+        "singleton_frac": 0.9754311915253422
+      },
+      {
+        "round": 7,
+        "n_reads": 65036,
+        "n_unique": 38253,
+        "singleton_frac": 0.900609102554048
+      },
+      {
+        "round": 8,
+        "n_reads": 73617,
+        "n_unique": 16574,
+        "singleton_frac": 0.850187039942078
+      },
+      {
+        "round": 9,
+        "n_reads": 219277,
+        "n_unique": 36974,
+        "singleton_frac": 0.8564667063341808
+      },
+      {
+        "round": 10,
+        "n_reads": 62770,
+        "n_unique": 14586,
+        "singleton_frac": 0.8556835321541204
+      },
+      {
+        "round": 11,
+        "n_reads": 135762,
+        "n_unique": 28208,
+        "singleton_frac": 0.8625212705615428
+      },
+      {
+        "round": 12,
+        "n_reads": 252760,
+        "n_unique": 104647,
+        "singleton_frac": 0.8822135369384694
+      }
+    ]
   },
   {
     "accession": "PRJEB62756",
@@ -920,8 +1291,51 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 12332574,
+        "n_unique": 11514353,
+        "singleton_frac": 0.9492193786311744
+      },
+      {
+        "round": 2,
+        "n_reads": 2912662,
+        "n_unique": 2693066,
+        "singleton_frac": 0.9480332082466602
+      },
+      {
+        "round": 3,
+        "n_reads": 8818255,
+        "n_unique": 8213123,
+        "singleton_frac": 0.948761877789971
+      },
+      {
+        "round": 4,
+        "n_reads": 10693575,
+        "n_unique": 9885039,
+        "singleton_frac": 0.9509812758452445
+      },
+      {
+        "round": 5,
+        "n_reads": 10274597,
+        "n_unique": 7642470,
+        "singleton_frac": 0.9456627242239747
+      },
+      {
+        "round": 6,
+        "n_reads": 13503896,
+        "n_unique": 3116388,
+        "singleton_frac": 0.9289494761242824
+      },
+      {
+        "round": 7,
+        "n_reads": 446,
+        "n_unique": 385,
+        "singleton_frac": 0.9558441558441558
+      }
+    ]
   },
   {
     "accession": "PRJEB88389",
@@ -942,7 +1356,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1008,7 +1422,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1030,7 +1444,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1052,7 +1466,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1162,7 +1576,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1206,7 +1620,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1250,8 +1664,15 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "mono",
+    "rounds": [
+      {
+        "round": 6,
+        "n_reads": 1019158,
+        "n_unique": 137761,
+        "singleton_frac": 0.7619282670712321
+      }
+    ]
   },
   {
     "accession": "PRJNA1121376",
@@ -1272,7 +1693,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1316,7 +1737,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1382,7 +1803,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1404,8 +1825,45 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 417470,
+        "n_unique": 22947,
+        "singleton_frac": 0.7448032422538894
+      },
+      {
+        "round": 2,
+        "n_reads": 408894,
+        "n_unique": 20060,
+        "singleton_frac": 0.7601694915254237
+      },
+      {
+        "round": 3,
+        "n_reads": 378865,
+        "n_unique": 16239,
+        "singleton_frac": 0.7169160662602377
+      },
+      {
+        "round": 4,
+        "n_reads": 353414,
+        "n_unique": 21134,
+        "singleton_frac": 0.7328002271221729
+      },
+      {
+        "round": 5,
+        "n_reads": 242892,
+        "n_unique": 9787,
+        "singleton_frac": 0.7019515684070706
+      },
+      {
+        "round": 6,
+        "n_reads": 205706,
+        "n_unique": 7673,
+        "singleton_frac": 0.7200573439332725
+      }
+    ]
   },
   {
     "accession": "PRJNA1212714",
@@ -1426,7 +1884,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1448,7 +1906,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1470,7 +1928,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1558,7 +2016,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1580,7 +2038,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1624,7 +2082,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1690,7 +2148,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1778,8 +2236,75 @@
     "paper_oa_url": "http://www.cell.com/article/S2405471216302204/pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 0,
+        "n_reads": 58632433,
+        "n_unique": 56406612,
+        "singleton_frac": 0.9609019595078676
+      },
+      {
+        "round": 1,
+        "n_reads": 85398350,
+        "n_unique": 82075913,
+        "singleton_frac": 0.9655988231285346
+      },
+      {
+        "round": 2,
+        "n_reads": 4000000,
+        "n_unique": 2242712,
+        "singleton_frac": 0.4655430567990897
+      },
+      {
+        "round": 3,
+        "n_reads": 55254308,
+        "n_unique": 52569671,
+        "singleton_frac": 0.9603889664822137
+      },
+      {
+        "round": 4,
+        "n_reads": 4000000,
+        "n_unique": 2213206,
+        "singleton_frac": 0.46439418653302045
+      },
+      {
+        "round": 5,
+        "n_reads": 49998823,
+        "n_unique": 46902904,
+        "singleton_frac": 0.9485420561592519
+      },
+      {
+        "round": 6,
+        "n_reads": 51880449,
+        "n_unique": 47923951,
+        "singleton_frac": 0.9366410544906867
+      },
+      {
+        "round": 7,
+        "n_reads": 54660362,
+        "n_unique": 48815631,
+        "singleton_frac": 0.914174048062597
+      },
+      {
+        "round": 8,
+        "n_reads": 56978727,
+        "n_unique": 47384130,
+        "singleton_frac": 0.869905789132353
+      },
+      {
+        "round": 9,
+        "n_reads": 55391483,
+        "n_unique": 42761821,
+        "singleton_frac": 0.8373029530243813
+      },
+      {
+        "round": 10,
+        "n_reads": 4000001,
+        "n_unique": 1985413,
+        "singleton_frac": 0.4810031968159773
+      }
+    ]
   },
   {
     "accession": "PRJNA360902",
@@ -1932,7 +2457,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -1954,7 +2479,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2020,7 +2545,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2042,7 +2567,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2108,8 +2633,75 @@
     "paper_oa_url": "https://www.nature.com/articles/s41598-020-77221-9.pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 0,
+        "n_reads": 102146,
+        "n_unique": 71789,
+        "singleton_frac": 0.6819707754669936
+      },
+      {
+        "round": 2,
+        "n_reads": 316898,
+        "n_unique": 210605,
+        "singleton_frac": 0.6707722988533036
+      },
+      {
+        "round": 3,
+        "n_reads": 315628,
+        "n_unique": 215636,
+        "singleton_frac": 0.6863417982155113
+      },
+      {
+        "round": 4,
+        "n_reads": 246168,
+        "n_unique": 176795,
+        "singleton_frac": 0.7195226109335672
+      },
+      {
+        "round": 5,
+        "n_reads": 226267,
+        "n_unique": 132492,
+        "singleton_frac": 0.6032817075747969
+      },
+      {
+        "round": 6,
+        "n_reads": 275179,
+        "n_unique": 159549,
+        "singleton_frac": 0.6038019667939003
+      },
+      {
+        "round": 7,
+        "n_reads": 229346,
+        "n_unique": 129723,
+        "singleton_frac": 0.6006105316713305
+      },
+      {
+        "round": 8,
+        "n_reads": 287246,
+        "n_unique": 158638,
+        "singleton_frac": 0.6358375672915695
+      },
+      {
+        "round": 9,
+        "n_reads": 222066,
+        "n_unique": 105510,
+        "singleton_frac": 0.6054497204056487
+      },
+      {
+        "round": 10,
+        "n_reads": 299490,
+        "n_unique": 116813,
+        "singleton_frac": 0.6295532175357195
+      },
+      {
+        "round": 11,
+        "n_reads": 315221,
+        "n_unique": 96959,
+        "singleton_frac": 0.6112480533008797
+      }
+    ]
   },
   {
     "accession": "PRJNA616423",
@@ -2174,7 +2766,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2196,7 +2788,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2284,7 +2876,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2306,8 +2898,69 @@
     "paper_oa_url": "https://www.nature.com/articles/s41467-022-29377-3.pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 0,
+        "n_reads": 41383293,
+        "n_unique": 39399263,
+        "singleton_frac": 0.951871764707883
+      },
+      {
+        "round": 1,
+        "n_reads": 19545291,
+        "n_unique": 18354390,
+        "singleton_frac": 0.9784436856795568
+      },
+      {
+        "round": 2,
+        "n_reads": 135701,
+        "n_unique": 130678,
+        "singleton_frac": 0.9909548661595677
+      },
+      {
+        "round": 3,
+        "n_reads": 119254,
+        "n_unique": 115149,
+        "singleton_frac": 0.9916803445970004
+      },
+      {
+        "round": 4,
+        "n_reads": 227901,
+        "n_unique": 197461,
+        "singleton_frac": 0.9843158902264244
+      },
+      {
+        "round": 5,
+        "n_reads": 41220331,
+        "n_unique": 9308966,
+        "singleton_frac": 0.969681058025134
+      },
+      {
+        "round": 6,
+        "n_reads": 62142,
+        "n_unique": 28733,
+        "singleton_frac": 0.958062158493718
+      },
+      {
+        "round": 7,
+        "n_reads": 48238,
+        "n_unique": 21768,
+        "singleton_frac": 0.9571389195148843
+      },
+      {
+        "round": 8,
+        "n_reads": 83034,
+        "n_unique": 49803,
+        "singleton_frac": 0.9683954781840451
+      },
+      {
+        "round": 9,
+        "n_reads": 9480,
+        "n_unique": 1106,
+        "singleton_frac": 0.7576853526220615
+      }
+    ]
   },
   {
     "accession": "PRJNA830749",
@@ -2328,7 +2981,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2394,8 +3047,63 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
-    "rounds": null
+    "round_structure": "multi",
+    "rounds": [
+      {
+        "round": 1,
+        "n_reads": 2267129,
+        "n_unique": 2209791,
+        "singleton_frac": 0.9753406543876774
+      },
+      {
+        "round": 2,
+        "n_reads": 686550,
+        "n_unique": 642958,
+        "singleton_frac": 0.9429558384840068
+      },
+      {
+        "round": 3,
+        "n_reads": 1652058,
+        "n_unique": 879557,
+        "singleton_frac": 0.8649979478305556
+      },
+      {
+        "round": 4,
+        "n_reads": 700157,
+        "n_unique": 172653,
+        "singleton_frac": 0.6641239943702107
+      },
+      {
+        "round": 5,
+        "n_reads": 799665,
+        "n_unique": 117836,
+        "singleton_frac": 0.7339183271665705
+      },
+      {
+        "round": 6,
+        "n_reads": 671880,
+        "n_unique": 89159,
+        "singleton_frac": 0.7233145279781066
+      },
+      {
+        "round": 7,
+        "n_reads": 787539,
+        "n_unique": 95464,
+        "singleton_frac": 0.7179355568591301
+      },
+      {
+        "round": 8,
+        "n_reads": 571159,
+        "n_unique": 72696,
+        "singleton_frac": 0.7190904588973258
+      },
+      {
+        "round": 9,
+        "n_reads": 1026779,
+        "n_unique": 99471,
+        "singleton_frac": 0.7226025675825115
+      }
+    ]
   },
   {
     "accession": "PRJNA862494",
@@ -2460,7 +3168,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2482,7 +3190,7 @@
     "paper_oa_url": "https://www.nature.com/articles/s41598-022-26949-7.pdf",
     "metadata_tier": "FULL_TEXT",
     "curation_level": "verified",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2504,7 +3212,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2526,7 +3234,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2548,7 +3256,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2570,7 +3278,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2592,7 +3300,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2614,7 +3322,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2636,7 +3344,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2680,7 +3388,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {
@@ -2724,7 +3432,7 @@
     "paper_oa_url": "",
     "metadata_tier": "RECORD_ONLY",
     "curation_level": "extracted",
-    "round_structure": "",
+    "round_structure": "unassigned",
     "rounds": null
   },
   {

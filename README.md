@@ -199,7 +199,7 @@ batches it and `catalog` browses the discovery catalog. Every command supports
 | `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | FASTA → `counts.parquet` (sequence, reads, rank, RPM). |
 | `selexprep qc <manifest> --outdir OUT` | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
 | `selexprep run <accessions.tsv> --outdir OUT [--resume]` | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. |
-| `selexprep catalog list \| show \| version \| refresh` | Browse / refresh the bundled discovery catalog (250 entries; `refresh` hits live ENA). |
+| `selexprep catalog list \| show \| version \| refresh` | Browse / refresh the bundled discovery catalog (238 entries; `refresh` hits live ENA). |
 
 ## Full output layout
 
@@ -262,8 +262,8 @@ fabricated primers) where inference is ambiguous.* See
 
 ## What v0.1 ships
 
-`catalog` (250 public SELEX entries: 125 INSDC + 125 figshare/zenodo
-passthrough; 21 documented exclusions in `bioprojects_excluded.csv`) · `inspect`
+`catalog` (238 public SELEX entries: 125 INSDC + 113 figshare/zenodo
+passthrough; documented exclusions in `bioprojects_excluded.csv`) · `inspect`
 (ENA metadata preview) · `fetch` (accession download with relaxed
 partial-parseability contract) · `detect` (primer inference) · `extract`
 (cutadapt-driven trimming + paired-end + strand handling) · `count` (per-round
