@@ -196,6 +196,20 @@ how a value was obtained:
 host-API lookups are cached in git-ignored `.oa_cache.json` /
 `.discovery_doi_cache.json`.
 
+**Canonical vs trajectory snapshot.** `project_metadata.{csv,json}` is the
+**canonical, sources-reproducible** table: `build_project_metadata` (no
+`--results-dir`) regenerates it byte-for-byte from the committed catalog +
+annotations, so `rounds` is `null` and `round_structure` only resolves
+`not_fetchable`. `project_metadata.trajectories.json` is a **dated run-product
+snapshot** (committed for reference, not regenerable from sources alone): the
+per-round trajectory + full `round_structure` from a `selexprep run` over the
+fetchable INSDC subset. The shipped snapshot is from the 2026-06-11 run (filtered
+to aptamer + method INSDC; the giant TF/GHT studies were dropped) — **18
+trajectories** (17 multi, 1 mono); the rest of the attempted deposits lacked a
+parsable round structure (`unassigned`) or an inferable primer, or their FASTQs
+were unavailable from ENA at run time. Re-running `build_project_metadata
+--results-dir <selexprep run outdir>` refreshes it.
+
 ## Reproducing
 
 Snakemake is in the optional `bench` extra:

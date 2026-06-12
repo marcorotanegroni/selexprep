@@ -187,22 +187,16 @@ figshare:8118461	aptamer_selection	Histamine			10.1021/acs.analchem.9b00075
 figshare:902248	aptamer_selection	Trypanosoma cruzi TESA	TESA-SELEX		10.1371/journal.pntd.0002650
 figshare:976460	method_or_other	Human soluble growth factors	cell-SELEX		10.1371/journal.pone.0093052
 figshare:986154	aptamer_selection	E-selectin (P-selectin cross-reactivity)			10.1371/journal.pone.0093173
-zenodo:10040600	not_selex				
-zenodo:10612073	not_selex				
 zenodo:1168878	method_or_other				10.1021/acs.analchem.7b02102
-zenodo:13684933	not_selex				
 zenodo:13995669	method_or_other	Burkholderia glumae virulence protein			
 zenodo:14272347	method_or_other	Steroids (small-molecule family)			
 zenodo:14272647	method_or_other	Steroids (small-molecule family)			
 zenodo:14272757	method_or_other	Steroids (small-molecule family)			
-zenodo:14281818	not_selex				
 zenodo:14598631	method_or_other	Antibiotics			10.3390/s22103684
 zenodo:14598734	method_or_other	Ampicillin			10.3390/CSAC2023-14875
 zenodo:14599255	method_or_other	Oxytetracycline			10.3390/biom13091363
 zenodo:14599416	method_or_other	Tetracycline			10.3390/IECB2023-14597
 zenodo:14689104	method_or_other	Hepatitis C virus RNA			10.2174/1381612043382675
-zenodo:15065216	not_selex				
-zenodo:15294875	not_selex				
 zenodo:15555251	tf_ht_selex	Transcription factors (Codebook-MEX, batch)			
 zenodo:15619991	tf_ht_selex	Transcription factors (Codebook, batch)	GHT-SELEX		
 zenodo:15620252	tf_ht_selex	Transcription factors (Codebook, batch)	HT-SELEX		
@@ -210,22 +204,17 @@ zenodo:15733619	method_or_other
 zenodo:15781226	method_or_other				
 zenodo:15831294	aptamer_selection	Kavain			
 zenodo:17311531	aptamer_selection	Vancomycin			10.17811/ruo_datasets.80707
-zenodo:17432573	not_selex				10.1016/j.xpro.2024.103433
-zenodo:17533332	not_selex				
 zenodo:18199595	method_or_other	Ochratoxin A (OTA)			
 zenodo:18719585	method_or_other				
 zenodo:19109198	method_or_other	Small molecules and peptides			
-zenodo:19223322	not_selex				10.1016/j.aca.2024.342325
 zenodo:19432013	method_or_other		CompELS		
 zenodo:19547634	method_or_other				
-zenodo:3634978	not_selex				
 zenodo:4450582	tf_ht_selex	Cyp33 (PPIE)	RNA SELEX		
 zenodo:4938913	method_or_other	Rotavirus genome segments			10.5061/dryad.vp312
 zenodo:53137	method_or_other	Dopamine			10.1039/c5an00480b
 zenodo:5707360	method_or_other	Cancer cells	cell-SELEX		10.36811/ijho.2021.110023
 zenodo:6332928	method_or_other	Testosterone			10.1016/j.talanta.2021.123121
 zenodo:6341687	method_or_other	Thrombin			
-zenodo:6586738	not_selex		HT-SELEX		
 zenodo:6587005	tf_ht_selex	bZIP dimers			10.7554/eLife.19272
 zenodo:6958314	aptamer_selection	HMGB1 (Plasmodium falciparum)			10.1371/journal.pone.0211756
 zenodo:7350428	method_or_other	Ochratoxin A (OTA)			
@@ -235,6 +224,5 @@ zenodo:7629808	method_or_other
 zenodo:7922963	method_or_other				
 zenodo:7991884	method_or_other	Tetracycline			
 zenodo:8106594	method_or_other	Human myeloperoxidase (MPO)	ProSELEX		10.1038/s41557-023-01207-z
-zenodo:8253891	not_selex				
 zenodo:8330867	method_or_other	Theophylline			
 zenodo:8387047	method_or_other				
