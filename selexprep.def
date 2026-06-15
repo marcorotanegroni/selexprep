@@ -1,0 +1,54 @@
+Bootstrap: docker
+From: python:3.12-slim
+
+# selexprep Apptainer/Singularity image.
+#
+# Build (run from the repository root, so %files can see the source tree):
+#   apptainer build selexprep.sif selexprep.def
+#
+# Run:
+#   apptainer run selexprep.sif inspect SRR1234567
+#   apptainer run selexprep.sif run accessions.tsv --outdir out
+#
+# This recipe installs selexprep from the local checkout (the %files section
+# below), so it builds before the PyPI release. After v0.1.0 is on PyPI you can
+# instead drop the %files block and use a one-line %post:
+#     python -m pip install --no-cache-dir selexprep==0.1.0
+#
+# cutadapt is a declared pip dependency invoked as a subprocess at runtime; its
+# manylinux wheel runs on the debian-slim base, so no apt package is required.
+
+%files
+    pyproject.toml /opt/selexprep/pyproject.toml
+    README.md /opt/selexprep/README.md
+    LICENSE /opt/selexprep/LICENSE
+    src /opt/selexprep/src
+
+%post
+    python -m pip install --upgrade pip
+    python -m pip install --no-cache-dir /opt/selexprep
+
+%test
+    selexprep --help > /dev/null
+    echo "selexprep $(selexprep --version 2>/dev/null || echo 0.1.0) installed"
+
+%labels
+    Author Marco Rotanegroni
+    Version 0.1.0
+    Description Accession-first preprocessing for public HT-SELEX with primer auto-inference
+
+%help
+    selexprep — accession-first preprocessing for public HT-SELEX datasets.
+
+    Give it an INSDC accession (ENA / SRA / DDBJ) and it fetches the runs,
+    infers the library's flanking constants from the reads, and extracts the
+    random regions — no manual primer entry required.
+
+    Examples:
+      apptainer run selexprep.sif inspect SRR1234567
+      apptainer run selexprep.sif run accessions.tsv --outdir out --resume
+
+    Docs: https://github.com/marcorotanegroni/selexprep
+
+%runscript
+    exec selexprep "$@"

@@ -1,0 +1,70 @@
+{% set name = "selexprep" %}
+{% set version = "0.1.0" %}
+
+# Bioconda recipe for selexprep.
+#
+# This file is the recipe to submit to https://github.com/bioconda/bioconda-recipes
+# under recipes/selexprep/meta.yaml. It is kept here in-repo so the recipe is
+# versioned alongside the package.
+#
+# BEFORE SUBMITTING: fill in `sha256` below from the PyPI sdist. After the
+# v0.1.0 sdist is on PyPI, compute it with:
+#   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.1.0.tar.gz | sha256sum
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: 0000000000000000000000000000000000000000000000000000000000000000
+
+build:
+  noarch: python
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - selexprep = selexprep.cli:app
+
+requirements:
+  host:
+    - python >=3.10
+    - hatchling >=1.26
+    - pip
+  run:
+    - python >=3.10
+    - typer >=0.12
+    - numpy >=1.24
+    - pandas >=2.0
+    - pyarrow >=14.0
+    - pyyaml >=6.0
+    - requests >=2.31
+    - matplotlib-base >=3.8
+    - pydantic >=2.0
+    - cutadapt >=4.0
+    - dnaio >=1.2
+
+test:
+  imports:
+    - selexprep
+  commands:
+    - selexprep --help
+
+about:
+  home: https://github.com/marcorotanegroni/selexprep
+  summary: Accession-first preprocessing for public HT-SELEX with primer auto-inference
+  description: |
+    selexprep takes a public HT-SELEX accession (ENA / SRA / DDBJ), infers the
+    library's 5'/3' constant regions from the reads, strips them, and emits
+    per-round random-region FASTAs, count tables, QC reports, and a reproducible
+    provenance manifest — with an explicit primer-inference confidence and safe
+    failure modes when the library cannot be inferred.
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  dev_url: https://github.com/marcorotanegroni/selexprep
+  doc_url: https://github.com/marcorotanegroni/selexprep#readme
+
+extra:
+  recipe-maintainers:
+    - marcorotanegroni
