@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+_No unreleased changes yet._
+
+## [0.1.0] - 2026-06-13
+
 First public release: accession-first preprocessing for high-throughput SELEX
 (HT-SELEX) sequencing deposits, with automatic primer / constant-region
 inference. Give it an INSDC accession (ENA / SRA / DDBJ) and it fetches the
@@ -63,7 +67,7 @@ random regions — no manual primer entry required.
 - **`--from-pretrimmed-fastq`** validates record completeness but not per-line
   FASTQ conformance — adequate for the power-user opt-in.
 - **Network coverage**: the non-ENA fetch backends still lack offline mocked
-  tests (to be closed before the PyPI release).
+  tests (carried into v0.2).
 
 ### Packaging
 
@@ -72,3 +76,6 @@ random regions — no manual primer entry required.
   subprocess.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
+
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/marcorotanegroni/selexprep/releases/tag/v0.1.0

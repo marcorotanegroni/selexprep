@@ -1,0 +1,23 @@
+# Keep the Docker build context small and reproducible: only pyproject,
+# README, LICENSE, and src/ are needed to build the wheel (see Dockerfile).
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+htmlcov
+.coverage
+coverage.xml
+dist
+build
+*.egg-info
+docs
+site
+examples
+tests
+benchmarks
+*.sif
