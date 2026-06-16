@@ -49,6 +49,16 @@ Thumbs.db
 *.swp
 *.swo
 
+# R session junk (created when R is opened in the repo directory)
+.Rhistory
+.RData
+.Rproj.user
+
+# Local Claude Code dev context — kept on disk (Claude reads these from the
+# filesystem regardless of git tracking) but not shipped in the public repo
+CLAUDE.md
+.claudeignore
+
 # Local data / scratch
 scratch/
 tmp/
