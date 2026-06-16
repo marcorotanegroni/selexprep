@@ -6,7 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Fixed
+
+- **cutadapt discovery**: `extract`, `count`, and the manifest's version
+  capture now locate cutadapt next to the running Python interpreter when it is
+  not on `$PATH`. This fixes "cutadapt not found on PATH" under `pipx install`
+  (which exposes only selexprep's own entry point), absolute-path invocation,
+  or a workflow runner with a sanitized PATH — cases where cutadapt is installed
+  alongside selexprep but the environment isn't "activated".
 
 ## [0.1.0] - 2026-06-13
 

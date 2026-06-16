@@ -36,6 +36,7 @@ import pyarrow
 from pydantic import BaseModel, ConfigDict
 
 from selexprep import __version__ as _SELEXPREP_VERSION
+from selexprep._common import resolve_cutadapt
 from selexprep._io import sha256_file
 from selexprep.library.report import (
     ExtractionMode,
@@ -60,7 +61,7 @@ def _cutadapt_version() -> str:
     """
     try:
         result = subprocess.run(
-            ["cutadapt", "--version"],
+            [resolve_cutadapt() or "cutadapt", "--version"],
             check=True,
             capture_output=True,
             text=True,

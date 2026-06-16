@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import logging
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -76,3 +77,23 @@ def setup_logging(
         fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
         root.addHandler(fh)
     return logging.getLogger(logger_name)
+
+
+def resolve_cutadapt() -> str | None:
+    """Locate the cutadapt executable, or return ``None`` if unavailable.
+
+    Prefers ``$PATH`` (``shutil.which``), then falls back to the directory of
+    the running interpreter (``sys.executable``). The fallback matters because
+    cutadapt is a *declared dependency*: it is installed alongside this Python
+    even when the environment is not "activated" — e.g. ``pipx install``
+    (which exposes only selexprep's own entry point on PATH), an absolute-path
+    invocation, or a workflow runner with a sanitized PATH. Callers decide
+    whether a ``None`` result is fatal (``extract``) or a soft skip (``count``).
+    """
+    exe = shutil.which("cutadapt")
+    if exe:
+        return exe
+    candidate = Path(sys.executable).parent / "cutadapt"
+    if candidate.is_file():
+        return str(candidate)
+    return None

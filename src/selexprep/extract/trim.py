@@ -31,11 +31,11 @@ from __future__ import annotations
 
 import json
 import logging
-import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from selexprep._common import resolve_cutadapt
 from selexprep._io import open_gzip_text_deterministic
 
 logger = logging.getLogger(__name__)
@@ -62,23 +62,24 @@ class TrimReport:
 # ---------------------------------------------------------------------------
 
 
-def _ensure_cutadapt() -> None:
-    """Raise RuntimeError if cutadapt is not on PATH."""
-    if not shutil.which("cutadapt"):
-        raise RuntimeError(
-            "cutadapt not found on PATH. Install with `pip install cutadapt` "
-            "or `uv add cutadapt`; selexprep declares it as a core dependency."
-        )
-
-
 def _run_cutadapt(argv: list[str], json_report_path: Path) -> tuple[int, dict]:
     """Run cutadapt; return (return_code, parsed_json_report).
 
     Captures stderr only on failure to keep the happy path quiet. Mirrors
     the subprocess pattern in `selexprep.count.counter._run_cutadapt`.
+
+    ``argv[0]`` is the literal ``"cutadapt"`` (recorded verbatim in the
+    manifest for portability); execution substitutes the resolved absolute
+    path so the call works even when the environment isn't activated.
     """
-    _ensure_cutadapt()
-    full = [*argv, "--json", str(json_report_path)]
+    exe = resolve_cutadapt()
+    if exe is None:
+        raise RuntimeError(
+            "cutadapt not found on PATH or alongside the Python interpreter. "
+            "Install with `pip install cutadapt` or `uv add cutadapt`; "
+            "selexprep declares it as a core dependency."
+        )
+    full = [exe, *argv[1:], "--json", str(json_report_path)]
     logger.info("cutadapt argv: %s", " ".join(full))
     try:
         subprocess.run(full, check=True, capture_output=True, text=True)

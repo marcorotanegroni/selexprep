@@ -25,7 +25,6 @@ import collections
 import gzip
 import logging
 import math
-import shutil
 import subprocess
 import tempfile
 from collections.abc import Iterator
@@ -33,6 +32,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+from selexprep._common import resolve_cutadapt
 
 logger = logging.getLogger(__name__)
 
@@ -131,13 +132,14 @@ def _trim_pair(
     """
     if not primer_5p and not primer_3p:
         return r1, r2, False
-    if not shutil.which("cutadapt"):
+    cutadapt_exe = resolve_cutadapt()
+    if cutadapt_exe is None:
         logger.warning("cutadapt not found — skipping trim for %s", r1.name)
         return r1, r2, False
 
     t1 = tmp_dir / f"{r1.stem}_trimmed.fastq.gz"
     cmd = [
-        "cutadapt",
+        cutadapt_exe,
         "--quiet",
         "--discard-untrimmed",
         "--minimum-length",
