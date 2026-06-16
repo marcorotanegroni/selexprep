@@ -7,8 +7,8 @@
 # under recipes/selexprep/meta.yaml. It is kept here in-repo so the recipe is
 # versioned alongside the package.
 #
-# BEFORE SUBMITTING: fill in `sha256` below from the PyPI sdist. After the
-# v0.1.1 sdist is on PyPI, compute it with:
+# The `sha256` below is the v0.1.1 PyPI sdist hash. To recompute on a version
+# bump, run:
 #   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.1.1.tar.gz | sha256sum
 
 package:
@@ -17,7 +17,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 0000000000000000000000000000000000000000000000000000000000000000
+  sha256: 66da56c90480e337d621a85c3558075bd43adef1cdc0934acf0cdec57a09d387
 
 build:
   noarch: python
