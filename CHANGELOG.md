@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+_No unreleased changes yet._
+
+## [0.1.1] - 2026-06-16
+
 ### Fixed
 
 - **cutadapt discovery**: `extract`, `count`, and the manifest's version
@@ -84,5 +88,6 @@ random regions — no manual primer entry required.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
 
-[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/marcorotanegroni/selexprep/releases/tag/v0.1.0

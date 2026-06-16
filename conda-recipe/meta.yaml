@@ -1,5 +1,5 @@
 {% set name = "selexprep" %}
-{% set version = "0.1.0" %}
+{% set version = "0.1.1" %}
 
 # Bioconda recipe for selexprep.
 #
@@ -8,8 +8,8 @@
 # versioned alongside the package.
 #
 # BEFORE SUBMITTING: fill in `sha256` below from the PyPI sdist. After the
-# v0.1.0 sdist is on PyPI, compute it with:
-#   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.1.0.tar.gz | sha256sum
+# v0.1.1 sdist is on PyPI, compute it with:
+#   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.1.1.tar.gz | sha256sum
 
 package:
   name: {{ name }}
