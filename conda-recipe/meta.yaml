@@ -1,5 +1,5 @@
 {% set name = "selexprep" %}
-{% set version = "0.1.1" %}
+{% set version = "0.2.0" %}
 
 # Bioconda recipe for selexprep.
 #
@@ -7,9 +7,9 @@
 # under recipes/selexprep/meta.yaml. It is kept here in-repo so the recipe is
 # versioned alongside the package.
 #
-# The `sha256` below is the v0.1.1 PyPI sdist hash. To recompute on a version
+# The `sha256` below is the v0.2.0 PyPI sdist hash. To recompute on a version
 # bump, run:
-#   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.1.1.tar.gz | sha256sum
+#   curl -sL https://pypi.io/packages/source/s/selexprep/selexprep-0.2.0.tar.gz | sha256sum
 
 package:
   name: {{ name }}
@@ -17,7 +17,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: 66da56c90480e337d621a85c3558075bd43adef1cdc0934acf0cdec57a09d387
+  sha256: 900b9c46f2829b4edd4a50e49f107b95201ac7e47e1730308811483dac1aa00c
 
 build:
   noarch: python
