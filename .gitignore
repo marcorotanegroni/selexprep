@@ -74,6 +74,11 @@ benchmarks/*_screen.tsv
 benchmarks/.oa_cache.json
 benchmarks/.discovery_doi_cache.json
 
+# Dual-extraction raw agreement scaffold — regenerable via compute_agreement.py from the
+# two arms, and misleading on its own (747 string-match flags, mostly wording). The genuine
+# disagreements (47) live in curated_metadata.json + genuine_disagreements.tsv.
+benchmarks/dual_extraction/out/
+
 # Example run artifacts — notebooks self-generate demo/, run_public_accession.sh writes demo_public/
 examples/**/demo*/
 .ipynb_checkpoints/

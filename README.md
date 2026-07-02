@@ -280,6 +280,22 @@ figshare/zenodo fetch backends · `SELEXPREP_CATALOG_PATH` env var for
 user-supplied catalogs · AnnData export · BibTeX auto-citation · library-type
 classification.
 
+## What v0.2 adds
+
+**Curated metadata layer** (`selexprep.catalog.load_metadata` /
+`load_metadata_records`) — each of the 238 catalog deposits now ships with curated
+experimental metadata: `study_type`, `target`, `target_class`, `chemistry`,
+`n_random`, `n_rounds`, `selection_format`, `counter_selection` (238 × 8 = 1904
+cells, 1479 populated — up from ~4 experimental-field cells in v0.1). Built by **two
+independent LLM extractions** (Claude + Codex/GPT), reconciled, with **every value
+source-cited** (evidence quote + DOI/URL + location); where the two extractions
+genuinely disagreed, both are kept. Bundled as `curated_metadata.json` (canonical,
+provenance-rich) + `curated_metadata.csv` (flat view) under `catalog/data/`, accessed
+via the API above. Spot-checked against the hand-curated benchmark
+ground truth (overlapping fields on 11 verified deposits) — no residual disagreements
+after adjudication. The extraction contract, both raw arms, and the reconciliation
+live under `benchmarks/dual_extraction/` (not shipped on PyPI).
+
 ## What v0.1 does *not* do
 
 By design — these are handled by mature tools that consume `selexprep`'s outputs:

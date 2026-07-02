@@ -1,0 +1,50 @@
+accession	field	status	claude_or_resolved_value	codex	note
+PRJEB14550	target	discordant	transcription factors HOXB13 and FLI1	TFs FLI1, HOXB13, HNF4A, TFAP2A, FOXC1, PKNOX2, NRSF, CTCF and RXRA	
+PRJEB14550	n_random	discordant	40	reads of length 30 or 40	
+PRJEB22637	chemistry	verified(3-way vs gold)	2'F-pyrimidine RNA		3-way CONFIRMED: Claude (2'F-Py RNA) + Codex re-read (2'F-Py RNA) + benchmark ground_truth (2'-F-Py RNA) all agree; Codex's initial single 'DNA library' caught the ssDNA synthetic precursor and was a transient one-off slip (its own fresh re-read gives 2'F-Py RNA).
+PRJEB25907	study_type	discordant	aptamer_selection	method_or_other	
+PRJEB25907	n_random	discordant	26 or 40 bases	40 bp random sequence	
+PRJEB46967	study_type	discordant	method_or_other	aptamer_selection	
+PRJEB47428	study_type	discordant	aptamer_selection	method_or_other	
+PRJEB50172	study_type	discordant	aptamer_selection	method_or_other	
+PRJEB65950	selection_format	discordant	HT-SELEX (and Temperature HT-SELEX)	NCAP-SELEX and free-DNA SELEX	
+PRJEB88389	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA1045519	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA1091700	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA1122221	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA1159731	selection_format	discordant	modified genomic SELEX-Seq	SELEX-NGS	
+PRJNA1212714	study_type	discordant	method_or_other	not_selex	
+PRJNA1220334	selection_format	discordant	Cluster SELEX	magnetic bead-based SELEX	
+PRJNA1346116	study_type	discordant	method_or_other	not_selex	
+PRJNA1467126	selection_format	discordant	single-round selection	SELEX	
+PRJNA251822	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA474677	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA491840	target	discordant	DNA substrates with substitutions in the central 4 bases (tested against I-LtrI and I-OnuI LAGLIDADG homing endonuclease variants)	LAGLIDADG homing endonucleases	
+PRJNA491840	target_class	discordant	DNA (enzyme cleavage substrate)	meganucleases	
+PRJNA547810	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA547810	target	discordant	SpCas9, HiFi-SpCas9, ScCas9, AsCas12a (Cpf1), DpbCasX	dSpCas9::Nanog	
+PRJNA600132	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA604410	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA633039	study_type	discordant	tf_ht_selex	method_or_other	
+PRJNA862494	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA866368	study_type	discordant	aptamer_selection	not_selex	
+PRJNA86771	study_type	discordant	aptamer_selection	not_selex	
+PRJNA883192	n_random	verified(3-way vs gold)	N40		3-way CONFIRMED: Codex (N40) + Claude re-read (N40) + benchmark ground_truth (40) all agree; Claude's initial single '50 nt' was a transient one-off slip (its own fresh re-read gives N40).
+PRJNA947642	selection_format	discordant	target-induced stem closure	SELEX	
+PRJNA952942	study_type	discordant	aptamer_selection	method_or_other	
+PRJNA952942	chemistry	discordant	boronic acid base-modified DNA	a natural DNA-based ATP aptamer as well as a newly-selected boronic acid base-modified aptamer for glucose	
+PRJNA957781	selection_format	discordant	immunoprecipitation (anti-FLAG M2 magnetic beads)	SELEX-seq	
+figshare:22339771	n_random	discordant	N41	N40	
+figshare:31282718	n_rounds	discordant	19 rounds (first Capture-SELEX) + 6 rounds (second Capture-SELEX) = 25 rounds total	15 rounds ... six rounds	
+figshare:3239092	study_type	discordant	aptamer_selection	not_selex	
+figshare:5195515	study_type	discordant	aptamer_selection	method_or_other	
+figshare:7018646	study_type	discordant	aptamer_selection	method_or_other	
+figshare:7146335	study_type	discordant	aptamer_selection	method_or_other	
+zenodo:14598631	study_type	discordant	not_selex	method_or_other	
+zenodo:14598734	study_type	discordant	not_selex	method_or_other	
+zenodo:14599255	study_type	discordant	not_selex	method_or_other	
+zenodo:14599416	study_type	discordant	not_selex	method_or_other	
+zenodo:4938913	study_type	discordant	aptamer_selection	method_or_other	
+zenodo:5707360	study_type	discordant	not_selex	method_or_other	
+zenodo:6332928	study_type	discordant	not_selex	method_or_other	
+zenodo:7350428	study_type	discordant	not_selex	method_or_other	
