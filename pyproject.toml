@@ -145,6 +145,15 @@ strict = true
 module = "selexprep.benchmark.equivalence"
 strict = true
 
+[[tool.mypy.overrides]]
+# numpy 2.x ships PEP 695 `type` statements in its bundled stubs, which mypy
+# rejects under `python_version = "3.10"` (kept for 3.10 compat) with a fatal
+# "Type statement is only supported in Python 3.12+" parse error (seen on the
+# 3.12 CI job, which resolves a newer numpy). Skip following numpy's stubs — the
+# public API exposes pandas / JSON types, not numpy types.
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --strict-markers"
