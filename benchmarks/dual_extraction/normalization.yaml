@@ -1,0 +1,89 @@
+# Controlled-vocabulary normalization table for dual-extraction metadata (v1).
+#
+# Verbatim extracted values are mapped onto `canonical` labels here, post-hoc, by
+# normalize.py — so inter-extractor agreement is computed on normalized values.
+# normalize.py first drops parentheticals and unifies prime/apostrophe glyphs, so
+# map keys are written in base form ("cells", not "cells (cell line)").
+# A verbatim value that is neither a `canonical` label nor a `map` key is returned
+# flagged UNMAPPED: that is a human adjudication decision (add it below), never a
+# silent forcing. This table is versioned alongside the dataset and is citable.
+#
+# Free-text fields (target, counter_selection, target_organism) are normalized by
+# the same _clean (parenthetical-strip + casefold) only. Numeric fields (n_random,
+# n_rounds) are parsed to integers by normalize.py.
+#
+# Entries marked "# review" are judgment calls seeded from the 11-deposit pilot —
+# confirm with the curator/PI before the full run.
+
+study_type:
+  # Produced canonical by the prompt (criteria-guided); mapping is identity.
+  canonical: [aptamer_selection, tf_ht_selex, method_or_other, not_selex]
+  map: {}
+
+chemistry:
+  canonical: [DNA, RNA, "2'F-RNA", "2'F-pyrimidine", "2'-OMe-RNA", LNA, "phosphorothioate-DNA", "modified-other"]
+  map:
+    "dna": DNA
+    "ssdna": DNA
+    "single-stranded dna": DNA
+    "dna aptamers": DNA
+    "rna": RNA
+    "rna aptamers": RNA
+    "2'-fluoro rna": "2'F-RNA"
+    "2'-fluoro-modified rna": "2'F-RNA"
+    "2'f-rna": "2'F-RNA"
+    "2'-fluoro-pyrimidine rna": "2'F-pyrimidine"
+    "2'-fluoro-pyrimidine modified rna": "2'F-pyrimidine"
+    "2'-fluoro pyrimidine": "2'F-pyrimidine"
+    "2'f-py rna": "2'F-pyrimidine"
+    "2'-f-py rna": "2'F-pyrimidine"
+    "2'-o-methyl rna": "2'-OMe-RNA"
+    "2'-ome rna": "2'-OMe-RNA"
+    "lna": LNA
+    "locked nucleic acid": LNA
+
+target_class:
+  canonical: [protein, peptide, cell, small molecule, ion, nucleic acid, virus, complex, glycan, tissue, other]
+  map:
+    "protein": protein
+    "glycoprotein": protein
+    "recombinant protein": protein
+    "enzyme": protein
+    "antibody": protein
+    "receptor": protein
+    "protein biomarker": protein
+    "fibrillar polymorphs": protein       # protein aggregate — review
+    "cell": cell
+    "cells": cell
+    "live cells": cell
+    "whole cell": cell
+    "whole cells": cell
+    "bacterial cells": cell
+    "whole bacterial cells": cell
+    "bacterium": cell                      # whole-bacterium target — review
+    "strict intracellular bacterium": cell # review
+    "human islets": cell
+    "metal ion": ion
+    "metal ions": ion
+    "paramagnetic metal ions": ion
+    "small-molecule": small molecule
+    "metabolite": small molecule
+
+selection_format:
+  canonical: [SELEX, HT-SELEX, Cell-SELEX, capture-SELEX, MB-SELEX, HM-SELEX, particle-display, microfluidic-SELEX, other]
+  map:
+    "selex": SELEX
+    "ht-selex": HT-SELEX
+    "ht selex": HT-SELEX
+    "high-throughput selex": HT-SELEX
+    "high throughput selex": HT-SELEX
+    "high-throughput systematic evolution of ligands by exponential enrichment": HT-SELEX
+    "cell-selex": Cell-SELEX
+    "cell selex": Cell-SELEX
+    "whole-cell selex": Cell-SELEX
+    "differential binding cell-selex": Cell-SELEX
+    "capture-selex": capture-SELEX
+    "capture selex": capture-SELEX
+    "mb-selex": MB-SELEX
+    "magnetic bead aptamer selection": MB-SELEX
+    "hm-selex": HM-SELEX

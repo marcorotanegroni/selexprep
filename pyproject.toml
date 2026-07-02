@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "selexprep"
-version = "0.1.1"
+version = "0.2.0"
 description = "Accession-first preprocessing for public HT-SELEX with primer auto-inference"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -86,9 +86,11 @@ selexprep = "selexprep.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/selexprep"]
 
-# Ensure the bundled discovery catalog CSV ships inside the wheel.
+# Ensure the bundled discovery catalog + curated metadata layer ship inside the wheel.
 [tool.hatch.build.targets.wheel.force-include]
 "src/selexprep/catalog/data/bioprojects.csv" = "selexprep/catalog/data/bioprojects.csv"
+"src/selexprep/catalog/data/curated_metadata.json" = "selexprep/catalog/data/curated_metadata.json"
+"src/selexprep/catalog/data/curated_metadata.csv" = "selexprep/catalog/data/curated_metadata.csv"
 
 [tool.ruff]
 line-length = 100

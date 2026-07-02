@@ -8,6 +8,25 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 _No unreleased changes yet._
 
+## [0.2.0] - 2026-07-02
+
+### Added
+
+- **Curated metadata layer** (`selexprep.catalog.metadata`) — the annotated
+  layer anticipated in v0.1. Each of the 238 bundled SELEX deposits now ships
+  with curated experimental metadata: `study_type`, `target`, `target_class`,
+  `chemistry`, `n_random`, `n_rounds`, `selection_format`, `counter_selection`.
+  Built by **two independent LLM extractions** (Claude + Codex/GPT), reconciled,
+  with per-value provenance (evidence quote + source + location). Where the two
+  extractions genuinely disagreed, **both are kept** rather than silently
+  picking one. This raises experimental-field coverage from ~4 to ~1479 filled,
+  source-cited cells versus the discovery catalog alone.
+- **New public API**: `load_metadata()` (flat `DataFrame`),
+  `load_metadata_records()` (provenance-rich list of dicts), `metadata_version()`.
+  Bundled as `curated_metadata.json` (canonical) + `curated_metadata.csv`
+  (flat view). The extraction contract, both raw arms, and the reconciliation
+  method live under `benchmarks/dual_extraction/` (not shipped on PyPI).
+
 ## [0.1.1] - 2026-06-16
 
 ### Fixed
@@ -88,6 +107,7 @@ random regions — no manual primer entry required.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
 
-[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/marcorotanegroni/selexprep/releases/tag/v0.1.0
