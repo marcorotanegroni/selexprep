@@ -44,10 +44,7 @@ def test_load_metadata_records_shape_and_provenance() -> None:
 def test_discordant_cells_keep_both_arms() -> None:
     recs = load_metadata_records()
     discordant = [
-        fd
-        for rec in recs
-        for fd in rec["fields"].values()
-        if fd.get("status") == "discordant"
+        fd for rec in recs for fd in rec["fields"].values() if fd.get("status") == "discordant"
     ]
     assert discordant, "expected some discordant cells (both arms kept)"
     for fd in discordant:
