@@ -151,8 +151,12 @@ strict = true
 # "Type statement is only supported in Python 3.12+" parse error (seen on the
 # 3.12 CI job, which resolves a newer numpy). Skip following numpy's stubs — the
 # public API exposes pandas / JSON types, not numpy types.
+# `follow_imports = "skip"` alone is NOT enough: mypy ignores it for stub
+# (`.pyi`) files unless `follow_imports_for_stubs` is also set, and the offending
+# `type` statement lives in numpy's bundled `__init__.pyi`.
 module = ["numpy", "numpy.*"]
 follow_imports = "skip"
+follow_imports_for_stubs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
