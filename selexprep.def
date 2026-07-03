@@ -11,9 +11,9 @@ From: python:3.12-slim
 #   apptainer run selexprep.sif run accessions.tsv --outdir out
 #
 # This recipe installs selexprep from the local checkout (the %files section
-# below), so it builds before the PyPI release. After v0.2.0 is on PyPI you can
+# below), so it builds before the PyPI release. After v0.2.1 is on PyPI you can
 # instead drop the %files block and use a one-line %post:
-#     python -m pip install --no-cache-dir selexprep==0.2.0
+#     python -m pip install --no-cache-dir selexprep==0.2.1
 #
 # cutadapt is a declared pip dependency invoked as a subprocess at runtime; its
 # manylinux wheel runs on the debian-slim base, so no apt package is required.
@@ -30,11 +30,11 @@ From: python:3.12-slim
 
 %test
     selexprep --help > /dev/null
-    echo "selexprep $(selexprep --version 2>/dev/null || echo 0.2.0) installed"
+    echo "selexprep $(selexprep --version 2>/dev/null || echo 0.2.1) installed"
 
 %labels
     Author Marco Rotanegroni
-    Version 0.2.0
+    Version 0.2.1
     Description Accession-first preprocessing for public HT-SELEX with primer auto-inference
 
 %help

@@ -8,6 +8,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 _No unreleased changes yet._
 
+## [0.2.1] - 2026-07-03
+
+### Changed
+
+- Refreshed the discovery catalog and curated metadata layer from **238 to 240
+  deposits**. Two newly-deposited public ENA SELEX studies were curated in (each
+  by the same two-independent-extraction method): `PRJEB114397` (an aptamer
+  selection against perfluorooctanoic acid) and `PRJNA1481083` (automated SELEX
+  against 96 protein targets). Two further new deposits were classified out of
+  scope and recorded in the exclusion sidecar: `PRJEB88669` (genomic
+  Helicase-SELEX) and `PRJNA860038` (a transcription-factor binding-motif
+  SELEX-seq).
+- Bumped `METADATA_VERSION` and `CATALOG_VERSION` to the `2026-07-03` snapshot.
+
+### Fixed
+
+- `catalog_version()` no longer returns a stale `v0.1.7-snapshot-2026-05-28`
+  identifier — it had not been bumped through the catalog's 250 → 238 → 240
+  changes.
+
 ## [0.2.0] - 2026-07-02
 
 ### Added
@@ -107,7 +127,8 @@ random regions — no manual primer entry required.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
 
-[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/marcorotanegroni/selexprep/releases/tag/v0.1.0

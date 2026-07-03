@@ -15886,5 +15886,122 @@
         "status": "not_stated"
       }
     }
+  },
+  {
+    "accession": "PRJEB114397",
+    "source": "ena",
+    "study_title": "This study identifies an aptamer that selectively binds to perfluorooctanoic acid (PFOA). Upon binding, the aptamer produces fluorescence, which can be used to detect and provide semi-quantitative measurements of PFOA in water matrices.",
+    "fields": {
+      "study_type": {
+        "status": "concordant",
+        "value": "aptamer_selection",
+        "rationale": "The ENA project is a SELEX-library-strategy sequencing deposit (16 candidate libraries subjected to 30 rounds of selection) reporting genuine aptamer-selection reads against a small-molecule target, not a transcription-factor motif study.",
+        "evidence_quote": "In this study, we selected 16 candidates for PFOA aptamers in order to find a selective and sensitive aptamer. After 30 rounds of selection, one candidate, Candidate 9, showed a measurable binding affinity with a kd of 2 µM",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      },
+      "target": {
+        "status": "concordant",
+        "value": "perfluorooctanoic acid (PFOA)",
+        "evidence_quote": "This study identifies an aptamer that selectively binds to perfluorooctanoic acid (PFOA).",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "TITLE field"
+      },
+      "target_class": {
+        "status": "concordant",
+        "value": "toxic, bioaccumulative chemical",
+        "evidence_quote": "Perfluorooctanoic acid (PFOA) is a toxic, bioaccumulative chemical that is present globally in water.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field, first sentence"
+      },
+      "chemistry": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_random": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_rounds": {
+        "status": "concordant",
+        "value": "30 rounds of selection",
+        "evidence_quote": "After 30 rounds of selection, one candidate, Candidate 9, showed a measurable binding affinity with a kd of 2 µM",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      },
+      "selection_format": {
+        "status": "concordant",
+        "value": "Aptamer SELEX",
+        "evidence_quote": "Aptamer SELEX for PFOA aptamer",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "NAME / CENTER_PROJECT_NAME field"
+      },
+      "counter_selection": {
+        "status": "concordant",
+        "value": "present",
+        "note": "Counter-selection was performed against structurally similar PFAS/chemicals; hairpin-structure enrichment increased after its addition and the aptamer gave no signal with the counter-selection chemicals.",
+        "evidence_quote": "2D structure analysis demonstrated an enrichment of hairpin structure, especially after the addition of counter-selection... did not produce signal with other PFAS or chemicals used in counter-selection.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      }
+    }
+  },
+  {
+    "accession": "PRJNA1481083",
+    "source": "ena",
+    "study_title": "High-throughput automated SELEX for aptamer discovery against 96 protein targets (GEO GSE336208)",
+    "fields": {
+      "study_type": {
+        "status": "concordant",
+        "value": "aptamer_selection",
+        "rationale": "The deposit contains genuine SELEX enrichment-round sequencing reads (Round 5 preliminary screening plus Round 2 secondary screening) across 96 protein targets, i.e. real aptamer-selection data, even though the associated study frames itself as a scalable computational/inference framework rather than a single-aptamer discovery paper.",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets. Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets. After 5 rounds of preliminary screening, the Round 5 library was sequenced.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "target": {
+        "status": "concordant",
+        "value": "96 protein targets",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "target_class": {
+        "status": "concordant",
+        "value": "protein",
+        "evidence_quote": "aptamer screening against 96 protein targets",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "chemistry": {
+        "status": "concordant",
+        "value": "random ssDNA libraries",
+        "evidence_quote": "Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "n_random": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_rounds": {
+        "status": "concordant",
+        "value": "5 rounds of preliminary screening followed by 2 rounds of secondary screening",
+        "evidence_quote": "After 5 rounds of preliminary screening, the Round 5 library was sequenced. The top 3000 enriched sequences served as the starting material for 2 rounds of secondary screening. The Round 2 library of the secondary selection was then sequenced.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "selection_format": {
+        "status": "concordant",
+        "value": "high-throughput automated SELEX",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "counter_selection": {
+        "value": null,
+        "status": "not_stated"
+      }
+    }
   }
 ]
