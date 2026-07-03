@@ -27,9 +27,9 @@ from a raw public deposit.
 `run` chains the whole thing for you; the individual verbs (`fetch`, `detect`,
 `extract`, `count`, `qc`) are there for when you need to drive one stage by hand.
 
-> **Status — v0.1.** Feature-complete and CI-tested (Python 3.10 / 3.11 / 3.12),
-> with one strict-xfail reserved for v0.2 read merging. Full inventory in
-> [What v0.1 ships](#what-v01-ships).
+> **Status.** Core pipeline feature-complete and CI-tested (Python 3.10 / 3.11 /
+> 3.12), with one strict-xfail reserved for a future read-merging feature. Full
+> inventory in [What v0.1 ships](#what-v01-ships).
 
 ---
 
@@ -90,7 +90,7 @@ selexprep catalog show PRJEB12345
 ```
 
 INSDC accessions are fetchable; figshare/zenodo rows are discovery-only pointers
-(flagged in the `fetchable` column) that `run` can't retrieve in v0.1 —
+(flagged in the `fetchable` column) that `run` can't retrieve yet —
 `--insdc-only` filters the list to just the retrievable ones.
 
 ### "I only have my own local FASTQs"
@@ -141,9 +141,9 @@ selexprep extract r0_R1.fastq.gz r1_R1.fastq.gz \
 
 If the 5' primer sits on R1 and the 3' on R2, `detect` reports
 `extraction_mode: PAIRED_END_SPLIT_PRIMERS` and `extract` writes the two trimmed
-sides separately (`partial_5p_extracted_R1…` + `partial_3p_extracted_R2…`). v0.1
+sides separately (`partial_5p_extracted_R1…` + `partial_3p_extracted_R2…`). It
 stops there on purpose: stitching the sides into one full-length insert is **read
-merging, a v0.2 item**, so `count`/`qc` are skipped for split-primer rounds
+merging, not yet implemented**, so `count`/`qc` are skipped for split-primer rounds
 rather than counting half-inserts.
 
 ### "I only have the final enriched pool (a single round)"
@@ -182,7 +182,7 @@ You can also edit `library_report.json` by hand and re-run without overrides.
 
 > **Multiplexed deposit** (several samples or targets pooled in one FASTQ)? v0.1
 > doesn't auto-split them — pass a `--sample-sheet` to `extract` in place of
-> `--round-map`. Auto-demultiplexing is a v0.2 item.
+> `--round-map`. Auto-demultiplexing is not yet implemented.
 
 ## CLI reference
 
@@ -199,7 +199,7 @@ batches it and `catalog` browses the discovery catalog. Every command supports
 | `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | FASTA → `counts.parquet` (sequence, reads, rank, RPM). |
 | `selexprep qc <manifest> --outdir OUT` | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
 | `selexprep run <accessions.tsv> --outdir OUT [--resume]` | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. |
-| `selexprep catalog list \| show \| version \| refresh` | Browse / refresh the bundled discovery catalog (238 entries; `refresh` hits live ENA). |
+| `selexprep catalog list \| show \| version \| refresh` | Browse / refresh the bundled discovery catalog (240 entries; `refresh` hits live ENA). |
 
 ## Full output layout
 
@@ -246,7 +246,7 @@ manifest **without requiring the user to supply primers**.
 | EasyDIVER+ (2025) | ✗ | ✗ — paired-end with known primers | ✗ |
 | ht-selex-demo | ✗ | ✗ — Illumina adapters only (a trap `selexprep` guards against via `known_adapter_hits`) | ✗ |
 | nf-core | ✗ (no SELEX pipelines exist) | — | — |
-| **`selexprep`** | ✓ — INSDC in v0.1; figshare/zenodo deferred | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
+| **`selexprep`** | ✓ — INSDC (figshare/Zenodo deferred) | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
 
 The core inference idea: **a true primer appears at a similar rate across all
 rounds; late-round-enriched aptamer motifs do not.** `detect` exploits this
@@ -262,7 +262,7 @@ fabricated primers) where inference is ambiguous.* See
 
 ## What v0.1 ships
 
-`catalog` (238 public SELEX entries: 125 INSDC + 113 figshare/zenodo
+`catalog` (240 public SELEX entries: 127 INSDC + 113 figshare/Zenodo
 passthrough; documented exclusions in `bioprojects_excluded.csv`) · `inspect`
 (ENA metadata preview) · `fetch` (accession download with relaxed
 partial-parseability contract) · `detect` (primer inference) · `extract`
@@ -270,23 +270,26 @@ partial-parseability contract) · `detect` (primer inference) · `extract`
 unique sequences) · `qc` (suspicion flags + 4 PNG plots) · `run` (batch driver
 with `--resume`).
 
-Catalog discovery completeness is measured at **100% of ENA-typed-SELEX
-deposits** in the v0.1.7 snapshot, with 21 documented exclusions for mis-labeled
-and gSELEX/genomic-fragment variants.
+Catalog discovery completeness is **auditable** via
+`benchmarks/catalog_completeness_audit.py` (it re-queries live ENA): as of the
+v0.2.1 snapshot (2026-07-03) every ENA-typed-SELEX study is accounted for —
+either included, or documented in `bioprojects_excluded.csv` (mis-labeled and
+gSELEX/genomic-fragment variants). Because ENA grows over time, the audit is the
+source of truth rather than a frozen percentage.
 
-**Deferred to v0.2:** read merging for paired-end full-insert recovery ·
-multiplex auto-detection (v0.1 needs a user-supplied sample sheet) ·
-figshare/zenodo fetch backends · `SELEXPREP_CATALOG_PATH` env var for
-user-supplied catalogs · AnnData export · BibTeX auto-citation · library-type
-classification.
+**Not yet implemented** (deferred to a future release): read merging for
+paired-end full-insert recovery · multiplex auto-detection (currently needs a
+user-supplied sample sheet) · figshare/Zenodo fetch backends ·
+`SELEXPREP_CATALOG_PATH` env var for user-supplied catalogs · AnnData export ·
+BibTeX auto-citation · library-type classification.
 
 ## What v0.2 adds
 
 **Curated metadata layer** (`selexprep.catalog.load_metadata` /
-`load_metadata_records`) — each of the 238 catalog deposits now ships with curated
+`load_metadata_records`) — each of the 240 catalog deposits now ships with curated
 experimental metadata: `study_type`, `target`, `target_class`, `chemistry`,
-`n_random`, `n_rounds`, `selection_format`, `counter_selection` (238 × 8 = 1904
-cells, 1479 populated — up from ~4 experimental-field cells in v0.1). Built by **two
+`n_random`, `n_rounds`, `selection_format`, `counter_selection` (240 × 8 = 1920
+cells, 1491 populated — up from ~4 experimental-field cells in v0.1). Built by **two
 independent LLM extractions** (Claude + Codex/GPT), reconciled, with **every value
 source-cited** (evidence quote + DOI/URL + location); where the two extractions
 genuinely disagreed, both are kept. Bundled as `curated_metadata.json` (canonical,
@@ -294,7 +297,7 @@ provenance-rich) + `curated_metadata.csv` (flat view) under `catalog/data/`, acc
 via the API above. Spot-checked against the hand-curated benchmark
 ground truth (overlapping fields on 11 verified deposits) — no residual disagreements
 after adjudication. The extraction contract, both raw arms, and the reconciliation
-live under `benchmarks/dual_extraction/` (not shipped on PyPI).
+live under `benchmarks/dual_extraction/` in the source repository.
 
 ## What v0.1 does *not* do
 
@@ -307,7 +310,7 @@ By design — these are handled by mature tools that consume `selexprep`'s outpu
 | Binding-affinity prediction | RaptGen · DeepSELEX · AptaTrans |
 | 3D structure | ViennaRNA · RNAfold |
 | Aptamer design | MAWS · RNAtranslator |
-| Read merging (paired-end full-insert recovery) | bbmerge · vsearch · pear (v0.2 hook) |
+| Read merging (paired-end full-insert recovery) | bbmerge · vsearch · pear (planned hook) |
 
 ## Determinism + reproducibility
 
@@ -334,8 +337,9 @@ Two-tier benchmark under [`benchmarks/`](https://github.com/marcorotanegroni/sel
   `benchmarks/audit_results/`; the reproducibility envelope (catalog version +
   sample sha256 + seed) is committed.
 - **Catalog completeness audit** (`catalog_completeness_audit.py`): re-runnable
-  script diffing `bioprojects.csv` against ENA's `library_strategy="SELEX"` set.
-  Snapshot: 100% discovery / 79.6% auditable (82/103).
+  script diffing `bioprojects.csv` against ENA's `library_strategy="SELEX"` set,
+  so coverage can be re-verified against a current, dated snapshot rather than a
+  frozen figure (ENA grows over time).
 
 ## Calibration status
 
