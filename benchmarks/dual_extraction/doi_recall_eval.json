@@ -1,0 +1,14 @@
+{
+  "n_dual_extracted": 238,
+  "n_api_article_doi": 82,
+  "recovered_same_article_doi": 81,
+  "recovered_same_article_doi_pct": 98.8,
+  "n_api_repository_doi": 32,
+  "repo_doi_upgraded_to_article": 22,
+  "n_api_no_doi": 124,
+  "beyond_api_found_paper": 98,
+  "papers_added_by_extraction": 120,
+  "not_recovered_same_article_doi": [
+    "PRJNA315881"
+  ]
+}

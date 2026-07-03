@@ -1,0 +1,402 @@
+{
+  "adapter_control": {
+    "false_positive_accessions": [],
+    "n_evaluated": 1,
+    "n_false_positive": 0,
+    "n_no_false_call": 1,
+    "n_not_evaluable": 0,
+    "not_evaluable_accessions": [],
+    "per_row": [
+      {
+        "accession": "PRJEB70964",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      }
+    ]
+  },
+  "count_correlation": {
+    "n_in_both": 0,
+    "n_observed_only": 0,
+    "n_reference_only": 0,
+    "n_union": 0,
+    "pearson": null,
+    "per_row": [],
+    "spearman": null,
+    "top_k": 100,
+    "top_k_pearson": null
+  },
+  "extraction_mode_distribution": {
+    "counts": {
+      "BOTH_PRIMERS_SINGLE_READ": 4,
+      "FIVE_PRIME_ONLY": 1,
+      "PAIRED_END_SPLIT_PRIMERS": 2,
+      "UNABLE_TO_EXTRACT": 4
+    }
+  },
+  "fetch_stats": {
+    "PRJDB9110": {
+      "accession": "PRJDB9110",
+      "fetch_available_runs": 9,
+      "fetch_expected_runs": 9,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJDB9111": {
+      "accession": "PRJDB9111",
+      "fetch_available_runs": 4,
+      "fetch_expected_runs": 4,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJEB22637": {
+      "accession": "PRJEB22637",
+      "fetch_available_runs": 15,
+      "fetch_expected_runs": 16,
+      "fetch_missing_runs": 1,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 1
+    },
+    "PRJEB28411": {
+      "accession": "PRJEB28411",
+      "fetch_available_runs": 12,
+      "fetch_expected_runs": 12,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJEB62495": {
+      "accession": "PRJEB62495",
+      "fetch_available_runs": 12,
+      "fetch_expected_runs": 12,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJEB70964": {
+      "accession": "PRJEB70964",
+      "fetch_available_runs": 17,
+      "fetch_expected_runs": 27,
+      "fetch_missing_runs": 10,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 10,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA1395820": {
+      "accession": "PRJNA1395820",
+      "fetch_available_runs": 1,
+      "fetch_expected_runs": 1,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA615076": {
+      "accession": "PRJNA615076",
+      "fetch_available_runs": 11,
+      "fetch_expected_runs": 11,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA809588": {
+      "accession": "PRJNA809588",
+      "fetch_available_runs": 10,
+      "fetch_expected_runs": 12,
+      "fetch_missing_runs": 2,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 2
+    },
+    "PRJNA883192": {
+      "accession": "PRJNA883192",
+      "fetch_available_runs": 2,
+      "fetch_expected_runs": 2,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA990511": {
+      "accession": "PRJNA990511",
+      "fetch_available_runs": 1,
+      "fetch_expected_runs": 1,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    }
+  },
+  "multi_round_sensitivity": {
+    "counts": {
+      "HIGH": {
+        "pair_exact": 3,
+        "pair_partial": 1
+      },
+      "MEDIUM": {
+        "pair_partial": 2
+      }
+    },
+    "n_evaluated": 6
+  },
+  "n_length_recovery": {
+    "n_in_tolerance": 4,
+    "n_out_of_tolerance": 0,
+    "n_unmeasurable": 3,
+    "per_row": [
+      {
+        "accession": "PRJDB9110",
+        "bucket": "in_tolerance",
+        "observed": 30,
+        "truth": 30
+      },
+      {
+        "accession": "PRJDB9111",
+        "bucket": "in_tolerance",
+        "observed": 40,
+        "truth": 40
+      },
+      {
+        "accession": "PRJNA883192",
+        "bucket": "unmeasurable",
+        "observed": null,
+        "reason": "extraction_mode=PAIRED_END_SPLIT_PRIMERS",
+        "truth": 40
+      },
+      {
+        "accession": "PRJNA615076",
+        "bucket": "in_tolerance",
+        "observed": 40,
+        "truth": 40
+      },
+      {
+        "accession": "PRJNA809588",
+        "bucket": "in_tolerance",
+        "observed": 40,
+        "truth": 40
+      },
+      {
+        "accession": "PRJNA1395820",
+        "bucket": "unmeasurable",
+        "observed": null,
+        "reason": "extraction_mode=PAIRED_END_SPLIT_PRIMERS",
+        "truth": 40
+      },
+      {
+        "accession": "PRJEB62495",
+        "bucket": "unmeasurable",
+        "observed": 40,
+        "reason": "extraction_mode=FIVE_PRIME_ONLY",
+        "truth": 40
+      }
+    ],
+    "tolerance": 2
+  },
+  "n_total": 11,
+  "n_unverified": 0,
+  "n_verified": 11,
+  "pair_recovery_by_status": {
+    "counts": {
+      "HIGH": {
+        "pair_exact": 3,
+        "pair_partial": 1
+      },
+      "MEDIUM": {
+        "pair_partial": 3
+      }
+    },
+    "n_evaluated": 7
+  },
+  "primer_recovery": {
+    "counts_3p": {
+      "EXACT": 4,
+      "MISMATCH": 1,
+      "PARTIAL_5P": 1
+    },
+    "counts_5p": {
+      "EXACT": 5,
+      "PARTIAL_3P": 2
+    },
+    "counts_by_status_3p": {
+      "HIGH": {
+        "EXACT": 3
+      },
+      "MEDIUM": {
+        "EXACT": 1,
+        "MISMATCH": 1,
+        "PARTIAL_5P": 1
+      }
+    },
+    "counts_by_status_5p": {
+      "HIGH": {
+        "EXACT": 4
+      },
+      "MEDIUM": {
+        "EXACT": 1,
+        "PARTIAL_3P": 2
+      }
+    },
+    "n_evaluated": 7,
+    "pairs": [
+      {
+        "accession": "PRJDB9110",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      },
+      {
+        "accession": "PRJDB9111",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      },
+      {
+        "accession": "PRJEB62495",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "MISMATCH",
+          "matched": false,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      },
+      {
+        "accession": "PRJNA1395820",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "PARTIAL_3P",
+          "matched": false,
+          "notes": "observed and truth share a 3' suffix but are not equal"
+        }
+      },
+      {
+        "accession": "PRJNA615076",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      },
+      {
+        "accession": "PRJNA809588",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "PARTIAL_5P",
+          "matched": false,
+          "notes": "observed and truth share a 5' prefix but are not equal"
+        },
+        "status_5p": {
+          "equivalence_kind": "PARTIAL_3P",
+          "matched": false,
+          "notes": "observed and truth share a 3' suffix but are not equal"
+        }
+      },
+      {
+        "accession": "PRJNA883192",
+        "score_3p": false,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      }
+    ]
+  },
+  "recovery_denominator": 7,
+  "required_action_distribution": {
+    "counts": {
+      "MANUAL_PRIMERS_REQUIRED": 4,
+      "NONE": 5,
+      "READ_MERGING_RECOMMENDED": 2
+    }
+  },
+  "safe_failure_rate": {
+    "by_reason": {
+      "extraction_mode_UNABLE_TO_EXTRACT": 4,
+      "required_action_MANUAL_PRIMERS_REQUIRED": 4,
+      "status_UNABLE_TO_INFER": 4
+    },
+    "n_evaluated": 11,
+    "n_safe_failures": 4,
+    "rate": 0.363636,
+    "safe_failure_accessions": [
+      "PRJEB22637",
+      "PRJEB28411",
+      "PRJEB70964",
+      "PRJNA990511"
+    ]
+  },
+  "skipped_unverified_accessions": [],
+  "specificity": {
+    "false_positive_accessions": [],
+    "n_evaluated": 3,
+    "n_false_positive": 0,
+    "n_no_false_call": 3,
+    "n_not_evaluable": 0,
+    "not_evaluable_accessions": [],
+    "per_row": [
+      {
+        "accession": "PRJEB22637",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJEB28411",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJNA990511",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      }
+    ]
+  }
+}

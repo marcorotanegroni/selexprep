@@ -28,7 +28,7 @@ import pandas as pd
 #: methodology, ATAC-seq-with-SELEX-label, etc.) are forced into
 #: ``bioprojects_excluded.csv`` via
 #: ``selexprep.catalog.rebuild.MANUAL_EXCLUSIONS``.
-CATALOG_VERSION = "v0.1.7-snapshot-2026-05-28"
+CATALOG_VERSION = "v0.2.1-snapshot-2026-07-03"
 
 _CATALOG_FILENAME = "bioprojects.csv"
 

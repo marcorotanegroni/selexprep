@@ -85,3 +85,6 @@ examples/**/demo*/
 
 # Transient HPC run-result tarballs (scp'd back for analysis, not repo content)
 full_list_*.tar.gz
+
+# Manuscript working dir (Application Note) — local-only, not shipped
+paper/

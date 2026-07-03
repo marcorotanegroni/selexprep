@@ -7,7 +7,7 @@ import pandas as pd
 from selexprep.catalog import load_metadata, load_metadata_records, metadata_version
 from selexprep.catalog.metadata import METADATA_FIELDS
 
-_N_DEPOSITS = 238
+_N_DEPOSITS = 240
 
 
 def test_metadata_version_is_nonempty_str() -> None:
