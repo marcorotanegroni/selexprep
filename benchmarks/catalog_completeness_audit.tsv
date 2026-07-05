@@ -8,6 +8,7 @@ PRJDB6696	False	True	False		manual exclusion: Genome-wide fungal transcriptional
 PRJDB7696	True	False	False	CASTing analysis of Smad3 or Smad4 overexpressed in 293T cells	
 PRJEB108136	False	True	False		manual exclusion: Human milk protein profiling using pre-enriched RNA-sequence libraries (custom 'Kklib' libraries); library_source=SYNTHETIC but library_selection=RT-PCR and study scope is protein profiling, not aptamer HT-SELEX
 PRJEB111361	True	False	False	High-throughput sequencing of SELEX rounds to identify enriched aptamer sequences.	
+PRJEB114397	True	False	False	This study identifies an aptamer that selectively binds to perfluorooctanoic acid (PFOA). Upon binding, the aptamer produces fluorescence, which can be used to detect and provide semi-quantitative measurements of PFOA in water matrices.	
 PRJEB14550	True	False	False	MODER: Efficient discovery of the modular structure of monomeric and dimeric transcription factor binding motifs	
 PRJEB14744	True	False	False	"Additional sequencing coverage for the study by Jolma et al 2013, “DNA-binding specificities of human Transcription factors. This new deeper sequencing data has been used in the publication ""Transcription factor family‐specific DNA shape readout revealed by quantitative specificity models”"	
 PRJEB14923	True	False	False	Multiparameter functional diversity of human C2H2 zinc finger proteins	
@@ -38,6 +39,7 @@ PRJEB76622	True	False	False	Genomic HT-SELEX data for: GHT-SELEX demonstrates un
 PRJEB7934	False	True	False		manual exclusion: Heterodimeric transcription factor complex specificities (human); 199 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + 1 ChIP-Exo control — gSELEX/TF-binding survey on genomic substrates, not synthetic-random aptamer SELEX
 PRJEB79572	True	False	False	Ultrahigh-throughput discovery of modified aptamers as specific and potent enzyme inhibitors	
 PRJEB88389	True	False	False	Helicase-SELEX mapping of Bacillus subtilis transcription terminator Rut sites	
+PRJEB88669	False	True	False		manual exclusion: Helicase-SELEX mapping of M. tuberculosis Rho utilization (Rut) sites; library_source=GENOMIC (genomic SELEX, not aptamer-library selection); dual extraction non-aptamer (Claude tf_ht_selex / Codex method_or_other). Analogous to the already-excluded E. coli Rho Helicase-SELEX deposit.
 PRJEB9797	False	True	False		manual exclusion: CpG methylation effects on TF binding (mouse); 194 SELEX-tagged runs with mixed GENOMIC + SYNTHETIC library_source + ChIP-Seq runs — gSELEX/methyl-SELEX on genomic substrates
 PRJEB9897	True	False	False	SELMAP - SELEX Affinity Landscape Mapping of transcription factor binding sites using integrated microfluidics	
 PRJNA1013112	True	False	False	Aptameric Evolution from CRISPR Signal Conductor 1.0 to 3.0: A Paradigm Shift in Precision Oncotherapy and Genetic Engineering	
@@ -65,6 +67,7 @@ PRJNA1390424	True	False	False	NApt
 PRJNA1395820	True	False	False	Magnetic field-assisted SELEX for cobalt-binding aptamers	
 PRJNA1406499	True	False	False	The mechanical code of DNA impacts its interaction with DNA gyrase	
 PRJNA1467126	True	False	False	Expedient Single-round Selection of Hyper-modified Aptamer Targeting Insulin Receptor from Over-represented Dually Nucleobase-modified DNA Libraries	
+PRJNA1481083	True	False	False	High-throughput automated SELEX for aptamer discovery against 96 protein targets (GEO GSE336208)	
 PRJNA221564	True	False	False	Overlapping and distinct functions of CstF64 and CstF64t in mammalian mRNA 3’ processing	
 PRJNA272858	False	True	False		manual exclusion: DNA shape recognition vs sequence (Drosophila melanogaster); 32 SELEX-tagged runs, library_source=GENOMIC across all — gSELEX on Drosophila genomic fragments, not synthetic-random aptamer SELEX
 PRJNA378233	False	True	False		manual exclusion: Arabidopsis MADS-box homeotic protein complex DNA-binding specificity; 28 SELEX runs, library_source=GENOMIC across all — gSELEX-style TF binding survey, not synthetic-random aptamer SELEX
@@ -94,6 +97,7 @@ PRJNA830749	True	False	False	The use of high-affinity polyhistidine binders as m
 PRJNA847751	True	False	False	A modular XNAzyme cleaves long, structured RNAs under physiological conditions and enables allele-specific gene silencing.	
 PRJNA847930	True	False	False	A two-residue nascent strand steric gate controls synthesis of 2-O-methyl- and 2-O-2-methoxyethyl-RNA	
 PRJNA854957	True	False	False	Generating experimentally unrelated target molecule binding nucleic-acid polymers using machine learning	
+PRJNA860038	False	True	False		manual exclusion: SELEX-seq mapping the DNA-binding motif of nematode effector protein Hg4E02 (tf_ht_selex, both extractors concordant; doi 10.1002/advs.202518591); TF/protein binding-specificity SELEX-seq, out of aptamer-discovery scope.
 PRJNA862494	True	False	False	The highly conserved RNA-binding specificity of nucleocapsid protein facilitates the identification of drugs with broad anti-coronavirus activity.	
 PRJNA905424	True	False	False	High-Throughput Quantitative Binding Analysis of DNA Aptamers using Exonucleases	
 PRJNA911774	True	False	False	Systematic Study of in vitro Selection Stringency Reveals How to Enrich High-Affinity Aptamers	

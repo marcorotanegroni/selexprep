@@ -1,12 +1,12 @@
 {
-  "auditable_coverage_pct": 79.61,
-  "catalog_version": "v0.1.7-snapshot-2026-05-28",
+  "auditable_coverage_pct": 78.5,
+  "catalog_version": "v0.2.1-snapshot-2026-07-03",
   "discovery_coverage_pct": 100.0,
   "ena_non_insdc_count": 0,
   "ena_query_url": "https://www.ebi.ac.uk/ena/portal/api/search?result=read_run&query=library_strategy%3D%22SELEX%22&fields=study_accession&format=tsv&limit=100000",
   "missing_accessions": [],
-  "n_ena_selex_studies": 103,
-  "n_present_in_catalog": 82,
-  "n_present_in_excluded_sidecar": 21,
+  "n_ena_selex_studies": 107,
+  "n_present_in_catalog": 84,
+  "n_present_in_excluded_sidecar": 23,
   "n_unaccounted_for": 0
 }

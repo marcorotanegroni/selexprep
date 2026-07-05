@@ -8,6 +8,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 _No unreleased changes yet._
 
+## [0.3.0] - 2026-07-03
+
+### Changed
+
+- **Development status is now Beta** (`Development Status :: 4 - Beta`). The core
+  accession/local-FASTQ preprocessing pipeline is feature-complete and CI-tested,
+  and the CLI commands and primary output schemas are treated as stable within
+  the 0.x series.
+- README status reads "beta" and points to the new stability policy; refreshed
+  stale catalog/version wording.
+
+### Added
+
+- **`STABILITY.md`** — a stability policy declaring the stable public surface
+  (the `inspect`/`fetch`/`detect`/`extract`/`count`/`qc`/`run`/`catalog` commands;
+  the `library_report.json`, `selexprep_manifest.json`, `counts.parquet`, and
+  `rounds.tsv` schemas; the enumerations; and the determinism guarantee) versus
+  the experimental / not-yet-implemented features.
+- **Schema-stability regression tests** (`tests/test_schema_stability.py`) that
+  pin the `LibraryReport` and `SelexprepManifestV1` field sets, the enumerations,
+  and the `counts.parquet` columns, so a breaking change to a public data
+  contract fails CI and forces a deliberate schema-version bump.
+
 ## [0.2.1] - 2026-07-03
 
 ### Changed
@@ -127,7 +150,8 @@ random regions — no manual primer entry required.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
 
-[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.0...v0.1.1
