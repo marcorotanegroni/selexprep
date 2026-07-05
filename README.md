@@ -27,9 +27,12 @@ from a raw public deposit.
 `run` chains the whole thing for you; the individual verbs (`fetch`, `detect`,
 `extract`, `count`, `qc`) are there for when you need to drive one stage by hand.
 
-> **Status.** Core pipeline feature-complete and CI-tested (Python 3.10 / 3.11 /
-> 3.12), with one strict-xfail reserved for a future read-merging feature. Full
-> inventory in [What v0.1 ships](#what-v01-ships).
+> **Status — beta.** The core accession/local-FASTQ preprocessing pipeline is
+> feature-complete and CI-tested (Python 3.10 / 3.11 / 3.12). The CLI commands and
+> the primary output schemas (`library_report.json`, `selexprep_manifest.json`,
+> `counts.parquet`) are treated as **stable within the 0.x series**; experimental
+> features are listed separately. See [`STABILITY.md`](STABILITY.md) for the full
+> stable-vs-experimental surface.
 
 ---
 
