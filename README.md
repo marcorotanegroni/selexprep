@@ -344,20 +344,6 @@ Two-tier benchmark under [`benchmarks/`](https://github.com/marcorotanegroni/sel
   so coverage can be re-verified against a current, dated snapshot rather than a
   frozen figure (ENA grows over time).
 
-## Calibration status
-
-Tests assert on **behavior**, never on threshold values (e.g.
-`assert report.status == "HIGH"`, never `assert HIGH_CUTOFF == 0.85`), so tuning
-the numbers is safe under the suite. `CALIBRATION-REVIEWED` markers in
-`library/detect.py` document vetted v0.1 thresholds with rationale;
-`CALIBRATION-TODO` markers (in `qc/flags.py`, `library/adapters.py`,
-`extract/strand.py`) flag what's still pending.
-
-```bash
-grep -rn "CALIBRATION-TODO" src/      # what's left to tune
-grep -rn "CALIBRATION-REVIEWED" src/  # what's already vetted with rationale
-```
-
 ## Development
 
 ```bash

@@ -53,6 +53,13 @@ fast = ["pyfastx >= 2.0"]
 #   ``uv sync --extra bench`` on a fresh HPC venv resolves PuLP 3.x and
 #   ``snakemake --version`` crashes with AttributeError. Surfaced during
 #   the HPC audit attempt.
+#
+# HPC build gotcha (not a pin): Snakemake 7 pulls the C-extension ``datrie``,
+# whose sdist needs Python dev headers (``Python.h``) to compile. On an HPC node
+# without ``python3-dev`` a fresh ``uv sync --extra bench`` fails to build
+# datrie. Workarounds: reuse an already-built venv (don't re-sync), or install
+# snakemake via conda/bioconda (ships a prebuilt datrie), or provide the headers
+# (``module load python``). Surfaced on the 2026-07 audit re-run.
 bench = [
   "snakemake >= 7.0, < 8",
   "pulp < 2.8",
