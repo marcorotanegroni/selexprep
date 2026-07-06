@@ -66,18 +66,31 @@ append to `extractions.json`, skip if already present, resumable"): both models 
 it literally as a script (`append_record.py`, `extract_accessions.py`) and stopped at the
 deposit record. The fix is to run the corpus exactly like the pilot — just in batches.
 
-1. In a clean dir per arm (outside `~/Documents`), open a **fresh agentic session with web
-   access** (Claude Code / Codex CLI). Paste `PROMPT_v1.md` (the `extract-v1.4` contract)
-   followed by a **batch of ~10–15 accessions** from `accessions_full.txt`, and send once.
-   The model reads each deposit + its paper and returns one JSON array; save it (e.g.
-   `claude_01.json`). Give the **identical** contract to both arms.
+1. In a clean dir per arm (outside `~/Documents`) containing `PROMPT_v1.md` and a batch file
+   `accessions_N.txt` (~10–15 accessions from `accessions_full.txt`), open a **fresh agentic
+   session with web access** (Claude Code / Codex CLI) and give it the **launch prompt below**
+   (identical for both arms). It reads `PROMPT_v1.md` from disk (the `extract-v1.4` contract),
+   processes each accession in `accessions_N.txt`, and writes `accessions_N.json`:
+
+   ```
+   Read PROMPT_v1.md in this directory and first print its CONTRACT VERSION line to
+   confirm you've read it. Then, following its rules and JSON schema exactly, extract
+   SELEX metadata for every accession in accessions_N.txt: for each, look up the deposit
+   and read its associated paper's full text yourself; fill each field only with a
+   verbatim quote + source URL/DOI, otherwise not_stated. Write the results as one JSON
+   array to accessions_N.json. Work autonomously, no questions. Stop at the end of the
+   batch, working one accession at a time (including the JSON write).
+   ```
 2. Repeat with a **fresh session per batch** until all 238 are done (~16–24 batches per
    arm). Fresh sessions keep each batch small enough to stay deep; "resumability" is simply
    which batches you have saved. Do **not** add loop / append / resume language.
-3. Merge each arm's batch arrays into one file:
+3. Merge each arm's batch arrays into one file (run inside each arm's dir, over its
+   `accessions_*.json` batches):
    ```bash
-   python3 -c "import json,glob; r=[x for f in sorted(glob.glob('claude_*.json')) for x in json.load(open(f))]; json.dump(r,open('claude_extractions.json','w'),indent=2,ensure_ascii=False)"
-   python3 -c "import json,glob; r=[x for f in sorted(glob.glob('codex_*.json'))  for x in json.load(open(f))]; json.dump(r,open('codex_extractions.json','w'),indent=2,ensure_ascii=False)"
+   # in the Claude arm dir:
+   python3 -c "import json,glob; r=[x for f in sorted(glob.glob('accessions_*.json')) for x in json.load(open(f))]; json.dump(r,open('claude_extractions.json','w'),indent=2,ensure_ascii=False)"
+   # in the Codex arm dir:
+   python3 -c "import json,glob; r=[x for f in sorted(glob.glob('accessions_*.json')) for x in json.load(open(f))]; json.dump(r,open('codex_extractions.json','w'),indent=2,ensure_ascii=False)"
    ```
 4. Compute agreement + the adjudication worklist:
    ```bash
