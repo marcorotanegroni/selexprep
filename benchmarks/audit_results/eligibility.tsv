@@ -12,6 +12,7 @@ PRJDB7696	NO_ROUND_STRUCTURE	2	0	[]	"[""SELEX""]"	2	0	0	only 0 compatible run(s)
 PRJDB9110	ELIGIBLE_HT_SELEX_ROUNDS	9	9	[0, 1, 2, 3, 4, 5, 6, 7, 8]	"[""AMPLICON""]"	9	0	1	9 distinct rounds across 9 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJDB9111	ELIGIBLE_HT_SELEX_ROUNDS	4	4	[3, 4, 5, 6]	"[""AMPLICON""]"	4	0	1	4 distinct rounds across 4 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJEB111361	ELIGIBLE_HT_SELEX_ROUNDS	4	4	[5, 6, 7, 8]	"[""SELEX""]"	4	0	1	4 distinct rounds across 4 runs, single trajectory, all library_strategy values SELEX-compatible
+PRJEB114397	NO_ROUND_STRUCTURE	1	1	[30]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB14550	NO_ROUND_STRUCTURE	8	0	[]	"[""SELEX""]"	8	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB14744	NO_ROUND_STRUCTURE	2510	0	[]	"[""SELEX""]"	2510	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB14923	NO_ROUND_STRUCTURE	4	0	[]	"[""SELEX""]"	4	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
@@ -76,6 +77,7 @@ PRJNA1390424	NO_ROUND_STRUCTURE	1	0	[]	"[""SELEX""]"	1	0	0	only 0 compatible run
 PRJNA1395820	NO_ROUND_STRUCTURE	1	1	[9]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA1406499	ELIGIBLE_HT_SELEX_ROUNDS	8	8	[1, 2, 3, 4, 5, 6, 7, 8]	"[""AMPLICON"", ""SELEX""]"	8	0	1	8 distinct rounds across 8 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJNA1467126	NO_ROUND_STRUCTURE	21	0	[]	"[""SELEX""]"	21	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJNA1481083	ELIGIBLE_HT_SELEX_ROUNDS	8	8	[1, 2]	"[""SELEX""]"	8	0	1	2 distinct rounds across 8 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJNA221564	NO_ROUND_STRUCTURE	5	0	[]	"[""OTHER"", ""RNA-Seq"", ""SELEX""]"	4	1	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA251822	NO_ROUND_STRUCTURE	2	0	[]	"[""OTHER""]"	2	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA315881	NO_ROUND_STRUCTURE	2	1	[5]	"[""OTHER""]"	2	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely

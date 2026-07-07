@@ -1,28 +1,29 @@
 {
   "catalog_classification_distribution": {
-    "ELIGIBLE_HT_SELEX_ROUNDS": 27,
+    "ELIGIBLE_HT_SELEX_ROUNDS": 28,
     "MIXED_PROJECT_NEEDS_GROUPING": 26,
-    "NO_ROUND_STRUCTURE": 72
+    "NO_ROUND_STRUCTURE": 73
   },
-  "catalog_version": "v0.1.7-snapshot-2026-05-28",
+  "catalog_version": "v0.2.1-snapshot-2026-07-03",
   "caveats": {
     "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
   },
   "extraction_mode_distribution": {
-    "BOTH_PRIMERS_SINGLE_READ": 7,
+    "BOTH_PRIMERS_SINGLE_READ": 6,
     "FIVE_PRIME_ONLY": 2,
-    "THREE_PRIME_ONLY": 2,
+    "THREE_PRIME_ONLY": 3,
     "UNABLE_TO_EXTRACT": 8
   },
   "fetch_outcome_distribution": {
     "EXTRACT_REFUSED": 8,
-    "FETCH_FAILED": 4,
+    "FETCH_FAILED": 3,
     "OK": 11
   },
   "flags_raised_histogram": {
     "0": 2,
     "1": 4,
-    "2": 5
+    "2": 4,
+    "3": 1
   },
   "inference_safe_failure_by_reason": {
     "extraction_mode_UNABLE_TO_EXTRACT": 8,
@@ -32,17 +33,18 @@
   "inference_safe_failure_rate": 0.421053,
   "library_report_status_distribution": {
     "HIGH": 6,
-    "MEDIUM": 5,
+    "LOW": 1,
+    "MEDIUM": 4,
     "UNABLE_TO_INFER": 8
   },
-  "n_catalog_classified": 125,
-  "n_catalog_eligible": 27,
-  "n_catalog_non_insdc_passthrough": 125,
-  "n_catalog_total": 250,
+  "n_catalog_classified": 127,
+  "n_catalog_eligible": 28,
+  "n_catalog_non_insdc_passthrough": 113,
+  "n_catalog_total": 240,
   "n_fetchable": 19,
   "n_in_ground_truth_overlap": 0,
   "n_inference_safe_failures": 8,
-  "n_sampled": 23,
+  "n_sampled": 22,
   "n_with_library_report": 19,
   "n_with_qc_run": 11,
   "per_accession": [
@@ -147,12 +149,12 @@
     },
     {
       "accession": "PRJNA1066781",
-      "extraction_mode": "",
-      "flags_raised": "",
+      "extraction_mode": "THREE_PRIME_ONLY",
+      "flags_raised": "3",
       "is_in_ground_truth": false,
-      "library_report_status": "",
-      "required_action": "",
-      "status": "FETCH_FAILED"
+      "library_report_status": "LOW",
+      "required_action": "NONE",
+      "status": "OK"
     },
     {
       "accession": "PRJNA1067620",
@@ -200,6 +202,15 @@
       "status": "FETCH_FAILED"
     },
     {
+      "accession": "PRJNA1481083",
+      "extraction_mode": "",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
+    },
+    {
       "accession": "PRJNA450989",
       "extraction_mode": "UNABLE_TO_EXTRACT",
       "flags_raised": "",
@@ -207,15 +218,6 @@
       "library_report_status": "UNABLE_TO_INFER",
       "required_action": "MANUAL_PRIMERS_REQUIRED",
       "status": "EXTRACT_REFUSED"
-    },
-    {
-      "accession": "PRJNA615076",
-      "extraction_mode": "",
-      "flags_raised": "",
-      "is_in_ground_truth": false,
-      "library_report_status": "",
-      "required_action": "",
-      "status": "FETCH_FAILED"
     },
     {
       "accession": "PRJNA633039",
@@ -236,15 +238,6 @@
       "status": "EXTRACT_REFUSED"
     },
     {
-      "accession": "PRJNA809588",
-      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
-      "flags_raised": "2",
-      "is_in_ground_truth": false,
-      "library_report_status": "MEDIUM",
-      "required_action": "NONE",
-      "status": "OK"
-    },
-    {
       "accession": "PRJNA862494",
       "extraction_mode": "UNABLE_TO_EXTRACT",
       "flags_raised": "",
@@ -258,6 +251,6 @@
     "MANUAL_PRIMERS_REQUIRED": 8,
     "NONE": 11
   },
-  "sample_accessions_sha256": "ba7c35e85617a292161a9096ee60821265c2f85cc9a9bf0bf02a665fc25bb1c3",
+  "sample_accessions_sha256": "980c99af747ec4691eed4f90db08853ac69a230ea76256348bd7a3ca799ca9b0",
   "sample_seed": 42
 }
