@@ -83,8 +83,12 @@ benchmarks/dual_extraction/out/
 examples/**/demo*/
 .ipynb_checkpoints/
 
-# Transient HPC run-result tarballs (scp'd back for analysis, not repo content)
+# Transient HPC run-result tarballs + their unpacked import dirs (scp'd back for
+# analysis, not repo content — the committed artifacts they refresh live under
+# benchmarks/audit_results/)
 full_list_*.tar.gz
+audit_*.tar.gz
+_hpc_import*/
 
 # Manuscript working dir (Application Note) — local-only, not shipped
 paper/
