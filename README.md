@@ -263,7 +263,7 @@ SELEX primers directly from raw reads — with none supplied — and fails safe 
 fabricated primers) where inference is ambiguous.* See
 [Benchmarks](#benchmarks).
 
-## What v0.1 ships
+## What selexprep ships
 
 `catalog` (240 public SELEX entries: 127 INSDC + 113 figshare/Zenodo
 passthrough; documented exclusions in `bioprojects_excluded.csv`) · `inspect`
@@ -286,7 +286,7 @@ user-supplied sample sheet) · figshare/Zenodo fetch backends ·
 `SELEXPREP_CATALOG_PATH` env var for user-supplied catalogs · AnnData export ·
 BibTeX auto-citation · library-type classification.
 
-## What v0.2 adds
+## Curated metadata layer
 
 **Curated metadata layer** (`selexprep.catalog.load_metadata` /
 `load_metadata_records`) — each of the 240 catalog deposits now ships with curated
@@ -302,7 +302,7 @@ ground truth (overlapping fields on 11 verified deposits) — no residual disagr
 after adjudication. The extraction contract, both raw arms, and the reconciliation
 live under `benchmarks/dual_extraction/` in the source repository.
 
-## What v0.1 does *not* do
+## What selexprep does *not* do
 
 By design — these are handled by mature tools that consume `selexprep`'s outputs:
 
