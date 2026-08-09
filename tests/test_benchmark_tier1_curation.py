@@ -42,6 +42,13 @@ _CURATED = {
 _RECOVERY = {
     "PRJDB9110",
     "PRJDB9111",
+    # Ground truth from RIBOMIC patent WO2020204151 (SEQ ID NO 39-41) — external
+    # to both the deposited reads and any selexprep output.
+    "PRJDB19098",
+    # Retained as a row but scored out (verified=false): its 3' truth is
+    # read-derived, so the pair has no fully external ground truth, and the
+    # deposit is paired-end split-primer, so its extraction cannot be verified
+    # without read merging. Reported under skipped_unverified_accessions.
     "PRJNA883192",
     "PRJNA615076",
     "PRJNA809588",
