@@ -41,15 +41,37 @@ def test_load_metadata_records_shape_and_provenance() -> None:
     )
 
 
-def test_discordant_cells_keep_both_arms() -> None:
+def test_cells_where_arms_disagreed_keep_both_arms() -> None:
+    """Adjudication resolves a disagreement; it never erases it.
+
+    Cells the two extractions disagreed on are now ``adjudicated`` rather than
+    left ``discordant``, but both arms stay on record so any reader can audit
+    the call that was made.
+    """
     recs = load_metadata_records()
-    discordant = [
-        fd for rec in recs for fd in rec["fields"].values() if fd.get("status") == "discordant"
+    disagreed = [
+        fd
+        for rec in recs
+        for fd in rec["fields"].values()
+        if fd.get("status") in ("discordant", "adjudicated")
     ]
-    assert discordant, "expected some discordant cells (both arms kept)"
-    for fd in discordant:
+    assert disagreed, "expected cells where the two arms disagreed"
+    for fd in disagreed:
         assert "claude" in fd and "codex" in fd
         assert "value" in fd["claude"] and "value" in fd["codex"]
+
+
+def test_adjudicated_cells_carry_value_and_rule() -> None:
+    """An adjudicated cell must state what was chosen and on what grounds."""
+    recs = load_metadata_records()
+    adjudicated = [
+        fd for rec in recs for fd in rec["fields"].values() if fd.get("status") == "adjudicated"
+    ]
+    assert adjudicated, "expected adjudicated cells"
+    for fd in adjudicated:
+        assert fd.get("value"), "adjudicated cell must carry the resolved value"
+        assert fd.get("adjudication_rule"), "adjudicated cell must name the rule applied"
+        assert fd.get("adjudication_note"), "adjudicated cell must record the reasoning"
 
 
 def test_flat_and_records_agree_on_accessions() -> None:
