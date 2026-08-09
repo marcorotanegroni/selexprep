@@ -34,7 +34,7 @@ import logging
 import random
 import statistics
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pandas as pd
@@ -76,6 +76,25 @@ BOUNDARY_HIGH_SUPPORT_BASELINE = 0.90
 BOUNDARY_HIGH_SUPPORT_DROP = 0.12
 BOUNDARY_HIGH_SUPPORT_POST_MAX = 0.85
 
+# Outer-edge core rescue.
+#
+# ``_positional_consensus`` walks inward from the *read edge*, so any constant
+# technical sequence sitting between the read edge and the library constant —
+# a truncated sequencing adapter, an index remnant, the T7 start-G — is absorbed
+# into the called flank. That material is often poorly conserved (it sits at the
+# low-quality end of the read), which makes the whole-primer ``match_rate``
+# collapse and downgrades an otherwise two-sided library to one-sided extraction.
+#
+# The rescue recomputes ``match_rate`` against the high-support *core* of the
+# flank (outer positions with weak support dropped) and is applied ONLY when the
+# full-length rate already failed, so libraries that pass today take the exact
+# same code path they take now. The core must still be a credible primer:
+# ``CORE_MIN_SUPPORT`` keeps it strongly conserved and ``CORE_MIN_LEN`` stops a
+# short, spurious consensus from being rescued into a false primer call (the
+# specificity arm must keep making no call at all).
+CORE_MIN_SUPPORT = 0.90
+CORE_MIN_LEN = 12
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -89,6 +108,10 @@ class FlankResult:
     sequence: str | None
     length: int
     confidence: float  # fraction of sequences matching within Hamming ≤ 1
+    # Per-position consensus support for the called flank, ordered 5'→3' like
+    # ``sequence``. Used by the outer-edge core rescue; empty when no flank was
+    # called. Internal detail — not part of the ``LibraryReport`` schema.
+    supports: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -238,11 +261,57 @@ def detect_flank(
     if L:
         selected = consensus[:L] if is_prefix else list(reversed(consensus[:L]))
         sequence = "".join(selected)
+        # ``supports`` is indexed from the read edge inward; reverse it for a
+        # suffix so it lines up 5'→3' with ``sequence``.
+        selected_supports = supports[:L] if is_prefix else list(reversed(supports[:L]))
         fragments = [(s[:L] if is_prefix else s[-L:]) for s in sequences if len(s) >= L]
         if len(fragments) >= min_seqs_for_detection:
             hits = sum(1 for f in fragments if _hamming_le1(f, sequence))
-            return FlankResult(sequence=sequence, length=L, confidence=hits / len(fragments))
+            return FlankResult(
+                sequence=sequence,
+                length=L,
+                confidence=hits / len(fragments),
+                supports=selected_supports,
+            )
     return FlankResult(sequence=None, length=0, confidence=0.0)
+
+
+def _high_support_core(
+    sequence: str | None,
+    supports: list[float],
+    *,
+    is_prefix: bool,
+    min_support: float = CORE_MIN_SUPPORT,
+    min_len: int = CORE_MIN_LEN,
+) -> str | None:
+    """Drop weakly-supported positions from a flank's *outer* edge.
+
+    The outer edge is the read edge: the start of a 5' flank, the end of a 3'
+    flank. Positions are dropped up to and including the outermost one whose
+    support falls below ``min_support``, so a noisy adapter/index remnant is
+    removed together with anything outside it. The inner edge — the boundary
+    with the random region — is never touched.
+
+    Returns ``None`` when there is nothing to rescue: no flank, no weak outer
+    position, or a core shorter than ``min_len``.
+    """
+    if not sequence or len(supports) != len(sequence):
+        return None
+
+    # Order positions outer-edge-first: index 0 for a prefix, last index for a
+    # suffix. Walk inward and remember the deepest weak position found.
+    ordered = supports if is_prefix else list(reversed(supports))
+    cut = 0
+    for i, value in enumerate(ordered):
+        if value < min_support:
+            cut = i + 1
+    if cut == 0:
+        return None
+
+    core = sequence[cut:] if is_prefix else sequence[: len(sequence) - cut]
+    if len(core) < min_len:
+        return None
+    return core
 
 
 # ---------------------------------------------------------------------------
@@ -931,6 +1000,40 @@ def compute_library_report(
     #   position_consistency_* = primer appears at the expected flank ± tolerance
     match_rate_5p = _substring_match_rate(earliest_seqs, primer_5p_seq)
     match_rate_3p = _substring_match_rate(threep_seqs_earliest, primer_3p_lookup)
+
+    # Outer-edge core rescue. Runs ONLY when the full-length rate already failed
+    # the primer-found threshold, so any library that passes today follows the
+    # exact same path it follows now. The rescued rate feeds classification;
+    # ``extract`` still trims the full-length flank, because the weak outer
+    # positions (adapter/index remnant, T7 start-G) really are in the reads and
+    # must be removed. Rescuing therefore cannot move the random-region
+    # boundary — it only decides whether the 3' side is usable at all.
+    if (
+        match_rate_5p <= PRIMER_FOUND_MATCH_RATE_THRESHOLD
+        and primer_5p_seq is not None
+        and primer_5p_seq == primer_detection.primer_5p.sequence
+    ):
+        core_5p = _high_support_core(
+            primer_5p_seq, primer_detection.primer_5p.supports, is_prefix=True
+        )
+        if core_5p is not None:
+            match_rate_5p = max(match_rate_5p, _substring_match_rate(earliest_seqs, core_5p))
+
+    # Skipped for paired-split libraries: there the 3' lookup is
+    # ``revcomp`` of a flank called on R2, so ``primer_detection.primer_3p``
+    # (called on R1) is not the sequence whose supports we would be reading.
+    if (
+        not has_paired_split
+        and match_rate_3p <= PRIMER_FOUND_MATCH_RATE_THRESHOLD
+        and primer_3p_lookup is not None
+        and primer_3p_lookup == primer_detection.primer_3p.sequence
+    ):
+        core_3p = _high_support_core(
+            primer_3p_lookup, primer_detection.primer_3p.supports, is_prefix=False
+        )
+        if core_3p is not None:
+            match_rate_3p = max(match_rate_3p, _substring_match_rate(threep_seqs_earliest, core_3p))
+
     position_consistency_5p = position_rates_5p_by_round[0] if position_rates_5p_by_round else 0.0
     position_consistency_3p = position_rates_3p_by_round[0] if position_rates_3p_by_round else 0.0
 
