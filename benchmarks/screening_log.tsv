@@ -15,3 +15,4 @@ PRJNA990511	pre_trimmed	true	specificity		read-length 40 = N40 (pre-trimmed, mon
 PRJNA728693	nonstandard	false		unsupported_architecture	RE-SELEX architecture; heterogeneous read lengths 90/182/249/250 (see excluded_datasets.tsv)
 PRJNA935703	nonstandard	false		unsupported_architecture	split-random-region architecture (N10 + internal constant + N35); see excluded_datasets.tsv
 PRJNA975735	aggregate_like	false		not_raw_reads	1 long record/file (~846-1174 nt), not per-read FASTQ; see excluded_datasets.tsv
+PRJDB19098	raw_standard	true	recovery		raw reads with both constants present; ground truth external and non-circular (RIBOMIC patent WO2020204151 SEQ ID NO 39-41, not the deposited reads and not a selexprep output); 6 selection rounds, 35 nt random region
