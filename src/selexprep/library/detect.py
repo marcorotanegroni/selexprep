@@ -94,6 +94,12 @@ BOUNDARY_HIGH_SUPPORT_POST_MAX = 0.85
 # specificity arm must keep making no call at all).
 CORE_MIN_SUPPORT = 0.90
 CORE_MIN_LEN = 12
+# Consecutive well-supported positions that end the outer-edge scan. Measured
+# on PRJEB62495: the outer run is 0.75/0.90/0.90/0.89/0.48/0.61, then the flank
+# settles at 0.90/0.91/0.98 — while an isolated 0.77 sits 21 nt deep, well
+# inside the genuine constant. Stopping at the first stable run keeps the cut
+# on the outer artefact instead of chasing that interior dip.
+CORE_STABLE_RUN = 3
 
 
 # ---------------------------------------------------------------------------
@@ -284,27 +290,39 @@ def _high_support_core(
     min_support: float = CORE_MIN_SUPPORT,
     min_len: int = CORE_MIN_LEN,
 ) -> str | None:
-    """Drop weakly-supported positions from a flank's *outer* edge.
+    """Drop the noisy run at a flank's *outer* edge.
 
     The outer edge is the read edge: the start of a 5' flank, the end of a 3'
-    flank. Positions are dropped up to and including the outermost one whose
-    support falls below ``min_support``, so a noisy adapter/index remnant is
-    removed together with anything outside it. The inner edge — the boundary
-    with the random region — is never touched.
+    flank. Positions are dropped up to and including the deepest weak one in
+    that outer run, so an adapter/index remnant goes together with anything
+    outside it.
 
-    Returns ``None`` when there is nothing to rescue: no flank, no weak outer
-    position, or a core shorter than ``min_len``.
+    The scan stops after ``CORE_STABLE_RUN`` consecutive well-supported
+    positions. Real flanks are not uniformly perfect — an isolated dip deep
+    inside a genuine constant region is normal — and without the stop a single
+    such dip would propose cutting almost the whole flank away. The inner edge,
+    the boundary with the random region, is therefore never reached.
+
+    Returns ``None`` when there is nothing to rescue: no flank, a clean outer
+    edge, or a core shorter than ``min_len``.
     """
     if not sequence or len(supports) != len(sequence):
         return None
 
     # Order positions outer-edge-first: index 0 for a prefix, last index for a
-    # suffix. Walk inward and remember the deepest weak position found.
+    # suffix. Walk inward, remembering the deepest weak position, and stop once
+    # the flank has settled into a stable run.
     ordered = supports if is_prefix else list(reversed(supports))
     cut = 0
+    stable = 0
     for i, value in enumerate(ordered):
         if value < min_support:
             cut = i + 1
+            stable = 0
+            continue
+        stable += 1
+        if stable >= CORE_STABLE_RUN:
+            break
     if cut == 0:
         return None
 

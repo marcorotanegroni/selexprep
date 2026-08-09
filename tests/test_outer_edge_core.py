@@ -40,22 +40,62 @@ class TestNoOpOnHealthyFlanks:
         assert _high_support_core(seq, [0.90] * len(seq), is_prefix=False) is None
 
 
+# Per-position support actually measured on PRJEB62495 round_04 (368,381 reads),
+# ordered 5'→3' like the called flank. The outer six positions carry a truncated
+# TruSeq remnant; the 0.772 at index 3 is an isolated dip inside the genuine
+# constant and must NOT drag the cut inward.
+PRJEB62495_SUPPORTS = [
+    0.921,
+    0.932,
+    0.931,
+    0.772,
+    0.932,
+    0.978,
+    0.923,
+    0.920,
+    0.911,
+    0.906,
+    0.903,
+    0.902,
+    0.898,
+    0.899,
+    0.884,
+    0.875,
+    0.976,
+    0.909,
+    0.901,
+    0.612,
+    0.483,
+    0.886,
+    0.896,
+    0.897,
+    0.749,
+]
+PRJEB62495_FLANK = "CGTGGTTACAGTCAGAGGACAGATT"
+
+
 class TestTrimsOuterEdgeOnly:
-    def test_suffix_drops_weak_tail(self):
-        # 3' flank: library constant + 5 nt of noisy adapter remnant at the
-        # read end. Mirrors PRJEB62495 (…CAGATT tail at 55-68% support).
-        core_seq = "CGTGGTTACAGTCAGAGGA"
-        tail = "CAGATT"
-        seq = core_seq + tail
-        supports = _supports(*([0.99] * len(core_seq)), 0.68, 0.55, 0.99, 0.99, 0.97, 0.58)
-        assert _high_support_core(seq, supports, is_prefix=False) == core_seq
+    def test_real_prjeb62495_profile_yields_conserved_core(self):
+        # Regression on the measured case: the 25 nt flank scores match_rate
+        # 0.535 (below the 0.70 primer-found threshold) while the 19 nt core
+        # scores 0.910, which is what unlocks two-sided extraction.
+        assert (
+            _high_support_core(PRJEB62495_FLANK, PRJEB62495_SUPPORTS, is_prefix=False)
+            == "CGTGGTTACAGTCAGAGGA"
+        )
+
+    def test_interior_dip_alone_does_not_trim(self):
+        # Same isolated 0.772 dip, but a clean outer edge: nothing to rescue.
+        supports = list(PRJEB62495_SUPPORTS)
+        supports[-6:] = [0.95] * 6
+        assert _high_support_core(PRJEB62495_FLANK, supports, is_prefix=False) is None
 
     def test_prefix_drops_weak_head(self):
         # 5' flank: T7 start-G / index remnant ahead of the library constant.
         head = "GAC"
         core_seq = "TACACTGCACTGCGTTAGAG"
         seq = head + core_seq
-        supports = _supports(0.55, 0.99, 0.62, *([0.99] * len(core_seq)))
+        supports = _supports(0.55, 0.62, 0.71, *([0.99] * len(core_seq)))
         assert _high_support_core(seq, supports, is_prefix=True) == core_seq
 
     def test_inner_boundary_is_never_moved(self):
@@ -66,11 +106,11 @@ class TestTrimsOuterEdgeOnly:
         # Weak position is the inner edge for a prefix flank -> nothing to do.
         assert _high_support_core(seq, supports, is_prefix=True) is None
 
-    def test_deepest_weak_position_sets_the_cut(self):
-        # Two weak positions: the cut must clear the deeper one and everything
-        # outside it, not stop at the first.
-        seq = "AAAA" + "CGTGGTTACAGTCAGAGGA"
-        supports = _supports(0.50, 0.99, 0.99, 0.60, *([0.99] * 19))
+    def test_scan_stops_at_stable_run(self):
+        # Weak outer pair, then a stable run, then another weak position: the
+        # cut must stay on the outer pair and ignore what lies past the run.
+        seq = "AA" + "CGTGGTTACAGTCAGAGGA"  # 21 nt
+        supports = _supports(0.50, 0.60, 0.99, 0.99, 0.99, 0.40, *([0.99] * 15))
         assert _high_support_core(seq, supports, is_prefix=True) == "CGTGGTTACAGTCAGAGGA"
 
 
