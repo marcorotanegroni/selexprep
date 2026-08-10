@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+_No unreleased changes yet._
+
+## [0.4.0] - 2026-08-10
+
 ### Fixed
 
 - **`detect` no longer reports a library where there is none.** When one
