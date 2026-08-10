@@ -1133,6 +1133,33 @@ def compute_library_report(
         status_low_cutoff=STATUS_LOW_CUTOFF,
     )
 
+    # A library with no randomised region is not a library. When one sequence
+    # dominates the pool — a monoclonal small-RNA library, an adapter-dimer
+    # pool, an already-collapsed deposit — every position is conserved, so
+    # there is no constant/random boundary for the consensus walk to stop at:
+    # it consumes the whole read from both ends and the two flanks meet,
+    # giving a modal insert of zero. Emitting primers there is worse than
+    # refusing, because ``full_insert_recovered`` stays True and
+    # ``required_action`` stays NONE, so ``run`` proceeds to count and writes
+    # a table of zero-length sequences without raising anything.
+    # ``n_mode is None`` is a different state entirely (paired split primers:
+    # no single read spans the insert) and must NOT be caught here.
+    if n_mode == 0:
+        logger.info("Refusing primer call: inferred random-region length is 0 nt")
+        return _build_unable_report(
+            read_source=read_source,
+            sampling_seed=sampling_seed,
+            failure_reason=(
+                "Inferred random-region length is 0 nt: the two flanks meet, so "
+                "the reads carry no randomised region. This is what a pool "
+                "dominated by a single sequence looks like to positional "
+                "consensus - every position is conserved, so no constant/random "
+                "boundary exists to detect. If this really is a SELEX library, "
+                "pass --override-primer-5p / --override-primer-3p."
+            ),
+            known_adapter_hits=adapter_hits,
+        )
+
     return LibraryReport(
         primer_5p=primer_5p_seq,
         primer_3p=primer_3p_seq,
