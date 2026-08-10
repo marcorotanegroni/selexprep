@@ -62,6 +62,31 @@ class TestMonoclonalPoolIsRefused:
         # points the user at the escape hatch rather than just failing
         assert "--override-primer-5p" in report.failure_reason
 
+    def test_converged_selex_pool_is_refused_the_same_way(self):
+        """A late-round SELEX pool that has collapsed onto one winner produces
+        the identical signal, and must be handled identically.
+
+        The randomised region of a converged pool is as conserved as the
+        primers flanking it, so no boundary exists to detect and the modal
+        insert is 0 — exactly what a non-SELEX library looks like. `detect`
+        cannot tell the two apart from reads alone, so it must not claim to:
+        the refusal says a variable region is absent, never that the input is
+        not SELEX. The user who knows better supplies the primers, which is
+        what ``required_action`` asks for and why that advice is right here
+        rather than merely harmless.
+        """
+        winner = PRIMER_5P + "ACGTACGTACGTACGTACGTACGTACGTAC" + PRIMER_3P
+        pools = {r: [winner] * 600 for r in range(3)}
+
+        report = compute_library_report(pools, read_source="R1")
+
+        assert report.status == "UNABLE_TO_INFER"
+        assert report.required_action == "MANUAL_PRIMERS_REQUIRED"
+        assert report.primer_5p is None and report.primer_3p is None
+        # the wording must stay agnostic about what the input actually is
+        assert "not SELEX" not in report.failure_reason
+        assert "If this really is a SELEX library" in report.failure_reason
+
 
 class TestHealthyLibrariesAreUntouched:
     """The guard keys on a modal insert of exactly 0, which a real library

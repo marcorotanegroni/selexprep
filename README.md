@@ -333,8 +333,10 @@ manifest pins `pyarrow_version` instead). PNG plots are **informational**
 Two-tier benchmark under [`benchmarks/`](https://github.com/marcorotanegroni/selexprep/blob/main/benchmarks/README.md):
 
 - **Tier 1 — primer-recovery scorecard** (`Snakefile` + `ground_truth.tsv`):
-  curated primer-recovery validation against paper-reported primers (N=11
-  source-verified accessions, modality-diverse), reported as a per-deposit table.
+  curated primer-recovery validation against paper-reported primers (N=21
+  source-verified accessions, modality-diverse, balanced across three arms:
+  7 recovery, 7 pre-trimmed specificity controls, 7 adapter controls),
+  reported as a per-deposit table.
 - **Tier 2 — corpus audit** (`audit.smk`): corpus utility audit over a random sample
   of audit-eligible INSDC catalog rows. Shipped artifacts under
   `benchmarks/audit_results/`; the reproducibility envelope (catalog version +

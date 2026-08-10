@@ -3,7 +3,7 @@
 Emits a per-deposit Markdown scorecard by joining the benchmark's deterministic
 ``metrics.json`` (per-side recovery outcomes) with the descriptors in
 ``ground_truth.tsv`` (chemistry / target / arm). The benchmark reports results
-as a **table, not a chart**: 11 deposits with categorical per-side outcomes are
+as a **table, not a chart**: deposits with categorical per-side outcomes are
 far more legible per-row than as bars, and the table carries the per-deposit
 detail a reader actually wants. ``metrics.json`` stays the machine-readable
 source of truth; this is its presentation layer.
