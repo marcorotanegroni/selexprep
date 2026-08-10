@@ -88,6 +88,7 @@ examples/**/demo*/
 # benchmarks/audit_results/)
 full_list_*.tar.gz
 audit_*.tar.gz
+tier1_*.tar.gz
 _hpc_import*/
 
 # Manuscript working dir (Application Note) — local-only, not shipped

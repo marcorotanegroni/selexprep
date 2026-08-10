@@ -40,27 +40,47 @@ this question by construction.
 
 ## Tier 1 — primer-recovery scorecard
 
-**Headline:** *selexprep recovered the paper-reported primers — exactly or with
-informative partial recovery — on all 7 evaluable recovery deposits (3 exact,
-4 partial), and made zero false-positive primer calls on the 4 primer-absent /
+**Headline:** *selexprep recovered the random region at exactly the
+paper-reported length on every recovery deposit where a single-read extraction
+is possible (6/6, 0 out of tolerance), recovered the paper-reported primer
+strings exactly on 4 of 7 and with informative partial recovery on the other 3,
+and made zero false-positive primer calls on the 4 primer-absent /
 adapter-collision controls.*
 
-The 11 source-verified deposits, by arm (the table below is the per-row scorecard;
-`snakemake -s Snakefile` regenerates it as `metrics.json`):
+Two distinct measurements are reported, because they answer different questions.
+The **random-region boundary** is what the tool must get right to trim
+correctly; the **exact primer string** additionally requires that the constant
+called from the reads coincides with the constant as written in the paper, which
+can differ when the deposit carries extra constant technical sequence.
 
-| Accession | Chemistry | Target | Arm | `status` | 5′ / 3′ | Note |
-|---|---|---|---|---|---|---|
-| PRJDB9110 | RNA (T7) | TG2 (protein) | recovery | HIGH | EXACT / EXACT | counted |
-| PRJDB9111 | RNA (T7) | αVβ3 (protein) | recovery | HIGH | EXACT / EXACT | counted |
-| PRJNA615076 | DNA | *E. faecalis* (cell) | recovery | HIGH | EXACT / EXACT | counted |
-| PRJNA883192 | DNA | EPX (protein) | recovery | HIGH | EXACT / — | 3′ read-resolved → not scored; pair counted on 5′ |
-| PRJNA1395820 | DNA | Co²⁺ (small molecule) | recovery | MEDIUM | PARTIAL / EXACT | counted (partial) |
-| PRJNA809588 | 2′-F-Py RNA | islet (cell) | recovery | MEDIUM | PARTIAL / PARTIAL | counted (partial) |
-| PRJEB62495 | DNA | *Anaplasma* (cell) | recovery | MEDIUM | EXACT / MISMATCH | counted (partial); read-level 3′ boundary divergence |
-| PRJEB22637 | 2′-F-Py RNA | cell (Annexin A2) | specificity | UNABLE_TO_INFER | null / null | correct refusal (N-region-only reads) |
-| PRJEB28411 | DNA | cell (ccRCC) | specificity | UNABLE_TO_INFER | null / null | correct refusal |
-| PRJNA990511 | DNA | protein (ASFV p30) | specificity | UNABLE_TO_INFER | null / null | correct refusal (single-round) |
-| PRJEB70964 | 2′-F-Py RNA | protein (α-syn) | adapter-control | UNABLE_TO_INFER | null / null | correct refusal (5′ const = revcomp TruSeq R1) |
+The source-verified deposits, by arm (the table below is the per-row scorecard;
+`snakemake -s Snakefile` regenerates it as `metrics.json`). Rows marked
+*pending* were added to balance the arms and have not yet been through a
+benchmark run; their scores are blank until they have.
+
+| Accession | Chemistry | Target | Arm | `status` | 5′ / 3′ | *N* obs / truth | Note |
+|---|---|---|---|---|---|---|---|
+| PRJDB9110 | RNA (T7) | TG2 (protein) | recovery | HIGH | EXACT / EXACT | 30 / 30 | counted |
+| PRJDB9111 | RNA (T7) | αVβ3 (protein) | recovery | HIGH | EXACT / EXACT | 40 / 40 | counted |
+| PRJDB19098 | RNA (T7) | FGF-9 (protein) | recovery | HIGH | EXACT / EXACT | 35 / 35 | counted; truth from patent WO2020204151 |
+| PRJNA615076 | DNA | *E. faecalis* (cell) | recovery | HIGH | EXACT / EXACT | 40 / 40 | counted |
+| PRJEB62495 | DNA | *Anaplasma* (cell) | recovery | HIGH | EXACT / MISMATCH | 40 / 40 | counted (partial); read-level 3′ boundary divergence |
+| PRJNA1395820 | DNA | Co²⁺ (small molecule) | recovery | MEDIUM | PARTIAL / EXACT | — | counted (partial); paired split primers → merge recommended |
+| PRJNA809588 | 2′-F-Py RNA | islet (cell) | recovery | MEDIUM | PARTIAL / PARTIAL | 40 / 40 | counted (partial) |
+| PRJEB22637 | 2′-F-Py RNA | cell (Annexin A2) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (N-region-only reads) |
+| PRJEB28411 | DNA | cell (ccRCC) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal |
+| PRJNA990511 | DNA | protein (ASFV p30) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (single-round) |
+| PRJEB47428 | RNA | RNA-binding proteins | specificity | *pending* | — | — | reads are N40 exactly (92 runs) |
+| PRJEB49150 | DNA | BEN-domain TFs | specificity | *pending* | — | — | reads are N40 exactly (9 runs) |
+| PRJEB14550 | DNA | HOXB13 / FLI1 | specificity | *pending* | — | — | reads are N40 exactly (8 runs) |
+| PRJNA360902 | DNA | *Ciona* TF DBDs | specificity | *pending* | — | — | reads are N20 exactly (14 runs) |
+| PRJEB70964 | 2′-F-Py RNA | protein (α-syn) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal (5′ const = revcomp TruSeq R1) |
+| PRJNA678231 | n/a (ncRNA-Seq) | n/a (*B. mori*) | adapter-control | *pending* | — | — | 51 nt reads over ~20–30 nt inserts |
+| PRJDB7022 | n/a (miRNA-Seq) | n/a (*D. melanogaster*) | adapter-control | *pending* | — | — | 51 nt reads over ~20–30 nt inserts |
+| PRJNA746278 | n/a (ncRNA-Seq) | n/a (*H. sapiens*) | adapter-control | *pending* | — | — | 59 nt reads, SMARTer smRNA kit |
+| PRJDB2183 | n/a (miRNA-Seq) | n/a (*A. thaliana*) | adapter-control | *pending* | — | — | 69 nt reads over ~20–30 nt inserts |
+| PRJEB50674 | n/a (miRNA-Seq) | n/a (*T. vaginalis*) | adapter-control | *pending* | — | — | 50 nt reads over ~20–30 nt inserts |
+| PRJNA591605 | n/a (ncRNA-Seq) | n/a (*M. musculus*) | adapter-control | *pending* | — | — | 75 nt reads over ~20–30 nt inserts |
 
 **How to read it.** The *recovery* arm asks whether selexprep recovers the
 paper primer from raw reads; the *specificity* and *adapter-control* arms are
@@ -68,9 +88,50 @@ negative controls where the correct behavior is **no call** (constants are
 absent, or collide with a known adapter). A "partial" or "mismatch" usually
 reflects the **deposit** (reads carrying an extended / heterogeneous constant
 region), not a tool error — `detect` reports what is physically in the reads.
-One side (PRJNA883192's 3′) had truth available only from the deposited reads;
-it is flagged `score_3p=false` and excluded from the paper-grounded tally
-(scoring an inferred call against a read-derived truth would be circular).
+The *N* column is the mode of the extracted random-region length against the
+paper-reported length; it is blank where a single-read extraction is not
+attempted (PRJNA1395820 is paired-end with split primers, so `detect` asks for
+read merging rather than forcing an R1-only call).
+
+PRJNA883192 was **withdrawn from the scored set** (`verified=false`) because its
+3′ constant could only be resolved from the deposited reads themselves: scoring
+an inferred call against a read-derived truth is circular, and keeping it would
+have inflated the recovery denominator with a case the benchmark cannot honestly
+adjudicate. It stays in `ground_truth.tsv` with the full reasoning.
+
+### How the two control arms were selected
+
+Both arms were built from archive metadata alone, before any inference was run,
+so membership cannot have been conditioned on how selexprep happened to behave.
+
+**Specificity (pre-trimmed).** Every INSDC deposit in the curated catalog that
+states a randomised-region length was screened by comparing that length against
+the archive-reported read length (`base_count / read_count` per run, halved for
+paired layouts — no FASTQ is downloaded). A deposit whose reads *are* the
+randomised region carries no library constant, so the correct behaviour is to
+make no primer call. Thirteen deposits passed; four were added, chosen for
+chemistry and target diversity and for having identical read length in every
+run. Deposits sharing a publication with a row already in the arm were
+rejected as near-duplicates, as were deposits with mixed randomised-region
+lengths by design, where the read-length argument does not hold cleanly.
+
+**Adapter control.** Two different kinds of negative control sit here.
+PRJEB70964 is the hard case — a genuine SELEX deposit whose 5′ constant is the
+reverse complement of TruSeq R1, so a correct tool must not mistake one for the
+other. The other six are non-SELEX small-RNA libraries (`miRNA-Seq` /
+`ncRNA-Seq`, six organisms, at least three library-prep kits) where the read
+runs 20–50 nt past the insert into 3′ sequencing adapter: a perfectly conserved
+block sitting exactly where a library constant would sit. Any primer call on
+them is a fabrication. Amplicon libraries were deliberately **not** used: a 16S
+amplicon has real constant primers flanking a variable region, so calling them
+would be correct behaviour, and scoring it as a false positive would punish the
+right answer.
+
+The randomised-region length for three of the four new specificity rows comes
+from a publication that cites the accession; for PRJNA360902 no citing
+publication was found, so its length is submitter-stated in the SRA record —
+external to the reads, but archive-sourced rather than paper-sourced, and the
+row says so.
 
 **Excluded deposits** live in `excluded_datasets.tsv` with an evidence-based,
 pre-inference reason (e.g. nonstandard read architecture, multiplexing without

@@ -32,10 +32,29 @@ _SCREENING_LOG = _BENCH / "screening_log.tsv"
 
 # Curated rows remaining in the benchmark after the cleanup
 # (PRJNA935703 + PRJNA975735 + PRJNA315881 were moved to excluded_datasets.tsv).
-_CURATED = {
+# Two different reasons to hand-write a round map, kept apart because they
+# demand different disclosure in the notes.
+#
+# Rounds recoverable but not automatically: the cycle is in the archive text
+# and the curator read it off, so the row must say the numbers were inferred.
+_CURATED_ROUNDS_INFERRED = {
     "PRJEB28411",
     "PRJNA883192",
+    "PRJEB49150",
 }
+# No round semantics to recover: the six non-SELEX controls have no selection
+# at all, and PRJEB14550's archive record carries no cycle handle. Every run
+# maps to a single pseudo-round, which the row must declare as meaningless.
+_CURATED_PSEUDO_ROUND = {
+    "PRJNA678231",
+    "PRJDB7022",
+    "PRJNA746278",
+    "PRJDB2183",
+    "PRJEB50674",
+    "PRJNA591605",
+    "PRJEB14550",
+}
+_CURATED = _CURATED_ROUNDS_INFERRED | _CURATED_PSEUDO_ROUND
 
 # benchmark set (post-cleanup), labeled by read-state role.
 # PRJNA615076 = first recovery addition (Kolm 2020, E. faecalis DNA whole-cell SELEX)
@@ -55,10 +74,35 @@ _RECOVERY = {
     "PRJNA1395820",
     "PRJEB62495",
 }
-_SPECIFICITY = {"PRJEB28411", "PRJEB22637", "PRJNA990511"}
-# Adapter-collision negative control (5' constant = revcomp of a known adapter);
+# Specificity arm: SELEX deposits whose reads ARE the randomised region, so no
+# library constant is physically present and the correct behaviour is no call.
+# The four additions were selected by comparing the archive-reported read
+# length against the randomised-region length stated outside the reads, before
+# any inference was run.
+_SPECIFICITY = {
+    "PRJEB28411",
+    "PRJEB22637",
+    "PRJNA990511",
+    "PRJEB47428",
+    "PRJEB49150",
+    "PRJEB14550",
+    "PRJNA360902",
+}
+# Adapter-control arm, two kinds of negative control. PRJEB70964 is the
+# adapter-*collision* case (a real SELEX deposit whose 5' constant is the
+# revcomp of a known adapter); the other six are non-SELEX small-RNA libraries
+# where the read runs well past the insert into 3' adapter — a perfectly
+# conserved block sitting exactly where a library constant would sit. All are
 # excluded from the recovery denominator.
-_ADAPTER_CONTROL = {"PRJEB70964"}
+_ADAPTER_CONTROL = {
+    "PRJEB70964",
+    "PRJNA678231",
+    "PRJDB7022",
+    "PRJNA746278",
+    "PRJDB2183",
+    "PRJEB50674",
+    "PRJNA591605",
+}
 # All in-benchmark rows (any of the three roles).
 _BENCHMARK = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
 # Out-of-scope rows removed from ground_truth.tsv → excluded_datasets.tsv.
@@ -133,11 +177,29 @@ def test_curated_round_maps_exist_and_are_valid() -> None:
 
 
 def test_curated_notes_carry_inference_caveat() -> None:
+    """SELEX rows with a hand-written round map must say the rounds were
+    inferred, not measured.
+
+    Scoped to the rows where a cycle actually existed to be read: the caveat is
+    about round numbers taken off sample metadata. Rows with no round semantics
+    at all declare a pseudo-round instead, asserted separately below.
+    """
     gt = _gt().set_index("accession")
-    for acc in _CURATED:
+    for acc in _CURATED_ROUNDS_INFERRED:
         notes = gt.at[acc, "notes"]
         assert "inferred from sample" in notes, f"{acc}: missing round-inference caveat"
         assert "not per-round biological claims" in notes, f"{acc}: missing claim caveat"
+
+
+def test_pseudo_round_rows_declare_the_convention() -> None:
+    """Where no selection cycle can be recovered, the curated map exists only
+    to hand the runner a well-formed input. The row must say so, so nobody
+    later reads round 1 as a selection cycle."""
+    gt = _gt().set_index("accession")
+    for acc in _CURATED_PSEUDO_ROUND:
+        notes = gt.at[acc, "notes"]
+        assert "pseudo-round" in notes, f"{acc}: missing pseudo-round declaration"
+        assert "no per-round biological claims" in notes, f"{acc}: missing claim caveat"
 
 
 def test_snakefile_writes_separate_r1_r2_manifests() -> None:
