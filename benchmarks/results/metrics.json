@@ -28,9 +28,8 @@
   },
   "extraction_mode_distribution": {
     "counts": {
-      "BOTH_PRIMERS_SINGLE_READ": 4,
-      "FIVE_PRIME_ONLY": 1,
-      "PAIRED_END_SPLIT_PRIMERS": 2,
+      "BOTH_PRIMERS_SINGLE_READ": 6,
+      "PAIRED_END_SPLIT_PRIMERS": 1,
       "UNABLE_TO_EXTRACT": 4
     }
   },
@@ -116,15 +115,6 @@
       "runs_with_no_fastq_url": 0,
       "unassigned_missing_or_skipped": 2
     },
-    "PRJNA883192": {
-      "accession": "PRJNA883192",
-      "fetch_available_runs": 2,
-      "fetch_expected_runs": 2,
-      "fetch_missing_runs": 0,
-      "partial_fetch": false,
-      "runs_with_no_fastq_url": 0,
-      "unassigned_missing_or_skipped": 0
-    },
     "PRJNA990511": {
       "accession": "PRJNA990511",
       "fetch_available_runs": 1,
@@ -138,19 +128,19 @@
   "multi_round_sensitivity": {
     "counts": {
       "HIGH": {
-        "pair_exact": 3,
+        "pair_exact": 4,
         "pair_partial": 1
       },
       "MEDIUM": {
-        "pair_partial": 2
+        "pair_partial": 1
       }
     },
     "n_evaluated": 6
   },
   "n_length_recovery": {
-    "n_in_tolerance": 4,
+    "n_in_tolerance": 6,
     "n_out_of_tolerance": 0,
-    "n_unmeasurable": 3,
+    "n_unmeasurable": 1,
     "per_row": [
       {
         "accession": "PRJDB9110",
@@ -162,13 +152,6 @@
         "accession": "PRJDB9111",
         "bucket": "in_tolerance",
         "observed": 40,
-        "truth": 40
-      },
-      {
-        "accession": "PRJNA883192",
-        "bucket": "unmeasurable",
-        "observed": null,
-        "reason": "extraction_mode=PAIRED_END_SPLIT_PRIMERS",
         "truth": 40
       },
       {
@@ -192,32 +175,37 @@
       },
       {
         "accession": "PRJEB62495",
-        "bucket": "unmeasurable",
+        "bucket": "in_tolerance",
         "observed": 40,
-        "reason": "extraction_mode=FIVE_PRIME_ONLY",
         "truth": 40
+      },
+      {
+        "accession": "PRJDB19098",
+        "bucket": "in_tolerance",
+        "observed": 35,
+        "truth": 35
       }
     ],
     "tolerance": 2
   },
-  "n_total": 11,
-  "n_unverified": 0,
+  "n_total": 12,
+  "n_unverified": 1,
   "n_verified": 11,
   "pair_recovery_by_status": {
     "counts": {
       "HIGH": {
-        "pair_exact": 3,
+        "pair_exact": 4,
         "pair_partial": 1
       },
       "MEDIUM": {
-        "pair_partial": 3
+        "pair_partial": 2
       }
     },
     "n_evaluated": 7
   },
   "primer_recovery": {
     "counts_3p": {
-      "EXACT": 4,
+      "EXACT": 5,
       "MISMATCH": 1,
       "PARTIAL_5P": 1
     },
@@ -227,25 +215,38 @@
     },
     "counts_by_status_3p": {
       "HIGH": {
-        "EXACT": 3
+        "EXACT": 4,
+        "MISMATCH": 1
       },
       "MEDIUM": {
         "EXACT": 1,
-        "MISMATCH": 1,
         "PARTIAL_5P": 1
       }
     },
     "counts_by_status_5p": {
       "HIGH": {
-        "EXACT": 4
+        "EXACT": 5
       },
       "MEDIUM": {
-        "EXACT": 1,
         "PARTIAL_3P": 2
       }
     },
     "n_evaluated": 7,
     "pairs": [
+      {
+        "accession": "PRJDB19098",
+        "score_3p": true,
+        "status_3p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        },
+        "status_5p": {
+          "equivalence_kind": "EXACT",
+          "matched": true,
+          "notes": ""
+        }
+      },
       {
         "accession": "PRJDB9110",
         "score_3p": true,
@@ -329,20 +330,6 @@
           "matched": false,
           "notes": "observed and truth share a 3' suffix but are not equal"
         }
-      },
-      {
-        "accession": "PRJNA883192",
-        "score_3p": false,
-        "status_3p": {
-          "equivalence_kind": "EXACT",
-          "matched": true,
-          "notes": ""
-        },
-        "status_5p": {
-          "equivalence_kind": "EXACT",
-          "matched": true,
-          "notes": ""
-        }
       }
     ]
   },
@@ -350,8 +337,8 @@
   "required_action_distribution": {
     "counts": {
       "MANUAL_PRIMERS_REQUIRED": 4,
-      "NONE": 5,
-      "READ_MERGING_RECOMMENDED": 2
+      "NONE": 6,
+      "READ_MERGING_RECOMMENDED": 1
     }
   },
   "safe_failure_rate": {
@@ -370,7 +357,9 @@
       "PRJNA990511"
     ]
   },
-  "skipped_unverified_accessions": [],
+  "skipped_unverified_accessions": [
+    "PRJNA883192"
+  ],
   "specificity": {
     "false_positive_accessions": [],
     "n_evaluated": 3,
