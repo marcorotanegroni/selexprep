@@ -6,7 +6,53 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Fixed
+
+- **`detect` no longer reports a library where there is none.** When one
+  sequence dominates a pool — a monoclonal small-RNA library, an adapter-dimer
+  pool, an already-collapsed deposit — every position is conserved, so the
+  positional-consensus walk finds no constant/random boundary, consumes the
+  whole read from both ends, and infers a random region of zero nucleotides.
+  `detect` used to emit that as a healthy two-sided library
+  (`full_insert_recovered=True`, `required_action="NONE"`), which carried `run`
+  through to `count` and wrote a table of zero-length sequences without raising
+  anything. It now returns `UNABLE_TO_INFER` / `MANUAL_PRIMERS_REQUIRED` with a
+  `failure_reason` that explains the cause and points at
+  `--override-primer-5p/-3p`. Paired split-primer deposits are unaffected: they
+  report `n_length_mode=None`, not `0`, and keep asking for read merging.
+  Found by the benchmark's adapter-control arm on PRJDB7022.
+
+  The refusal deliberately claims only that no variable region is present, not
+  that the input is not SELEX: a late-round pool that has converged onto a
+  single winner has a randomised region as conserved as its primers and
+  produces the same signal, and `detect` cannot separate the two from reads
+  alone. `MANUAL_PRIMERS_REQUIRED` is the right instruction in both cases —
+  the user who knows the construct supplies the primers and extraction
+  proceeds.
+- **Outer-edge core rescue in flank detection.** Constant technical sequence
+  sitting between the read edge and the library constant (a truncated
+  sequencing adapter, an index remnant) was absorbed into the called flank,
+  collapsing the whole-primer match rate below the primer-found threshold and
+  downgrading a two-sided library to one-sided extraction. `detect` now retries
+  with the well-supported core of the flank when — and only when — the
+  full-length match rate has already failed. The trim span is unchanged, so the
+  random-region boundary cannot move. On PRJEB62495 this turns
+  `FIVE_PRIME_ONLY` (65 nt output) into `BOTH_PRIMERS_SINGLE_READ` (40 nt, the
+  published length).
+
+### Changed
+
+- **Tier-1 benchmark rebalanced to three arms of seven** (21 source-verified
+  deposits, up from 11): four pre-trimmed deposits added to the specificity arm
+  and six non-SELEX small-RNA deposits to the adapter-control arm, both selected
+  from archive metadata before any inference was run. PRJDB19098 (ground truth
+  from patent WO2020204151) joins the recovery arm; PRJNA883192 leaves the
+  scored set because its 3′ constant is resolvable only from the deposited
+  reads, which makes it circular to score.
+- **Curated metadata: the 47 cells where the two independent extractions
+  disagreed are now adjudicated** (`v0.3.1-dual-extraction-adjudicated`), each
+  carrying the resolved value, the rule applied, and the reasoning, with both
+  arms preserved on record.
 
 ## [0.3.0] - 2026-07-03
 

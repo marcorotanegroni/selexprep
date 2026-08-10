@@ -1,14 +1,50 @@
 {
   "adapter_control": {
     "false_positive_accessions": [],
-    "n_evaluated": 1,
+    "n_evaluated": 7,
     "n_false_positive": 0,
-    "n_no_false_call": 1,
+    "n_no_false_call": 7,
     "n_not_evaluable": 0,
     "not_evaluable_accessions": [],
     "per_row": [
       {
+        "accession": "PRJDB2183",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJDB7022",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJEB50674",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
         "accession": "PRJEB70964",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJNA591605",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJNA678231",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJNA746278",
         "bucket": "no_false_call",
         "primer_3p": null,
         "primer_5p": null
@@ -30,10 +66,37 @@
     "counts": {
       "BOTH_PRIMERS_SINGLE_READ": 6,
       "PAIRED_END_SPLIT_PRIMERS": 1,
-      "UNABLE_TO_EXTRACT": 4
+      "UNABLE_TO_EXTRACT": 14
     }
   },
   "fetch_stats": {
+    "PRJDB19098": {
+      "accession": "PRJDB19098",
+      "fetch_available_runs": 6,
+      "fetch_expected_runs": 6,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJDB2183": {
+      "accession": "PRJDB2183",
+      "fetch_available_runs": 2,
+      "fetch_expected_runs": 2,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJDB7022": {
+      "accession": "PRJDB7022",
+      "fetch_available_runs": 3,
+      "fetch_expected_runs": 4,
+      "fetch_missing_runs": 1,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 1
+    },
     "PRJDB9110": {
       "accession": "PRJDB9110",
       "fetch_available_runs": 9,
@@ -52,6 +115,15 @@
       "runs_with_no_fastq_url": 0,
       "unassigned_missing_or_skipped": 0
     },
+    "PRJEB14550": {
+      "accession": "PRJEB14550",
+      "fetch_available_runs": 8,
+      "fetch_expected_runs": 8,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
     "PRJEB22637": {
       "accession": "PRJEB22637",
       "fetch_available_runs": 15,
@@ -65,6 +137,33 @@
       "accession": "PRJEB28411",
       "fetch_available_runs": 12,
       "fetch_expected_runs": 12,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJEB47428": {
+      "accession": "PRJEB47428",
+      "fetch_available_runs": 88,
+      "fetch_expected_runs": 92,
+      "fetch_missing_runs": 4,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 4
+    },
+    "PRJEB49150": {
+      "accession": "PRJEB49150",
+      "fetch_available_runs": 9,
+      "fetch_expected_runs": 9,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJEB50674": {
+      "accession": "PRJEB50674",
+      "fetch_available_runs": 6,
+      "fetch_expected_runs": 6,
       "fetch_missing_runs": 0,
       "partial_fetch": false,
       "runs_with_no_fastq_url": 0,
@@ -97,10 +196,46 @@
       "runs_with_no_fastq_url": 0,
       "unassigned_missing_or_skipped": 0
     },
+    "PRJNA360902": {
+      "accession": "PRJNA360902",
+      "fetch_available_runs": 13,
+      "fetch_expected_runs": 14,
+      "fetch_missing_runs": 1,
+      "partial_fetch": true,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 1
+    },
+    "PRJNA591605": {
+      "accession": "PRJNA591605",
+      "fetch_available_runs": 6,
+      "fetch_expected_runs": 6,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
     "PRJNA615076": {
       "accession": "PRJNA615076",
       "fetch_available_runs": 11,
       "fetch_expected_runs": 11,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA678231": {
+      "accession": "PRJNA678231",
+      "fetch_available_runs": 2,
+      "fetch_expected_runs": 2,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
+      "runs_with_no_fastq_url": 0,
+      "unassigned_missing_or_skipped": 0
+    },
+    "PRJNA746278": {
+      "accession": "PRJNA746278",
+      "fetch_available_runs": 2,
+      "fetch_expected_runs": 2,
       "fetch_missing_runs": 0,
       "partial_fetch": false,
       "runs_with_no_fastq_url": 0,
@@ -188,9 +323,9 @@
     ],
     "tolerance": 2
   },
-  "n_total": 12,
+  "n_total": 22,
   "n_unverified": 1,
-  "n_verified": 11,
+  "n_verified": 21,
   "pair_recovery_by_status": {
     "counts": {
       "HIGH": {
@@ -336,24 +471,34 @@
   "recovery_denominator": 7,
   "required_action_distribution": {
     "counts": {
-      "MANUAL_PRIMERS_REQUIRED": 4,
+      "MANUAL_PRIMERS_REQUIRED": 14,
       "NONE": 6,
       "READ_MERGING_RECOMMENDED": 1
     }
   },
   "safe_failure_rate": {
     "by_reason": {
-      "extraction_mode_UNABLE_TO_EXTRACT": 4,
-      "required_action_MANUAL_PRIMERS_REQUIRED": 4,
-      "status_UNABLE_TO_INFER": 4
+      "extraction_mode_UNABLE_TO_EXTRACT": 14,
+      "required_action_MANUAL_PRIMERS_REQUIRED": 14,
+      "status_UNABLE_TO_INFER": 14
     },
-    "n_evaluated": 11,
-    "n_safe_failures": 4,
-    "rate": 0.363636,
+    "n_evaluated": 21,
+    "n_safe_failures": 14,
+    "rate": 0.666667,
     "safe_failure_accessions": [
+      "PRJDB2183",
+      "PRJDB7022",
+      "PRJEB14550",
       "PRJEB22637",
       "PRJEB28411",
+      "PRJEB47428",
+      "PRJEB49150",
+      "PRJEB50674",
       "PRJEB70964",
+      "PRJNA360902",
+      "PRJNA591605",
+      "PRJNA678231",
+      "PRJNA746278",
       "PRJNA990511"
     ]
   },
@@ -362,12 +507,18 @@
   ],
   "specificity": {
     "false_positive_accessions": [],
-    "n_evaluated": 3,
+    "n_evaluated": 7,
     "n_false_positive": 0,
-    "n_no_false_call": 3,
+    "n_no_false_call": 7,
     "n_not_evaluable": 0,
     "not_evaluable_accessions": [],
     "per_row": [
+      {
+        "accession": "PRJEB14550",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
       {
         "accession": "PRJEB22637",
         "bucket": "no_false_call",
@@ -376,6 +527,24 @@
       },
       {
         "accession": "PRJEB28411",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJEB47428",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJEB49150",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJNA360902",
         "bucket": "no_false_call",
         "primer_3p": null,
         "primer_5p": null

@@ -4,8 +4,10 @@
 feature-complete and covered by continuous integration, and the public surfaces
 listed below are treated as **stable within the 0.x series**: they will not be
 removed or changed incompatibly without a **minor-version bump** and a
-`CHANGELOG` entry. Additive changes (a new optional field, a new CLI flag, a new
-enumeration value) may land in a patch release.
+`CHANGELOG` entry. Additive changes (a new optional field, a new CLI flag) may
+land in a patch release; a **new enumeration value is a minor-version change**,
+because consumers may be matching the value set exhaustively (see *Stable*
+below).
 
 The stable data contracts are enforced in code — `LibraryReport` and
 `SelexprepManifestV1` are frozen Pydantic models with `extra="forbid"`, and

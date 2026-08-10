@@ -6,8 +6,9 @@ catalog-completeness audit. Each tier emits deterministic, sorted-key JSON —
 presents as a per-deposit **scorecard table** and a corpus-audit **summary table**.
 
 - **Tier 1 — primer recovery** (`Snakefile` + `ground_truth.tsv`): per-deposit
-  recovery of paper-reported primers from accession-derived reads, on 11
-  source-verified deposits. Produces the scorecard (paper **Table 1**).
+  recovery of paper-reported primers from accession-derived reads, on 21
+  source-verified deposits balanced across three arms (7 recovery, 7
+  specificity, 7 adapter-control). Produces the scorecard (paper **Table 1**).
 - **Tier 2 — corpus audit** (`audit.smk` + the bundled catalog): a descriptive
   utility audit over a deterministic sample of audit-eligible INSDC accessions.
   Distributional metrics only — no per-row ground truth. Paper **supplement**.
@@ -40,23 +41,24 @@ this question by construction.
 
 ## Tier 1 — primer-recovery scorecard
 
-**Headline:** *selexprep recovered the random region at exactly the
-paper-reported length on every recovery deposit where a single-read extraction
-is possible (6/6, 0 out of tolerance), recovered the paper-reported primer
-strings exactly on 4 of 7 and with informative partial recovery on the other 3,
-and made zero false-positive primer calls on the 4 primer-absent /
-adapter-collision controls.*
+**Headline:** *On 7 recovery deposits selexprep reproduced both
+paper-reported primer strings exactly on 4 and with informative partial
+recovery on the other 3; in every one of the 6 where a single-read extraction
+is possible — including all 3 of the partials — it recovered the random region
+at exactly the paper-reported length, 0 out of tolerance. It made zero
+false-positive primer calls on 14 negative controls (7 pre-trimmed, 7
+adapter).*
 
-Two distinct measurements are reported, because they answer different questions.
-The **random-region boundary** is what the tool must get right to trim
-correctly; the **exact primer string** additionally requires that the constant
-called from the reads coincides with the constant as written in the paper, which
-can differ when the deposit carries extra constant technical sequence.
+Two measurements are reported because they answer different questions. The
+**random-region boundary** is what the tool must get right to trim correctly;
+the **exact primer string** additionally requires that the constant called from
+the reads coincides with the constant as written in the paper, which can differ
+when the deposit carries extra constant technical sequence outside the library
+constant. The three partials are exactly that case, which is why they trim
+correctly despite not matching the published string.
 
 The source-verified deposits, by arm (the table below is the per-row scorecard;
-`snakemake -s Snakefile` regenerates it as `metrics.json`). Rows marked
-*pending* were added to balance the arms and have not yet been through a
-benchmark run; their scores are blank until they have.
+`snakemake -s Snakefile` regenerates it as `metrics.json`):
 
 | Accession | Chemistry | Target | Arm | `status` | 5′ / 3′ | *N* obs / truth | Note |
 |---|---|---|---|---|---|---|---|
@@ -70,17 +72,17 @@ benchmark run; their scores are blank until they have.
 | PRJEB22637 | 2′-F-Py RNA | cell (Annexin A2) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (N-region-only reads) |
 | PRJEB28411 | DNA | cell (ccRCC) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal |
 | PRJNA990511 | DNA | protein (ASFV p30) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (single-round) |
-| PRJEB47428 | RNA | RNA-binding proteins | specificity | *pending* | — | — | reads are N40 exactly (92 runs) |
-| PRJEB49150 | DNA | BEN-domain TFs | specificity | *pending* | — | — | reads are N40 exactly (9 runs) |
-| PRJEB14550 | DNA | HOXB13 / FLI1 | specificity | *pending* | — | — | reads are N40 exactly (8 runs) |
-| PRJNA360902 | DNA | *Ciona* TF DBDs | specificity | *pending* | — | — | reads are N20 exactly (14 runs) |
+| PRJEB47428 | RNA | RNA-binding proteins (HTR-SELEX) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N40 exactly (92 runs) |
+| PRJEB49150 | DNA | BEN-domain TFs | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; submitter states reads carry only the randomised region |
+| PRJEB14550 | DNA | HOXB13 / FLI1 | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N40 exactly (8 runs) |
+| PRJNA360902 | DNA | *Ciona* TF DBDs | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N20 exactly (14 runs) |
 | PRJEB70964 | 2′-F-Py RNA | protein (α-syn) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal (5′ const = revcomp TruSeq R1) |
-| PRJNA678231 | n/a (ncRNA-Seq) | n/a (*B. mori*) | adapter-control | *pending* | — | — | 51 nt reads over ~20–30 nt inserts |
-| PRJDB7022 | n/a (miRNA-Seq) | n/a (*D. melanogaster*) | adapter-control | *pending* | — | — | 51 nt reads over ~20–30 nt inserts |
-| PRJNA746278 | n/a (ncRNA-Seq) | n/a (*H. sapiens*) | adapter-control | *pending* | — | — | 59 nt reads, SMARTer smRNA kit |
-| PRJDB2183 | n/a (miRNA-Seq) | n/a (*A. thaliana*) | adapter-control | *pending* | — | — | 69 nt reads over ~20–30 nt inserts |
-| PRJEB50674 | n/a (miRNA-Seq) | n/a (*T. vaginalis*) | adapter-control | *pending* | — | — | 50 nt reads over ~20–30 nt inserts |
-| PRJNA591605 | n/a (ncRNA-Seq) | n/a (*M. musculus*) | adapter-control | *pending* | — | — | 75 nt reads over ~20–30 nt inserts |
+| PRJNA678231 | n/a (ncRNA-Seq) | n/a (*B. mori*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 51 nt reads over ~20–30 nt inserts |
+| PRJDB7022 | n/a (miRNA-Seq) | n/a (*D. melanogaster*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal **after the zero-length-insert guard**; 83% of reads are one identical 51-mer |
+| PRJNA746278 | n/a (ncRNA-Seq) | n/a (*H. sapiens*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 59 nt reads, SMARTer smRNA kit |
+| PRJDB2183 | n/a (miRNA-Seq) | n/a (*A. thaliana*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 69 nt reads over ~20–30 nt inserts |
+| PRJEB50674 | n/a (miRNA-Seq) | n/a (*T. vaginalis*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 50 nt reads over ~20–30 nt inserts |
+| PRJNA591605 | n/a (ncRNA-Seq) | n/a (*M. musculus*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 75 nt reads over ~20–30 nt inserts |
 
 **How to read it.** The *recovery* arm asks whether selexprep recovers the
 paper primer from raw reads; the *specificity* and *adapter-control* arms are
@@ -132,6 +134,19 @@ from a publication that cites the accession; for PRJNA360902 no citing
 publication was found, so its length is submitter-stated in the SRA record —
 external to the reads, but archive-sourced rather than paper-sourced, and the
 row says so.
+
+**The adapter arm earned its place immediately.** On its first run PRJDB7022
+produced a false positive: `detect` returned the same 51 nt string as both
+constants and an inferred random region of **zero** nucleotides, while
+reporting `full_insert_recovered=True` and `required_action=NONE` — a state in
+which `run` would have proceeded to `count` and written a table of zero-length
+sequences without raising anything. The cause is that 4.7M of the deposit's
+5.7M reads are one identical 51-mer, so positional conservation is ~100% at
+every position and there is no constant/random boundary for the inward walk to
+stop at. `detect` now refuses when the inferred random-region length is 0
+(`test_zero_length_insert_guard.py`), and the deposit scores a correct refusal.
+The guard keys on exactly 0 and not on falsiness, because paired split-primer
+deposits report `None` there and must keep asking for read merging.
 
 **Excluded deposits** live in `excluded_datasets.tsv` with an evidence-based,
 pre-inference reason (e.g. nonstandard read architecture, multiplexing without
