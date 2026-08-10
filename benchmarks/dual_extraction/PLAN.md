@@ -40,7 +40,14 @@ Per (accession, field): concordant → `verified`; conflict → **adjudicate fro
 presence-gap → take the deeper arm (usually Claude) → `single_source`; both absent → `not_stated`
 (the old CSV is the tertiary safety net for the rare both-absent-but-CSV-has case).
 - [x] Built `curated_metadata.json` (238): per cell `status` (concordant/discordant/single_source/not_stated) + value + **inline provenance**; the **47 discordant carry BOTH arms** (value+source+location)
-- Counts: 1194 concordant / 238 single_source / 47 discordant / 425 not_stated (of 1904 cells)
+- Counts at that point: 1194 concordant / 238 single_source / 47 discordant / 425 not_stated
+  (of 1904 cells, 238 deposits)
+- **Superseded.** The catalog then grew to 240 deposits and the 47 disagreements were
+  adjudicated one by one against the sources, so the shipped layer
+  (`v0.3.1-dual-extraction-adjudicated-2026-08-09`) is 1206 concordant / 236 single_source /
+  47 adjudicated / 2 verified / 429 not_stated of 1920 cells, with **no discordant cells left**.
+  Adjudicated cells keep both arms plus the rule applied and the reasoning; the per-cell trail is
+  in `adjudication_worklist.tsv`.
 - [x] Emitted flat `curated_metadata.csv` (value + `_curation` per field; discordant → `claude || codex`); provenance companion = `curated_metadata.json`
 - Information gain vs old `bioprojects.csv`: experimental fields **4 → 1479 cells (~370×)**, all source-cited (old had 0 evidence-cited values); `target_organism` artifact dropped
 
