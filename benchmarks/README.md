@@ -44,8 +44,9 @@ this question by construction.
 **Headline:** *On 7 recovery deposits selexprep reproduced both
 paper-reported primer strings exactly on 4 and with informative partial
 recovery on the other 3; in every one of the 6 where a single-read extraction
-is possible — including all 3 of the partials — it recovered the random region
-at exactly the paper-reported length, 0 out of tolerance. It made zero
+is possible — including two of the three partials, the third being the
+paired-end deposit that is not measurable at all — it recovered the random
+region at exactly the paper-reported length, 0 out of tolerance. It made zero
 false-positive primer calls on 14 negative controls (7 pre-trimmed, 7
 adapter).*
 
