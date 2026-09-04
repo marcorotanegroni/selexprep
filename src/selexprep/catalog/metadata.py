@@ -36,7 +36,7 @@ from pathlib import Path
 import pandas as pd
 
 #: Snapshot identifier for the bundled annotated layer. Bump on every rebuild.
-METADATA_VERSION = "v0.3.1-dual-extraction-adjudicated-2026-08-09"
+METADATA_VERSION = "v0.3.2-dual-extraction-adjudicated-en-2026-09-04"
 
 _JSON_FILENAME = "curated_metadata.json"
 _CSV_FILENAME = "curated_metadata.csv"

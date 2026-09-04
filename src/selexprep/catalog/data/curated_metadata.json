@@ -837,7 +837,7 @@
         },
         "value": "transcription factors HOXB13 and FLI1",
         "adjudication_rule": "accession-specific",
-        "adjudication_note": "Claude cita PRJEB14550 con i read count per HOXB13/FLI1; Codex cita l elenco TF dall Introduzione = scope del paper, non del deposito."
+        "adjudication_note": "Claude cites PRJEB14550 with the read counts for HOXB13/FLI1; Codex cites the TF list from the Introduction, which is the scope of the paper, not of the deposit."
       },
       "target_class": {
         "status": "concordant",
@@ -871,7 +871,7 @@
         },
         "value": "40",
         "adjudication_rule": "accession-specific",
-        "adjudication_note": "Claude: \"PRJEB14550, 143 389 reads of length 40\". Codex: \"30 or 40\" riferito ai sei dataset del paper."
+        "adjudication_note": "Claude: \"PRJEB14550, 143 389 reads of length 40\". Codex: \"30 or 40\", which refers to the six datasets of the paper."
       },
       "n_rounds": {
         "value": null,
@@ -1343,7 +1343,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "HTR-SELEX con read di selezione propri nel deposito. RBP = RNA-binding, quindi NON tf_ht_selex (definito per DNA-binding). Regola: classifica dai dati, non dal framing \"nuovo metodo\"."
+        "adjudication_note": "HTR-SELEX with its own selection reads in the deposit. RBPs are RNA-binding, so NOT tf_ht_selex, which is defined for DNA-binding proteins. Rule: classify from the data, not from the \"new method\" framing."
       },
       "target": {
         "status": "concordant",
@@ -1385,7 +1385,7 @@
         },
         "value": "40",
         "adjudication_rule": "field-semantics",
-        "adjudication_note": "Il campo e la lunghezza della regione RANDOM. Claude cita la lunghezza dei READ nei fastq (26 o 40), non della regione random; Codex cita la libreria: \"40 bp random sequence\" (Methods). Vince Codex."
+        "adjudication_note": "The field is the length of the RANDOM region. Claude cites the length of the READS in the fastq files (26 or 40), not of the random region; Codex cites the library: \"40 bp random sequence\" (Methods). Codex wins."
       },
       "n_rounds": {
         "status": "single_source",
@@ -1702,7 +1702,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Selezione in vitro da libreria DNA random che isola un aptamero ligabile ad alta affinita per T4DL. Vince Codex: Claude aveva pesato il framing metodologico."
+        "adjudication_note": "In vitro selection from a random DNA library isolating a high-affinity ligatable aptamer for T4DL. Codex wins: Claude had weighted the methodological framing."
       },
       "target": {
         "status": "single_source",
@@ -1781,7 +1781,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "\"raw fastq data is deposited in this entry\" per 23 RBP: read di selezione propri. RBP, non DNA-binding."
+        "adjudication_note": "\"raw fastq data is deposited in this entry\" for 23 RBPs: own selection reads. RBPs, not DNA-binding proteins."
       },
       "target": {
         "status": "concordant",
@@ -1996,7 +1996,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Helicase-SELEX con round propri. NOTA TASSONOMIA: seleziona substrati naturali da libreria genomica, piu vicino nello spirito a gSELEX che alla scoperta di aptameri, ma tf_ht_selex e riservato a proteine DNA-binding e Rho lega RNA."
+        "adjudication_note": "Helicase-SELEX with its own rounds. TAXONOMY NOTE: it selects natural substrates from a genomic library, closer in spirit to gSELEX than to aptamer discovery, but tf_ht_selex is reserved for DNA-binding proteins and Rho binds RNA."
       },
       "target": {
         "status": "concordant",
@@ -2487,7 +2487,7 @@
         },
         "value": "HT-SELEX; Temperature-SELEX; Methylated-SELEX",
         "adjudication_rule": "accession-specific (deposit sample titles)",
-        "adjudication_note": "CORREZIONE: le due arm avevano letto lo STESSO paper (PMC11996681 = 10.1038/s41594-024-01449-6, \"Interfacial water confers transcription factors with dinucleotide specificity\"), non due paper diversi. I titoli dei campioni ENA del deposito dicono \"HT-SELEX sample BARHL2\", \"Temperature-SELEX sample BARHL2\", \"Methylated-SELEX sample BARHL2\". NCAP-SELEX/free-DNA SELEX (Codex) compaiono solo nell inventario oligo del supplementare, NON fra i campioni di questo deposito. Claude era corretto ma incompleto (mancava Methylated-SELEX)."
+        "adjudication_note": "CORRECTION: the two arms had read the SAME paper (PMC11996681 = 10.1038/s41594-024-01449-6, \"Interfacial water confers transcription factors with dinucleotide specificity\"), not two different papers. The ENA sample titles of the deposit read \"HT-SELEX sample BARHL2\", \"Temperature-SELEX sample BARHL2\" and \"Methylated-SELEX sample BARHL2\". NCAP-SELEX / free-DNA SELEX (Codex) appear only in the oligo inventory of the supplement, NOT among the samples of this deposit. Claude was correct but incomplete: Methylated-SELEX was missing."
       },
       "counter_selection": {
         "value": null,
@@ -2855,7 +2855,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Come PRJEB50172 (Helicase-SELEX, B. subtilis). Stessa nota di tassonomia."
+        "adjudication_note": "As PRJEB50172 (Helicase-SELEX, B. subtilis). Same taxonomy note."
       },
       "target": {
         "status": "concordant",
@@ -3195,7 +3195,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Selezione in vitro di T-boxzymi con round propri. NOTA: e selezione per attivita (ribozima), non per legame; la tassonomia non ha una categoria dedicata."
+        "adjudication_note": "In vitro selection of T-boxzymes with its own rounds. NOTE: this is selection for activity (ribozyme), not for binding; the taxonomy has no dedicated category."
       },
       "target": {
         "status": "concordant",
@@ -3656,7 +3656,7 @@
         },
         "value": "tf_ht_selex",
         "adjudication_rule": "dna-binding-motif",
-        "adjudication_note": "SELEX-seq per la specificita di legame al DNA di Cas12a: mappatura di motivo di proteina DNA-binding. Precedente nel corpus: 19 concordanti gSELEX/TF -> tf_ht_selex."
+        "adjudication_note": "SELEX-seq for the DNA-binding specificity of Cas12a: motif mapping of a DNA-binding protein. Precedent in the corpus: 19 concordant gSELEX/TF cells -> tf_ht_selex."
       },
       "target": {
         "status": "concordant",
@@ -3903,7 +3903,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "RAPID-SELEX, libreria RNA random 70-mer, 12 round: selezione di aptameri a tutti gli effetti."
+        "adjudication_note": "RAPID-SELEX, random 70-mer RNA library, 12 rounds: an aptamer selection in every respect."
       },
       "target": {
         "status": "concordant",
@@ -4090,7 +4090,7 @@
         },
         "value": "modified genomic SELEX-Seq",
         "adjudication_rule": "paper-over-deposit-title",
-        "adjudication_note": "Descrizione metodologica dal paper (abstract) piu informativa del titolo del deposito (\"SELEX-NGS\"); stesso esperimento."
+        "adjudication_note": "The methodological description from the paper (abstract) is more informative than the deposit title (\"SELEX-NGS\"); same experiment."
       },
       "counter_selection": {
         "value": null,
@@ -4318,7 +4318,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "not-a-selection",
-        "adjudication_note": "circSHAPE-MaP e sondaggio strutturale di RNA circolare, non una selezione. Vince Codex."
+        "adjudication_note": "circSHAPE-MaP is structural probing of circular RNA, not a selection. Codex wins."
       },
       "target": {
         "status": "single_source",
@@ -4428,7 +4428,7 @@
         },
         "value": "Cluster SELEX (magnetic bead-based)",
         "adjudication_rule": "merge-granularity",
-        "adjudication_note": "Non contraddittori: \"Cluster SELEX\" e il nome del metodo (titolo BioProject), \"magnetic bead-based\" il formato fisico (Results). Tenuta la forma piu completa, come da convenzione per target."
+        "adjudication_note": "Not contradictory: \"Cluster SELEX\" is the name of the method (BioProject title), \"magnetic bead-based\" the physical format (Results). The more complete form was kept, following the convention used for target."
       },
       "counter_selection": {
         "status": "concordant",
@@ -4802,7 +4802,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "not-a-selection",
-        "adjudication_note": "Usa aptameri MS2 noti come tag; i read sono DNA genomico da HEK293T post-trasfezione. Nessuna selezione. Vince Codex."
+        "adjudication_note": "Uses known MS2 aptamers as tags; the reads are genomic DNA from HEK293T after transfection. No selection. Codex wins."
       },
       "target": {
         "value": null,
@@ -5170,7 +5170,7 @@
         },
         "value": "single-round selection",
         "adjudication_rule": "paper-over-generic-archive-field",
-        "adjudication_note": "Claude cita l abstract; Codex riporta il valore generico library_strategy=SELEX del filereport ENA, che non descrive il formato."
+        "adjudication_note": "Claude cites the abstract; Codex reports the generic library_strategy=SELEX value from the ENA filereport, which does not describe the format."
       },
       "counter_selection": {
         "value": null,
@@ -5269,7 +5269,7 @@
         },
         "value": "tf_ht_selex",
         "adjudication_rule": "dna-binding-motif",
-        "adjudication_note": "gSELEX su DNA genomico di Arabidopsis per identificare siti SUVR: proteina DNA-binding."
+        "adjudication_note": "gSELEX on Arabidopsis genomic DNA to identify SUVR sites: a DNA-binding protein."
       },
       "target": {
         "status": "concordant",
@@ -5763,7 +5763,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "RNA Bind-n-Seq per LIN28A: read di legame propri, RBP non DNA-binding. NOTA: RBNS e a round singolo con serie di concentrazioni, non SELEX iterativa."
+        "adjudication_note": "RNA Bind-n-Seq for LIN28A: own binding reads, an RBP and not a DNA-binding protein. NOTE: RBNS is single-round with a concentration series, not iterative SELEX."
       },
       "target": {
         "status": "concordant",
@@ -5922,7 +5922,7 @@
         },
         "value": "LAGLIDADG homing endonucleases (I-LtrI, I-OnuI meganuclease variants)",
         "adjudication_rule": "library-vs-target",
-        "adjudication_note": "Errore di categoria in Claude: i substrati di DNA sono la LIBRERIA, non il bersaglio. Il bersaglio della selezione e la meganucleasi. Vince Codex, con le varianti dal paper."
+        "adjudication_note": "Category error in Claude: the DNA substrates are the LIBRARY, not the target. The target of the selection is the meganuclease. Codex wins, with the variants taken from the paper."
       },
       "target_class": {
         "status": "adjudicated",
@@ -5940,7 +5940,7 @@
         },
         "value": "protein (enzyme / homing endonuclease)",
         "adjudication_rule": "library-vs-target",
-        "adjudication_note": "Coerente con l adjudicazione di target: il bersaglio e proteico, non il substrato di DNA."
+        "adjudication_note": "Consistent with the adjudication of target: the target is a protein, not the DNA substrate."
       },
       "chemistry": {
         "status": "concordant",
@@ -6145,7 +6145,7 @@
         },
         "value": "tf_ht_selex",
         "adjudication_rule": "dna-binding-motif",
-        "adjudication_note": "Spec-seq/SEAM-seq per la specificita di legame al DNA di dSpCas9 e varianti Cas: proteine DNA-binding."
+        "adjudication_note": "Spec-seq / SEAM-seq for the DNA-binding specificity of dSpCas9 and Cas variants: DNA-binding proteins."
       },
       "target": {
         "status": "adjudicated",
@@ -6163,7 +6163,7 @@
         },
         "value": "SpCas9, HiFi-SpCas9, ScCas9, AsCas12a (Cpf1), DpbCasX",
         "adjudication_rule": "quote-does-not-support-value",
-        "adjudication_note": "Il quote di Codex parla della proteina MADS SEPALLATA3, che non c entra con il valore dichiarato (dSpCas9::Nanog): quote e valore incoerenti fra loro. Estrazione Codex inaffidabile su questa cella."
+        "adjudication_note": "The Codex quote is about the MADS protein SEPALLATA3, which is unrelated to the declared value (dSpCas9::Nanog): quote and value are inconsistent with each other. The Codex extraction is unreliable on this cell."
       },
       "target_class": {
         "status": "concordant",
@@ -6294,7 +6294,7 @@
         },
         "value": "tf_ht_selex",
         "adjudication_rule": "dna-binding-motif",
-        "adjudication_note": "SELEX per sequenze di DNA preferite da una proteina legante il DNA."
+        "adjudication_note": "SELEX for the DNA sequences preferred by a DNA-binding protein."
       },
       "target": {
         "status": "concordant",
@@ -6365,7 +6365,7 @@
         },
         "value": "tf_ht_selex",
         "adjudication_rule": "dna-binding-motif",
-        "adjudication_note": "SELEX + ChIP-seq + CLIP-seq per specificita su DNA."
+        "adjudication_note": "SELEX plus ChIP-seq and CLIP-seq for specificity on DNA."
       },
       "target": {
         "status": "concordant",
@@ -6640,7 +6640,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "SRSF1 e un fattore di splicing RNA-binding, NON DNA-binding: tf_ht_selex non si applica per definizione. Il deposito ha round di selezione propri (Round 6). Ne Claude (tf_ht_selex) ne Codex (method_or_other) avevano ragione."
+        "adjudication_note": "SRSF1 is an RNA-binding splicing factor, NOT a DNA-binding protein: tf_ht_selex does not apply by definition. The deposit has its own selection rounds (Round 6). Neither Claude (tf_ht_selex) nor Codex (method_or_other) was right."
       },
       "target": {
         "status": "concordant",
@@ -7444,7 +7444,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "HTR-SELEX per la specificita di legame a RNA delle proteine N di SARS-CoV-2: RBP con round propri."
+        "adjudication_note": "HTR-SELEX for the RNA-binding specificity of the SARS-CoV-2 N proteins: RBPs with their own rounds."
       },
       "target": {
         "status": "concordant",
@@ -7523,7 +7523,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "accession-specific",
-        "adjudication_note": "Il quote di Claude e un titolo di campione del deposito (\"SELEX PTBP1 rep1\"): evidenza legata all accessione. Codex cita il metodo principale del paper (CRIC-seq), che e scope del paper."
+        "adjudication_note": "The Claude quote is a sample title of the deposit (\"SELEX PTBP1 rep1\"): evidence tied to the accession. Codex cites the main method of the paper (CRIC-seq), which is the scope of the paper."
       },
       "target": {
         "status": "single_source",
@@ -7602,7 +7602,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "accession-specific",
-        "adjudication_note": "Titolo del deposito \"SELEX-Seq for ESRP motif analysis\". ESRP e RNA-binding, quindi non tf_ht_selex. Codex cita il titolo generale del paper."
+        "adjudication_note": "Deposit title \"SELEX-Seq for ESRP motif analysis\". ESRP is RNA-binding, so not tf_ht_selex. Codex cites the general title of the paper."
       },
       "target": {
         "status": "single_source",
@@ -8208,7 +8208,7 @@
         },
         "value": "Capture-SELEX variant (target-induced stem closure)",
         "adjudication_rule": "paper-over-generic-archive-field",
-        "adjudication_note": "Claude cita il meccanismo dal paper (Science); Codex riporta il generico \"SELEX\" dalla descrizione BioProject."
+        "adjudication_note": "Claude cites the mechanism from the paper (Science); Codex reports the generic \"SELEX\" from the BioProject description."
       },
       "counter_selection": {
         "status": "single_source",
@@ -8244,7 +8244,7 @@
         },
         "value": "method_or_other",
         "adjudication_rule": "deposit-content (ENA run titles)",
-        "adjudication_note": "Il deposito ha SOLO 2 run: \"ATP aptamer switches\" e \"Glucose aptamer switches\" (SRR24093234, SRR24093233). Contiene lo screening degli switch, non i round della selezione click-PD, che il paper stesso indica come \"previously published\". Per definizione method_or_other = deposito senza un read set di selezione standard. Vince Codex."
+        "adjudication_note": "The deposit has ONLY 2 runs: \"ATP aptamer switches\" and \"Glucose aptamer switches\" (SRR24093234, SRR24093233). It holds the screening of the switches, not the rounds of the click-PD selection, which the paper itself reports as \"previously published\". By definition method_or_other = a deposit without a standard selection read set. Codex wins."
       },
       "target": {
         "status": "concordant",
@@ -8278,7 +8278,7 @@
         },
         "value": "boronic acid base-modified DNA",
         "adjudication_rule": "chemistry-of-selected-library",
-        "adjudication_note": "Il campo e la chimica della libreria SELEZIONATA. Codex include anche l aptamero ATP naturale, che nel paper e un costrutto di test, non una selezione."
+        "adjudication_note": "The field is the chemistry of the SELECTED library. Codex also includes the natural ATP aptamer, which in the paper is a test construct and not a selection."
       },
       "n_random": {
         "value": null,
@@ -8381,7 +8381,7 @@
         },
         "value": "SELEX-seq",
         "adjudication_rule": "field-semantics",
-        "adjudication_note": "Il campo e il FORMATO di selezione. \"SELEX-seq\" e il formato; l immunoprecipitazione anti-FLAG citata da Claude e la tecnica di partizionamento interna al formato. Vince Codex."
+        "adjudication_note": "The field is the selection FORMAT. \"SELEX-seq\" is the format; the anti-FLAG immunoprecipitation cited by Claude is the partitioning technique internal to that format. Codex wins."
       },
       "counter_selection": {
         "value": null,
@@ -10449,9 +10449,9 @@
           "source": "https://doi.org/10.26686/wgtn.22339771",
           "location": "thesis, Table 2.1"
         },
-        "value": "N40 and N41 (entrambe usate)",
-        "adjudication_rule": "union-of-evidence (fonte non accessibile)",
-        "adjudication_note": "Le due arm hanno visto parti diverse della stessa verita: Claude la frase \"Two oligonucleotide libraries (N40 and N41) were used\", Codex la voce N40 di Tabella 2.1. Entrambe furono usate. NON RISOLTO quale abbia prodotto i dati depositati: il quote di Claude si tronca proprio li, e il repository (openaccess.wgtn.ac.nz / figshare) restituisce 403 all accesso automatico. Richiede apertura manuale del PDF, Cap. 2 sez. 2.3.1."
+        "value": "N40 and N41 (both used)",
+        "adjudication_rule": "union-of-evidence (source not accessible)",
+        "adjudication_note": "The two arms saw different parts of the same truth: Claude the sentence \"Two oligonucleotide libraries (N40 and N41) were used\", Codex the N40 entry of Table 2.1. Both libraries were used. NOT RESOLVED which of the two produced the deposited data: the Claude quote is truncated exactly there, and the repository (openaccess.wgtn.ac.nz / figshare) returns 403 to automated access. Resolving it requires opening the PDF by hand, Ch. 2 sec. 2.3.1."
       },
       "n_rounds": {
         "status": "concordant",
@@ -11853,7 +11853,7 @@
         },
         "value": "19 (first Capture-SELEX) + 6 (second) = 25",
         "adjudication_rule": "primary-methods-over-deposit-blurb",
-        "adjudication_note": "SI Section 2 (metodi primari) da 19+6; la descrizione del deposito dice 15+6. Discrepanza reale nella fonte: tenuto il dato dei metodi, discrepanza annotata."
+        "adjudication_note": "SI Section 2 (primary methods) gives 19+6; the deposit description says 15+6. A real discrepancy in the source: the figure from the methods was kept and the discrepancy recorded."
       },
       "selection_format": {
         "status": "concordant",
@@ -12116,7 +12116,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "definition-over-name",
-        "adjudication_note": "\"non-SELEX selection of aptamers\" e comunque selezione in vitro di aptameri (senza amplificazione fra i partizionamenti). Codex si e fatto sviare dal nome letterale \"non-SELEX\"."
+        "adjudication_note": "\"non-SELEX selection of aptamers\" is still in vitro selection of aptamers, performed without amplification between partitioning steps. Codex was misled by the literal name \"non-SELEX\"."
       },
       "target": {
         "status": "concordant",
@@ -12323,7 +12323,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Apta-Seq applicato a un pool genomico umano ha prodotto tre nuovi aptameri: selezione presente."
+        "adjudication_note": "Apta-Seq applied to a human genomic pool produced three new aptamers: a selection is present."
       },
       "target": {
         "status": "concordant",
@@ -12973,7 +12973,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Il deposito contiene i pool ssDNA del 3o e 11o round sequenziati: read di selezione propri, nonostante il paper sia un modello di classificazione."
+        "adjudication_note": "The deposit contains the sequenced ssDNA pools of rounds 3 and 11: own selection reads, even though the paper itself is a classification model."
       },
       "target": {
         "status": "concordant",
@@ -13121,7 +13121,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "definition-over-name",
-        "adjudication_note": "CompELS e screening di ligandi oligonucleotidici: selezione di aptameri, pur evitando eluizione iterativa e PCR."
+        "adjudication_note": "CompELS is a screen of oligonucleotide ligands: an aptamer selection, although it avoids iterative elution and PCR."
       },
       "target": {
         "status": "concordant",
@@ -14087,7 +14087,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-review",
-        "adjudication_note": "Review su biosensori elettrochimici: nessuna selezione."
+        "adjudication_note": "Review of electrochemical biosensors: no selection."
       },
       "target": {
         "value": null,
@@ -14142,7 +14142,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-purchased-aptamer",
-        "adjudication_note": "Aptasensore su carta; aptamero acquistato da IDT. Nessuna selezione."
+        "adjudication_note": "Paper-based aptasensor; the aptamer was purchased from IDT. No selection."
       },
       "target": {
         "value": null,
@@ -14197,7 +14197,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-purchased-aptamer",
-        "adjudication_note": "Studio di struttura 3D; la sequenza era stata selezionata da altri (Niazi et al.). Nessuna selezione propria."
+        "adjudication_note": "3D structure study; the sequence had been selected by others (Niazi et al.). No selection of its own."
       },
       "target": {
         "value": null,
@@ -14252,7 +14252,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-purchased-aptamer",
-        "adjudication_note": "Aptasensore elettrochimico; aptamero acquistato da GeneCust."
+        "adjudication_note": "Electrochemical aptasensor; the aptamer was purchased from GeneCust."
       },
       "target": {
         "value": null,
@@ -15108,7 +15108,7 @@
         },
         "value": "aptamer_selection",
         "adjudication_rule": "data-centric",
-        "adjudication_note": "Libreria RNA naive N30 (~3.6e11 sequenze) e approccio RNA-RNA SELEX: selezione propria."
+        "adjudication_note": "Naive N30 RNA library (~3.6e11 sequences) and an RNA-RNA SELEX approach: own selection."
       },
       "target": {
         "status": "concordant",
@@ -15244,7 +15244,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "not-a-selection",
-        "adjudication_note": "Clon Mapper per tracciare cellule tumorali nel tempo / articolo di review: non e SELEX."
+        "adjudication_note": "Clon Mapper for tracking tumour cells over time, in a review article: this is not SELEX."
       },
       "target": {
         "value": null,
@@ -15307,7 +15307,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-purchased-aptamer",
-        "adjudication_note": "Saggio proof-of-concept basato su riconoscimento aptamerico: nessuna selezione."
+        "adjudication_note": "Proof-of-concept assay based on aptamer recognition: no selection."
       },
       "target": {
         "status": "single_source",
@@ -15584,7 +15584,7 @@
         },
         "value": "not_selex",
         "adjudication_rule": "no-selection-purchased-aptamer",
-        "adjudication_note": "Aptasensore GFET per Ocratossina A: nessuna selezione."
+        "adjudication_note": "GFET aptasensor for Ochratoxin A: no selection."
       },
       "target": {
         "status": "single_source",
