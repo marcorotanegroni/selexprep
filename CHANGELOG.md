@@ -8,6 +8,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 _No unreleased changes yet._
 
+## [0.4.1] - 2026-09-04
+
+### Fixed
+
+- **The curated metadata now reads in English.** The 47 adjudication notes -- the
+  record of how each disagreement between the two independent extractions was
+  settled -- were written in Italian, as was one `adjudication_rule` value and,
+  more consequentially, one `n_random` value exposed by both the JSON and the
+  flat CSV. They ship inside the wheel and the Zenodo archive, so a reader could
+  not check an entry against its source, which is the whole point of shipping
+  the provenance. Translated literally: accessions, field names, quoted evidence
+  and method names are carried over verbatim, and the data itself is unchanged --
+  240 records, 1920 cells, 1206 concordant / 236 single-source / 47 adjudicated /
+  2 verified / 429 not stated, with both extraction arms retained on every
+  adjudicated cell. `METADATA_VERSION` is bumped to
+  `v0.3.2-dual-extraction-adjudicated-en-2026-09-04`.
+
 ## [0.4.0] - 2026-08-10
 
 ### Fixed
