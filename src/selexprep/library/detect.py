@@ -37,6 +37,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from selexprep.library.adapters import (
@@ -100,6 +101,33 @@ CORE_MIN_LEN = 12
 # inside the genuine constant. Stopping at the first stable run keeps the cut
 # on the outer artefact instead of chasing that interior dip.
 CORE_STABLE_RUN = 3
+
+# Library constant = the part of a flank that every round shares.
+#
+# The flank is called on the earliest round, walking inward from the read edge,
+# so everything that round's reads carry between the edge and the random region
+# ends up in it — including sequence that belongs to that run and not to the
+# library: an inline tag that changes from run to run (PRJNA809588), a base that
+# differs between rounds (PRJEB62495), a heterogeneous base ahead of the
+# construct (PRJNA1395820). Within one run nothing marks that sequence as
+# foreign, because it is as conserved as the constant; across runs it is the
+# part that changes.
+#
+# So every round is aligned on the flank's inner core — the
+# ``CONSTANT_CORE_LEN`` bases next to the random region, which fix the boundary
+# and are never trimmed — and each outer position is kept only if, in every
+# round, the bases at that position agree with the call with at least
+# ``BOUNDARY_SUPPORT_FLOOR`` support: the same floor ``_boundary_length`` uses
+# for "still constant". The scan stops at the first position that fails, so the
+# constant can only lose sequence at its outer edge, never at the boundary.
+CONSTANT_CORE_LEN = CORE_MIN_LEN
+# How far beyond the earliest round's flank the core may sit in another round
+# (a longer tag pushes the constant further in).
+CONSTANT_SEARCH_SLACK = 12
+# A round counts only if the core is found in at least this fraction of its
+# reads; otherwise its reads cannot say where the constant is.
+CONSTANT_MIN_ANCHORED_FRACTION = 0.5
+_CONSTANT_CHUNK = 200_000
 
 
 # ---------------------------------------------------------------------------
@@ -332,6 +360,94 @@ def _high_support_core(
     return core
 
 
+def _add_base_counts(
+    counts: np.ndarray, covered: np.ndarray, segments: list[str], width: int
+) -> None:
+    """Add per-position A/C/G/T counts of equal-width segments ('.' = no base)."""
+    arr = np.frombuffer("".join(segments).encode("ascii"), dtype=np.uint8).reshape(-1, width)
+    covered += (arr != ord(".")).sum(axis=0)
+    for b, code in enumerate(b"ACGT"):
+        counts[b] += (arr == code).sum(axis=0)
+
+
+def _shared_library_constant(
+    flank: str,
+    pools: list[list[str]],
+    *,
+    is_prefix: bool,
+) -> tuple[str, list[int | None]]:
+    """Trim ``flank``'s outer edge to the sequence every round shares.
+
+    ``pools`` holds one read pool per round, earliest first; ``flank`` was
+    called on the first. Every pool is aligned on the flank's inner core (see
+    ``CONSTANT_CORE_LEN``) and the outer positions are kept, from the core
+    outward, while every anchored round agrees with the call at that position.
+
+    Returns the library constant and, per round, where it sits in the reads:
+    its start index for a 5' flank, the distance of its end from the read end
+    for a 3' flank. ``None`` marks a round whose reads do not carry the core
+    often enough to say. If the earliest round itself does not anchor, the
+    flank comes back unchanged at offset 0 in every round.
+    """
+    core_len = min(CONSTANT_CORE_LEN, len(flank))
+    core = flank[len(flank) - core_len :] if is_prefix else flank[:core_len]
+    # Outer bases, ordered from the core outward.
+    outer = flank[: len(flank) - core_len][::-1] if is_prefix else flank[core_len:]
+    width = len(outer)
+    window = len(flank) + CONSTANT_SEARCH_SLACK
+
+    kept = width
+    core_positions: list[int | None] = []
+    for pool in pools:
+        counts = np.zeros((4, max(width, 1)), dtype=np.int64)
+        covered = np.zeros(max(width, 1), dtype=np.int64)
+        positions: Counter[int] = Counter()
+        segments: list[str] = []
+        anchored = 0
+        for seq in pool:
+            if is_prefix:
+                start = seq.find(core, 0, window)
+                if start < 0:
+                    continue
+                positions[start] += 1
+                segment = seq[max(0, start - width) : start][::-1]
+            else:
+                start = seq.rfind(core, max(0, len(seq) - window))
+                if start < 0:
+                    continue
+                end = start + core_len
+                positions[len(seq) - end] += 1
+                segment = seq[end : end + width]
+            anchored += 1
+            if width:
+                segments.append(segment.ljust(width, "."))
+                if len(segments) >= _CONSTANT_CHUNK:
+                    _add_base_counts(counts, covered, segments, width)
+                    segments.clear()
+        if segments:
+            _add_base_counts(counts, covered, segments, width)
+
+        if not pool or anchored < CONSTANT_MIN_ANCHORED_FRACTION * len(pool):
+            if not core_positions:
+                return flank, [0] * len(pools)
+            core_positions.append(None)
+            continue
+        core_positions.append(positions.most_common(1)[0][0])
+
+        shared = 0
+        for j in range(min(kept, width)):
+            if covered[j] < CONSTANT_MIN_ANCHORED_FRACTION * anchored:
+                break
+            b = int(counts[:, j].argmax())
+            if "ACGT"[b] != outer[j] or counts[b, j] < BOUNDARY_SUPPORT_FLOOR * covered[j]:
+                break
+            shared += 1
+        kept = shared
+
+    constant = flank[len(flank) - core_len - kept :] if is_prefix else flank[: core_len + kept]
+    return constant, [None if pos is None else pos - kept for pos in core_positions]
+
+
 # ---------------------------------------------------------------------------
 # Top-level detection from a list of sequences
 # ---------------------------------------------------------------------------
@@ -543,16 +659,26 @@ def _normalize_pool(seqs: list[str]) -> list[str]:
 
 
 def _top_k_variants(
-    seqs: list[str], length: int, *, is_prefix: bool, k: int = VARIANTS_TOP_K
+    seqs: list[str], length: int, *, is_prefix: bool, k: int = VARIANTS_TOP_K, offset: int = 0
 ) -> list[tuple[str, int]]:
     """Return the top-K most common ``length``-mers at the read's flank.
 
-    Used to populate ``variants_5p`` / ``variants_3p`` for downstream
-    review when the primary primer is ambiguous.
+    ``offset`` is where the flank sits: its start index for a prefix, the
+    distance of its end from the read end for a suffix. Used to populate
+    ``variants_5p`` / ``variants_3p`` for downstream review when the primary
+    primer is ambiguous.
     """
     if length <= 0:
         return []
-    fragments = [(s[:length] if is_prefix else s[-length:]) for s in seqs if len(s) >= length]
+    fragments = [
+        (
+            s[offset : offset + length]
+            if is_prefix
+            else s[len(s) - offset - length : len(s) - offset]
+        )
+        for s in seqs
+        if len(s) >= length + offset
+    ]
     return Counter(fragments).most_common(k)
 
 
@@ -562,40 +688,32 @@ def _position_consistency(
     *,
     is_prefix: bool,
     tolerance: int = POSITION_CONSISTENCY_TOLERANCE,
+    offset: int = 0,
 ) -> float:
     """Fraction of reads where ``primer`` appears within ±tolerance of the expected flank position.
 
-    Hamming ≤ 1 is allowed (matches ``detect_flank`` semantics). Returns
-    0.0 when ``primer`` is None or no reads are long enough.
+    The expected position is ``offset`` from the read edge (the start index for
+    a prefix, the distance of the primer's end from the read end for a
+    suffix); 0 means flush with the edge. Hamming ≤ 1 is allowed (matches
+    ``detect_flank`` semantics). Returns 0.0 when ``primer`` is None or no
+    reads are long enough.
     """
     if not primer:
         return 0.0
     L = len(primer)
+    shifts = range(max(0, offset - tolerance), offset + tolerance + 1)
     hits, total = 0, 0
     for s in seqs:
         if len(s) < L:
             continue
         total += 1
-        if is_prefix:
-            for offset in range(tolerance + 1):
-                start = offset
-                end = offset + L
-                if end > len(s):
-                    continue
-                if _hamming_le1(s[start:end], primer):
-                    hits += 1
-                    break
-        else:
-            for offset in range(tolerance + 1):
-                if offset == 0:
-                    chunk = s[-L:]
-                else:
-                    if L + offset > len(s):
-                        continue
-                    chunk = s[-(L + offset) : -offset]
-                if _hamming_le1(chunk, primer):
-                    hits += 1
-                    break
+        for shift in shifts:
+            if L + shift > len(s):
+                break
+            chunk = s[shift : shift + L] if is_prefix else s[len(s) - shift - L : len(s) - shift]
+            if _hamming_le1(chunk, primer):
+                hits += 1
+                break
     return hits / total if total else 0.0
 
 
@@ -879,7 +997,8 @@ def compute_library_report(
     1. Adapter-blacklist scan on the earliest round (records hits; does
        NOT filter reads).
     2. Single-pool primer detection on the earliest round
-       (``detect_primers``).
+       (``detect_primers``), then each flank's outer edge is trimmed back to
+       the sequence every round shares (``_shared_library_constant``).
     3. Cross-round persistence — per-round match rates of the detected
        primer; persistence = ``1 - clip(stdev/mean, 0, 1)``.
     4. Position consistency at the expected flank with ±tolerance.
@@ -996,15 +1115,65 @@ def compute_library_report(
     )
     threep_seqs_earliest = threep_seqs_by_round[earliest_round]
 
+    # Keep only the part of each flank that every round shares
+    # (``_shared_library_constant``). The earliest round's full flanks stay in
+    # hand: they are what that round's reads carry from edge to random region,
+    # so the random-region length and the orientation are still measured with
+    # them, and the boundary with the random region does not move.
+    flank_5p_full = primer_5p_seq
+    flank_3p_lookup_full = primer_3p_lookup
+    flank_3p_full = primer_3p_seq
+    offsets_5p: list[int | None] = [0] * len(rounds_sorted)
+    offsets_3p: list[int | None] = [0] * len(rounds_sorted)
+    if primer_5p_seq is not None:
+        primer_5p_seq, offsets_5p = _shared_library_constant(
+            primer_5p_seq, [normalized[r] for r in rounds_sorted], is_prefix=True
+        )
+    if primer_3p_lookup is not None:
+        primer_3p_lookup, offsets_3p = _shared_library_constant(
+            primer_3p_lookup,
+            [threep_seqs_by_round[r] for r in rounds_sorted],
+            is_prefix=threep_is_prefix,
+        )
+        primer_3p_seq = (
+            reverse_complement(primer_3p_lookup) if has_paired_split else primer_3p_lookup
+        )
+    for side, full, constant in (
+        ("5'", flank_5p_full, primer_5p_seq),
+        ("3'", flank_3p_lookup_full, primer_3p_lookup),
+    ):
+        if full != constant:
+            logger.info(
+                "%s flank %r trimmed to %r: the outer %d nt are not shared by every round",
+                side,
+                full,
+                constant,
+                len(full or "") - len(constant or ""),
+            )
+
+    def _at(offsets: list[int | None], i: int) -> int:
+        """Where the constant sits in round ``i``; the earliest round's place if unknown."""
+        value = offsets[i]
+        return value if value is not None else (offsets[0] or 0)
+
     # Per-round POSITION-ANCHORED rates → persistence. Position-anchored
     # (not substring) because a true primer appears AT the flank in every
-    # round — substring presence might survive aptamer enrichment.
+    # round — substring presence might survive aptamer enrichment. The place is
+    # each round's own: run-specific sequence outside the constant can shift it.
     position_rates_5p_by_round = [
-        _position_consistency(normalized[r], primer_5p_seq, is_prefix=True) for r in rounds_sorted
+        _position_consistency(
+            normalized[r], primer_5p_seq, is_prefix=True, offset=_at(offsets_5p, i)
+        )
+        for i, r in enumerate(rounds_sorted)
     ]
     position_rates_3p_by_round = [
-        _position_consistency(threep_seqs_by_round[r], primer_3p_lookup, is_prefix=threep_is_prefix)
-        for r in rounds_sorted
+        _position_consistency(
+            threep_seqs_by_round[r],
+            primer_3p_lookup,
+            is_prefix=threep_is_prefix,
+            offset=_at(offsets_3p, i),
+        )
+        for i, r in enumerate(rounds_sorted)
     ]
     persistence_5p = _persistence_score(position_rates_5p_by_round)
     persistence_3p = _persistence_score(position_rates_3p_by_round)
@@ -1058,26 +1227,39 @@ def compute_library_report(
     # Variants — top-K flank fragments. For paired-split, 3p variants come
     # from R2's 5' end (using the revcomp-lookup length).
     p5_len = len(primer_5p_seq) if primer_5p_seq else 0
-    p3_len = len(primer_3p_seq) if primer_3p_seq else 0
     p3_lookup_len = len(primer_3p_lookup) if primer_3p_lookup else 0
-    variants_5p = _top_k_variants(earliest_seqs, p5_len, is_prefix=True) if p5_len else []
+    variants_5p = (
+        _top_k_variants(earliest_seqs, p5_len, is_prefix=True, offset=_at(offsets_5p, 0))
+        if p5_len
+        else []
+    )
     variants_3p = (
-        _top_k_variants(threep_seqs_earliest, p3_lookup_len, is_prefix=threep_is_prefix)
+        _top_k_variants(
+            threep_seqs_earliest,
+            p3_lookup_len,
+            is_prefix=threep_is_prefix,
+            offset=_at(offsets_3p, 0),
+        )
         if p3_lookup_len
         else []
     )
 
     # N-length distribution. Only meaningful in single-read modes — in
     # paired-end split the full insert spans R1+R2 and cannot be measured
-    # from either read alone, so we surface no n-length signal.
+    # from either read alone, so we surface no n-length signal. Measured with
+    # the full earliest-round flanks, which run from the read edges to the
+    # random region in that round's reads.
     if has_paired_split:
         n_mode, n_dist, n_conf = None, {}, 0.0
     else:
-        n_mode, n_dist, n_conf = _n_length_stats(earliest_seqs, p5_len, p3_len)
+        n_mode, n_dist, n_conf = _n_length_stats(
+            earliest_seqs, len(flank_5p_full or ""), len(flank_3p_full or "")
+        )
 
     # Orientation (always measured on R1 reads — R1's 5' end is where forward
-    # vs reverse-strand inversion would appear).
-    orientation = _detect_orientation(earliest_seqs, primer_5p_seq, primer_3p_seq)
+    # vs reverse-strand inversion would appear), with the full earliest-round
+    # flanks because those are what sits at that round's read edges.
+    orientation = _detect_orientation(earliest_seqs, flank_5p_full, flank_3p_full)
 
     # Composite confidence.
     has_round_map = len(normalized) >= 2

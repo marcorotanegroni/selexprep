@@ -32,6 +32,7 @@ from collections import Counter
 from pathlib import Path
 
 from selexprep.benchmark.metrics import load_ground_truth
+from selexprep.extract.trim import input_fastq_name
 
 COLUMNS = [
     "accession",
@@ -59,11 +60,6 @@ def _length_mode(fasta_gz: Path) -> tuple[int | str, str]:
         return "", ""
     mode, count = lengths.most_common(1)[0]
     return mode, f"{count / sum(lengths.values()):.4f}"
-
-
-def _input_fastq(cutadapt_cmd: list[str]) -> str:
-    """The R1 / single-end input of one cutadapt call (paired calls end in R1, R2)."""
-    return Path(cutadapt_cmd[-2] if "-p" in cutadapt_cmd else cutadapt_cmd[-1]).name
 
 
 def _last_line(path: Path) -> str:
@@ -103,7 +99,7 @@ def extraction_rows(results_dir: Path, accession: str, n_length_truth: int) -> l
             {
                 **base,
                 "round": output.parent.name.removeprefix("round_"),
-                "fastq": _input_fastq(entry["cutadapt_cmd"]),
+                "fastq": input_fastq_name(entry["cutadapt_cmd"]),
                 "n_in": n_in,
                 "n_out": n_out,
                 "frac_kept": f"{n_out / n_in:.4f}" if n_in else "",

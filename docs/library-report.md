@@ -10,6 +10,11 @@ real examples are in [`02_library_report_interpretation.ipynb`](examples.md).
 
 ### Primers
 - `primer_5p`, `primer_3p` — inferred constants (`null` if not recoverable).
+  Each is the part of the flank that **every round shares**: the flank is
+  called on the earliest round, then its outer edge is trimmed back to the
+  sequence all rounds agree on, so a run-specific inline tag, a base that
+  differs between rounds or a heterogeneous base ahead of the construct is
+  left out. The boundary with the random region never moves.
 - `variants_5p`, `variants_3p` — top candidates with read counts.
 
 ### Biology — `extraction_mode`
@@ -35,7 +40,8 @@ used to discard reads.
 
 ### Quality + N-region
 - `match_rate_5p/3p`, `position_consistency_5p/3p` — how cleanly each constant
-  sits at the read end.
+  sits at its flank, measured where it actually is (a run-specific tag outside
+  the constant shifts it away from the read edge).
 - `n_length_mode`, `n_length_distribution`, `n_length_confidence`.
 
 ### Confidence + reproducibility
@@ -60,6 +66,11 @@ used to discard reads.
 When `status == UNABLE_TO_INFER` or `extraction_mode == UNABLE_TO_EXTRACT`,
 downstream `extract` refuses without an explicit `--override-primer-*` or a
 hand-edited report — `selexprep` never silently miscalls.
+
+`extract` also warns when an input FASTQ keeps less than half the yield of the
+best input (`trim_reports.json` holds every input's reads in and out): the
+primers fit that run's reads badly, for example because it carries a different
+construct.
 
 !!! note
     Single-round deposits cap `status` at `MEDIUM` (cross-round persistence is

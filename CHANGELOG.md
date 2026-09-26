@@ -30,6 +30,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   run the called constants do not fit is visible instead of hidden behind a
   correct random-region length.
 
+### Fixed
+
+- **`detect` reports the library constant every round shares, not the earliest
+  round's whole flank.** The flank is called on the earliest round from the read
+  edge inward, so it took in whatever that round's reads carried outside the
+  library constant. Where that sequence changes between runs, the call did not
+  fit the other runs: on PRJNA809588, whose runs each carry their own inline
+  tags, `extract` kept under 1% of the reads of seven of its ten runs, while
+  `detect` and `extract` both reported success. `detect` now aligns every round
+  on the flank's inner core (the 12 nt next to the random region) and keeps an
+  outer position only if every round agrees on its base with at least 55%
+  support, the floor the boundary search already uses for "constant". The inner
+  boundary cannot move, so the random-region length is unchanged; position
+  consistency, persistence and variants are measured where each round actually
+  carries the constant. The same rule drops a heterogeneous base ahead of the
+  construct when there is only one round (PRJNA1395820). Found by the
+  benchmark's per-run extraction yield; it changes the Tier-1 calls for
+  PRJNA809588, PRJEB62495 and PRJNA1395820.
+- **`extract` warns when an input's yield collapses.** An input FASTQ keeping
+  less than half the yield of the best input is named in a warning with its
+  counts, instead of passing silently.
+
 ### Changed
 
 - **PRJEB70964 moved from the adapter-control arm to the specificity arm**
