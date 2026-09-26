@@ -884,11 +884,11 @@ def compute_specificity(rows: list[BenchmarkRow]) -> SpecificityReport:
 def compute_adapter_control(rows: list[BenchmarkRow]) -> SpecificityReport:
     """Adapter-control panel — no-false-call on ``read_state == "adapter_control"``.
 
-    Deposits whose constant collides with a known sequencing adapter (e.g.
-    PRJEB70964: 5' constant = revcomp(TruSeq R1)). Excluded from the recovery
-    denominator — scoring "refused to call an adapter a primer" as a recovery
-    miss would be unfair — and reported here as a NEGATIVE CONTROL where the
-    correct behavior is no primer call. Delegates to :func:`_compute_no_false_call`.
+    Non-SELEX libraries (small-RNA sequencing) carrying technical sequence such
+    as adapter read-through, where any primer call is a fabrication. Excluded
+    from the recovery denominator and reported here as a NEGATIVE CONTROL where
+    the correct behavior is no primer call. Delegates to
+    :func:`_compute_no_false_call`.
     """
     return _compute_no_false_call(rows, "adapter_control")
 
@@ -1058,7 +1058,7 @@ def aggregate_metrics(
     # Specificity arm — no-false-call on pre_trimmed deposits.
     report.specificity = compute_specificity(verified)
     # Adapter-control panel — no-false-call on adapter_control deposits
-    # (e.g. PRJEB70964, 5' constant = revcomp(TruSeq R1)); out of recovery.
+    # (non-SELEX small-RNA libraries); out of recovery.
     report.adapter_control = compute_adapter_control(verified)
 
     # Honest accounting runs across ALL verified rows (both arms +

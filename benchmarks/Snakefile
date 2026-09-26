@@ -1,6 +1,8 @@
 # selexprep benchmark scaffolding
 #
 # Per-accession pipeline: fetch -> detect, then aggregate -> figure_a.
+# Recovery-arm rows (read_state=raw_standard) also run extract, and
+# extraction_yield.tsv reports reads in / kept for every input FASTQ.
 # Reads ``ground_truth.tsv``; processes only ``verified=true`` rows.
 #
 # Implementation notes:
@@ -42,6 +44,7 @@ _gt = _gt[_gt["verified"].str.strip().str.lower() == "true"]
 ACCESSIONS = sorted(_gt["accession"].tolist())
 ROUND_MAP_SOURCE = dict(zip(_gt["accession"], _gt["round_map_source"].replace("", "auto")))
 ROUND_MAP_PATH = dict(zip(_gt["accession"], _gt["round_map_path"]))
+RECOVERY = sorted(_gt.loc[_gt["read_state"].str.strip() == "raw_standard", "accession"])
 
 # resolve curated round-map paths relative to
 # ``ground_truth.tsv``'s directory so Snakemake invocations from any
@@ -53,6 +56,7 @@ rule all:
     input:
         OUTROOT + "/table_1.md",
         OUTROOT + "/metrics.json",
+        OUTROOT + "/extraction_yield.tsv",
 
 
 rule fetch:
@@ -146,6 +150,50 @@ rule detect:
         "selexprep detect $(cat {input.manifest}) $r2_args "
         "--round-map {params.round_map} "
         "--outdir {OUTROOT}/{wildcards.accession}"
+
+
+rule extract:
+    # detect infers the constants from the earliest round only; this rule
+    # applies them to every round, the way a user would, so that a run whose
+    # reads the called constants do not fit shows up as a collapse in reads
+    # kept. extract exits 2 when it refuses (e.g. no usable primers); that is
+    # recorded in extract.rc and reported, not treated as a pipeline failure.
+    input:
+        report=OUTROOT + "/{accession}/library_report.json",
+        manifest=OUTROOT + "/{accession}/fastqs.manifest",
+        r2_manifest=OUTROOT + "/{accession}/fastqs.r2.manifest",
+    output:
+        rc=OUTROOT + "/{accession}/extract/extract.rc",
+    params:
+        round_map=lambda w: _round_map_for(w.accession),
+        outdir=lambda w: OUTROOT + "/" + w.accession + "/extract",
+    shell:
+        # extract refuses to overwrite earlier outputs, so start clean.
+        """
+        rm -rf {params.outdir}
+        mkdir -p {params.outdir}
+        r2_args=''
+        if [ -s {input.r2_manifest} ]; then while IFS= read -r fq; do r2_args="$r2_args --paired-r2 $fq"; done < {input.r2_manifest}; fi
+        set +e
+        selexprep extract $(cat {input.manifest}) $r2_args --library-report {input.report} --round-map {params.round_map} --outdir {params.outdir} > {params.outdir}/extract.log 2>&1
+        rc=$?
+        set -e
+        echo $rc > {output.rc}
+        if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then cat {params.outdir}/extract.log >&2; exit 1; fi
+        """
+
+
+rule extraction_yield:
+    input:
+        ground_truth=GROUND_TRUTH,
+        rcs=expand(OUTROOT + "/{acc}/extract/extract.rc", acc=RECOVERY),
+    output:
+        OUTROOT + "/extraction_yield.tsv",
+    shell:
+        "python -m selexprep.benchmark.extraction "
+        "--ground-truth {input.ground_truth} "
+        "--results-dir {OUTROOT} "
+        "--out {output}"
 
 
 rule compute_metrics:

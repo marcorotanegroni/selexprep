@@ -16,6 +16,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   tell which. The assignment is unchanged; `fetch` logs a warning naming the
   rounds and runs, and `fetch_metadata.json` records them under
   `rounds_with_several_samples`. Lanes of one BioSample are not flagged.
+- **Benchmark: all-read verification of every deposit's read state**
+  (`benchmarks/verify_read_state.{py,sh}`, results in
+  `benchmarks/read_state_full.tsv`). It streams every read of every fetched
+  FASTQ and reports, per file, the length distribution, where the published
+  constants sit, adapter probes and a positional conservation profile.
+  `read_state_evidence.tsv` is now built from it instead of spot-checks of the
+  leading reads.
+- **Benchmark: per-run extraction yield for the recovery arm.** `detect`
+  infers the constants from the earliest round; the Tier-1 workflow now also
+  runs `extract` on every round and writes `results/extraction_yield.tsv`
+  (reads in / kept per input FASTQ, modal extracted length per round), so a
+  run the called constants do not fit is visible instead of hidden behind a
+  correct random-region length.
+
+### Changed
+
+- **PRJEB70964 moved from the adapter-control arm to the specificity arm**
+  (arms are now 7 recovery / 8 specificity / 6 adapter-control). It had been
+  filed as an adapter-collision control on a spot-check recording 81-nt reads
+  with both constants; the all-read check shows every read is the N35 region
+  alone. Its outcome (no call) is unchanged. The adapter-control description in
+  the benchmark README, `metrics.py` and the library-report example notebook is
+  corrected to what those deposits actually carry.
 
 ## [0.4.1] - 2026-09-04
 

@@ -8,7 +8,7 @@ PRJNA1395820	raw_standard	true	recovery		DNA Co2+ small-ion aptamer (Gao 2026 Na
 PRJNA1068659	nonstandard	false		unsupported_architecture	construct embedded at variable internal offsets in heterogeneous adapter-laden reads (dominant ~158nt vs ~73nt designed insert); 5' constant ~90% present but not position-consistent (200k-read stream); see excluded_datasets.tsv
 PRJEB62495	raw_standard	true	recovery		DNA SELEX vs Anaplasma phagocytophilum (tick-borne bacterium, infected-cell extract; Le Dortz 2024 Sci Rep); reads REVERSE-COMPLEMENT-oriented; streamed (non-circular): revcomp(3')=95%, revcomp(5')=92%. Read-orientation truth = revcomp forms..
 PRJNA315881	multiplexed	false		multiplexed_without_demux	round-5 pool multiplexed-by-condition (undocumented barcodes); 100nt uniform, TruSeq-adapter-heavy reads; see excluded_datasets.tsv
-PRJEB70964	adapter_control	true	adapter_control		read-length 81 (raw, partial_fetch 17/27) + paper-verified primers (NAR 2024); adapter-trap hard case
+PRJEB70964	pre_trimmed	true	specificity		all-read check: 155,139,542 reads of 17/27 runs are 33-37 nt (mode 35) = N35 only, constants absent (read_state_full.tsv); ENA base/read 34.9 nt for all 27 runs. Reclassified 2026-09-26 from adapter_control, which rested on a wrong 81-nt spot-check record
 PRJEB28411	pre_trimmed	true	specificity		read-length 40 = N40 (pre-trimmed) + paper-verified primers (Pleiko 2019 Sci Rep)
 PRJEB22637	pre_trimmed	true	specificity		read-length 50 = N50 (pre-trimmed) + paper-verified primers (Cibiel 2014 PLOS ONE)
 PRJNA990511	pre_trimmed	true	specificity		read-length 40 = N40 (pre-trimmed, mono) + paper-verified primers (Hu 2024 Sci Rep)

@@ -7,8 +7,8 @@ presents as a per-deposit **scorecard table** and a corpus-audit **summary table
 
 - **Tier 1 — primer recovery** (`Snakefile` + `ground_truth.tsv`): per-deposit
   recovery of paper-reported primers from accession-derived reads, on 21
-  source-verified deposits balanced across three arms (7 recovery, 7
-  specificity, 7 adapter-control). Produces the scorecard (paper **Table 1**).
+  source-verified deposits in three arms (7 recovery, 8 specificity,
+  6 adapter-control). Produces the scorecard (paper **Table 1**).
 - **Tier 2 — corpus audit** (`audit.smk` + the bundled catalog): a descriptive
   utility audit over a deterministic sample of audit-eligible INSDC accessions.
   Distributional metrics only — no per-row ground truth. Paper **supplement**.
@@ -47,7 +47,7 @@ recovery on the other 3; in every one of the 6 where a single-read extraction
 is possible — including two of the three partials, the third being the
 paired-end deposit that is not measurable at all — it recovered the random
 region at exactly the paper-reported length, 0 out of tolerance. It made zero
-false-positive primer calls on 14 negative controls (7 pre-trimmed, 7
+false-positive primer calls on 14 negative controls (8 pre-trimmed, 6
 adapter).*
 
 Two measurements are reported because they answer different questions. The
@@ -77,18 +77,18 @@ The source-verified deposits, by arm (the table below is the per-row scorecard;
 | PRJEB49150 | DNA | BEN-domain TFs | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; submitter states reads carry only the randomised region |
 | PRJEB14550 | DNA | HOXB13 / FLI1 | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N40 exactly (8 runs) |
 | PRJNA360902 | DNA | *Ciona* TF DBDs | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N20 exactly (14 runs) |
-| PRJEB70964 | 2′-F-Py RNA | protein (α-syn) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal (5′ const = revcomp TruSeq R1) |
-| PRJNA678231 | n/a (ncRNA-Seq) | n/a (*B. mori*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 51 nt reads over ~20–30 nt inserts |
+| PRJEB70964 | 2′-F-Py RNA | protein (α-syn) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal; reads are N35 exactly (reclassified from adapter-control, see below) |
+| PRJNA678231 | n/a (ncRNA-Seq) | n/a (*B. mori*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 51 nt reads, TruSeq R1 in 97% at variable positions |
 | PRJDB7022 | n/a (miRNA-Seq) | n/a (*D. melanogaster*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal **after the zero-length-insert guard**; 83% of reads are one identical 51-mer |
-| PRJNA746278 | n/a (ncRNA-Seq) | n/a (*H. sapiens*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 59 nt reads, SMARTer smRNA kit |
-| PRJDB2183 | n/a (miRNA-Seq) | n/a (*A. thaliana*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 69 nt reads over ~20–30 nt inserts |
-| PRJEB50674 | n/a (miRNA-Seq) | n/a (*T. vaginalis*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 50 nt reads over ~20–30 nt inserts |
-| PRJNA591605 | n/a (ncRNA-Seq) | n/a (*M. musculus*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 75 nt reads over ~20–30 nt inserts |
+| PRJNA746278 | n/a (ncRNA-Seq) | n/a (*H. sapiens*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 35–76 nt reads ending in poly-A, SMARTer smRNA kit |
+| PRJDB2183 | n/a (miRNA-Seq) | n/a (*A. thaliana*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 69 nt reads ending in poly-A |
+| PRJEB50674 | n/a (miRNA-Seq) | n/a (*T. vaginalis*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 50 nt reads, no technical sequence at a fixed position |
+| PRJNA591605 | n/a (ncRNA-Seq) | n/a (*M. musculus*) | adapter-control | UNABLE_TO_INFER | null / null | — | correct refusal; 75 nt reads, no technical sequence at a fixed position |
 
 **How to read it.** The *recovery* arm asks whether selexprep recovers the
 paper primer from raw reads; the *specificity* and *adapter-control* arms are
-negative controls where the correct behavior is **no call** (constants are
-absent, or collide with a known adapter). A "partial" or "mismatch" usually
+negative controls where the correct behavior is **no call** (the reads carry
+no library constant, or are not SELEX at all). A "partial" or "mismatch" usually
 reflects the **deposit** (reads carrying an extended / heterogeneous constant
 region), not a tool error — `detect` reports what is physically in the reads.
 The *N* column is the mode of the extracted random-region length against the
@@ -118,14 +118,17 @@ run. Deposits sharing a publication with a row already in the arm were
 rejected as near-duplicates, as were deposits with mixed randomised-region
 lengths by design, where the read-length argument does not hold cleanly.
 
-**Adapter control.** Two different kinds of negative control sit here.
-PRJEB70964 is the hard case — a genuine SELEX deposit whose 5′ constant is the
-reverse complement of TruSeq R1, so a correct tool must not mistake one for the
-other. The other six are non-SELEX small-RNA libraries (`miRNA-Seq` /
-`ncRNA-Seq`, six organisms, at least three library-prep kits) where the read
-runs 20–50 nt past the insert into 3′ sequencing adapter: a perfectly conserved
-block sitting exactly where a library constant would sit. Any primer call on
-them is a fabrication. Amplicon libraries were deliberately **not** used: a 16S
+**Adapter control.** Six non-SELEX small-RNA libraries (`miRNA-Seq` /
+`ncRNA-Seq`, six organisms, at least three library-prep kits), chosen because
+the archive-reported read length exceeds a small-RNA insert, so the reads
+should run into sequencing adapter. Any primer call on them is a fabrication.
+The all-read check (`read_state_evidence.tsv`) shows what they actually carry:
+TruSeq R1 in 97% of PRJNA678231 reads but at variable positions, a poly-A tail
+at the read end in PRJDB2183 and PRJNA746278, one dominant sequence in
+PRJDB7022, and no technical sequence at a fixed position in PRJEB50674 and
+PRJNA591605. The arm therefore tests that `detect` makes no call on non-SELEX
+data; it does not test an adapter sitting exactly where a library constant
+would sit. Amplicon libraries were deliberately **not** used: a 16S
 amplicon has real constant primers flanking a variable region, so calling them
 would be correct behaviour, and scoring it as a false positive would punish the
 right answer.
@@ -135,6 +138,18 @@ from a publication that cites the accession; for PRJNA360902 no citing
 publication was found, so its length is submitter-stated in the SRA record —
 external to the reads, but archive-sourced rather than paper-sourced, and the
 row says so.
+
+**PRJEB70964 moved from the adapter arm to the specificity arm.** It was
+filed as an adapter-collision control — a SELEX library whose 5′ constant ends
+in the reverse complement of TruSeq R1 — on a read-state spot-check that
+recorded 81-nt reads carrying both constants. A check of every read
+(`verify_read_state.py`: 155M reads in the 17 downloadable runs, and ENA's
+per-run base/read counts for all 27) shows the reads are the N35 region alone,
+with neither constant present. Its refusal was always correct, but for the
+reason the specificity arm tests, so it now sits there; no outcome changes. The
+adapter-collision case itself was never exercised by this deposit. The same
+check replaced every spot-check record in `read_state_evidence.tsv` with
+all-read measurements.
 
 **The adapter arm earned its place immediately.** On its first run PRJDB7022
 produced a false positive: `detect` returned the same 51 nt string as both
