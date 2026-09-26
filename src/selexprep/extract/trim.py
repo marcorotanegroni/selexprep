@@ -56,6 +56,20 @@ class TrimReport:
     return_code: int
     output_paths: list[Path] = field(default_factory=list)
 
+    @property
+    def input_name(self) -> str:
+        """Basename of the R1 / single-end input (paired calls end in R1, R2)."""
+        return input_fastq_name(self.cutadapt_cmd)
+
+
+def input_fastq_name(cutadapt_cmd: list[str]) -> str:
+    """Basename of the R1 / single-end input of one cutadapt call.
+
+    Works on the command as recorded in ``trim_reports.json`` too, where it is
+    the only record of which FASTQ a count belongs to.
+    """
+    return Path(cutadapt_cmd[-2] if "-p" in cutadapt_cmd else cutadapt_cmd[-1]).name
+
 
 # ---------------------------------------------------------------------------
 # Private helpers

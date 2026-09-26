@@ -56,6 +56,14 @@ logger = logging.getLogger(__name__)
 # .
 _STRAND_REPORT_SAMPLE_PER_ROUND = 10_000
 
+# An input that keeps less than this fraction of the best input's yield is
+# reported. The primers come from one round (``detect`` reads the earliest), so
+# a run whose reads they do not fit loses most of its reads while cutadapt and
+# ``extract`` both finish normally; PRJNA809588 kept under 1% of seven of its
+# ten runs that way. Half the best yield is far below the spread between
+# healthy runs of the same deposit (78-99% on the Tier-1 recovery arm).
+LOW_YIELD_RATIO = 0.5
+
 
 # ---------------------------------------------------------------------------
 # Result dataclass
@@ -73,6 +81,8 @@ class ExtractResult:
     extract_diff_path: Path | None = None
     skipped_reason: str | None = None
     trim_reports: list[trim_module.TrimReport] = field(default_factory=list)
+    # Inputs whose yield collapsed relative to the best input (see LOW_YIELD_RATIO).
+    low_yield_inputs: list[str] = field(default_factory=list)
 
     @property
     def skipped(self) -> bool:
@@ -82,6 +92,20 @@ class ExtractResult:
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
+
+def _low_yield_inputs(reports: list[trim_module.TrimReport]) -> list[str]:
+    """Describe every input that kept under ``LOW_YIELD_RATIO`` of the best yield."""
+    fractions = {id(r): r.n_out / r.n_in for r in reports if r.n_in > 0}
+    if not fractions:
+        return []
+    best = max(fractions.values())
+    return [
+        f"{r.input_name}: kept {r.n_out:,} of {r.n_in:,} reads "
+        f"({fractions[id(r)]:.1%}; best input {best:.1%})"
+        for r in reports
+        if id(r) in fractions and fractions[id(r)] < LOW_YIELD_RATIO * best
+    ]
 
 
 def _refusal_reason(library_report: LibraryReport) -> str | None:
@@ -692,6 +716,16 @@ def run_extract(
             skipped_reason=f"Unknown extraction_mode: {extraction_mode!r}",
         )
 
+    low_yield = _low_yield_inputs(trim_reports)
+    if low_yield:
+        logger.warning(
+            "extract: %d input(s) kept far fewer reads than the best one; the "
+            "primers may not fit their reads (run-specific sequence outside the "
+            "library constant, or a different construct): %s",
+            len(low_yield),
+            "; ".join(low_yield),
+        )
+
     # Emit strand report (if applicable).
     strand_report_path: Path | None = None
     if strand_distributions:
@@ -749,4 +783,5 @@ def run_extract(
         extract_diff_path=extract_diff_path,
         skipped_reason=None,
         trim_reports=trim_reports,
+        low_yield_inputs=low_yield,
     )
