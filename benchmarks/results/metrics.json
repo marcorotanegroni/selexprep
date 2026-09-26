@@ -1,9 +1,9 @@
 {
   "adapter_control": {
     "false_positive_accessions": [],
-    "n_evaluated": 7,
+    "n_evaluated": 6,
     "n_false_positive": 0,
-    "n_no_false_call": 7,
+    "n_no_false_call": 6,
     "n_not_evaluable": 0,
     "not_evaluable_accessions": [],
     "per_row": [
@@ -21,12 +21,6 @@
       },
       {
         "accession": "PRJEB50674",
-        "bucket": "no_false_call",
-        "primer_3p": null,
-        "primer_5p": null
-      },
-      {
-        "accession": "PRJEB70964",
         "bucket": "no_false_call",
         "primer_3p": null,
         "primer_5p": null
@@ -507,9 +501,9 @@
   ],
   "specificity": {
     "false_positive_accessions": [],
-    "n_evaluated": 7,
+    "n_evaluated": 8,
     "n_false_positive": 0,
-    "n_no_false_call": 7,
+    "n_no_false_call": 8,
     "n_not_evaluable": 0,
     "not_evaluable_accessions": [],
     "per_row": [
@@ -539,6 +533,12 @@
       },
       {
         "accession": "PRJEB49150",
+        "bucket": "no_false_call",
+        "primer_3p": null,
+        "primer_5p": null
+      },
+      {
+        "accession": "PRJEB70964",
         "bucket": "no_false_call",
         "primer_3p": null,
         "primer_5p": null
