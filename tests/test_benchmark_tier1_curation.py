@@ -87,15 +87,15 @@ _SPECIFICITY = {
     "PRJEB49150",
     "PRJEB14550",
     "PRJNA360902",
+    # Filed as an adapter-collision control until an all-read check showed every
+    # read is the N35 region alone (benchmarks/read_state_full.tsv).
+    "PRJEB70964",
 }
-# Adapter-control arm, two kinds of negative control. PRJEB70964 is the
-# adapter-*collision* case (a real SELEX deposit whose 5' constant is the
-# revcomp of a known adapter); the other six are non-SELEX small-RNA libraries
-# where the read runs well past the insert into 3' adapter — a perfectly
-# conserved block sitting exactly where a library constant would sit. All are
+# Adapter-control arm: non-SELEX small-RNA libraries, where any primer call is a
+# fabrication. What technical sequence each one carries, and whether it sits at
+# a fixed position, is measured per deposit in read_state_evidence.tsv. All are
 # excluded from the recovery denominator.
 _ADAPTER_CONTROL = {
-    "PRJEB70964",
     "PRJNA678231",
     "PRJDB7022",
     "PRJNA746278",
