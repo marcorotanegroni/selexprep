@@ -118,6 +118,28 @@ class FetchPlan:
         """
         return [run for run in self.runs if run.round_record.is_unassigned]
 
+    @property
+    def rounds_with_several_samples(self) -> dict[int, list[str]]:
+        """Assigned rounds whose runs come from more than one BioSample.
+
+        Several runs of one sample (lanes, re-sequencing of one library) are one
+        pool and are meant to be merged. Runs of *different* samples that carry
+        the same round label are ambiguous from metadata alone: replicates of one
+        selection, or parallel selections (other targets, arms or libraries)
+        that ``count`` would merge into a single pool. Maps each such round to
+        its run accessions so fetch can say so; the assignment is unchanged.
+        """
+        by_round: dict[int, list[FetchRun]] = {}
+        for run in self.runs:
+            rn = run.round_record.round_number
+            if rn is not None and not run.round_record.is_unassigned:
+                by_round.setdefault(rn, []).append(run)
+        return {
+            rn: [r.srr for r in runs]
+            for rn, runs in sorted(by_round.items())
+            if len({r.sample_accession or r.srr for r in runs}) > 1
+        }
+
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -231,6 +253,9 @@ def write_fetch_metadata_json(plan: FetchPlan, path: Path) -> None:
         "library_strategy": plan.library_strategy,
         "library_source": plan.library_source,
         "runs": [_run_to_dict(r) for r in plan.runs],
+        "rounds_with_several_samples": {
+            str(rn): srrs for rn, srrs in plan.rounds_with_several_samples.items()
+        },
     }
     text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     path.write_text(text, encoding="utf-8")
