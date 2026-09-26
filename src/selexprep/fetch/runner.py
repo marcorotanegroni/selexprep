@@ -184,6 +184,22 @@ def run_fetch(
             srrs,
         )
 
+    # Same round label on runs of different BioSamples: count would merge them
+    # into one pool, which is right for replicates of one selection and wrong
+    # for parallel selections. Metadata cannot tell the two apart, so say it.
+    shared = plan.rounds_with_several_samples
+    if shared:
+        logger.warning(
+            "run_fetch[%s]: %d round(s) carry runs from more than one BioSample "
+            "(%s). count merges every run of a round into one pool: correct for "
+            "replicates of one selection, wrong for parallel selections. If these "
+            "are separate selections, run detect/extract once per selection with "
+            "a --round-map listing only that selection's FASTQs.",
+            accession,
+            len(shared),
+            "; ".join(f"round {rn}: {', '.join(srrs)}" for rn, srrs in shared.items()),
+        )
+
     # Download per run.
     downloaded: list[str] = []
     skipped: list[str] = []

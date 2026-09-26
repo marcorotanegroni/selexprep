@@ -6,7 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Added
+
+- **`fetch` now says when one round label covers runs of different
+  BioSamples.** Deposits with parallel selections often number each one's
+  rounds from 1 (`SELEX S1 Round 04`, `SELEX S2 Round 04`), so both runs get
+  round 4 and `count` merges them into one pool. That is right for replicates
+  of one selection and wrong for separate selections, and the metadata cannot
+  tell which. The assignment is unchanged; `fetch` logs a warning naming the
+  rounds and runs, and `fetch_metadata.json` records them under
+  `rounds_with_several_samples`. Lanes of one BioSample are not flagged.
 
 ## [0.4.1] - 2026-09-04
 

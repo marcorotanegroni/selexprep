@@ -148,6 +148,61 @@ def test_run_fetch_paired_end_emits_both_R1_R2(tmp_path: Path) -> None:
     assert rounds_lines == ["SRR3_1.fastq.gz\t2", "SRR3_2.fastq.gz\t2"]
 
 
+def _fetch_with_warnings(
+    rows: list[dict], tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> list[str]:
+    def fake_dl(srr: str, output_dir: Path, backend: str = "ena", **kw):
+        return _stub_download_writes_files(output_dir, srr, paired=False)
+
+    with (
+        caplog.at_level("WARNING", logger="selexprep.fetch.runner"),
+        patch("selexprep.fetch.inspect.requests.get", return_value=_mock_response(rows)),
+        patch("selexprep.fetch.runner.download_srr", side_effect=fake_dl),
+    ):
+        run_fetch("PRJ", tmp_path)
+    return [r.getMessage() for r in caplog.records if "more than one BioSample" in r.getMessage()]
+
+
+def test_run_fetch_warns_when_parallel_selections_share_a_round(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """PRJEB70964 labels two selections 'SELEX S1 Round 04' / 'SELEX S2 Round 04'.
+
+    Both parse to round 4 and count would pool them; fetch must say so, keep
+    both runs in rounds.tsv (the assignment itself is not wrong) and record
+    the round in fetch_metadata.json.
+    """
+    rows = [
+        _row("ERR1", sample_title="SELEX S1 Round 04"),
+        _row("ERR2", sample_title="SELEX S2 Round 04"),
+        _row("ERR3", sample_title="SELEX S1 Round 05"),
+    ]
+    warnings = _fetch_with_warnings(rows, tmp_path, caplog)
+
+    assert len(warnings) == 1
+    assert "round 4: ERR1, ERR2" in warnings[0]
+    assert "round 5" not in warnings[0]
+    body = sorted((tmp_path / "rounds.tsv").read_text().strip().splitlines()[1:])
+    assert body == ["ERR1.fastq.gz\t4", "ERR2.fastq.gz\t4", "ERR3.fastq.gz\t5"]
+    payload = json.loads((tmp_path / "fetch_metadata.json").read_text())
+    assert payload["rounds_with_several_samples"] == {"4": ["ERR1", "ERR2"]}
+
+
+def test_run_fetch_does_not_warn_for_lanes_of_one_sample(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Two runs of the same BioSample (lanes of one library) are one pool."""
+    rows = [
+        _row("ERR1", sample_title="Round 4"),
+        _row("ERR2", sample_title="Round 4"),
+    ]
+    for row in rows:
+        row["sample_accession"] = "SAMEA1"
+    assert _fetch_with_warnings(rows, tmp_path, caplog) == []
+    payload = json.loads((tmp_path / "fetch_metadata.json").read_text())
+    assert payload["rounds_with_several_samples"] == {}
+
+
 # ---------------------------------------------------------------------------
 # Refusal paths
 # ---------------------------------------------------------------------------
