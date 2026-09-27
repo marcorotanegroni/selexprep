@@ -41,32 +41,44 @@ this question by construction.
 
 ## Tier 1 — primer-recovery scorecard
 
-**Headline:** *On 7 recovery deposits selexprep reproduced both
-paper-reported primer strings exactly on 4 and with informative partial
-recovery on the other 3; in every one of the 6 where a single-read extraction
-is possible — including two of the three partials, the third being the
-paired-end deposit that is not measurable at all — it recovered the random
-region at exactly the paper-reported length, 0 out of tolerance. It made zero
-false-positive primer calls on 14 negative controls (8 pre-trimmed, 6
-adapter). Applied to every round, the called constants kept at least 78% of the
-reads of every run of five deposits and of 11 of the 12 runs of PRJEB62495, but
-under 1% of the reads in 7 of the 10 runs of PRJNA809588 (see
-[Extraction yield](#extraction-yield-per-run)).*
+**Two results, kept apart.** The benchmark was specified and first scored with
+v0.4.1. Its per-run extraction yield then exposed a defect in `detect` (see
+[Extraction yield](#extraction-yield-per-run)), which was fixed; the fix changes
+three recovery calls. The v0.4.1 result is the pre-specified one. The post-fix
+result is measured on the same deposits that revealed the defect, so it is
+in-sample: the rule and its constants were committed before this benchmark was
+rerun and were not tuned afterwards, but they were designed with these deposits
+in view. Evidence that the rule generalises has to come from data that did not
+motivate it.
+
+*v0.4.1 (pre-specified):* on 7 recovery deposits selexprep reproduced both
+paper-reported primer strings exactly on 4 and partially on 3; in every one of
+the 6 where a single-read extraction is possible it recovered the random region
+at exactly the paper-reported length, 0 out of tolerance; it made zero
+false-positive primer calls on 14 negative controls (8 pre-trimmed, 6 adapter).
+Applied to every round, the called constants kept at least 78% of the reads of
+every run of five deposits and of 11 of the 12 runs of PRJEB62495, but under 1%
+of the reads in 7 of the 10 runs of PRJNA809588.
+
+*After the fix (in-sample):* both strings exact on 5 of 7 (per flank 6 of 7 at
+5′ and 6 of 7 at 3′), the random-region length unchanged (exact in all 6
+measurable deposits), the controls unchanged (0 false calls on 14), and every
+run of every recovery deposit keeps at least 63% of its reads — PRJNA809588 now
+84–99% in all ten runs.
 
 Two measurements are reported because they answer different questions. The
 **random-region boundary** is what the tool must get right to trim correctly;
 the **exact primer string** additionally requires that the constant called from
-the reads coincides with the constant as written in the paper. In two partials
-the reads carry extra sequence outside the library constant: one heterogeneous
-leading base in PRJNA1395820, and in PRJNA809588 inline tags that differ from
-run to run. PRJEB62495 is different: one base of its 3′ constant differs between
-runs, and the earliest run, which `detect` reads, carries at that position a
-base the publication does not report. The boundary is right in all three, but
-a correct boundary does not guarantee extraction in every round: PRJNA809588's
-call includes the earliest run's tags, which the other runs do not share.
+the reads coincides with the constant as written in the paper. The boundary was
+right in every measurable deposit in both versions. The two partials left after
+the fix are differences between the reads and the paper, not boundary errors:
+in PRJEB62495 one base of the published 3′ constant differs between runs, so the
+3′ call now stops before it; in PRJNA809588 the 5′ call still extends past the
+published constant at the outer edge (on reconstructed reads, by the one G that
+ends every run's inline tag).
 
-The source-verified deposits, by arm (the table below is the per-row scorecard;
-`snakemake -s Snakefile` regenerates it as `metrics.json`):
+The source-verified deposits, by arm (the table below is the per-row scorecard
+after the fix; `snakemake -s Snakefile` regenerates it as `metrics.json`):
 
 | Accession | Chemistry | Target | Arm | `status` | 5′ / 3′ | *N* obs / truth | Note |
 |---|---|---|---|---|---|---|---|
@@ -74,9 +86,9 @@ The source-verified deposits, by arm (the table below is the per-row scorecard;
 | PRJDB9111 | RNA (T7) | αVβ3 (protein) | recovery | HIGH | EXACT / EXACT | 40 / 40 | counted |
 | PRJDB19098 | RNA (T7) | FGF-9 (protein) | recovery | HIGH | EXACT / EXACT | 35 / 35 | counted; truth from patent WO2020204151 |
 | PRJNA615076 | DNA | *E. faecalis* (cell) | recovery | HIGH | EXACT / EXACT | 40 / 40 | counted |
-| PRJEB62495 | DNA | *Anaplasma* (cell) | recovery | HIGH | EXACT / MISMATCH | 40 / 40 | counted (partial); read-level 3′ boundary divergence |
-| PRJNA1395820 | DNA | Co²⁺ (small molecule) | recovery | MEDIUM | PARTIAL / EXACT | — | counted (partial); paired split primers → merge recommended |
-| PRJNA809588 | 2′-F-Py RNA | islet (cell) | recovery | MEDIUM | PARTIAL / PARTIAL | 40 / 40 | counted (partial) |
+| PRJEB62495 | DNA | *Anaplasma* (cell) | recovery | HIGH | EXACT / PARTIAL | 40 / 40 | counted (partial); v0.4.1: EXACT / MISMATCH. The 3′ base that differs between runs is left out |
+| PRJNA1395820 | DNA | Co²⁺ (small molecule) | recovery | MEDIUM | EXACT / EXACT | — | counted; v0.4.1: PARTIAL / EXACT. The heterogeneous leading base is left out; paired split primers → merge recommended |
+| PRJNA809588 | 2′-F-Py RNA | islet (cell) | recovery | HIGH | PARTIAL / EXACT | 40 / 40 | counted (partial); v0.4.1: MEDIUM, PARTIAL / PARTIAL. The run-specific tags are left out |
 | PRJEB22637 | 2′-F-Py RNA | cell (Annexin A2) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (N-region-only reads) |
 | PRJEB28411 | DNA | cell (ccRCC) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal |
 | PRJNA990511 | DNA | protein (ASFV p30) | specificity | UNABLE_TO_INFER | null / null | — | correct refusal (single-round) |
@@ -95,11 +107,10 @@ The source-verified deposits, by arm (the table below is the per-row scorecard;
 **How to read it.** The *recovery* arm asks whether selexprep recovers the
 paper primer from raw reads; the *specificity* and *adapter-control* arms are
 negative controls where the correct behavior is **no call** (the reads carry
-no library constant, or are not SELEX at all). A "partial" or "mismatch" reflects
-what is physically in the reads of the round `detect` reads (an extended or
-heterogeneous constant region) rather than a wrong boundary; whether the call
-then extracts every round is measured separately, under
-[Extraction yield](#extraction-yield-per-run).
+no library constant, or are not SELEX at all). A "partial" or "mismatch" is a
+difference between what the reads carry and the constant as published, not a
+wrong boundary; whether the call then extracts every round is measured
+separately, under [Extraction yield](#extraction-yield-per-run).
 The *N* column is the mode of the extracted random-region length against the
 paper-reported length; it is blank where a single-read extraction is not
 attempted (PRJNA1395820 is paired-end with split primers, so `detect` asks for
@@ -117,34 +128,39 @@ adjudicate. It stays in `ground_truth.tsv` with the full reasoning.
 scores that call. The workflow then runs `extract` on every round of the
 recovery deposits, the way a user would, and `results/extraction_yield.tsv`
 records reads in and reads kept for each input FASTQ, with the modal extracted
-length of each round.
+length of each round (current file: after the fix).
 
-| Accession | FASTQs | Reads kept per FASTQ | Modal length / truth |
-|---|---|---|---|
-| PRJDB19098 | 6 | 91.9–93.9% | 35 / 35 |
-| PRJDB9110 | 9 | 78.4–92.0% | 30 / 30 |
-| PRJDB9111 | 4 | 80.9–84.4% | 40 / 40 |
-| PRJNA615076 | 11 | 89.7–95.5% | 40 / 40 |
-| PRJNA1395820 | 1 | 99.5% | partial R1 (paired split primers, no length) |
-| PRJEB62495 | 12 | 79.1–93.8%; ERR11470033 36.7% | 40 / 40 |
-| PRJNA809588 | 10 | 89.9–98.5% in 3 runs; 0.03–1.0% in 7 | 40 / 40 |
+| Accession | FASTQs | Reads kept per FASTQ, v0.4.1 | After the fix | Modal length / truth |
+|---|---|---|---|---|
+| PRJDB19098 | 6 | 91.9–93.9% | 91.9–93.9% | 35 / 35 |
+| PRJDB9110 | 9 | 78.4–92.0% | 78.4–92.0% | 30 / 30 |
+| PRJDB9111 | 4 | 80.9–84.4% | 80.9–84.4% | 40 / 40 |
+| PRJNA615076 | 11 | 89.7–95.5% | 89.7–95.5% | 40 / 40 |
+| PRJNA1395820 | 1 | 99.5% | 99.6% | partial R1 (paired split primers, no length) |
+| PRJEB62495 | 12 | 79.1–93.8%; ERR11470033 36.7% | 83.1–98.7%; ERR11470033 63.1% | 40 / 40 |
+| PRJNA809588 | 10 | 89.9–98.5% in 3 runs; 0.03–1.0% in 7 | 83.8–99.2% | 40 / 40 |
 
-**PRJNA809588 loses seven of its ten runs.** Every run carries its own inline
-tags outside both library constants, differing in sequence and length between
-runs (`read_state_evidence.tsv`). `detect` read the earliest run, SRR18110617,
-and its call includes that run's tags; `extract` applies the call unchanged to
-every round, and cutadapt's linked-adapter mode discards any read in which
-either called flank is not found. The three runs whose tags match or nearly
-match the earliest run's keep 90–99% of their reads; the other seven keep 1% or
-less, and 31% of the deposit's 332M reads survive overall. `extract` exits
-normally, so the loss is visible only in the per-round counts. This is a limitation of `selexprep`, not
-of the deposit: the library constant is the part of the flank that every run
-shares, and `detect` does not yet compare runs to find it. The random-region
-length in the scorecard is correct because it is measured on the earliest run.
+**In v0.4.1 PRJNA809588 lost seven of its ten runs.** Every run carries its own
+inline tags outside both library constants, differing in sequence and length
+between runs (`read_state_evidence.tsv`). `detect` read the earliest run,
+SRR18110617, and its call included that run's tags; `extract` applied the call
+unchanged to every round, and cutadapt's linked-adapter mode discards any read
+in which either called flank is not found. The three runs whose tags match or
+nearly match the earliest run's kept 90–99% of their reads; the other seven kept
+1% or less, and 31% of the deposit's 332M reads survived overall, while
+`extract` exited normally. This was a limitation of `selexprep`, not of the
+deposit: the library constant is the part of the flank that every run shares.
 
-In PRJEB62495, ERR11470033 (round 12) keeps 36.7% of its reads while the other
-run of the same round keeps 79%; its 3′ end has the lowest positional
-conservation among the deposit's runs (`read_state_full.tsv`).
+`detect` now keeps only that part (`_shared_library_constant`; see the
+CHANGELOG), and `extract` warns when an input keeps less than half the yield of
+the best one. After the fix all ten runs keep 84–99% of their reads, 91% of the
+332M overall. These numbers come from the deposit that motivated the fix and
+are in-sample.
+
+In PRJEB62495, ERR11470033 (round 12) kept 36.7% of its reads in v0.4.1 and
+63.1% after the fix, which no longer calls the part of the 3′ end that varies
+between runs; it remains the run with the lowest positional conservation at its
+3′ end (`read_state_full.tsv`).
 
 ### How the two control arms were selected
 
