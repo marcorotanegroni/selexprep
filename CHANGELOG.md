@@ -47,10 +47,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   carries the constant. The same rule drops a heterogeneous base ahead of the
   construct when there is only one round (PRJNA1395820). Found by the
   benchmark's per-run extraction yield; it changes the Tier-1 calls for
-  PRJNA809588, PRJEB62495 and PRJNA1395820. Reads are anchored on the core
-  copy nearest the random region, and a trimmed constant that would occur
-  twice in the flank is not used (found in code review: anchoring on an outer
-  copy made `extract` cut there; no Tier-1 flank contains its core twice).
+  PRJNA809588, PRJEB62495 and PRJNA1395820. A read in which the core occurs
+  more than once — a copy in the outer sequence, or a copy inside the random
+  region of a later round — is anchored where the round's single-copy reads
+  agree, or left out when they do not; a trimmed constant that would occur
+  twice in the flank is not used. Found in code review, before any benchmark
+  used it: anchoring on the outermost copy placed the constant on an outer
+  repeat, and anchoring on the innermost copy let a copy of the core inside the
+  random region shorten the constant to the bare core, after which `extract`
+  cut inside the random region.
 - **`extract` warns when an input's yield collapses.** An input FASTQ keeping
   less than half of its reads, or less than half the yield of the best input,
   is named in a warning with its counts, instead of passing silently.

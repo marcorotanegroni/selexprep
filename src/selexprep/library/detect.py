@@ -127,6 +127,13 @@ CONSTANT_SEARCH_SLACK = 12
 # A round counts only if the core is found in at least this fraction of its
 # reads; otherwise its reads cannot say where the constant is.
 CONSTANT_MIN_ANCHORED_FRACTION = 0.5
+# A read carrying the core more than once is anchored at the place where this
+# fraction of the round's single-copy reads carry it. When a copy sits in the
+# random region of some reads, the other reads all agree on the true place;
+# when the core is repeated in the flank itself, the single-copy reads are those
+# with an error in one copy and split between the two places, so the ambiguous
+# reads are left out and the round does not anchor.
+CONSTANT_ANCHOR_AGREEMENT = 0.8
 _CONSTANT_CHUNK = 200_000
 
 
@@ -389,12 +396,15 @@ def _shared_library_constant(
     often enough to say. If the earliest round itself does not anchor, the
     flank comes back unchanged at offset 0 in every round.
 
-    Each read is anchored on the core copy nearest the random region: a copy
-    further out is sequence outside the constant, and anchoring on it would
-    place the constant there. The flank also comes back unchanged when the
-    trimmed constant occurs more than once in it, because a string that fits
-    the flank at two places does not tell ``extract`` where the random region
-    starts.
+    A read in which the core occurs once is anchored there. A read in which it
+    occurs more than once — a copy in the outer sequence, or a copy inside the
+    random region of a later round — is ambiguous on its own, so it is anchored
+    at the place the round's single-copy reads agree on (see
+    ``CONSTANT_ANCHOR_AGREEMENT``) and left out when they do not agree. A round
+    whose reads cannot be anchored this way does not vote. The flank also comes
+    back unchanged when the trimmed constant occurs more than once in it,
+    because a string that fits the flank at two places does not tell
+    ``extract`` where the random region starts.
     """
     core_len = min(CONSTANT_CORE_LEN, len(flank))
     core = flank[len(flank) - core_len :] if is_prefix else flank[:core_len]
@@ -406,24 +416,38 @@ def _shared_library_constant(
     kept = width
     core_positions: list[int | None] = []
     for pool in pools:
+        # Pass 1: where the reads with a single copy of the core carry it.
+        single: Counter[int] = Counter()
+        for seq in pool:
+            places = _core_places(seq, core, is_prefix=is_prefix, window=window)
+            if len(places) == 1:
+                single[places[0]] += 1
+        agreed: int | None = None
+        if single:
+            place, count = single.most_common(1)[0]
+            if count >= CONSTANT_ANCHOR_AGREEMENT * sum(single.values()):
+                agreed = place
+
+        # Pass 2: anchor every read that can be anchored and collect the bases
+        # outward of its core.
         counts = np.zeros((4, max(width, 1)), dtype=np.int64)
         covered = np.zeros(max(width, 1), dtype=np.int64)
         positions: Counter[int] = Counter()
         segments: list[str] = []
         anchored = 0
         for seq in pool:
-            if is_prefix:
-                start = seq.rfind(core, 0, window)
-                if start < 0:
-                    continue
-                positions[start] += 1
-                segment = seq[max(0, start - width) : start][::-1]
+            places = _core_places(seq, core, is_prefix=is_prefix, window=window)
+            if len(places) == 1:
+                place = places[0]
+            elif agreed is not None and agreed in places:
+                place = agreed
             else:
-                start = seq.find(core, max(0, len(seq) - window))
-                if start < 0:
-                    continue
-                end = start + core_len
-                positions[len(seq) - end] += 1
+                continue
+            positions[place] += 1
+            if is_prefix:
+                segment = seq[max(0, place - width) : place][::-1]
+            else:
+                end = len(seq) - place
                 segment = seq[end : end + width]
             anchored += 1
             if width:
@@ -460,6 +484,27 @@ def _shared_library_constant(
         )
         return flank, [0] * len(pools)
     return constant, [None if pos is None else pos - kept for pos in core_positions]
+
+
+def _core_places(seq: str, core: str, *, is_prefix: bool, window: int) -> list[int]:
+    """Every place of ``core`` within ``window`` bases of the flank's read edge.
+
+    A place is the core's start index for a 5' flank and the distance of its
+    end from the read end for a 3' flank — the units ``_shared_library_constant``
+    reports offsets in.
+    """
+    places = []
+    if is_prefix:
+        start = seq.find(core, 0, window)
+        while start >= 0:
+            places.append(start)
+            start = seq.find(core, start + 1, window)
+    else:
+        start = seq.find(core, max(0, len(seq) - window))
+        while start >= 0:
+            places.append(len(seq) - start - len(core))
+            start = seq.find(core, start + 1)
+    return places
 
 
 def _occurrences(text: str, pattern: str) -> int:
