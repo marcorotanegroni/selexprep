@@ -1,0 +1,8 @@
+family	set	constant_5p	constant_3p	library_kind	paper_doi	source
+PRJDB9110	dev	TAATACGACTCACTATAGGGAGCAGGAGAGAGGTCAGATG	CCTATGCGTGCTAGTGTGA	RNA	10.1093/nar/gkaa484	benchmarks/ground_truth.tsv (read orientation)
+PRJNA615076	dev	TAGGGAAGAGAAGGACATATGAT	TTGACTAGTACATGACCACTTGA	DNA	10.1038/s41598-020-77221-9	benchmarks/ground_truth.tsv (read orientation)
+PRJEB62495	dev	GGCTTCTGGACTACCTATGC	CGTGGTTACAGTCAGAGGAG	DNA	10.1038/s41598-024-52808-8	benchmarks/ground_truth.tsv (read orientation)
+PRJEB22637	test	GGGAGATGATCCGTTGATGCGAG	AAGTCGTCGTTCGTAGGCAGAATC	2'-F-Py RNA	10.1371/journal.pone.0087002	benchmarks/ground_truth.tsv (read orientation)
+PRJEB28411	test	ATCCAGAGTGACGCAGCA	TGGACACGGTGGCTTAGT	DNA	10.1038/s41598-019-44654-w	benchmarks/ground_truth.tsv (read orientation)
+PRJNA990511	dev	ATTGGCACTCCACGCATAGG	CCTATGCGTGCTACCGTGAA	DNA	10.1038/s41598-024-53619-7	benchmarks/ground_truth.tsv (read orientation)
+PRJEB70964	test	CCTACACGACGCTCTTCCGATCT	TCAGCCTCAACGGATACTCTCCC	2'-F-Py RNA	10.1093/nar/gkae544	benchmarks/ground_truth.tsv (read orientation)
