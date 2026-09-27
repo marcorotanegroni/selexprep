@@ -16,7 +16,11 @@ it the boundary with the random region, never moves.
 
 from __future__ import annotations
 
+import gzip
 import random
+import shutil
+
+import pytest
 
 from selexprep.library.detect import (
     CONSTANT_CORE_LEN,
@@ -146,3 +150,145 @@ class TestCoreThatOccursTwice:
             self.FLANK,
             [0, 0],
         )
+
+
+# --- A second copy of the core -------------------------------------------------
+#
+# The core is found by exact search within ``len(flank) + 12`` bases of the read
+# edge, so a second copy can sit in the outer sequence or, in later rounds, in
+# the first (5') or last (3') 12 nt of the random region. A read with two copies
+# is anchored where the round's single-copy reads agree, or left out.
+
+CORE5 = C5[-CONSTANT_CORE_LEN:]
+CORE3 = C3[:CONSTANT_CORE_LEN]
+
+
+def _library(n, *, seed, tag5="", tag3="", n_start="", n_end="", with_copy=0.0):
+    """Reads whose random region starts with ``n_start`` / ends with ``n_end``
+    in a ``with_copy`` fraction of them, with each read's true random region."""
+    rng = random.Random(seed)
+    reads, truth = [], []
+    for _ in range(n):
+        body = "".join(rng.choice("ACGT") for _ in range(N))
+        if rng.random() < with_copy:
+            body = n_start + body[len(n_start) : N - len(n_end)] + n_end
+        reads.append(tag5 + C5 + body + C3 + tag3)
+        truth.append(body)
+    return reads, truth
+
+
+class TestCoreRepeatedInTheFlank3p:
+    """Mirror of ``TestCoreThatOccursTwice`` on the 3' side."""
+
+    FLANK = CORE3 + "TTCA" + CORE3
+
+    def test_flank_is_kept_whole(self):
+        pools = [_reads(1000, c3=self.FLANK, seed=s) for s in range(2)]
+        assert _shared_library_constant(self.FLANK, pools, is_prefix=False) == (
+            self.FLANK,
+            [0, 0],
+        )
+        report = compute_library_report(
+            {r: _reads(1500, c3=self.FLANK, seed=r) for r in range(2)}, read_source="R1"
+        )
+        assert report.primer_3p == self.FLANK
+        assert report.n_length_mode == N
+
+
+def test_repeated_core_with_errors_does_not_anchor_on_either_copy():
+    """Reads with an error in one copy have a single copy, split between the two
+    places: they must not decide where the other reads are anchored."""
+    flank = CORE5 + "TTCA" + CORE5
+    rng = random.Random(3)
+    pool = []
+    for read in _reads(1000, c5=flank, seed=3):
+        if rng.random() < 0.2:
+            i = rng.choice([0, len(CORE5) + 4])  # first base of either copy
+            read = read[:i] + ("A" if read[i] != "A" else "C") + read[i + 1 :]
+        pool.append(read)
+    assert _shared_library_constant(flank, [pool], is_prefix=True) == (flank, [0])
+
+
+class TestCopyInsideTheRandomRegionOfLaterRounds:
+    """A diverse first round, then rounds where most reads carry the core in N."""
+
+    def _rounds(self, **copy):
+        rounds = {0: _library(1500, seed=0)[0]}
+        for r in (1, 2):
+            rounds[r] = _library(1500, seed=r, with_copy=0.6, **copy)[0]
+        return rounds
+
+    def test_5p_constant_and_boundary_do_not_move(self):
+        pools = list(self._rounds(n_start=CORE5).values())
+        assert _shared_library_constant(C5, pools, is_prefix=True) == (C5, [0, 0, 0])
+        report = compute_library_report(self._rounds(n_start=CORE5), read_source="R1")
+        assert report.primer_5p == C5
+        assert report.n_length_mode == N
+
+    def test_3p_constant_and_boundary_do_not_move(self):
+        pools = list(self._rounds(n_end=CORE3).values())
+        assert _shared_library_constant(C3, pools, is_prefix=False) == (C3, [0, 0, 0])
+        report = compute_library_report(self._rounds(n_end=CORE3), read_source="R1")
+        assert report.primer_3p == C3
+        assert report.n_length_mode == N
+
+    def test_together_with_run_specific_tags(self):
+        tags = (("ACTGAG", "GCATG"), ("TAAGCG", "CTGTC"), ("GTCAATG", "GTTAGATG"))
+        rounds = {
+            r: _library(
+                1500,
+                seed=r,
+                tag5=t5,
+                tag3=t3,
+                n_start=CORE5,
+                n_end=CORE3,
+                with_copy=0.0 if r == 0 else 0.6,
+            )[0]
+            for r, (t5, t3) in enumerate(tags)
+        }
+        report = compute_library_report(rounds, read_source="R1")
+        assert (report.primer_5p, report.primer_3p) == ("G" + C5, C3)
+        assert report.n_length_mode == N
+
+
+@pytest.mark.skipif(shutil.which("cutadapt") is None, reason="cutadapt not on PATH")
+def test_every_extracted_read_is_its_true_random_region(tmp_path):
+    """End to end: tags per run and core copies inside N of later rounds, then
+    ``extract`` with the inferred constants. Every emitted sequence must be the
+    read's own random region, and nearly every read must be emitted."""
+    from selexprep.extract.runner import run_extract
+
+    tags = (("ACTGAG", "GCATG"), ("TAAGCG", "CTGTC"), ("GTCAATG", "GTTAGATG"))
+    rounds, truth, round_map, fastqs = {}, {}, {}, []
+    for r, (t5, t3) in enumerate(tags):
+        reads, bodies = _library(
+            1500,
+            seed=r,
+            tag5=t5,
+            tag3=t3,
+            n_start=CORE5,
+            n_end=CORE3,
+            with_copy=0.0 if r == 0 else 0.6,
+        )
+        rounds[r] = reads
+        fq = tmp_path / f"run{r}.fastq"
+        with fq.open("w") as fh:
+            for i, (read, body) in enumerate(zip(reads, bodies, strict=True)):
+                fh.write(f"@r{r}_{i}\n{read}\n+\n{'I' * len(read)}\n")
+                truth[f"r{r}_{i}"] = body
+        round_map[fq.name] = r
+        fastqs.append(fq)
+
+    report = compute_library_report(rounds, read_source="R1")
+    result = run_extract(report, fastqs, tmp_path / "out", round_map=round_map)
+    assert not result.skipped
+    assert result.low_yield_inputs == []
+
+    emitted = {}
+    for path in sorted((tmp_path / "out").glob("round_*/extracted.fasta.gz")):
+        with gzip.open(path, "rt") as fh:
+            lines = fh.read().split()
+        emitted.update(zip((h[1:] for h in lines[0::2]), lines[1::2], strict=True))
+    wrong = [name for name, seq in emitted.items() if seq != truth[name]]
+    assert wrong == []
+    assert len(emitted) >= 0.99 * len(truth)
