@@ -119,3 +119,30 @@ def test_the_inner_core_is_never_trimmed():
     pools = [_reads(1000, c5="AAAA" + core, seed=0), _reads(1000, c5="CCCC" + core, seed=1)]
     constant, _ = _shared_library_constant("AAAA" + core, pools, is_prefix=True)
     assert constant == core
+
+
+class TestCoreThatOccursTwice:
+    """A flank whose inner 12 nt also occur further out (found in code review)."""
+
+    CORE = C5[-CONSTANT_CORE_LEN:]
+    FLANK = CORE + "TTCA" + CORE
+
+    def test_reads_are_anchored_on_the_copy_next_to_the_random_region(self):
+        pools = [_reads(1000, c5=self.FLANK, seed=s) for s in range(2)]
+        assert _shared_library_constant(self.FLANK, pools, is_prefix=True) == (
+            self.FLANK,
+            [0, 0],
+        )
+        report = compute_library_report(
+            {r: _reads(1500, c5=self.FLANK, seed=r) for r in range(2)}, read_source="R1"
+        )
+        assert report.primer_5p == self.FLANK
+        assert report.n_length_mode == N
+
+    def test_a_constant_that_fits_the_flank_twice_is_not_used(self):
+        """Trimming to the bare core would let extract cut at the outer copy."""
+        pools = [_reads(1000, c5=self.FLANK, seed=0), _reads(1000, c5="CCCC" + self.CORE, seed=1)]
+        assert _shared_library_constant(self.FLANK, pools, is_prefix=True) == (
+            self.FLANK,
+            [0, 0],
+        )

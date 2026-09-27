@@ -47,10 +47,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   carries the constant. The same rule drops a heterogeneous base ahead of the
   construct when there is only one round (PRJNA1395820). Found by the
   benchmark's per-run extraction yield; it changes the Tier-1 calls for
-  PRJNA809588, PRJEB62495 and PRJNA1395820.
+  PRJNA809588, PRJEB62495 and PRJNA1395820. Reads are anchored on the core
+  copy nearest the random region, and a trimmed constant that would occur
+  twice in the flank is not used (found in code review: anchoring on an outer
+  copy made `extract` cut there; no Tier-1 flank contains its core twice).
 - **`extract` warns when an input's yield collapses.** An input FASTQ keeping
-  less than half the yield of the best input is named in a warning with its
-  counts, instead of passing silently.
+  less than half of its reads, or less than half the yield of the best input,
+  is named in a warning with its counts, instead of passing silently.
 
 ### Changed
 

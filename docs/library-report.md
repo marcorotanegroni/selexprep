@@ -67,8 +67,8 @@ When `status == UNABLE_TO_INFER` or `extraction_mode == UNABLE_TO_EXTRACT`,
 downstream `extract` refuses without an explicit `--override-primer-*` or a
 hand-edited report — `selexprep` never silently miscalls.
 
-`extract` also warns when an input FASTQ keeps less than half the yield of the
-best input (`trim_reports.json` holds every input's reads in and out): the
+`extract` also warns when an input FASTQ keeps less than half of its reads, or
+less than half the yield of the best input (`trim_reports.json` holds every input's reads in and out): the
 primers fit that run's reads badly, for example because it carries a different
 construct.
 

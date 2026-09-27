@@ -388,6 +388,13 @@ def _shared_library_constant(
     for a 3' flank. ``None`` marks a round whose reads do not carry the core
     often enough to say. If the earliest round itself does not anchor, the
     flank comes back unchanged at offset 0 in every round.
+
+    Each read is anchored on the core copy nearest the random region: a copy
+    further out is sequence outside the constant, and anchoring on it would
+    place the constant there. The flank also comes back unchanged when the
+    trimmed constant occurs more than once in it, because a string that fits
+    the flank at two places does not tell ``extract`` where the random region
+    starts.
     """
     core_len = min(CONSTANT_CORE_LEN, len(flank))
     core = flank[len(flank) - core_len :] if is_prefix else flank[:core_len]
@@ -406,13 +413,13 @@ def _shared_library_constant(
         anchored = 0
         for seq in pool:
             if is_prefix:
-                start = seq.find(core, 0, window)
+                start = seq.rfind(core, 0, window)
                 if start < 0:
                     continue
                 positions[start] += 1
                 segment = seq[max(0, start - width) : start][::-1]
             else:
-                start = seq.rfind(core, max(0, len(seq) - window))
+                start = seq.find(core, max(0, len(seq) - window))
                 if start < 0:
                     continue
                 end = start + core_len
@@ -445,7 +452,23 @@ def _shared_library_constant(
         kept = shared
 
     constant = flank[len(flank) - core_len - kept :] if is_prefix else flank[: core_len + kept]
+    if _occurrences(flank, constant) > 1:
+        logger.info(
+            "Keeping flank %r whole: its shared part %r occurs in it more than once",
+            flank,
+            constant,
+        )
+        return flank, [0] * len(pools)
     return constant, [None if pos is None else pos - kept for pos in core_positions]
+
+
+def _occurrences(text: str, pattern: str) -> int:
+    """Number of (possibly overlapping) occurrences of ``pattern`` in ``text``."""
+    count, start = 0, text.find(pattern)
+    while start >= 0:
+        count += 1
+        start = text.find(pattern, start + 1)
+    return count
 
 
 # ---------------------------------------------------------------------------
