@@ -39,9 +39,18 @@ def test_healthy_spread_is_not_reported():
 
 
 def test_threshold_is_relative_to_the_best_input():
-    best = _report("BEST", 1000, 800)
-    at_ratio = _report("EDGE", 1000, int(800 * LOW_YIELD_RATIO))
+    best = _report("BEST", 1000, 1000)
+    at_ratio = _report("EDGE", 1000, int(1000 * LOW_YIELD_RATIO))
     assert _low_yield_inputs([best, at_ratio]) == []
+
+
+def test_collapse_shared_by_every_input_is_reported():
+    """The relative test alone would pass inputs that all keep 5%."""
+    reports = [_report("A", 1000, 50), _report("B", 1000, 48)]
+    assert [line.split(":")[0] for line in _low_yield_inputs(reports)] == [
+        "A.fastq.gz",
+        "B.fastq.gz",
+    ]
 
 
 def test_empty_inputs_are_ignored():

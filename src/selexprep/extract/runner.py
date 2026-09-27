@@ -61,8 +61,11 @@ _STRAND_REPORT_SAMPLE_PER_ROUND = 10_000
 # a run whose reads they do not fit loses most of its reads while cutadapt and
 # ``extract`` both finish normally; PRJNA809588 kept under 1% of seven of its
 # ten runs that way. Half the best yield is far below the spread between
-# healthy runs of the same deposit (78-99% on the Tier-1 recovery arm).
+# healthy runs of the same deposit (63-99% on the Tier-1 recovery arm).
 LOW_YIELD_RATIO = 0.5
+# An input that keeps less than this fraction of its own reads is reported too,
+# so a collapse shared by every input is not hidden by the relative test.
+LOW_YIELD_FLOOR = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +84,7 @@ class ExtractResult:
     extract_diff_path: Path | None = None
     skipped_reason: str | None = None
     trim_reports: list[trim_module.TrimReport] = field(default_factory=list)
-    # Inputs whose yield collapsed relative to the best input (see LOW_YIELD_RATIO).
+    # Inputs whose yield collapsed (see LOW_YIELD_FLOOR and LOW_YIELD_RATIO).
     low_yield_inputs: list[str] = field(default_factory=list)
 
     @property
@@ -95,7 +98,7 @@ class ExtractResult:
 
 
 def _low_yield_inputs(reports: list[trim_module.TrimReport]) -> list[str]:
-    """Describe every input that kept under ``LOW_YIELD_RATIO`` of the best yield."""
+    """Describe every input below ``LOW_YIELD_FLOOR`` or ``LOW_YIELD_RATIO`` x best yield."""
     fractions = {id(r): r.n_out / r.n_in for r in reports if r.n_in > 0}
     if not fractions:
         return []
@@ -104,7 +107,8 @@ def _low_yield_inputs(reports: list[trim_module.TrimReport]) -> list[str]:
         f"{r.input_name}: kept {r.n_out:,} of {r.n_in:,} reads "
         f"({fractions[id(r)]:.1%}; best input {best:.1%})"
         for r in reports
-        if id(r) in fractions and fractions[id(r)] < LOW_YIELD_RATIO * best
+        if id(r) in fractions
+        and (fractions[id(r)] < LOW_YIELD_FLOOR or fractions[id(r)] < LOW_YIELD_RATIO * best)
     ]
 
 
@@ -719,9 +723,10 @@ def run_extract(
     low_yield = _low_yield_inputs(trim_reports)
     if low_yield:
         logger.warning(
-            "extract: %d input(s) kept far fewer reads than the best one; the "
-            "primers may not fit their reads (run-specific sequence outside the "
-            "library constant, or a different construct): %s",
+            "extract: %d input(s) kept under half of their reads or under half "
+            "the best input's yield; the primers may not fit their reads "
+            "(run-specific sequence outside the library constant, or a "
+            "different construct): %s",
             len(low_yield),
             "; ".join(low_yield),
         )
