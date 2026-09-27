@@ -1,0 +1,11 @@
+accession	documentation_source	trajectory	rounds_documented	chosen_rounds	chosen_runs	step6_documented	reason
+PRJEB14550	ENA sample_alias (FLI1_FL_1_KX_..., HOXB13_FL_3_KX_...)					pending	a number sits in the alias where the lab's naming puts the cycle, but it is not labelled as a cycle; the publication decides
+PRJEB25907	ENA sample_alias (BOLL_TGTTCG40NGAC_EMJ_4, ...)					pending	trailing alias number read as the cycle only by naming convention; the publication decides
+PRJEB28303	ENA sample_alias (Diff_bind..._P4_..., ..._P11_...)		P4,P11			fail	two cell-SELEX pools (passages 4 and 11) compared for differential binding: two rounds
+PRJEB28411	curated round map (benchmarks/round_maps)		4,11			fail	two rounds
+PRJEB51212	ArrayExpress E-MTAB-11484 SDRF: selex cycle, construct	ZFC1 of Sall4 (with the cycle-0 input library)	0,1,3,6	0,1,6	ERR8972346,ERR8972349,ERR8972373	pass	target trajectories ZFC1, ZFC2, ZFC4 each 0,1,3,6 with the shared cycle-0 input (RV01-03); tie -> lowest unshared accession (RV04); replicates -> lowest accession
+PRJEB51473	ArrayExpress E-MTAB-11519 SDRF: selex cycle, construct	ZFC4_WT (with the cycle-0 input library)	0,1,3,6	0,1,6	ERR9130374,ERR9130380,ERR9130404	pass	target trajectories ZFC4_WT, R900W, G921D each 0,1,3,6 with the shared cycle-0 input (RV01-03); the no-protein trajectory is a control (amendment rule 2); tie -> lowest unshared accession (RV07)
+PRJEB61115	ENA sample_alias (..._Cycle1-3)					fail	only the bead-only control has three cycles (amendment rule 2); target trajectories have one cycle each
+PRJEB66722	ENA sample_alias (CAP-SELEX, one cycle per sample)					fail	one round per trajectory
+PRJNA672779	ENA sample_alias (round1_*, round2_*, MLPD_*)		1,2			fail	particle display rounds 1 and 2; the MLPD_* runs are a separate designed library: at most two rounds
+PRJNA741127	GEO GSE178811 sample characteristics: round, protein	Fkh1 test series (R0_test, Fkh1_R1_test, Fkh1_R2_test)	0,1,2	0,1,2	SRR14903906,SRR14903907,SRR14903908	pass	target trajectories test/Fkh1, Fkh1, Fkh2 each rounds 0,1,2 (round 0 = in vitro library, no protein); tie -> lowest unshared accession; Hcm1/Fhl1 runs are 39 nt, not compatible with N16

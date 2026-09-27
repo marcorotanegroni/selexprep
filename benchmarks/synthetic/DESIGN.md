@@ -339,4 +339,40 @@ any change they led to, are reported in the supplement as development.
 
 ## Amendments
 
-None yet.
+### Amendment 1 — 2026-09-27, before any read of a candidate donor was examined
+
+**What.** The trajectory rule (step 6 of the donor screen, and "Simulated
+libraries") is made precise:
+
+1. **Round documentation.** A run's round is taken from an explicit round or
+   cycle label in the archive records (ENA titles, aliases and library names;
+   the ArrayExpress SDRF; GEO sample characteristics) or from the depositor's
+   publication. `selexprep`'s round parser is only a first pass.
+2. **Only trajectories selected against a target.** No-target controls
+   (bead-only, no protein) are not donor trajectories.
+3. **Input library.** A documented input library (round or cycle 0, no target)
+   is round 0 of every trajectory it seeded.
+4. **Replicates.** Of several runs of one round, the lowest run accession.
+5. **Ties** in the number of rounds go to the lowest run accession among the
+   runs not shared with another trajectory.
+
+**Why.** Running the metadata screen showed that `selexprep`'s parser reads
+sample identifiers as rounds (PRJEB51212 and PRJEB51473: "RV01"…"RV39" became
+rounds 1–39, while ArrayExpress documents cycles 0, 1, 3 and 6 with three
+replicates each) and misses round labels in sample aliases, SDRFs and GEO
+records; and that "the trajectory with the most rounds" picked no-target
+controls (PRJEB61115, PRJEB51473), whose weak enrichment would make the test
+easier than intended.
+
+**Disclosure.** Written after seeing the candidates' metadata, before any of
+their reads was examined.
+
+**Applied** to all ten deposits that pass the length screen; the review is in
+`trajectory_documentation.tsv`, and `screen_donors.py` regenerates
+`donor_screening.tsv` from it. Three candidates go on to the read check
+(PRJEB51212, PRJEB51473, PRJNA741127). Two are pending the publication
+(PRJEB14550, PRJEB25907), whose cycle numbers are known only from the naming of
+the samples. Rule 1 also applies to the current donors: PRJEB49150's rounds were
+inferred from the trailing digit of its sample titles, so it is pending the same
+check; the other four current donors carry explicit round labels and are
+unchanged.
