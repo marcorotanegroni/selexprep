@@ -1,0 +1,16 @@
+donor	set	n_stated	chemistry	trajectory	role	round	run_accession	sample_title	ena_read_count	round_source	retained_reads	excluded_fraction	sample_sha256	notes
+PRJNA360902	dev	20	DNA	HT-SELEX_Ciona_robusta_GATA4_5_6	earliest	1	SRR5188404	HT-SELEX_Ciona_robusta_GATA4_5_6_rd1	10356	sample title (selexprep parser)				
+PRJNA360902	dev	20	DNA	HT-SELEX_Ciona_robusta_GATA4_5_6	middle	4	SRR5188401	HT-SELEX_Ciona_robusta_GATA4_5_6_rd4	47359	sample title (selexprep parser)				
+PRJNA360902	dev	20	DNA	HT-SELEX_Ciona_robusta_GATA4_5_6	latest	7	SRR5188398	HT-SELEX_Ciona_robusta_GATA4_5_6_rd7	739225	sample title (selexprep parser)				
+PRJEB22637	dev	50	2'-F-Py RNA	cell-SELEX	earliest	0	ERR2121976	Starting library	1599784	sample title 'Starting library' (naive pool)				unassigned by the parser; round 0 from its title
+PRJEB22637	dev	50	2'-F-Py RNA	cell-SELEX	middle	7	ERR2121983	Round 7	639457	sample title (selexprep parser)				
+PRJEB22637	dev	50	2'-F-Py RNA	cell-SELEX	latest	15	ERR2121991	Round 15	795563	sample title (selexprep parser)				
+PRJEB70964	test	35	2'-F-Py RNA	SELEX S1	earliest	1	ERR12353593	SELEX S1 Round 01	9502133	sample title (selexprep parser)				
+PRJEB70964	test	35	2'-F-Py RNA	SELEX S1	middle	8	ERR12353599	SELEX S1 Round 08	9072306	sample title (selexprep parser)				
+PRJEB70964	test	35	2'-F-Py RNA	SELEX S1	latest	15	ERR12353606	SELEX S1 Round 15	5960615	sample title (selexprep parser)				
+PRJEB47428	test	40	RNA	ELAVL1_GC40NCACTTC_AAU_C	earliest	1	ERR7416988	ELAVL1_GC40NCACTTC_AAU_C_Cycle1	381785	sample title (selexprep parser)				
+PRJEB47428	test	40	RNA	ELAVL1_GC40NCACTTC_AAU_C	middle	2	ERR7416989	ELAVL1_GC40NCACTTC_AAU_C_Cycle2	307156	sample title (selexprep parser)				
+PRJEB47428	test	40	RNA	ELAVL1_GC40NCACTTC_AAU_C	latest	4	ERR7416991	ELAVL1_GC40NCACTTC_AAU_C_Cycle4	185896	sample title (selexprep parser)				
+PRJEB49150	test	40	DNA	NACC1_CC40NTGAGTAYWCA	earliest	1	ERR8016768	NACC1_CC40NTGAGTAYWCA1	57172	curated round map				
+PRJEB49150	test	40	DNA	NACC1_CC40NTGAGTAYWCA	middle	2	ERR8016767	NACC1_CC40NTGAGTAYWCA2	158685	curated round map				
+PRJEB49150	test	40	DNA	NACC1_CC40NTGAGTAYWCA	latest	3	ERR8016766	NACC1_CC40NTGAGTAYWCA3	447391	curated round map				
