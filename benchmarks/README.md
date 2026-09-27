@@ -49,7 +49,10 @@ result is measured on the same deposits that revealed the defect, so it is
 in-sample: the rule and its constants were committed before this benchmark was
 rerun and were not tuned afterwards, but they were designed with these deposits
 in view. Evidence that the rule generalises has to come from data that did not
-motivate it.
+motivate it. Two later changes to how reads are anchored on the constant's core
+(a106c3d and b8ded35, found in code review, not on these deposits) were rerun on
+the full benchmark: calls, metrics and per-run yields are identical to the
+post-fix run.
 
 *v0.4.1 (pre-specified):* on 7 recovery deposits selexprep reproduced both
 paper-reported primer strings exactly on 4 and partially on 3; in every one of
