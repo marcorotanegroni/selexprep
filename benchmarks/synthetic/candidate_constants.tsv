@@ -7,5 +7,5 @@ PRJEB51212	5p			no	not documented in the archive (E-MTAB-11484 protocol gives no
 PRJEB51212	3p			no	not documented in the archive (E-MTAB-11484 protocol gives no oligonucleotide sequence)	unknown: adapters only on this side
 PRJEB51473	5p			no	not documented in the archive (E-MTAB-11519 protocol gives no oligonucleotide sequence)	unknown: adapters only on this side
 PRJEB51473	3p			no	not documented in the archive (E-MTAB-11519 protocol gives no oligonucleotide sequence)	unknown: adapters only on this side
-PRJNA741127	5p			no	not documented in the archive (GEO GSE178811 records no oligonucleotide sequence)	unknown: adapters only on this side
-PRJNA741127	3p			no	not documented in the archive (GEO GSE178811 records no oligonucleotide sequence)	unknown: adapters only on this side
+PRJNA741127	5p	CGC	3	no	GEO GSE178811 data processing (test samples): cutadapt -g ^CGC -a CCTGGAATTCTCGGGTGCCAAGGAACTCCAG$ -O 10 -n 2 --discard-untrimmed -m 16 -M 16	below 6 nt: background too close to the 5% trigger; the reads are the depositor's trimmed 16-nt region
+PRJNA741127	3p	CCTGGAATTCTCGGGTGCCAAGGAACTCCAG	31	yes	GEO GSE178811 data processing (test samples): cutadapt -g ^CGC -a CCTGGAATTCTCGGGTGCCAAGGAACTCCAG$ -O 10 -n 2 --discard-untrimmed -m 16 -M 16	the chosen runs are the test series (R0_test, Fkh1_R1_test, Fkh1_R2_test); corrected after the read job, which had it as unknown, and probed in a rerun for this donor

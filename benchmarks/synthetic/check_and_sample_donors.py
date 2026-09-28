@@ -222,7 +222,9 @@ def documented_constants() -> dict[str, dict[str, tuple[str, int]]]:
             if not r["fragment"]:
                 continue
             fragment = r["fragment"].upper()
-            out[r["accession"]].setdefault(r["side"], (fragment, len(fragment)))
+            # Probed from 8 nt like any constant; a shorter documented fragment
+            # from its own length (down to 6 nt, see RESIDUE_K_MIN).
+            out[r["accession"]].setdefault(r["side"], (fragment, min(len(fragment), RESIDUE_K)))
     return dict(out)
 
 

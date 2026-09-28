@@ -105,7 +105,7 @@ def test_constants_are_loaded_per_side(mod):
     assert loaded["PRJEB25907"]["5p"] == ("TCCCAA", 6)
     # Documented but too short to probe: loaded, and recorded as such.
     assert loaded["PRJEB25907"]["3p"] == ("GCGC", 4)
-    for accession in ("PRJEB51212", "PRJEB51473", "PRJNA741127"):
+    for accession in ("PRJEB51212", "PRJEB51473"):
         assert loaded.get(accession, {}) == {}
     five, kmin = loaded["PRJEB70964"]["5p"]
     assert kmin == mod.RESIDUE_K and len(five) > mod.RESIDUE_K
@@ -192,3 +192,8 @@ def test_a_five_prime_probe_is_described_by_the_end_it_matches(mod):
     probes = mod.EdgeProbes("start")
     probes.add("constant_5p", "GGCAGGTTCTAAGGCTAGCA")
     assert probes.described == ["constant_5p=...GGCTAGCA(>=8nt)"]
+
+
+def test_a_long_documented_constant_is_probed_from_eight_nucleotides(mod):
+    loaded = mod.documented_constants()
+    assert loaded["PRJNA741127"]["3p"] == ("CCTGGAATTCTCGGGTGCCAAGGAACTCCAG", mod.RESIDUE_K)
