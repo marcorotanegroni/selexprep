@@ -194,10 +194,16 @@ def manifest(which: str) -> dict:
             ["git", *args], cwd=REPO, capture_output=True, text=True, check=False
         ).stdout.strip()
 
+    # The tracked files that differ from the commit, so a dirty tree says what
+    # differs rather than only that something does.
+    modified = [
+        line[3:] for line in git("status", "--porcelain", "--untracked-files=no").splitlines()
+    ]
     return {
         "set": which,
         "commit": git("rev-parse", "HEAD"),
-        "dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
+        "dirty": bool(modified),
+        "modified": modified,
         "python": sys.version.split()[0],
     }
 
