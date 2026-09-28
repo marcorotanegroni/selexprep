@@ -49,6 +49,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
   removed: in PRJEB51212, PRJEB51473 and PRJEB38961 those are sample numbers,
   and the attributes give cycles 0, 1, 3 and 6. An attribute outranks a title
   that reads as another round, and the conflict is named in the parser notes.
+  Every round attribute is weighed before deciding, so the result does not
+  depend on the order the archive lists them: unambiguous attributes that
+  disagree leave the run unassigned, and `pcr cycle` never overrides a round
+  that another attribute or a text field gives.
   The attributes are kept in `fetch_metadata.json`; if the sample records
   cannot be fetched, `fetch` warns and parses the text fields as before.
   Across the 25,435 runs of the 127 INSDC deposits in the catalogue: 117 runs
