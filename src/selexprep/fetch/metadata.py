@@ -233,58 +233,81 @@ def parse_round(
         "abstract_excerpt": abstract[:500],
     }
 
-    # L1 — structured sample_attributes. They outrank the text fields; a text
-    # field that reads as a different round is named in the notes, not
-    # silently dropped.
+    target_hint = _extract_target_hint(sample_title)
+
+    # L1 — structured sample_attributes. Every round attribute is collected
+    # first, so the result does not depend on the order the archive lists them.
+    # Unambiguous keys (``selex cycle``, ``round`` ...) outrank the text fields;
+    # when they disagree the run is left unassigned. An ambiguous key (``pcr
+    # cycle``) never overrides a round the text fields give.
+    strong: list[tuple[str, int]] = []
+    weak: list[tuple[str, int]] = []
     for key, val in sample_attributes.items():
         key_confidence = _round_key_confidence(key)
-        if key_confidence is not None:
-            stripped = str(val).strip()
-            m = _ATTR_ROUND_VALUE.fullmatch(stripped)
-            if m:
-                round_num = int(m.group(1))
-                notes = f"structured attribute key='{key}' value='{stripped}'"
-                if key_confidence != "HIGH":
-                    notes += "; the key can also mean amplification cycles, read as the round"
-                for field_name, text in [
-                    ("sample_title", sample_title),
-                    ("library_name", library_name),
-                    ("experiment_title", experiment_title),
-                    ("design_description", design_description),
-                ]:
-                    other = _match_text_field(srr, field_name, text)
-                    if other is not None and other.round_candidates != [round_num]:
-                        notes += (
-                            f"; {field_name} reads as round {other.round_candidates} "
-                            f"('{text[:60]}'), the attribute is kept"
-                        )
-                return RoundRecord(
-                    srr=srr,
-                    round_number=round_num,
-                    confidence=key_confidence,
-                    source_field="sample_attributes",
-                    matched_pattern="structured_attr",
-                    round_candidates=[round_num],
-                    parser_notes=notes,
-                    target_hint=_extract_target_hint(sample_title),
+        m = _ATTR_ROUND_VALUE.fullmatch(str(val).strip()) if key_confidence else None
+        if m:
+            (strong if key_confidence == "HIGH" else weak).append((key, int(m.group(1))))
+
+    text_record = _text_round(
+        srr,
+        sample_title=sample_title,
+        library_name=library_name,
+        experiment_title=experiment_title,
+        design_description=design_description,
+    )
+    strong_rounds = list(dict.fromkeys(n for _, n in strong))
+    weak_rounds = list(dict.fromkeys(n for _, n in weak))
+    listed = "; ".join(f"{k}='{n}'" for k, n in strong + weak)
+
+    if len(strong_rounds) > 1:
+        return RoundRecord(
+            srr=srr,
+            round_number=strong_rounds[0],
+            confidence="MEDIUM",
+            source_field="sample_attributes",
+            matched_pattern="structured_attr",
+            round_candidates=strong_rounds,
+            parser_notes=f"conflicting round attributes {strong_rounds}: {listed}",
+            target_hint=target_hint,
+        )
+    if strong_rounds or (weak_rounds and text_record is None):
+        rounds = strong_rounds or weak_rounds
+        notes = f"structured attribute {listed}"
+        if not strong_rounds:
+            notes += "; the key can also mean amplification cycles, read as the round"
+        elif weak_rounds and weak_rounds != rounds:
+            notes += f"; ambiguous attribute reads as round {weak_rounds}, not used"
+        for field_name, text in [
+            ("sample_title", sample_title),
+            ("library_name", library_name),
+            ("experiment_title", experiment_title),
+            ("design_description", design_description),
+        ]:
+            other = _match_text_field(srr, field_name, text)
+            if other is not None and other.round_candidates != rounds[:1]:
+                notes += (
+                    f"; {field_name} reads as round {other.round_candidates} "
+                    f"('{text[:60]}'), the attribute is kept"
                 )
+        return RoundRecord(
+            srr=srr,
+            round_number=rounds[0],
+            confidence="HIGH" if strong_rounds else "MEDIUM",
+            source_field="sample_attributes",
+            matched_pattern="structured_attr",
+            round_candidates=rounds,
+            parser_notes=notes,
+            target_hint=target_hint,
+        )
 
-    # L2 — sample_title
-    result = _match_text_field(srr, "sample_title", sample_title)
-    if result is not None:
-        result.target_hint = _extract_target_hint(sample_title)
-        return result
-
-    # L3 — library_name, experiment_title, design_description
-    for field_name, text in [
-        ("library_name", library_name),
-        ("experiment_title", experiment_title),
-        ("design_description", design_description),
-    ]:
-        result = _match_text_field(srr, field_name, text, base_confidence="MEDIUM")
-        if result is not None:
-            result.target_hint = _extract_target_hint(sample_title)
-            return result
+    # L2 / L3 — the text fields
+    if text_record is not None:
+        if weak_rounds and weak_rounds != [text_record.round_number]:
+            text_record.parser_notes += (
+                f"; ambiguous attribute {listed} not used over the text field"
+            )
+        text_record.target_hint = target_hint
+        return text_record
 
     # L4 — abstract count (informative only, NEVER assigns round)
     n_rounds_abstract = _extract_round_count_from_abstract(abstract)
@@ -309,6 +332,29 @@ def parse_round(
     if manual_review_dir is not None:
         _write_manual_review_dump(record, all_metadata, manual_review_dir)
     return record
+
+
+def _text_round(
+    srr: str,
+    *,
+    sample_title: str,
+    library_name: str,
+    experiment_title: str,
+    design_description: str,
+) -> RoundRecord | None:
+    """L2 (sample_title, HIGH) then L3 (the other text fields, MEDIUM)."""
+    result = _match_text_field(srr, "sample_title", sample_title)
+    if result is not None:
+        return result
+    for field_name, text in [
+        ("library_name", library_name),
+        ("experiment_title", experiment_title),
+        ("design_description", design_description),
+    ]:
+        result = _match_text_field(srr, field_name, text, base_confidence="MEDIUM")
+        if result is not None:
+            return result
+    return None
 
 
 # ---------------------------------------------------------------------------

@@ -447,3 +447,47 @@ def test_summarise_bioproject_clean_when_all_assigned() -> None:
     ]
     summary = summarise_bioproject("PRJ1", records)
     assert summary.inconsistent_annotation is False
+
+
+# ----- L1 precedence: every round attribute is weighed, not the first one -----
+
+
+@pytest.mark.parametrize(
+    "attrs",
+    [
+        {"pcr cycle": "25", "selex cycle": "3"},
+        {"selex cycle": "3", "pcr cycle": "25"},
+    ],
+)
+def test_an_unambiguous_attribute_wins_whatever_the_order(attrs) -> None:
+    r = parse_round("SRR1", sample_attributes=attrs)
+    assert (r.round_number, r.confidence, r.round_candidates) == (3, "HIGH", [3])
+    assert "ambiguous attribute reads as round [25], not used" in r.parser_notes
+
+
+@pytest.mark.parametrize(
+    "attrs",
+    [{"round": "2", "selex cycle": "3"}, {"selex cycle": "3", "round": "2"}],
+)
+def test_disagreeing_unambiguous_attributes_leave_the_run_unassigned(attrs) -> None:
+    r = parse_round("SRR1", sample_attributes=attrs)
+    assert r.is_unassigned is True
+    assert sorted(r.round_candidates) == [2, 3]
+    assert "conflicting round attributes" in r.parser_notes
+
+
+def test_agreeing_unambiguous_attributes_are_one_round() -> None:
+    r = parse_round("SRR1", sample_attributes={"round": "3", "selex cycle": "Cycle3"})
+    assert (r.round_number, r.confidence, r.is_unassigned) == (3, "HIGH", False)
+
+
+def test_an_ambiguous_attribute_does_not_override_a_round_in_the_title() -> None:
+    r = parse_round("SRR1", sample_title="Round 3", sample_attributes={"pcr cycle": "25"})
+    assert (r.round_number, r.source_field) == (3, "sample_title")
+    assert "ambiguous attribute pcr cycle='25' not used" in r.parser_notes
+
+
+def test_an_ambiguous_attribute_agreeing_with_the_title_adds_no_note() -> None:
+    r = parse_round("SRR1", sample_title="Round 3", sample_attributes={"pcr cycle": "3"})
+    assert (r.round_number, r.source_field) == (3, "sample_title")
+    assert "not used" not in r.parser_notes
