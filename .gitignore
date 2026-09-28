@@ -93,3 +93,7 @@ _hpc_import*/
 
 # Manuscript working dir (Application Note) — local-only, not shipped
 paper/
+
+# Semi-synthetic benchmark: downloaded donor FASTQs and sampled pools stay on the HPC
+benchmarks/synthetic/fastq_cache/
+benchmarks/synthetic/pools/

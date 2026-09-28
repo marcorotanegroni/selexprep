@@ -1,0 +1,72 @@
+accession	n_random_text	reviewed_n	reason
+PRJDB19098			the curated field is empty
+PRJDB19137			the curated field is empty
+PRJDB19139			the curated field is empty
+PRJDB19140	3% doped library		no randomised length stated in the text
+PRJDB19141	8% doped library		no randomised length stated in the text
+PRJDB40016			the curated field is empty
+PRJDB40017			the curated field is empty
+PRJDB40584			the curated field is empty
+PRJDB9110			the curated field is empty
+PRJDB9111			the curated field is empty
+PRJEB111361			the curated field is empty
+PRJEB114397			the curated field is empty
+PRJEB14744	14, 20, 30 or 40 bases (varies by ligand design)		a range or several libraries: 14, 20, 30, 40
+PRJEB14923			the curated field is empty
+PRJEB20112			the curated field is empty
+PRJEB20652			the curated field is empty
+PRJEB22684	101 or 154 bp randomized regions		a range or several libraries: 101, 154
+PRJEB25690			the curated field is empty
+PRJEB29730			the curated field is empty
+PRJEB38961			the curated field is empty
+PRJEB62756	26-base variable region (DNA); 50-base variable region (RNA)		a range or several libraries: 26, 50
+PRJEB75580			the curated field is empty
+PRJEB76622	no randomized region — fragmented genomic DNA is used in place of a synthetic random library		no randomised region: the text states genomic or fragmented material
+PRJEB79572			the curated field is empty
+PRJEB88389	genomic fragments (~30–300 bp; ~90–130 nt ssRNA), generated with semi-randomized primers — not a synthetic random region		no randomised region: the text states genomic or fragmented material
+PRJEB98610			the curated field is empty
+PRJEB9897	12-mer random sequence (within a 71-bp dsDNA)	12	12-mer random sequence stated; 71 bp is the length of the molecule that carries it
+PRJNA1013112			the curated field is empty
+PRJNA1013173	N10 ... N40		a range or several libraries: 10, 40
+PRJNA1061493	two randomized regions: 40 nt (5′) and 10 nt (3′), flanking a 13 nt docking sequence		a range or several libraries: 3, 5, 10, 13, 40
+PRJNA1066781			the curated field is empty
+PRJNA1068659			the curated field is empty
+PRJNA1090029			the curated field is empty
+PRJNA1091700	PAM +1 to +6 positions	6	six randomised positions stated (PAM +1 to +6); the integers are coordinates of one region
+PRJNA1119072			the curated field is empty
+PRJNA1121376			the curated field is empty
+PRJNA1151868			the curated field is empty
+PRJNA1159731			the curated field is empty
+PRJNA1176306			the curated field is empty
+PRJNA1188194	22–34 nt (morphine motif library); N30 stem-loop (apixaban original library)		a range or several libraries: 22, 30, 34
+PRJNA1206477	11 nucleotides (first selection, library N11); 8 bases (second selection)		a range or several libraries: 8, 11
+PRJNA1212714			the curated field is empty
+PRJNA1221092	40-nucleotide randomized region N40 (Library 1); two 26-nucleotide regions N26 (Library 2)		a range or several libraries: 1, 2, 26, 40
+PRJNA1246497	40-nucleotide random region (N40 library); stem-enriched library (Stem2)	40	one randomised length stated (N40); the second library (Stem2) has no stated length
+PRJNA1308116			the curated field is empty
+PRJNA1346116			the curated field is empty
+PRJNA1390424			the curated field is empty
+PRJNA1406499			the curated field is empty
+PRJNA1467126	N19; N17; N13; N22		a range or several libraries: 13, 17, 19, 22
+PRJNA1481083			the curated field is empty
+PRJNA251822			the curated field is empty
+PRJNA385825			the curated field is empty
+PRJNA491840	4 central bases (67 substrates with central 4 base substitutions)	4	four randomised central bases stated; 67 is a number of substrates, not a length
+PRJNA547810	30-bp randomized region (SELEX-seq); randomized 4-mer regions per sub-library (Spec-seq)		a range or several libraries: 4, 30
+PRJNA564266			the curated field is empty
+PRJNA600132			the curated field is empty
+PRJNA615076			the curated field is empty
+PRJNA616423			the curated field is empty
+PRJNA633039			the curated field is empty
+PRJNA688234			the curated field is empty
+PRJNA728693			the curated field is empty
+PRJNA786208			the curated field is empty
+PRJNA809588	40–44 nucleotides		a range or several libraries: 40, 44
+PRJNA847751	N40 or N20		a range or several libraries: 20, 40
+PRJNA854957	45 bp coding region (15 codons)	45	45 bp randomised coding region stated; '15 codons' is the same region counted in codons
+PRJNA887057			the curated field is empty
+PRJNA887059			the curated field is empty
+PRJNA916521			the curated field is empty
+PRJNA932049			the curated field is empty
+PRJNA935703	N10 and N35 (two randomized regions, 45 nt total, in a 100-base library)		a range or several libraries: 10, 35, 45, 100
+PRJNA952942			the curated field is empty

@@ -376,3 +376,160 @@ the samples. Rule 1 also applies to the current donors: PRJEB49150's rounds were
 inferred from the trailing digit of its sample titles, so it is pending the same
 check; the other four current donors carry explicit round labels and are
 unchanged.
+
+**Publication check (same day, before any read was examined).** One standard for
+all three: the publication states that the deposited samples of a trajectory are
+its successive selection cycles, and the run suffixes are consistent with them.
+PRJEB49150 (Genes Dev 2022, doi:10.1101/gad.348993.121): the bound populations
+were sequenced after all three selection cycles, three runs per protein with
+suffixes 1–3 — it stays a test donor. PRJEB25907 (Genome Res 2020,
+doi:10.1101/gr.258848.119): three or four selection cycles, ligands from the
+cycles sequenced; aliases end in 1–4 — passes. PRJEB14550 (NAR 2018,
+doi:10.1093/nar/gky027): the paper analyses an early cycle of FLI1 (143,389 reads,
+the run suffixed 2) against the previous cycle, which is deposited with suffix 1;
+that supports suffixes 1 and 2 and not the suffix-4 run chosen as the latest
+round, so its trajectory is **inconclusive** — the reasoning is in amendment 2.
+Four candidates go on to the read check (`donor_screening.tsv`).
+
+### Amendment 2 — 2026-09-27, before any simulated library was generated
+
+An external review of the written design, its screen and its tables found eleven
+points that needed a decision: five in the design, four in the screen, and two
+in how the donor pools and the read job are described. None comes from a
+simulated result, because nothing has been generated yet. The body above is left
+as it was committed and each item below names the sentence it replaces.
+
+**Design.**
+
+1. **Recall denominators** (replaces the recall clauses of levels 2 and 3 of
+   "Evaluation"). The numerator must lie inside the denominator. Measured, not
+   assumed: with the linked non-anchored adapters `extract` uses, a read cut
+   inside the 3′ constant is still trimmed correctly from the residual fragment.
+   Of 200 reads cut at a uniform position inside a 20-nt 3′ constant (cutadapt
+   5.2), every read that kept at least 3 nt of it came out equal to its true
+   random region, none came out wrong, and only those left with 0–2 nt (below
+   cutadapt's 3-nt minimum overlap) were lost. Those reads are not
+   "recoverable" under the truth definition, so they would have entered the
+   numerator of `F_trunc30` and not the denominator, giving more than 100%.
+   Therefore: for each mode, recall = reads that are eligible **and** correct /
+   eligible reads; and the recovery of the random region overall is reported
+   separately over **all reads that contain it**, which is where a recovery
+   beyond the eligible set is credited. Precision stays over every emitted read.
+   A zero denominator is not applicable, with or without output.
+2. **The oracle with round-specific constants** (adds to "The oracle"). T4 is
+   the only configuration in which the true constants differ between rounds. The
+   oracle keeps one report per run — the constraint `extract` itself has — and
+   carries the longest constant that is true in **every** provided round, which
+   for T4 is the 3′ constant without the round-specific base. The review
+   suggested a per-round oracle instead; that would measure something else,
+   because the difference between the oracle and the inferred run would then mix
+   the cost of inference with a freedom `selexprep` does not have.
+3. **The dominant clone is a share, not a substitution rate** (replaces
+   configuration C in the table, and follows `configurations.tsv`, which already
+   said "makes up"). The level `p` is the clone's share of the round: its count
+   is set to exactly ⌈p·M⌉ by replacing a random subset of the reads that are
+   not already that read, so reads that already equal the clone count toward
+   `p`. When the round already holds more copies than that, a random subset of
+   the surplus copies is replaced by reads drawn, with the seed and with
+   replacement, from the round's reads that are not the clone. C100 leaves only
+   the clone. Recorded per run: the realised share and the
+   pool's own top-read share before the replacement.
+4. **The K spacer is fixed** (replaces "separated from the constant by 4 random
+   nt" in configuration K). The 4 nt are drawn once per cell and seed and are the
+   same in every read and round, so the outer region is a fixed 16 nt. A spacer
+   drawn per read would break the consensus 12 nt into the read, below
+   `DEFAULT_MIN_LEN` (14), and the case would never reach the repeated-core
+   anchoring it exists to exercise.
+5. **Indel coordinates** (adds to "Construction order"). An insertion is placed
+   before a sampled position and belongs to the block of the position it
+   precedes; a deletion removes the sampled position from its block. Both
+   conventions are arbitrary at the two boundaries of the random region, and
+   so is any placement inside a run of identical bases, where the same indel at
+   another position gives the same read. A read is therefore flagged in its
+   name, and reported separately, when any placement that gives the same read
+   (the indel shifted left and right as far as it stays equivalent, as in
+   variant normalisation) touches a boundary of the random region: a convention
+   must not move a headline number.
+
+**Screen.**
+
+6. **Residue probes of every length ≥ 8** (replaces "an exact fragment of at
+   least 8 nt … at the read edge" in step 4 with its intended meaning). A single
+   8-mer tested with `startswith` / `endswith` misses longer residues, which
+   shift it away from the edge: `N + AGATCGGAA` does not end with `AGATCGGA`.
+   Every length from 8 to the full probe is tested, anchored at the edge, the
+   longest match is recorded, and a read counts once per signal. Signals are
+   counted per probe family: TruSeq R1 and R2 share their first 13 nt, so they
+   are one signal; counted apart, one residue would be split between two labels
+   and each part could stay under the 5% trigger.
+7. **Which side was checked is recorded** (replaces the single `none` value).
+   Constants are loaded per side, so one known side is still used, and each side
+   is recorded with the probe and its length, as `unknown`, or as `too short`. A
+   documented fragment shorter than 8 nt is still probed when it is at least 6
+   nt, where the background expectation (1/4096 ≈ 0.02%) is fifty times below
+   the 5% trigger; below 6 nt it is recorded as too short. `ground_truth.tsv`
+   covers no candidate, so the candidates' documented fragments are recorded,
+   with their source, in `candidate_constants.tsv`.
+8. **The documented runs are re-verified** (adds to Amendment 1, rule 1).
+   Substituting the runs the documentation names skipped the checks the parser's
+   runs had passed. Each chosen run is now re-checked against the archive
+   (FASTQ present, mean length within N ± 2, at least 10,000 reads) and the
+   result is recorded. Step 7 is split: `step7_biosample` (no BioSample shared
+   with a development donor) and `step7_selection` (no shared selection or input
+   library), which a shared BioSample does not cover.
+9. **A stated length inside a longer molecule is a stated length** (replaces the
+   integer rule of step 1). Taking the single integer of the free-text field
+   excluded PRJEB9897 ("12-mer random sequence (within a 71-bp dsDNA)"), which
+   states N = 12: an interpretation error, not an absent N. All 71 deposits
+   excluded as "no single stated N" are re-reviewed by hand into
+   `n_random_review.tsv` (accession, text, reviewed N or none, reason) and the
+   screen reads that table. Metadata only; no read of theirs has been examined.
+
+**Consequences for the current candidates.**
+
+- **PRJEB14550 is inconclusive** on its trajectory, by the same standard applied
+  to the other two: the publication documents the FLI1 cycle of 143,389 reads
+  (the run suffixed 2) and the previous cycle, which supports suffixes 1 and 2,
+  not the suffix-4 run chosen as the latest round. Restricted to what is
+  documented it has two rounds, below step 6. Recorded, not used.
+- **Its reads were already examined**, which the Amendment 1 disclosure did not
+  say: PRJEB14550 is in the all-read check of commit f9d8bd7
+  (`../read_state_full.tsv`, ERR2270887: 186,388 reads, all 40 nt, no constant
+  at either edge). PRJEB28411, excluded at step 6 for having two rounds, is in
+  that check too. "Before any read of a candidate donor was examined" holds for
+  the four candidates still under evaluation; for PRJEB14550 and PRJEB28411 it
+  does not, and both are out for reasons that have nothing to do with their
+  reads.
+- **The re-review of item 9 changed no candidate.** Five deposits do state one
+  randomised length after all — PRJEB9897 (12), PRJNA491840 (4), PRJNA854957
+  (45), PRJNA1091700 (6), PRJNA1246497 (40) — and none of them has a single run
+  whose mean read length is within N ± 2, so all five stop at step 2. What
+  changes is the record: they are now excluded by measured read lengths instead
+  of by a misreading of their metadata.
+- A candidate that passes step 2 without a row in `trajectory_documentation.tsv`
+  is now **pending**, not decided by the parser, as Amendment 1 rule 1 requires.
+- The four remaining candidates all pass the re-verification of item 8
+  (PRJEB25907 mean 40.00; PRJEB51212 and PRJEB51473 mean 21.00; PRJNA741127
+  mean 16.00; every run above 170,000 reads). **PRJEB51212 and PRJEB51473 are
+  expected to fail step 3**: 21.00 nt for a 20-nt random region is one extra
+  base in every read. The all-read check measures it; if the modal length is 21
+  they fail step 3 and are not used. What the extra base is (a residue, or a
+  stated length that is wrong) is recorded from the evidence, not assumed.
+
+**Sampling replicates** (replaces "10,000 reads per round are sampled … (seeded)"
+in "Which donor reads are used"). One pool per run **and seed** — 1–3 for
+development, 101–103 for test — each with its own hash, so a seed varies the
+donor sampling as well as the simulated error, as "Replication" states. A single
+pool would have made the seeds vary only the error model.
+
+**Status of the read job's output.** `donor_checks.tsv` and the pools it writes
+are measurements and provisional material: admission (steps 3–5, the trajectory,
+the cap of six and the priority order) is a separate decision, recorded in
+`donor_screening.tsv` with its evidence. The job ranks nothing and excludes
+nothing by itself, and conservation, diversity and convergence stay descriptors.
+
+**Disclosure.** Every item of this amendment was written after reading the
+design, the screen's code and its tables, after the metadata of every candidate,
+and after the reads of PRJEB14550 and PRJEB28411 as recorded above; before any
+read of the four candidates still under evaluation and before any simulated
+library.
