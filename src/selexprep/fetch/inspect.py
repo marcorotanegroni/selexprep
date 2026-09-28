@@ -77,6 +77,71 @@ def query_ena_filereport(
     return rows
 
 
+ENA_BROWSER_XML_URL = "https://www.ebi.ac.uk/ena/browser/api/xml/"
+# Sample accessions per XML request; keeps the URL short.
+_SAMPLE_XML_BATCH = 50
+
+
+def query_ena_sample_attributes(
+    sample_accessions: list[str],
+    *,
+    timeout_s: int = 30,
+) -> dict[str, dict[str, str]]:
+    """Custom attributes (tag -> value) of each sample, from ENA's sample XML.
+
+    The filereport rows carry no sample attributes, yet that is where
+    ArrayExpress (``selex cycle`` from the SDRF) and GEO (``round`` from the
+    sample characteristics) put the round. ENA's own bookkeeping tags
+    (``ENA-FIRST-PUBLIC`` ...) are left out; a repeated tag keeps its first
+    value. Samples missing from the response are missing from the result.
+
+    Raises:
+        requests.HTTPError on non-2xx; xml.etree.ElementTree.ParseError on a
+        malformed response.
+    """
+    from xml.etree import ElementTree
+
+    def get(batch: list[str]) -> bytes | None:
+        url = ENA_BROWSER_XML_URL + ",".join(batch)
+        logger.info("query_ena_sample_attributes: GET %s", url)
+        response = requests.get(url, timeout=timeout_s)
+        if response.status_code == 404 and len(batch) == 1:
+            return None  # a sample ENA does not serve (some DDBJ SAMD records)
+        response.raise_for_status()
+        return response.content
+
+    accessions = sorted({a.strip() for a in sample_accessions if a and a.strip()})
+    out: dict[str, dict[str, str]] = {}
+    for start in range(0, len(accessions), _SAMPLE_XML_BATCH):
+        batch = accessions[start : start + _SAMPLE_XML_BATCH]
+        try:
+            contents = [get(batch)]
+        except requests.HTTPError as exc:
+            # One sample ENA does not serve fails the whole batch: ask one by one.
+            if exc.response is None or exc.response.status_code != 404:
+                raise
+            contents = [get([accession]) for accession in batch]
+        for content in contents:
+            if content is not None:
+                _collect_sample_attributes(ElementTree.fromstring(content), set(batch), out)
+    return out
+
+
+def _collect_sample_attributes(root, wanted: set[str], out: dict[str, dict[str, str]]) -> None:
+    """Custom attributes of every ``SAMPLE`` under ``root`` whose id is wanted."""
+    for sample in root.iter("SAMPLE"):
+        attrs: dict[str, str] = {}
+        for attribute in sample.iter("SAMPLE_ATTRIBUTE"):
+            tag = (attribute.findtext("TAG") or "").strip()
+            if tag and not tag.startswith("ENA-"):
+                attrs.setdefault(tag, (attribute.findtext("VALUE") or "").strip())
+        names = {sample.get("accession", "")}
+        names |= {(e.text or "").strip() for e in sample.iter("PRIMARY_ID")}
+        names |= {(e.text or "").strip() for e in sample.iter("EXTERNAL_ID")}
+        for name in names & wanted:
+            out[name] = attrs
+
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------

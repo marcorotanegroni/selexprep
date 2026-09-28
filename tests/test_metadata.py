@@ -38,6 +38,63 @@ def test_l1_ignores_non_numeric_value() -> None:
     assert r.confidence == "NONE"
 
 
+def test_l1_reads_archive_spellings_of_the_round_key() -> None:
+    """ArrayExpress ``selex cycle`` (SDRF ``Characteristics[selex cycle]``),
+    GEO ``round``, and spaced or hyphenated variants."""
+    for key in [
+        "selex cycle",
+        "Characteristics[selex cycle]",
+        "SELEX-round",
+        "selection cycle",
+        "Selection cycle",
+        "selex round",
+        "round of selex enrichment",
+        "round_selection",
+        "round",
+        "cycle number",
+    ]:
+        r = parse_round("SRR1", sample_attributes={key: "6"})
+        assert (r.round_number, r.source_field) == (6, "sample_attributes"), key
+
+
+def test_l1_reads_pcr_cycle_at_medium_confidence() -> None:
+    """PRJEB38961 records the selection cycle as ``pcr cycle`` (0/1/3/6); the key
+    can also mean amplification cycles, so the round is read at MEDIUM."""
+    r = parse_round("SRR1", sample_title="RV04", sample_attributes={"pcr cycle": "1"})
+    assert (r.round_number, r.confidence) == (1, "MEDIUM")
+    assert r.is_unassigned is False
+    assert "amplification cycles" in r.parser_notes
+
+
+def test_l1_does_not_read_keys_that_are_not_rounds() -> None:
+    for key in ["cell cycle", "cycle threshold", "passage", "library_selection", "Selection"]:
+        r = parse_round("SRR1", sample_attributes={key: "3"})
+        assert r.round_number is None, key
+
+
+def test_l1_accepts_a_round_word_before_the_number() -> None:
+    for value in ["R3", "round 3", "Cycle-3", "3"]:
+        r = parse_round("SRR1", sample_attributes={"round": value})
+        assert r.round_number == 3, value
+
+
+def test_l1_does_not_read_unrelated_numeric_attributes() -> None:
+    r = parse_round("SRR1", sample_attributes={"replicate": "2", "passage": "4"})
+    assert r.round_number is None
+
+
+def test_l1_outranks_a_title_and_names_the_conflict() -> None:
+    r = parse_round("SRR1", sample_title="Round 5", sample_attributes={"selex cycle": "3"})
+    assert r.round_number == 3
+    assert r.round_candidates == [3]
+    assert "sample_title reads as round [5]" in r.parser_notes
+
+
+def test_l1_agreeing_title_adds_no_conflict_note() -> None:
+    r = parse_round("SRR1", sample_title="Round 3", sample_attributes={"round": "3"})
+    assert "reads as round" not in r.parser_notes
+
+
 # ----- L2: sample_title patterns -----
 
 
@@ -158,29 +215,33 @@ def test_audit_pilot_genuine_ambiguity_still_unassigned() -> None:
 # moves these to HIGH/MEDIUM-confidence assignments.
 
 
-def test_pattern_rv01_sample_title_high() -> None:
-    """PRJEB51212: sample_title='RV01' → round 1 (HIGH from L2)."""
-    r = parse_round("SRR1", sample_title="RV01")
+def test_rv_sample_numbers_are_not_rounds() -> None:
+    """PRJEB51212 / PRJEB51473: ``RV01``..``RV39`` are ArrayExpress sample
+    numbers; the SDRF gives cycles 0, 1, 3 and 6. Without a round attribute
+    the run stays unassigned instead of becoming round 1-39."""
+    for field in ("sample_title", "library_name"):
+        r = parse_round("SRR1", **{field: "RV04_s" if field == "library_name" else "RV04"})
+        assert r.round_number is None
+        assert r.is_unassigned is True
+
+
+def test_the_sample_attribute_gives_the_round_of_an_rv_sample() -> None:
+    """RV04 of PRJEB51212 is ZFC1 at cycle 1 (ENA sample SAMEA13183932)."""
+    r = parse_round(
+        "ERR8972349",
+        sample_title="RV04",
+        library_name="RV04_s",
+        sample_attributes={"construct": "ZFC1 of Sall4", "selex cycle": "1"},
+    )
     assert r.round_number == 1
     assert r.confidence == "HIGH"
-    assert r.is_unassigned is False
-
-
-def test_pattern_rv01_library_name_medium() -> None:
-    """library_name='RV01_s' (PRJEB51212 actual values like 'RV01_s')
-    must still parse to round 1 (MEDIUM from L3)."""
-    r = parse_round("SRR1", library_name="RV01_s")
-    assert r.round_number == 1
-    assert r.confidence == "MEDIUM"
-    assert r.source_field == "library_name"
-    assert r.is_unassigned is False
+    assert r.source_field == "sample_attributes"
 
 
 def test_pattern_rv_does_not_match_just_R_or_V_alone() -> None:
     """Sanity: pattern requires the glued ``RV`` literal; doesn't fire on
     ``R 01`` (space-separated, already handled by R_digit_boundary) or
     ``V01`` (no R prefix)."""
-    # "V01" alone doesn't match RV_digit (needs R-V-digits)
     r = parse_round("SRR1", sample_title="V01_library")
     assert r.round_number is None
 
