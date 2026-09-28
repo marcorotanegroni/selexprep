@@ -564,12 +564,14 @@ signal. Retained reads, excluded fraction and the pool hashes are now in
 - **PRJNA741127 — admitted** (DNA, N16). Every read 16 nt, as the depositor's
   documented trimming requires; no residue signal (adapters, and the documented
   3′ constant); at least 2.69 million reads per round.
-- **PRJEB51212 — inconclusive.** Every read 21 nt for a stated N of 20, in all
-  three rounds; no edge position above 0.44 support, so the extra base is not a
-  fixed residue, and what it is cannot be told from the reads or the archive.
-- **PRJEB51473 — excluded.** Every read 21 nt for a stated N of 20; a position
-  among the last ten carries one base in at least 97.7% of the reads of every
-  round, the cycle-0 input library included: a fixed base, not selection.
+- **PRJEB51212 — excluded at step 3.** Every read 21 nt for a stated N of 20,
+  in all three rounds; no edge position above 0.44 support. What the extra base
+  is cannot be told from the reads or the archive.
+- **PRJEB51473 — excluded at step 3.** Every read 21 nt for a stated N of 20; a
+  position among the last ten carries one base in at least 97.7% of the reads
+  of every round, the cycle-0 input library included. Whether that base is
+  technical or part of the library design is not established; the length alone
+  excludes the donor.
 
 **Test set.** Five test donors: PRJEB70964, PRJEB47428, PRJEB49150, PRJEB25907,
 PRJNA741127. Below the cap of six, so the priority order was not needed. As
@@ -614,35 +616,74 @@ the code fixes it as follows.
 ### Development run 1 — 2026-09-28, commit fef67d4, SLURM job 121239
 
 1,200 runs, no pipeline error; per run in `runs/dev/results.tsv`. The tree was
-dirty only in `uv.lock`, rewritten by `uv run` on the cluster; the harness now
-records which files differ and the job runs with `uv run --frozen`.
+dirty only in `uv.lock`, rewritten by `uv run` on the cluster.
 
 Against the expectations fixed in advance:
 
 - **As expected:** BASE, L ≥ 14, E 0–2%, I, T1–T5, A middle and inner end, K,
   R, C50, D, M, B, O: complete and correct in every run (median per-read
   precision 1.000; 0.986 with 0.5% indels). L 8–12 and C90–C100 refused in all
-  48 runs. F_no3, F_no5 and A outer start: partial, correct and declared. Calls
+  144 runs. F_no3, F_no5 and A outer start: partial, correct and declared. Calls
   including outer material where predicted (T2, T5, K outer; T1 in 4 of 24).
   X3 wrong in 24 of 24, as predicted. Negative controls refused.
 - **Uncertain in advance, now measured:** E5, 18 partial and correct (3′ side
   dropped) and 6 refused. F_trunc30, refused in 24 of 24: safe, but the correct
   5′ call would have allowed a partial extraction. C70, 23 correct and 1 wrong.
-  **C80, 17 wrong in 24, all with status HIGH:** an 80% clone in every round,
-  the earliest included, puts the support inside N at about 0.85, the
+  **C80, 17 wrong in 24, all with status HIGH:** a clone making up 80% of every
+  round, the earliest included, puts the support inside N at about 0.85, the
   threshold of the drop test (`BOUNDARY_HIGH_SUPPORT_POST_MAX`), and the call
   extends 1–4 nt into N, occasionally more.
+- **A high yield does not mean a correct boundary.** In the wrong C70 run every
+  round kept at least 99.5% of its reads, while 0.05% of them came out equal to
+  their random region (99.7% with the true constants). The low-yield warning of
+  `extract` does not catch a boundary placed a few bases into N.
 
-**Decision: no change to `selexprep`.** C80 is reported as a limit. It was
-predicted as uncertain; the only simple guard would be a new threshold between
-the C70 and C80 levels of this benchmark, which is tuning to the benchmark, and
-the principled alternative (disagreement that persists across positions in the
-same reads) is a new algorithm that would need its own validation. The limit to
-state: when one sequence makes up about 80% or more of every provided round,
-the earliest included, the call can extend a few nucleotides into the random
-region with status HIGH; providing an early round avoids it. F_trunc30's
-refusal is reported as a loss of coverage, not of correctness.
+**Decision: no change to `selexprep`.** It was predicted as uncertain; the only
+simple guard would be a new threshold between the C70 and C80 levels of this
+benchmark, which is tuning to the benchmark, and the principled alternative
+(disagreement that persists across positions in the same reads) is a new
+algorithm that would need its own validation. The limit is stated for users
+(`docs/library-report.md`) and in the paper, with what was observed rather than
+a threshold: when one sequence dominates every provided round, the earliest
+included, the call can extend a few nucleotides into the random region with
+status HIGH (1 of 24 runs at 70%, 17 of 24 at 80%; every run refused at 90–100%).
+What prevents it is an earliest round in which no sequence dominates, not the
+round's position alone. F_trunc30's refusal is a loss of coverage, not of
+correctness.
 
-The generator, the evaluator and `selexprep` are unchanged since fef67d4; the
-harness change above touches only the manifest and the `uv` invocation. The
-test set is run next, once, at the commit that carries this entry.
+**Scope of the simulated error.** Substitution and indel rates are the error
+*added* to the donor reads, which carry their own sequencing errors; E0 adds
+none. Base qualities are constant, and the error model is a simple function of
+position: enough to test boundaries and extraction, not a model of a sequencer.
+
+### Changes after run 1 — 2026-09-28, before development run 2
+
+From a review of the code and of run 1:
+
+1. **Refusals and errors recover no random region.** The evaluator left every
+   inferred metric empty for a run that refused or failed, so a median over runs
+   skipped those losses (180 runs in run 1). Precision and recall stay not
+   applicable, having no extraction mode; the recovery of N and the per-round
+   yield are now 0.
+2. **The called constant is compared with the constant as configured.** For T4
+   the comparison used the oracle's constant, which leaves out the round-specific
+   base, so a call without that base read as "exact"; it now reads as "shorter",
+   and whether the call equals the oracle's constant is a separate column.
+3. **Provenance when resuming.** The harness reused any stored result but
+   rewrote the manifest with the current commit. It now keeps the first manifest
+   and refuses a directory whose results come from another set, commit,
+   uncommitted change (compared by content, not by file name) or set of donor
+   pools. Every pool is checked against its SHA-256 in `donors.tsv` before a
+   run starts, and the test set refuses a tree with uncommitted changes. Runs
+   write to a directory named per run (`OUT`).
+4. **The harness records which files differ from the commit** and runs with
+   `uv run --frozen`, so `uv.lock` is not rewritten.
+5. **Wording.** The run-1 entry above now counts 144 refused runs (48 before) and
+   states the C80 limit with the observed counts; Amendment 3 no longer infers a
+   technical origin for PRJEB51473's conserved base.
+
+Also merged since run 1: the round-parser fix (f3ff047), which changes only
+`selexprep.fetch`; the benchmark reads local FASTQs with explicit round maps and
+does not use it. `detect` and `extract` are unchanged since fef67d4, so outcomes
+and calls should repeat; run 2 reruns the whole development set with the new
+evaluator in `runs/dev-2`, and run 1 is kept as it was.

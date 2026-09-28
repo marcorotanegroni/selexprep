@@ -327,12 +327,34 @@ def test_a_leading_random_base_in_the_call_is_wrong(pools, tmp_path):
     assert not ev.call_correct("A" + c5, "5p", truth, reverse=False)
 
 
-def test_a_refusal_is_refused_with_no_inferred_metrics(pools, tmp_path):
+def test_a_refusal_recovers_no_random_region(pools, tmp_path):
+    """Precision and recall have no mode to refer to, but the loss is counted:
+    a summary over runs must not skip refusals."""
     _build("C100", pools, tmp_path)
     _report(tmp_path, status="UNABLE_TO_INFER", extraction_mode="UNABLE_TO_EXTRACT")
     row = ev.evaluate(tmp_path)
     assert row["outcome"] == "refused"
-    assert "inferred_recall" not in row
+    assert row["inferred_precision"] is None and row["inferred_recall"] is None
+    assert row["inferred_n_recovery"] == 0 and row["inferred_lowest_round_yield"] == 0
+    assert row["inferred_emitted"] == 0
+
+
+def test_an_error_recovers_no_random_region(pools, tmp_path):
+    _build("BASE", pools, tmp_path)
+    (tmp_path / "run.json").write_text(json.dumps({"error": "detect exited 1"}))
+    row = ev.evaluate(tmp_path)
+    assert row["outcome"] == "error" and row["inferred_n_recovery"] == 0
+
+
+def test_t4_call_is_shorter_than_the_configured_constant_and_equals_the_oracle(pools, tmp_path):
+    """The category compares with the configured constant, not the oracle's."""
+    truth, _ = _build("T4", pools, tmp_path)
+    c5, c3 = sim.load_constants()[FAMILY]
+    assert truth["constants"]["primer_3p"] == c3
+    _report(tmp_path, primer_5p=c5, primer_3p=c3[:-1])
+    row = ev.evaluate(tmp_path)
+    assert row["call_3p_category"] == "shorter" and row["call_3p_is_oracle"]
+    assert row["call_5p_category"] == "exact" and row["call_5p_is_oracle"]
 
 
 def test_recall_never_counts_reads_outside_its_denominator(pools, tmp_path):
@@ -426,3 +448,42 @@ def test_one_baseline_run_end_to_end(tmp_path):
     assert harness.run_cell(cell, pools, tmp_path / "out", keep=False) == json.loads(
         (run_dir / "result.json").read_text()
     )
+
+
+def test_resuming_refuses_results_of_another_experiment(tmp_path, monkeypatch):
+    """Provenance: stored results are reused only by the experiment that made
+    them: same commit, same uncommitted changes (by content), same pools."""
+    harness = _load("run_synthetic")
+    monkeypatch.setattr(harness, "verify_pools", lambda which, pools: "p" * 64)
+    monkeypatch.setattr(harness, "run_cell", lambda *a: pytest.fail("must not run"))
+    current = harness.manifest("dev", "p" * 64)
+    for field, other in (
+        ("commit", "0" * 40),
+        ("modified_sha256", "1" * 64),
+        ("pools_sha256", "2" * 64),
+    ):
+        out = tmp_path / field
+        out.mkdir()
+        (out / "manifest.json").write_text(json.dumps({**current, field: other}))
+        assert harness.main(["--set", "dev", "--out", str(out), "--config", "BASE"]) == 2
+        assert json.loads((out / "manifest.json").read_text())[field] == other
+
+
+def test_pools_are_checked_against_the_recorded_hashes(tmp_path):
+    """Fake pools do not match donors.tsv, so the harness refuses them."""
+    harness = _load("run_synthetic")
+    pools = _fake_pools(tmp_path / "pools", size=10)
+    with pytest.raises(ValueError, match=r"differs from donors\.tsv"):
+        harness.verify_pools("dev", pools)
+    with pytest.raises(ValueError, match="missing pool"):
+        harness.verify_pools("test", pools)
+    assert harness.main(["--set", "dev", "--pools", str(pools), "--out", str(tmp_path / "o")]) == 2
+
+
+def test_the_test_set_needs_a_clean_tree(tmp_path, monkeypatch):
+    harness = _load("run_synthetic")
+    monkeypatch.setattr(harness, "verify_pools", lambda which, pools: "p" * 64)
+    monkeypatch.setattr(
+        harness, "manifest", lambda which, sha: {"dirty": True, "modified": ["x.py"]}
+    )
+    assert harness.main(["--set", "test", "--out", str(tmp_path / "o")]) == 2

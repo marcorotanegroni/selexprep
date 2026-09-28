@@ -65,7 +65,9 @@ used to discard reads.
 
 When `status == UNABLE_TO_INFER` or `extraction_mode == UNABLE_TO_EXTRACT`,
 downstream `extract` refuses without an explicit `--override-primer-*` or a
-hand-edited report — `selexprep` never silently miscalls.
+hand-edited report, rather than cutting where it cannot place the boundary.
+Refusal covers the cases `detect` recognises; the limits below are cases it
+does not.
 
 `extract` also warns when an input FASTQ keeps less than half of its reads, or
 less than half the yield of the best input (`trim_reports.json` holds every input's reads in and out): the
@@ -76,3 +78,24 @@ construct.
     Single-round deposits cap `status` at `MEDIUM` (cross-round persistence is
     unavailable). Below ~500 sequences in the earliest round, `detect` refuses
     outright.
+
+## Known limits
+
+`detect` finds the boundary from how conserved each position is across the
+reads of the earliest round. Sequence that is conserved in the random region
+itself can therefore be taken for constant, and the call then reaches a few
+bases into the random region. Seen in the semi-synthetic benchmark
+(`benchmarks/synthetic/`):
+
+- **One sequence dominating every round, the earliest included.** With one
+  sequence making up 70% of every round, 1 run in 24 placed the boundary inside
+  the random region; at 80%, 17 in 24, all with `status` `HIGH`. From 90% on,
+  every run was refused. What protects the call is an earliest round in which
+  no sequence dominates.
+- **Only a late round provided, with a motif next to the constant.** The motif
+  enters the call (`status` `MEDIUM`, since one round caps it).
+
+A high extraction yield does not show that the boundary is right: a call a few
+bases into the random region still trims almost every read. When the deposit
+has an early, diverse round, provide it; when it has none, check the called
+constants against the publication.
