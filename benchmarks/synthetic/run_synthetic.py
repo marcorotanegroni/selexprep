@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import importlib.util
 import json
 import os
@@ -188,14 +189,41 @@ def _star(args):
     return run_cell(*args)
 
 
-def manifest(which: str) -> dict:
+def verify_pools(which: str, pools: Path) -> str:
+    """Check every donor pool the set uses against the SHA-256 in ``donors.tsv``.
+
+    Returns one digest over them; raises ``ValueError`` naming the first pool
+    that is missing or differs. The pools are part of the experiment's identity:
+    results made from other pools must not be resumed as these.
+    """
+    seeds = simulate.DEV_SEEDS if which == "dev" else simulate.TEST_SEEDS
+    digests = []
+    with (HERE / "donors.tsv").open() as fh:
+        for row in csv.DictReader(fh, delimiter="\t"):
+            if row["set"] != which:
+                continue
+            expected = dict(pair.split("=") for pair in row["sample_sha256"].split(";"))
+            for seed in seeds:
+                path = simulate.pool_path(
+                    pools, row["donor"], row["role"], int(row["round"]), row["run_accession"], seed
+                )
+                if not path.is_file():
+                    raise ValueError(f"missing pool {path}")
+                got = hashlib.sha256(path.read_bytes()).hexdigest()
+                if got != expected.get(str(seed)):
+                    raise ValueError(f"pool {path} differs from donors.tsv")
+                digests.append(got)
+    return hashlib.sha256("".join(digests).encode()).hexdigest()
+
+
+def manifest(which: str, pools_sha256: str) -> dict:
     def git(*args: str) -> str:
         return subprocess.run(
             ["git", *args], cwd=REPO, capture_output=True, text=True, check=False
         ).stdout.strip()
 
-    # The tracked files that differ from the commit, so a dirty tree says what
-    # differs rather than only that something does.
+    # The tracked files that differ from the commit, and a hash of how they
+    # differ: the same file edited twice without a commit is another experiment.
     modified = [
         line[3:] for line in git("status", "--porcelain", "--untracked-files=no").splitlines()
     ]
@@ -204,6 +232,8 @@ def manifest(which: str) -> dict:
         "commit": git("rev-parse", "HEAD"),
         "dirty": bool(modified),
         "modified": modified,
+        "modified_sha256": hashlib.sha256(git("diff", "HEAD").encode()).hexdigest(),
+        "pools_sha256": pools_sha256,
         "python": sys.version.split()[0],
     }
 
@@ -225,8 +255,34 @@ def main(argv: list[str] | None = None) -> int:
         if (not args.config or c.config in args.config)
         and (not args.donor or c.donor in args.donor)
     ]
+    try:
+        pools_sha256 = verify_pools(args.set, args.pools)
+    except ValueError as exc:
+        print(f"donor pools: {exc}", file=sys.stderr)
+        return 2
+    current = manifest(args.set, pools_sha256)
+    if args.set == "test" and current["dirty"]:
+        # The test set runs once, at a recorded commit: nothing uncommitted.
+        print(f"test set needs a clean tree; modified: {current['modified']}", file=sys.stderr)
+        return 2
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / "manifest.json").write_text(json.dumps(manifest(args.set), indent=2) + "\n")
+    stored_path = args.out / "manifest.json"
+    if stored_path.is_file():
+        # Resuming reuses every stored result.json, so it is allowed only for the
+        # same experiment: same set, commit, uncommitted changes and pools.
+        # Otherwise old results would be attributed to new code or data. The
+        # first manifest is kept.
+        stored = json.loads(stored_path.read_text())
+        keys = ("set", "commit", "modified", "modified_sha256", "pools_sha256")
+        if any(stored.get(k) != current[k] for k in keys):
+            diff = {k: (stored.get(k), current[k]) for k in keys if stored.get(k) != current[k]}
+            print(
+                f"{args.out} holds results of another experiment {diff}; use a new --out",
+                file=sys.stderr,
+            )
+            return 2
+    else:
+        stored_path.write_text(json.dumps(current, indent=2) + "\n")
     print(f"{len(todo)} runs ({args.set})", file=sys.stderr)
     jobs = [(c, args.pools, args.out, args.keep) for c in todo]
     rows = []

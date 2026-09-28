@@ -458,6 +458,16 @@ def _oracle(spec: Spec, lib: Library) -> dict:
     return {"mode": mode, "primer_5p": c5, "primer_3p": c3}
 
 
+def _configured(spec: Spec, lib: Library) -> dict:
+    """The constants as configured, in read orientation: for T4, the 3' constant
+    of the later rounds, whole. The oracle's may be shorter (``_oracle``)."""
+    c5 = None if spec.negative or spec.flank == "no5" else lib.c5
+    c3 = None if spec.negative or spec.flank == "no3" else lib.c3
+    if spec.reverse:
+        c5, c3 = (revcomp(c3) if c3 else None), (revcomp(c5) if c5 else None)
+    return {"primer_5p": c5, "primer_3p": c3}
+
+
 def _write_fastq(path: Path, reads: list[ReadTruth]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with (
@@ -532,6 +542,7 @@ def generate(cell: Cell, pools: Path, outdir: Path) -> dict:
         "negative_control": spec.negative is not None,
         "rounds": rounds_out,
         "oracle": _oracle(spec, lib),
+        "constants": _configured(spec, lib),
         "record": lib.record,
     }
     (outdir / "truth.json").write_text(json.dumps(truth, indent=2, sort_keys=True) + "\n")

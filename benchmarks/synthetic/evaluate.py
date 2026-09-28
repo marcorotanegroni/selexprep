@@ -237,17 +237,24 @@ def evaluate(run_dir: Path) -> dict:
     sides_ok = {"5p": False, "3p": False}
     if report is not None:
         reverse = report["orientation"] == "REVERSE"
+        # The category compares the call with the constant as configured (for T4,
+        # the full 3' constant of the later rounds), not with the oracle's, which
+        # leaves out a round-specific base; whether the call equals the oracle's
+        # constant is recorded apart.
+        configured = truth["constants"]
         for side in ("5p", "3p"):
             call = report[f"primer_{side}"]
             sides_ok[side] = call_correct(call, side, truth, reverse)
-            constant = oracle[f"primer_{side}"]
-            if reverse and constant is not None:
-                # In the frame extract works in, the other side's constant, reversed.
-                other = oracle["primer_3p" if side == "5p" else "primer_5p"]
-                constant = revcomp(other) if other else None
+            constant, target = configured[f"primer_{side}"], oracle[f"primer_{side}"]
+            if reverse:
+                # In the frame extract works in: the other side's constant, reversed.
+                key = "primer_3p" if side == "5p" else "primer_5p"
+                constant = revcomp(configured[key]) if configured[key] else None
+                target = revcomp(oracle[key]) if oracle[key] else None
             row[f"call_{side}"] = call or ""
             row[f"call_{side}_correct"] = sides_ok[side]
             row[f"call_{side}_category"] = category(call, constant, side, sides_ok[side])
+            row[f"call_{side}_is_oracle"] = bool(call) and call == target
         row.update(
             status=report["status"],
             confidence=report["confidence"],
@@ -259,6 +266,12 @@ def evaluate(run_dir: Path) -> dict:
         if not refused and not run.get("error"):
             metrics = per_read(report["extraction_mode"], framed, read_outputs(run_dir / "extract"))
             row.update({f"inferred_{k}": v for k, v in metrics.items()})
+    if "inferred_emitted" not in row:
+        # A refusal or an error emits nothing: precision and recall are not
+        # applicable (no mode), but the recovery of N is known and is zero, so a
+        # summary over runs counts the loss instead of skipping it.
+        metrics = per_read(None, reads, {})
+        row.update({f"inferred_{k}": v for k, v in metrics.items()})
     row["outcome"] = outcome(truth, run, report, sides_ok)
     if oracle["mode"] is not None and not run.get("oracle_error"):
         metrics = per_read(oracle["mode"], reads, read_outputs(run_dir / "oracle" / "extract"))
