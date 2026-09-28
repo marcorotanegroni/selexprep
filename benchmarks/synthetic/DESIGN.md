@@ -577,3 +577,34 @@ fixed in "Donor screen", test uses seeds 101–102 only: 300 runs per test donor
 1,500 in all; the seed-103 pools are kept and not used. Declared limit:
 PRJEB25907 and PRJEB47428 are both HTR-SELEX RNA with N40, so they add depth on
 one assay rather than a new one; PRJNA741127 adds a new N length (16).
+
+### Amendment 4 — 2026-09-28, implementation choices, before any development run
+
+The generator (`simulate.py`), the evaluator (`evaluate.py`) and the harness
+(`run_synthetic.py`, `run_synthetic.sh`) are written, with unit tests in
+`tests/test_synthetic_benchmark.py`. They were exercised only on random fake
+pools; no run has used a donor pool. Where the text above left a detail open,
+the code fixes it as follows.
+
+1. **A correct call** is a suffix (5′) or prefix (3′) of the error-free,
+   untruncated sequence before or after N in **every** read of the earliest
+   round provided, in read orientation. Where that sequence varies between
+   reads (T3's leading base), a call that includes the varying part is wrong.
+2. **Truncation (F)** cuts at a uniform position that keeps between 1 nt and
+   all but 1 nt of the 3′ constant.
+3. **The motif (M, X3)** is drawn from the seed alone, so it is the same in
+   every configuration run with that seed; the K spacer, the tags (T1, T2) and
+   the T4 base are drawn per cell and seed.
+4. **N±1 (B)** deletes a base at a uniform position of N, or inserts a uniform
+   random base at a uniform position.
+5. **Round numbers** passed to `selexprep` are the donor's own (for example 1,
+   4, 7), and rounds are passed earliest first.
+6. **`selexprep` runs through its command line**, as a user runs it; a detect or
+   extract call that exits non-zero or exceeds 30 minutes is an error. The
+   oracle report is written with the public schema (`LibraryReport`) and
+   extracted with the same command.
+7. **Per-run output** is one row of `results.tsv`. The inputs and the extracted
+   reads are deleted after evaluation and can be regenerated from the seed; the
+   truth, the reports and the logs are kept.
+8. **A run whose report says REVERSE** is evaluated in the frame `extract`
+   works in, after reverse-complementing the reads.
