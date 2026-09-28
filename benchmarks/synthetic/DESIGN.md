@@ -533,3 +533,47 @@ design, the screen's code and its tables, after the metadata of every candidate,
 and after the reads of PRJEB14550 and PRJEB28411 as recorded above; before any
 read of the four candidates still under evaluation and before any simulated
 library.
+
+### Amendment 3 — 2026-09-28, donor screen results, before any simulated library
+
+**Read job.** `check_and_sample_donors.py` at the Amendment 2 commit, SLURM job
+121232: 27 runs (15 of the current donors, 12 of the four candidates), every
+read of each. Results in `donor_checks.tsv`.
+
+**Correction made after the job, for one donor.** PRJNA741127's constants had
+been recorded as undocumented; the GEO sample records do document them, in the
+depositor's trimming command (test samples: `cutadapt -g ^CGC -a
+CCTGGAATTCTCGGGTGCCAAGGAACTCCAG$ … -m 16 -M 16`). `candidate_constants.tsv` was
+corrected, and a defect found while doing so was fixed: a documented constant
+longer than 8 nt had been probed only at its full length instead of from 8 nt.
+PRJNA741127 alone was checked again with the corrected probes (no residue
+signal); its rows in `donor_checks.tsv` come from that rerun, and its pools are
+bit-identical to the job's (same SHA-256), so only the probe columns changed. No
+other donor had a documented constant longer than 8 nt taken from
+`candidate_constants.tsv`.
+
+**Current donors.** All five pass the mechanical part of step 3 in every chosen
+round (modal length N, at least 99.6% of reads within N ± 2) and show no residue
+signal. Retained reads, excluded fraction and the pool hashes are now in
+`donors.tsv`.
+
+**Candidates** (`donor_screening.tsv`, with the evidence):
+
+- **PRJEB25907 — admitted** (RNA, N40). Every read 40 nt; no residue signal
+  (adapters, and the 5′ fragment TCCCAA); at least 171,491 reads per round.
+- **PRJNA741127 — admitted** (DNA, N16). Every read 16 nt, as the depositor's
+  documented trimming requires; no residue signal (adapters, and the documented
+  3′ constant); at least 2.69 million reads per round.
+- **PRJEB51212 — inconclusive.** Every read 21 nt for a stated N of 20, in all
+  three rounds; no edge position above 0.44 support, so the extra base is not a
+  fixed residue, and what it is cannot be told from the reads or the archive.
+- **PRJEB51473 — excluded.** Every read 21 nt for a stated N of 20; a position
+  among the last ten carries one base in at least 97.7% of the reads of every
+  round, the cycle-0 input library included: a fixed base, not selection.
+
+**Test set.** Five test donors: PRJEB70964, PRJEB47428, PRJEB49150, PRJEB25907,
+PRJNA741127. Below the cap of six, so the priority order was not needed. As
+fixed in "Donor screen", test uses seeds 101–102 only: 300 runs per test donor,
+1,500 in all; the seed-103 pools are kept and not used. Declared limit:
+PRJEB25907 and PRJEB47428 are both HTR-SELEX RNA with N40, so they add depth on
+one assay rather than a new one; PRJNA741127 adds a new N length (16).
