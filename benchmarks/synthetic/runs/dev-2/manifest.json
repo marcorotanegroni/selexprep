@@ -1,0 +1,9 @@
+{
+  "set": "dev",
+  "commit": "c3d43e90b65a0117ff76debbbe61fc583e68d993",
+  "dirty": false,
+  "modified": [],
+  "modified_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pools_sha256": "76175218d602eee8df19de7552be280cd91b96f3c6a01db9acc60f6e8200077b",
+  "python": "3.11.15"
+}

@@ -687,3 +687,15 @@ Also merged since run 1: the round-parser fix (f3ff047), which changes only
 does not use it. `detect` and `extract` are unchanged since fef67d4, so outcomes
 and calls should repeat; run 2 reruns the whole development set with the new
 evaluator in `runs/dev-2`, and run 1 is kept as it was.
+
+### Development run 2 — 2026-09-28, commit c3d43e9, SLURM job 126982
+
+1,200 runs from a clean tree, every donor pool matching its hash in
+`donors.tsv`; per run in `runs/dev-2/results.tsv`. Compared cell by cell with
+run 1: outcome, status, extraction mode, both calls and confidence are
+identical in all 1,200 runs, and so is every per-read metric run 1 had. What
+changed is what the evaluator changes were meant to change: the 192 refused
+runs (negative controls included) now carry a recovery of N and a per-round
+yield of 0, and the 24 T4 runs classify the 3′ call as "shorter" than the
+configured constant while equal to the oracle's. No further change: the test
+set is run next, once, at the commit that carries this entry.
