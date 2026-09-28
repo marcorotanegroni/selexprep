@@ -608,3 +608,41 @@ the code fixes it as follows.
    truth, the reports and the logs are kept.
 8. **A run whose report says REVERSE** is evaluated in the frame `extract`
    works in, after reverse-complementing the reads.
+
+## Development log
+
+### Development run 1 — 2026-09-28, commit fef67d4, SLURM job 121239
+
+1,200 runs, no pipeline error; per run in `runs/dev/results.tsv`. The tree was
+dirty only in `uv.lock`, rewritten by `uv run` on the cluster; the harness now
+records which files differ and the job runs with `uv run --frozen`.
+
+Against the expectations fixed in advance:
+
+- **As expected:** BASE, L ≥ 14, E 0–2%, I, T1–T5, A middle and inner end, K,
+  R, C50, D, M, B, O: complete and correct in every run (median per-read
+  precision 1.000; 0.986 with 0.5% indels). L 8–12 and C90–C100 refused in all
+  48 runs. F_no3, F_no5 and A outer start: partial, correct and declared. Calls
+  including outer material where predicted (T2, T5, K outer; T1 in 4 of 24).
+  X3 wrong in 24 of 24, as predicted. Negative controls refused.
+- **Uncertain in advance, now measured:** E5, 18 partial and correct (3′ side
+  dropped) and 6 refused. F_trunc30, refused in 24 of 24: safe, but the correct
+  5′ call would have allowed a partial extraction. C70, 23 correct and 1 wrong.
+  **C80, 17 wrong in 24, all with status HIGH:** an 80% clone in every round,
+  the earliest included, puts the support inside N at about 0.85, the
+  threshold of the drop test (`BOUNDARY_HIGH_SUPPORT_POST_MAX`), and the call
+  extends 1–4 nt into N, occasionally more.
+
+**Decision: no change to `selexprep`.** C80 is reported as a limit. It was
+predicted as uncertain; the only simple guard would be a new threshold between
+the C70 and C80 levels of this benchmark, which is tuning to the benchmark, and
+the principled alternative (disagreement that persists across positions in the
+same reads) is a new algorithm that would need its own validation. The limit to
+state: when one sequence makes up about 80% or more of every provided round,
+the earliest included, the call can extend a few nucleotides into the random
+region with status HIGH; providing an early round avoids it. F_trunc30's
+refusal is reported as a loss of coverage, not of correctness.
+
+The generator, the evaluator and `selexprep` are unchanged since fef67d4; the
+harness change above touches only the manifest and the `uv` invocation. The
+test set is run next, once, at the commit that carries this entry.
