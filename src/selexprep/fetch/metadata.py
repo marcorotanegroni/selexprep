@@ -105,11 +105,11 @@ _ROUND_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # pilot's per-accession metadata inspection. Each was a SELEX deposit
     # the original cascade missed.
     #
-    # ``RV01`` / ``RV02`` / ... (PRJEB51212 — Sall4 SELEX rounds). The R
-    # and V are glued, so ``R_digit_boundary`` ('R immediately followed
-    # by digit') doesn't match; this pattern handles the RV-glued case
-    # explicitly.
-    ("RV_digit", re.compile(r"(?:^|[\s_\-./])RV(\d+)(?:[\s_\-./]|$)")),
+    # There is deliberately no pattern for ``RV01`` / ``RV02`` / ...: in
+    # PRJEB51212 and PRJEB51473 those are ArrayExpress sample numbers (39
+    # samples), while the SDRF, mirrored into each sample's ``selex cycle``
+    # attribute, gives cycles 0, 1, 3 and 6. Read as rounds they produced
+    # rounds 1-39.
     # ``DNAFOXR00`` / ``DNAFOXR01`` / ... (PRJEB62756 — DNAFOX SELEX
     # series). A word prefix glued to ``R\d+`` with no separator.
     # Requires the prefix to be ≥3 letters (uppercase + ≥2 more letters)
@@ -138,11 +138,46 @@ _ABSTRACT_COUNT_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(\d+)\s+(?:selection\s+)?cycles?", re.IGNORECASE),
 ]
 
-# Keys identifying round number in sample_attributes (L1)
-_ATTR_ROUND_KEYS: re.Pattern[str] = re.compile(
-    r"^(?:selex_)?(?:round|cycle|iteration|r|selection_round|selection_cycle)(?:_num(?:ber)?)?$",
+# Keys identifying round number in sample_attributes (L1). A key, normalised by
+# ``_normalise_attr_key`` and split into words, names a round when it has one
+# round word and every other word is in a fixed vocabulary. Spellings seen in
+# deposits: ``selex cycle`` (ArrayExpress, from the SDRF's
+# ``Characteristics[selex cycle]``), ``Selection cycle``, ``selection round``,
+# ``selex round``, ``round of selex enrichment``, ``round_selection``, GEO
+# ``round``. The vocabulary keeps out keys such as ``cell cycle`` or ``cycle
+# threshold`` (a qPCR Ct).
+_ATTR_ROUND_WORDS = frozenset({"round", "cycle", "iteration", "r"})
+_ATTR_KEY_VOCABULARY = frozenset(
+    {"selex", "selection", "enrichment", "of", "number", "num", "no", "pcr"}
+)
+# ``pcr cycle`` is used for the selection cycle (PRJEB38961, values 0/1/3/6),
+# but can also mean a count of amplification cycles, so it gives MEDIUM.
+_ATTR_KEY_AMBIGUOUS = frozenset({"pcr"})
+# Values: a bare integer, or one after a round word (``R3``, ``round 3``).
+_ATTR_ROUND_VALUE: re.Pattern[str] = re.compile(
+    r"(?:(?:round|cycle|r|c)[\s_\-]*)?(\d+)",
     re.IGNORECASE,
 )
+
+
+def _normalise_attr_key(key: str) -> str:
+    """``Characteristics[Selex Cycle]`` -> ``selex_cycle``."""
+    k = key.strip().lower()
+    m = re.fullmatch(r"characteristics?\s*\[(.*)\]", k)
+    if m:
+        k = m.group(1).strip()
+    return re.sub(r"[\s\-]+", "_", k)
+
+
+def _round_key_confidence(key: str) -> str | None:
+    """``HIGH`` or ``MEDIUM`` when ``key`` names a round, else ``None``."""
+    words = [w for w in _normalise_attr_key(key).split("_") if w]
+    rounds = [w for w in words if w in _ATTR_ROUND_WORDS]
+    others = [w for w in words if w not in _ATTR_ROUND_WORDS]
+    if len(rounds) != 1 or not set(others) <= _ATTR_KEY_VOCABULARY:
+        return None
+    return "MEDIUM" if set(others) & _ATTR_KEY_AMBIGUOUS else "HIGH"
+
 
 # Target hint — first capitalised word before a round indicator
 _TARGET_HINT_PATTERN: re.Pattern[str] = re.compile(
@@ -198,20 +233,39 @@ def parse_round(
         "abstract_excerpt": abstract[:500],
     }
 
-    # L1 — structured sample_attributes
+    # L1 — structured sample_attributes. They outrank the text fields; a text
+    # field that reads as a different round is named in the notes, not
+    # silently dropped.
     for key, val in sample_attributes.items():
-        if _ATTR_ROUND_KEYS.match(key.strip()):
-            stripped = val.strip()
-            if re.fullmatch(r"\d+", stripped):
-                round_num = int(stripped)
+        key_confidence = _round_key_confidence(key)
+        if key_confidence is not None:
+            stripped = str(val).strip()
+            m = _ATTR_ROUND_VALUE.fullmatch(stripped)
+            if m:
+                round_num = int(m.group(1))
+                notes = f"structured attribute key='{key}' value='{stripped}'"
+                if key_confidence != "HIGH":
+                    notes += "; the key can also mean amplification cycles, read as the round"
+                for field_name, text in [
+                    ("sample_title", sample_title),
+                    ("library_name", library_name),
+                    ("experiment_title", experiment_title),
+                    ("design_description", design_description),
+                ]:
+                    other = _match_text_field(srr, field_name, text)
+                    if other is not None and other.round_candidates != [round_num]:
+                        notes += (
+                            f"; {field_name} reads as round {other.round_candidates} "
+                            f"('{text[:60]}'), the attribute is kept"
+                        )
                 return RoundRecord(
                     srr=srr,
                     round_number=round_num,
-                    confidence="HIGH",
+                    confidence=key_confidence,
                     source_field="sample_attributes",
                     matched_pattern="structured_attr",
                     round_candidates=[round_num],
-                    parser_notes=f"structured attribute key='{key}' value='{stripped}'",
+                    parser_notes=notes,
                     target_hint=_extract_target_hint(sample_title),
                 )
 

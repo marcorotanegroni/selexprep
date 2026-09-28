@@ -30,7 +30,11 @@ import logging
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from selexprep.fetch.inspect import query_ena_filereport, split_semicolon_list
+from selexprep.fetch.inspect import (
+    query_ena_filereport,
+    query_ena_sample_attributes,
+    split_semicolon_list,
+)
 from selexprep.fetch.metadata import RoundRecord, parse_round
 
 logger = logging.getLogger(__name__)
@@ -75,6 +79,10 @@ class FetchRun:
     paired_end: bool
     round_record: RoundRecord
     library_strategy: str = ""
+    # Custom attributes of the run's sample (ENA sample XML): where ArrayExpress
+    # and GEO record the round. Empty in fetch_metadata.json files written before
+    # the field existed, or when the sample records could not be fetched.
+    sample_attributes: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -146,6 +154,30 @@ class FetchPlan:
 # ---------------------------------------------------------------------------
 
 
+def _sample_attributes(rows: list[dict], accession: str, *, timeout_s: int) -> dict:
+    """Sample attributes for the plan's runs; empty, with a warning, if ENA fails.
+
+    The round parser reads structured attributes first. Without them it still
+    runs on the text fields, so an unreachable sample record degrades the round
+    assignment instead of stopping the fetch.
+    """
+    import xml.etree.ElementTree as ElementTree
+
+    import requests
+
+    samples = [str(r.get("sample_accession") or "") for r in rows]
+    try:
+        return query_ena_sample_attributes(samples, timeout_s=timeout_s)
+    except (requests.RequestException, ElementTree.ParseError, TypeError, ValueError) as exc:
+        logger.warning(
+            "build_fetch_plan: sample attributes of %s could not be fetched (%s); "
+            "rounds are parsed from titles and library names only",
+            accession,
+            exc,
+        )
+        return {}
+
+
 def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
     """Hit ENA filereport with extended fields + parse rounds per run.
 
@@ -158,6 +190,7 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
         ValueError if ENA returns no records.
     """
     rows = query_ena_filereport(accession, fields=_ENA_FETCH_FIELDS, timeout_s=timeout_s)
+    sample_attributes = _sample_attributes(rows, accession, timeout_s=timeout_s)
 
     runs: list[FetchRun] = []
     for row in rows:
@@ -179,18 +212,21 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
         sample_title = str(row.get("sample_title") or "")
         library_name = str(row.get("library_name") or "")
         experiment_title = str(row.get("experiment_title") or "")
+        sample_accession = str(row.get("sample_accession") or "")
+        attributes = sample_attributes.get(sample_accession, {})
 
         round_record = parse_round(
             srr=srr,
             sample_title=sample_title,
             library_name=library_name,
             experiment_title=experiment_title,
+            sample_attributes=attributes,
         )
 
         runs.append(
             FetchRun(
                 srr=srr,
-                sample_accession=str(row.get("sample_accession") or ""),
+                sample_accession=sample_accession,
                 sample_title=sample_title,
                 library_name=library_name,
                 experiment_title=experiment_title,
@@ -202,6 +238,7 @@ def build_fetch_plan(accession: str, *, timeout_s: int = 30) -> FetchPlan:
                 paired_end=len(urls) == 2,
                 round_record=round_record,
                 library_strategy=str(row.get("library_strategy") or "").strip(),
+                sample_attributes=attributes,
             )
         )
 
