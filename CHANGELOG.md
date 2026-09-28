@@ -32,6 +32,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Fixed
 
+- **`fetch` reads the round from the sample's attributes, and no longer reads
+  ArrayExpress sample numbers as rounds.** The round parser has always ranked
+  structured sample attributes first, but `fetch` never passed any: the ENA
+  filereport carries none. It now reads them from ENA's sample records, where
+  ArrayExpress writes the SDRF's `selex cycle` and GEO its `round`. An
+  attribute key names a round when it has one round word (round, cycle,
+  iteration, r) and its other words come from a fixed vocabulary (selex,
+  selection, enrichment, of, number, pcr); this covers the spellings found in
+  the catalogue (`selex cycle`, `Characteristics[selex cycle]`,
+  `Selection cycle` with values such as `Cycle3`, `selex round`,
+  `round of selex enrichment`, `round_selection`) and keeps out keys such as
+  `cell cycle` or `cycle threshold`. `pcr cycle` is read at MEDIUM confidence:
+  PRJEB38961 uses it for the selection cycle, but it can also mean
+  amplification cycles. The pattern that read `RV01`…`RV39` as rounds 1–39 is
+  removed: in PRJEB51212, PRJEB51473 and PRJEB38961 those are sample numbers,
+  and the attributes give cycles 0, 1, 3 and 6. An attribute outranks a title
+  that reads as another round, and the conflict is named in the parser notes.
+  The attributes are kept in `fetch_metadata.json`; if the sample records
+  cannot be fetched, `fetch` warns and parses the text fields as before.
+  Across the 25,435 runs of the 127 INSDC deposits in the catalogue: 117 runs
+  in those three deposits move from rounds 1–39 to their documented cycles;
+  4,105 runs that were unassigned get a round from their attributes, 4,080 of
+  them in PRJEB76622 and PRJEB61115, whose titles were ambiguous (`CPXCR1`, a
+  replicate suffix `_R1`); no run loses its round. Against the ten
+  hand-curated round maps in `benchmarks/round_maps/`, no run receives a round
+  that differs from the map, and PRJEB49150 goes from 0 to 9 of 9 runs
+  assigned.
 - **`detect` reports the library constant every round shares, not the earliest
   round's whole flank.** The flank is called on the earliest round from the read
   edge inward, so it took in whatever that round's reads carried outside the

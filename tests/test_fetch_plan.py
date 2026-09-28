@@ -217,9 +217,11 @@ def test_build_fetch_plan_passes_timeout_through() -> None:
     fake = _mock_response(rows)
     with patch("selexprep.fetch.inspect.requests.get", return_value=fake) as mock_get:
         build_fetch_plan("SRR1", timeout_s=12)
-    args, kwargs = mock_get.call_args
-    assert args[0] == ENA_FILEREPORT_URL
-    assert kwargs["timeout"] == 12
+    # First the filereport, then the sample XML; both get the timeout.
+    first, *rest = mock_get.call_args_list
+    assert first.args[0] == ENA_FILEREPORT_URL
+    assert rest, "the sample attributes are requested too"
+    assert all(call.kwargs["timeout"] == 12 for call in mock_get.call_args_list)
 
 
 def test_build_fetch_plan_requests_extended_fields() -> None:
@@ -228,8 +230,7 @@ def test_build_fetch_plan_requests_extended_fields() -> None:
     fake = _mock_response(rows)
     with patch("selexprep.fetch.inspect.requests.get", return_value=fake) as mock_get:
         build_fetch_plan("SRR1")
-    _, kwargs = mock_get.call_args
-    params = kwargs["params"]
+    params = mock_get.call_args_list[0].kwargs["params"]
     for field_name in ("sample_title", "library_name", "experiment_title", "sample_accession"):
         assert field_name in params["fields"], f"missing {field_name} in {params['fields']!r}"
 
@@ -377,3 +378,99 @@ def test_fetch_plan_is_frozen() -> None:
     )
     with pytest.raises(dataclasses.FrozenInstanceError):
         plan.accession = "Y"  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# Sample attributes (ENA sample XML)
+# ---------------------------------------------------------------------------
+
+_SAMPLE_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<SAMPLE_SET>
+  <SAMPLE accession="SAMEA13183932" alias="E-MTAB-11484:RV04">
+    <IDENTIFIERS><PRIMARY_ID>SAMEA13183932</PRIMARY_ID></IDENTIFIERS>
+    <SAMPLE_ATTRIBUTES>
+      <SAMPLE_ATTRIBUTE><TAG>ENA-FIRST-PUBLIC</TAG><VALUE>2022-03-01</VALUE></SAMPLE_ATTRIBUTE>
+      <SAMPLE_ATTRIBUTE><TAG>construct</TAG><VALUE>ZFC1 of Sall4</VALUE></SAMPLE_ATTRIBUTE>
+      <SAMPLE_ATTRIBUTE><TAG>selex cycle</TAG><VALUE>1</VALUE></SAMPLE_ATTRIBUTE>
+      <SAMPLE_ATTRIBUTE><TAG>selex cycle</TAG><VALUE>9</VALUE></SAMPLE_ATTRIBUTE>
+    </SAMPLE_ATTRIBUTES>
+  </SAMPLE>
+</SAMPLE_SET>
+"""
+
+
+def _routed_get(rows: list[dict], xml: bytes | Exception):
+    """``requests.get`` that answers the filereport and the sample XML apart."""
+
+    def get(url, params=None, timeout=None):
+        if url == ENA_FILEREPORT_URL:
+            return _mock_response(rows)
+        if isinstance(xml, Exception):
+            raise xml
+        resp = MagicMock(spec=requests.Response)
+        resp.status_code = 200
+        resp.content = xml
+        resp.raise_for_status.return_value = None
+        return resp
+
+    return get
+
+
+def test_build_fetch_plan_reads_the_round_from_the_sample_attributes() -> None:
+    """PRJEB51212: the title ``RV04`` is a sample number; ``selex cycle`` is the round."""
+    rows = [_row(srr="ERR8972349", sample_title="RV04", sample_accession="SAMEA13183932")]
+    with patch("selexprep.fetch.inspect.requests.get", side_effect=_routed_get(rows, _SAMPLE_XML)):
+        plan = build_fetch_plan("PRJEB51212")
+    run = plan.runs[0]
+    assert run.round_record.round_number == 1
+    assert run.round_record.source_field == "sample_attributes"
+    # ENA bookkeeping tags are dropped; a repeated tag keeps its first value.
+    assert run.sample_attributes == {"construct": "ZFC1 of Sall4", "selex cycle": "1"}
+
+
+def test_build_fetch_plan_falls_back_to_text_fields_when_samples_fail(caplog) -> None:
+    rows = [_row(srr="SRR1", sample_title="Round 2")]
+    with patch(
+        "selexprep.fetch.inspect.requests.get",
+        side_effect=_routed_get(rows, requests.ConnectionError("down")),
+    ):
+        plan = build_fetch_plan("PRJ")
+    assert plan.runs[0].round_record.round_number == 2
+    assert plan.runs[0].sample_attributes == {}
+    assert "sample attributes of PRJ could not be fetched" in caplog.text
+
+
+def test_sample_attributes_survive_the_metadata_json(tmp_path: Path) -> None:
+    from selexprep.fetch.runner import read_fetch_metadata_json as load
+
+    rows = [_row(srr="ERR8972349", sample_title="RV04", sample_accession="SAMEA13183932")]
+    with patch("selexprep.fetch.inspect.requests.get", side_effect=_routed_get(rows, _SAMPLE_XML)):
+        plan = build_fetch_plan("PRJEB51212")
+    path = tmp_path / "fetch_metadata.json"
+    write_fetch_metadata_json(plan, path)
+    assert load(path).runs[0].sample_attributes == plan.runs[0].sample_attributes
+
+
+def test_one_sample_ena_does_not_serve_does_not_lose_the_others() -> None:
+    """A 404 on a batch (some DDBJ SAMD records) is retried sample by sample."""
+    from selexprep.fetch.inspect import ENA_BROWSER_XML_URL, query_ena_sample_attributes
+
+    def response(status: int, content: bytes = b"") -> MagicMock:
+        resp = MagicMock(spec=requests.Response)
+        resp.status_code = status
+        resp.content = content
+        if status >= 400:
+            resp.raise_for_status.side_effect = requests.HTTPError(response=resp)
+        else:
+            resp.raise_for_status.return_value = None
+        return resp
+
+    def get(url, timeout=None):
+        ids = url.removeprefix(ENA_BROWSER_XML_URL).split(",")
+        if "SAMD00000001" in ids:
+            return response(404)
+        return response(200, _SAMPLE_XML)
+
+    with patch("selexprep.fetch.inspect.requests.get", side_effect=get):
+        out = query_ena_sample_attributes(["SAMD00000001", "SAMEA13183932"])
+    assert out == {"SAMEA13183932": {"construct": "ZFC1 of Sall4", "selex cycle": "1"}}
