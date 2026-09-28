@@ -339,6 +339,7 @@ def read_fetch_metadata_json(path: Path) -> FetchPlan:
                 # fetch_metadata.json files written before the field
                 # existed default to empty string.
                 library_strategy=str(r.get("library_strategy", "")),
+                sample_attributes=dict(r.get("sample_attributes", {}) or {}),
             )
         )
     return FetchPlan(
