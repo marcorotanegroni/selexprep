@@ -28,6 +28,17 @@ from selexprep.qc.runner import run_qc
 
 logger = logging.getLogger(__name__)
 
+# Printed wherever a status is shown next to inferred primers (detect, run).
+# HIGH and MEDIUM rate how well the reads support the inferred primers, not a
+# verified boundary: sequence conserved inside the random region itself (one
+# sequence dominating every round, a motif next to the constant) can be taken
+# for constant with status HIGH (benchmarks/synthetic, test run).
+STATUS_NOTE = (
+    "note: the primers are inferred from the reads; status rates how well the reads "
+    "support them, not a verified boundary. Check the called constants against the "
+    "publication when an early, diverse round is missing (docs: Known limits)."
+)
+
 app = typer.Typer(
     name="selexprep",
     help="Accession-first preprocessing for public HT-SELEX with primer auto-inference.",
@@ -314,6 +325,8 @@ def detect(
     typer.echo(f"  status:          {report.status}")
     if report.failure_reason:
         typer.echo(f"  failure_reason:  {report.failure_reason}")
+    if report.status != "UNABLE_TO_INFER" and (report.primer_5p or report.primer_3p):
+        typer.echo(STATUS_NOTE)
 
 
 @app.command()
@@ -658,6 +671,8 @@ def run(
     typer.echo(f"  failed:             {n_failed}")
     if report.summary_tsv is not None:
         typer.echo(f"run_summary.tsv -> {report.summary_tsv}")
+    if any(r.library_report_status not in (None, "UNABLE_TO_INFER") for r in report.rows):
+        typer.echo(STATUS_NOTE)
 
     for row in report.rows:
         if row.status not in ("OK", "SKIPPED_READ_MERGING_RECOMMENDED"):

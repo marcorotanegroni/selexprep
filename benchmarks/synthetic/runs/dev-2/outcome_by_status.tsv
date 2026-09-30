@@ -1,0 +1,4 @@
+status	complete, correct	partial, correct and declared	refused	wrong
+HIGH	808	2	0	18
+MEDIUM	48	108	0	24
+UNABLE_TO_INFER	0	0	180	0

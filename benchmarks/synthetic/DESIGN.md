@@ -699,3 +699,64 @@ runs (negative controls included) now carry a recovery of N and a per-round
 yield of 0, and the 24 T4 runs classify the 3′ call as "shorter" than the
 configured constant while equal to the oracle's. No further change: the test
 set is run next, once, at the commit that carries this entry.
+
+## Test run — 2026-09-28, commit d8a702b, SLURM job 127738
+
+Run once, as fixed in "Freezing and changes", and reported as it came out.
+Clean tree, every donor pool matching its hash in `donors.tsv`. Between the
+frozen development commit (c3d43e9) and d8a702b the only code change is
+fd1a28d, in `selexprep.fetch`, which the benchmark does not use. Per run in
+`runs/test/results.tsv`; `summarize.py` writes `summary.tsv` (configuration ×
+donor × family), `outcome_by_status.tsv` and `totals.tsv`.
+
+**Totals.** 1,500 runs, no pipeline error. Of the 1,480 runs with constants:
+1,058 complete and correct, 160 partial, correct and declared, 213 refused, 49
+wrong; coverage 85.6%, accuracy among accepted runs 96.1%. The 20 negative
+controls were all refused. The 96.1% counts a partial run as correct when its
+used side is; 100 of the 160 partial runs recover no read's random region
+exactly, as a one-sided extraction does not end it. Runs extracted on both
+sides with both boundaries right: 1,058 of 1,480, 71.5% (a share of runs, not of
+reads). Both figures describe this grid, whose conditions were chosen; the
+results per configuration are the ones to read.
+
+**Against the expectations fixed in advance.** Every configuration came out as
+expected, or within the band marked uncertain, except where noted:
+
+- Complete and correct in every run: BASE, L ≥ 14, E 0–2%, I, T1–T5, A middle
+  and inner end, K, R, C50, C70, D, M, B, X1 at 0.5–2%, X2. Calls include outer
+  material where predicted (T2, T5, K outer; T1 in 7 of 30); T4's 3′ call leaves
+  out the round-specific base in all 30.
+- Refused in every run: L 8–12, C90–C100, F_trunc30 (as in development).
+- Partial, correct and declared: F_no3, F_no5, A outer start, E5 and X1 at 5%
+  (3′ side dropped), and O on the PRJEB70964 family in 10 of 10, whose
+  reverse-complemented 3′ constant starts like TruSeq R1 — the exception
+  predicted in the table.
+- **Wrong: 49 runs, all in the two conditions reported as limits before the
+  test.** X3 in 30 of 30 (status MEDIUM), as predicted: the 5′ call takes the
+  6-nt motif. C80 in 19 of 30, all with status HIGH, plus 3 refused and 8
+  complete and correct; by donor, 4–5 wrong of 6 for the four N35–N40 donors
+  and 0 of 6 for PRJNA741127 (N16), complete and correct in all six. The C80
+  calls reach 1–5 nt into N, and in three runs 37 nt at the 5′ end and up to 2
+  at the 3′ end, leaving 1–3 nt of a 40-nt region. Every wrong run is a two-sided
+  extraction with a boundary inside N, never a missing primer: exact recovery
+  of N has median 0 (the oracle, on the same reads, 99.5%), while the lowest
+  per-round yield of each run has median 90.7%, so a wrong run looks like a
+  successful one. The three worst clones, read from `truth.json`, begin with
+  exactly the 37 nt the 5′ calls added.
+
+**Outcome by status.** HIGH: 998 complete, 9 partial, 19 wrong (all C80).
+MEDIUM: 60 complete, 151 partial, 30 wrong (all X3). UNABLE_TO_INFER: the 213
+refusals. Descriptive only: `confidence` is not calibrated.
+
+**Compared with development** (run 2): the main failure mechanisms are
+confirmed on new donors and constant families. C80 is wrong in 17 of 24 runs in
+development (no refusal) and 19 of 30 here (3 refused); C70 had 1 wrong run in
+24 and none in 30 here; E5 had 6 refusals and none here.
+
+**How to read the limits.** C100 is a clear case of a boundary that cannot be
+told from the reads without outside information. In C80 and X3 the reads not
+carrying the dominant sequence or motif hold information the current method
+does not use; that it would always suffice to place the boundary is not shown.
+
+From here the test set is development material (step 6 of "Freezing and
+changes"): a change prompted by it is validated on new data, not on these runs.
