@@ -930,3 +930,22 @@ def test_pair_recovery_both_mismatch_is_pair_failed() -> None:
     ]
     report = compute_pair_recovery_by_status(rows)
     assert report.counts == {"LOW": {"pair_failed": 1}}
+
+
+def test_a_deposit_excluded_after_inference_changes_no_main_number() -> None:
+    """It is scored only in the sensitivity block, with the recovery arm counted in."""
+    from selexprep.benchmark.metrics import EXCLUDED_AFTER_INFERENCE
+
+    arm = [_row("PRJ_A", read_state="raw_standard"), _row("PRJ_B", read_state="raw_standard")]
+    excluded = _row("PRJ_X", read_state=EXCLUDED_AFTER_INFERENCE)
+    without = aggregate_metrics(arm)
+    with_it = aggregate_metrics([*arm, excluded])
+    assert with_it.n_verified == without.n_verified == 2
+    assert with_it.recovery_denominator == without.recovery_denominator == 2
+    assert with_it.pair_recovery_by_status == without.pair_recovery_by_status
+    assert with_it.safe_failure_rate == without.safe_failure_rate
+    assert without.excluded_after_inference is None
+    ex = with_it.excluded_after_inference
+    assert ex is not None and ex.accessions == ["PRJ_X"]
+    assert ex.recovery_denominator == 3
+    assert ex.pair_recovery_by_status.n_evaluated == 3

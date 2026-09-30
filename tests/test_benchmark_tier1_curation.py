@@ -104,7 +104,13 @@ _ADAPTER_CONTROL = {
     "PRJNA591605",
 }
 # All in-benchmark rows (any of the three roles).
-_BENCHMARK = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
+# Excluded from the recovery arm after its inference was known (benchmarks/README.md):
+# kept in ground_truth.tsv only to be scored as a sensitivity analysis, never in an arm.
+_EXCLUDED_AFTER_INFERENCE = {"PRJNA1244358"}
+# The three arms, decided before detect ran: the pre-detect screening log and the
+# read-state evidence cover exactly these.
+_ARMS = _RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL
+_BENCHMARK = _ARMS | _EXCLUDED_AFTER_INFERENCE
 # Out-of-scope rows removed from ground_truth.tsv → excluded_datasets.tsv.
 # PRJNA315881: round-5 pool multiplexed-by-condition (undocumented barcodes) →
 # not a fair primer-inference test (multiplexing/offset/truncation);
@@ -251,7 +257,7 @@ def test_excluded_rows_removed_from_ground_truth() -> None:
 
 def test_every_row_has_valid_read_state_and_flags() -> None:
     gt = _gt()
-    valid_states = {"raw_standard", "pre_trimmed", "adapter_control"}
+    valid_states = {"raw_standard", "pre_trimmed", "adapter_control", "excluded_after_inference"}
     flag_cols = ["mono_round", "partial_fetch", "paired_end_r1_only", "demultiplexed"]
     for _, row in gt.iterrows():
         acc = row["accession"]
@@ -300,7 +306,7 @@ def test_read_state_evidence_schema_and_coverage() -> None:
     ]
     # covers exactly the benchmark set, and read_state mirrors ground_truth
     gt = _gt().set_index("accession")
-    assert set(ev["accession"]) == _BENCHMARK
+    assert set(ev["accession"]) == _ARMS
     for _, row in ev.iterrows():
         acc = row["accession"]
         assert row["read_state"] in {"raw_standard", "pre_trimmed", "adapter_control"}
@@ -332,12 +338,12 @@ def test_screening_log_covers_full_original_pool() -> None:
     assert _SCREENING_LOG.exists()
     sl = pd.read_csv(_SCREENING_LOG, sep="\t", dtype=str).fillna("")
     assert list(sl.columns) == ["accession", "read_state", "included", "arm", "reason", "evidence"]
-    assert set(sl["accession"]) == _BENCHMARK | _EXCLUDED_ACCESSIONS
+    assert set(sl["accession"]) == _ARMS | _EXCLUDED_ACCESSIONS
 
 
 def test_screening_log_included_flags_match_arms() -> None:
     sl = pd.read_csv(_SCREENING_LOG, sep="\t", dtype=str).fillna("").set_index("accession")
-    for acc in _BENCHMARK:
+    for acc in _ARMS:
         assert sl.at[acc, "included"] == "true", f"{acc} should be included"
     for acc in _EXCLUDED_ACCESSIONS:
         assert sl.at[acc, "included"] == "false", f"{acc} should be excluded"
@@ -377,3 +383,10 @@ def test_screening_log_excluded_reasons_are_evidence_based() -> None:
     for _, row in excluded.iterrows():
         assert row["reason"] in _REASON_VOCAB, f"{row['accession']}: reason {row['reason']!r}"
         assert row["reason"] != "primers_unrecoverable"
+
+
+def test_excluded_after_inference_rows_are_in_no_arm() -> None:
+    gt = _gt().set_index("accession")
+    for acc in _EXCLUDED_AFTER_INFERENCE:
+        assert gt.at[acc, "read_state"] == "excluded_after_inference"
+    assert not _EXCLUDED_AFTER_INFERENCE & (_RECOVERY | _SPECIFICITY | _ADAPTER_CONTROL)
