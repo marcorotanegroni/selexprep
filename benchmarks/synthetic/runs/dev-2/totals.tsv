@@ -1,0 +1,2 @@
+complete, correct	partial, correct and declared	refused	wrong	error	negative control, refused	negative control, wrong	runs	runs_with_constants	coverage	accuracy_among_accepted	complete_correct_share
+856	110	180	42	0	12	0	1200	1188	0.8485	0.9583	0.7205

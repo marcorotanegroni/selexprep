@@ -83,19 +83,25 @@ construct.
 
 `detect` finds the boundary from how conserved each position is across the
 reads of the earliest round. Sequence that is conserved in the random region
-itself can therefore be taken for constant, and the call then reaches a few
-bases into the random region. Seen in the semi-synthetic benchmark
-(`benchmarks/synthetic/`):
+itself can therefore be taken for constant, and the call then reaches into the
+random region: by 1 nt, or in the worst cases by almost all of it. `status`
+rates how well the reads support the inferred primers, not whether the boundary
+is right, so such a call can carry `status` `HIGH`. Seen in the semi-synthetic
+benchmark (`benchmarks/synthetic/`):
 
-- **One sequence dominating every round, the earliest included.** With one
-  sequence making up 70% of every round, 1 run in 24 placed the boundary inside
-  the random region; at 80%, 17 in 24, all with `status` `HIGH`. From 90% on,
-  every run was refused. What protects the call is an earliest round in which
-  no sequence dominates.
+- **One sequence dominating every round, the earliest included.** At 70% of
+  every round, 1 of 24 development runs and none of 30 test runs placed the
+  boundary inside the random region; at 80%, 17 of 24 and 19 of 30, all with
+  `status` `HIGH`, the calls reaching 1–5 nt into it and, in three runs, 37 of
+  its 40 nt. From 90% on, every run was refused. With a single sequence and no
+  outside information the boundary cannot be told from the reads at all; at
+  70–80% the other reads carry information the current method does not use.
 - **Only a late round provided, with a motif next to the constant.** The motif
   enters the call (`status` `MEDIUM`, since one round caps it).
 
 A high extraction yield does not show that the boundary is right: a call a few
-bases into the random region still trims almost every read. When the deposit
-has an early, diverse round, provide it; when it has none, check the called
-constants against the publication.
+bases into the random region still trims almost every read. The benchmark put
+the dominant sequence in every round; that an early, diverse round protects the
+call follows from how the boundary is found, but was not measured on its own.
+When the called constants matter, check them against the publication, and pass
+the published ones with `--override-primer-5p` / `--override-primer-3p`.

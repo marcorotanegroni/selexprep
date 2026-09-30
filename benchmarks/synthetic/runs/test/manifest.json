@@ -1,0 +1,9 @@
+{
+  "set": "test",
+  "commit": "d8a702b3542fac8739f3aece40c15b03765b06b8",
+  "dirty": false,
+  "modified": [],
+  "modified_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pools_sha256": "d86ca66af9c6cddd254483f7c8c4b71bef6c6bb9811e8c4540be09d0812fe8c7",
+  "python": "3.11.15"
+}

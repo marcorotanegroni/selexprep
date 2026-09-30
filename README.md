@@ -256,7 +256,9 @@ rounds; late-round-enriched aptamer motifs do not.** `detect` exploits this
 cross-round persistence to separate constants from binders, and reports its
 confidence in a typed `LibraryReport` (pydantic, strict-mypy) with explicit
 `extraction_mode`, `read_source`, `required_action`, `full_insert_recovered`,
-and `status` — no silent miscalls.
+and `status`. `status` rates how well the reads support the inferred primers, not
+a verified boundary: sequence conserved inside the random region itself can be
+taken for constant (see [Known limits](docs/library-report.md#known-limits)).
 
 **Benchmark headline:** *on a curated, paper-grounded set, `selexprep` recovers
 SELEX primers directly from raw reads — with none supplied — and fails safe (no

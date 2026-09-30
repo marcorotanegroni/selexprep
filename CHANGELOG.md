@@ -8,6 +8,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+- **`detect` and `run` say what `status` means.** Whenever a status is shown
+  next to inferred primers, a note says that it rates how well the reads
+  support them, not a verified boundary, and points to the new "Known limits"
+  section of the LibraryReport reference. The semi-synthetic benchmark found
+  the case: one sequence making up 80% of every round, the earliest included,
+  is taken for constant with status HIGH, and the call reaches 1 nt to almost
+  the whole random region into it (19 of 30 test runs). The inference is
+  unchanged; the README no longer promises "no silent miscalls".
+- **Semi-synthetic benchmark** (`benchmarks/synthetic/`): a pre-registered
+  design, a donor screen, a generator that builds libraries around real
+  random regions with the truth in every read name, an evaluator independent
+  of `selexprep`, and development and test results.
+
 - **`fetch` now says when one round label covers runs of different
   BioSamples.** Deposits with parallel selections often number each one's
   rounds from 1 (`SELEX S1 Round 04`, `SELEX S2 Round 04`), so both runs get
