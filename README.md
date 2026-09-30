@@ -312,6 +312,7 @@ By design — these are handled by mature tools that consume `selexprep`'s outpu
 |---|---|
 | Clustering | FASTAptameR |
 | Motif discovery | MEME · RaptGen-UI |
+| Sequence–structure motif scoring, aptamer ranking | APTANI2 — takes the raw FASTQ of one round, not the extracted FASTA, with the flanking constants and read length as parameters; `detect` reports both |
 | Binding-affinity prediction | RaptGen · DeepSELEX · AptaTrans |
 | 3D structure | ViennaRNA · RNAfold |
 | Aptamer design | MAWS · RNAtranslator |
