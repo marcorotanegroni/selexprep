@@ -487,3 +487,73 @@ def test_the_test_set_needs_a_clean_tree(tmp_path, monkeypatch):
         harness, "manifest", lambda which, sha: {"dirty": True, "modified": ["x.py"]}
     )
     assert harness.main(["--set", "test", "--out", str(tmp_path / "o")]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Post-test experiments (DESIGN.md, "Post-test experiments")
+# ---------------------------------------------------------------------------
+
+
+def test_post_test_experiments_have_the_registered_size():
+    assert len(sim.post_test_cells("override")) == 60
+    assert {c.config for c in sim.post_test_cells("override")} == {"C80", "X3"}
+    trajectory = sim.post_test_cells("trajectory")
+    assert len(trajectory) == 60
+    assert {c.config for c in trajectory} == {"G_full", "G_late"}
+    # The pre-registered grid is untouched.
+    assert not set(sim.POST_SPECS) & set(sim.SPECS)
+
+
+def test_the_paired_arms_share_their_rounds_read_for_read(pools, tmp_path):
+    """P2 compares the arms: the only difference must be the earliest round."""
+    full, _ = _build("G_full", pools, tmp_path / "full")
+    late, _ = _build("G_late", pools, tmp_path / "late")
+    assert [r["role"] for r in full["rounds"]] == ["earliest", "middle", "latest"]
+    assert [r["role"] for r in late["rounds"]] == ["middle", "latest"]
+    assert full["record"]["clone"] == late["record"]["clone"]
+    for rnd in late["rounds"]:
+        name = rnd["fastq"]
+        assert (tmp_path / "full" / name).read_bytes() == (tmp_path / "late" / name).read_bytes()
+
+
+def test_the_growth_trajectory_sets_the_clone_per_round(pools, tmp_path):
+    truth, reads = _build("G_full", pools, tmp_path)
+    shares = truth["record"]["clone_share"]
+    assert shares == {"middle": pytest.approx(0.8), "latest": pytest.approx(0.9)}
+    # The earliest round is the donor's as it is.
+    pool = _pool(pools, "earliest")
+    early = [seq[ev.parse_name(n).start : ev.parse_name(n).end] for n, seq in reads["earliest"]]
+    assert sum(a == b for a, b in zip(early, pool, strict=True)) > 0.7 * len(pool)
+
+
+def test_override_extraction_is_evaluated_like_the_oracle(pools, tmp_path):
+    truth, _ = _build("C80", pools, tmp_path)
+    c5, c3 = sim.load_constants()[FAMILY]
+    _report(tmp_path, primer_5p=c5 + "ACGT", primer_3p=c3)
+    _perfect(tmp_path, truth, "override/overridden")
+    (tmp_path / "run.json").write_text(json.dumps({"override_seconds": 1.0}))
+    row = ev.evaluate(tmp_path)
+    assert row["outcome"] == "wrong"  # the inferred call reaches into N
+    assert row["override_precision"] == row["override_recall"] == 1
+    assert row["override_n_recovery"] == 1 and row["override_error"] == ""
+
+
+def test_experiments_run_only_on_the_test_set(tmp_path):
+    harness = _load("run_synthetic")
+    args = ["--set", "dev", "--experiment", "override", "--out", str(tmp_path / "o")]
+    assert harness.main(args) == 2
+
+
+@pytest.mark.skipif(
+    shutil.which("cutadapt") is None and not (Path(sys.executable).parent / "cutadapt").exists(),
+    reason="cutadapt not available",
+)
+def test_override_run_end_to_end_matches_the_oracle(tmp_path):
+    """P1's expectation on fake pools: the override path cuts as the oracle."""
+    pools = _fake_pools(tmp_path / "pools", size=1500)
+    harness = _load("run_synthetic")
+    cell = sim.Cell("C80", DONOR, FAMILY, 1)
+    row = harness.run_cell(cell, pools, tmp_path / "out", keep=False, override=True)
+    assert row["override_error"] == ""
+    for metric in ("precision", "recall", "n_recovery", "lowest_round_yield"):
+        assert row[f"override_{metric}"] == row[f"oracle_{metric}"], metric

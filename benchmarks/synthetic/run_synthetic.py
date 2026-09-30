@@ -104,7 +104,13 @@ def write_oracle_report(oracle: dict, path: Path) -> None:
     write_library_report_json(report, path)
 
 
-def run_cell(cell, pools: Path, out: Path, keep: bool) -> dict:
+def run_cell(cell, pools: Path, out: Path, keep: bool, override: bool = False) -> dict:
+    """Generate, detect, extract, extract with the oracle, evaluate.
+
+    ``override`` (post-test P1) adds one more extraction: ``detect``'s report
+    with both configured constants passed as ``--override-primer-5p/3p``, the
+    path the documentation recommends, evaluated like the oracle's.
+    """
     run_dir = out / "runs" / cell.cell_id
     result = run_dir / "result.json"
     if result.is_file():
@@ -173,6 +179,28 @@ def run_cell(cell, pools: Path, out: Path, keep: bool) -> dict:
         if rc != 0:
             run["oracle_error"] = f"oracle extract exited {rc}"
 
+    if override and report_path.is_file():
+        constants = truth["constants"]
+        rc, run["override_seconds"] = _selexprep(
+            [
+                "extract",
+                *fastqs,
+                "--library-report",
+                str(report_path),
+                "--round-map",
+                rounds,
+                "--override-primer-5p",
+                constants["primer_5p"],
+                "--override-primer-3p",
+                constants["primer_3p"],
+                "--outdir",
+                str(run_dir / "override"),
+            ],
+            run_dir / "override.log",
+        )
+        if rc != 0:
+            run["override_error"] = f"override extract exited {rc}"
+
     (run_dir / "run.json").write_text(json.dumps(run, indent=2, sort_keys=True) + "\n")
     row = evaluate.evaluate(run_dir)
     row.update({k: v for k, v in run.items() if k.endswith("_seconds")})
@@ -180,7 +208,7 @@ def run_cell(cell, pools: Path, out: Path, keep: bool) -> dict:
     if not keep:
         for path in run_dir.glob("round_*.fastq.gz"):
             path.unlink()
-        for sub in (run_dir / "extract", run_dir / "oracle" / "extract"):
+        for sub in (run_dir / "extract", run_dir / "oracle" / "extract", run_dir / "override"):
             shutil.rmtree(sub, ignore_errors=True)
     return row
 
@@ -247,11 +275,22 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--config", action="append", help="only these configurations")
     p.add_argument("--donor", action="append", help="only these donors")
     p.add_argument("--keep", action="store_true", help="keep FASTQs and extracted reads")
+    p.add_argument(
+        "--experiment",
+        choices=simulate.EXPERIMENTS,
+        help="a post-test experiment (DESIGN.md) on the test set's donors, instead of the grid",
+    )
     args = p.parse_args(argv)
+    if args.experiment and args.set != "test":
+        print("post-test experiments use the test set's donors: --set test", file=sys.stderr)
+        return 2
 
+    grid = (
+        simulate.post_test_cells(args.experiment) if args.experiment else simulate.cells(args.set)
+    )
     todo = [
         c
-        for c in simulate.cells(args.set)
+        for c in grid
         if (not args.config or c.config in args.config)
         and (not args.donor or c.donor in args.donor)
     ]
@@ -261,8 +300,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"donor pools: {exc}", file=sys.stderr)
         return 2
     current = manifest(args.set, pools_sha256)
+    current["experiment"] = args.experiment
     if args.set == "test" and current["dirty"]:
-        # The test set runs once, at a recorded commit: nothing uncommitted.
+        # The test set and the post-test experiments report results: nothing
+        # uncommitted.
         print(f"test set needs a clean tree; modified: {current['modified']}", file=sys.stderr)
         return 2
     args.out.mkdir(parents=True, exist_ok=True)
@@ -273,9 +314,11 @@ def main(argv: list[str] | None = None) -> int:
         # Otherwise old results would be attributed to new code or data. The
         # first manifest is kept.
         stored = json.loads(stored_path.read_text())
-        keys = ("set", "commit", "modified", "modified_sha256", "pools_sha256")
-        if any(stored.get(k) != current[k] for k in keys):
-            diff = {k: (stored.get(k), current[k]) for k in keys if stored.get(k) != current[k]}
+        keys = ("set", "experiment", "commit", "modified", "modified_sha256", "pools_sha256")
+        if any(stored.get(k) != current.get(k) for k in keys):
+            diff = {
+                k: (stored.get(k), current.get(k)) for k in keys if stored.get(k) != current.get(k)
+            }
             print(
                 f"{args.out} holds results of another experiment {diff}; use a new --out",
                 file=sys.stderr,
@@ -284,7 +327,8 @@ def main(argv: list[str] | None = None) -> int:
     else:
         stored_path.write_text(json.dumps(current, indent=2) + "\n")
     print(f"{len(todo)} runs ({args.set})", file=sys.stderr)
-    jobs = [(c, args.pools, args.out, args.keep) for c in todo]
+    override = args.experiment == "override"
+    jobs = [(c, args.pools, args.out, args.keep, override) for c in todo]
     rows = []
     with Pool(args.jobs) as pool:
         for i, row in enumerate(pool.imap_unordered(_star, jobs), 1):

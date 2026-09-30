@@ -277,6 +277,18 @@ def evaluate(run_dir: Path) -> dict:
         metrics = per_read(oracle["mode"], reads, read_outputs(run_dir / "oracle" / "extract"))
         row.update({f"oracle_{k}": v for k, v in metrics.items()})
     row["oracle_error"] = run.get("oracle_error", "")
+    if "override_seconds" in run:
+        # Post-test P1: detect's report with both configured constants passed as
+        # overrides. extract writes it under overridden/ and cuts on both sides,
+        # in the frame of detect's report.
+        row["override_error"] = run.get("override_error", "")
+        if not run.get("override_error"):
+            framed = reads
+            if report is not None and report["orientation"] == "REVERSE":
+                framed = {k: v.reversed() for k, v in reads.items()}
+            outputs = read_outputs(run_dir / "override" / "overridden")
+            metrics = per_read(TWO_SIDED, framed, outputs)
+            row.update({f"override_{k}": v for k, v in metrics.items()})
     return row
 
 
