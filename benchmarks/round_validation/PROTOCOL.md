@@ -113,4 +113,55 @@ number of runs not verified.
 
 ## Amendments
 
-None yet.
+### Amendment 1 — 2026-09-30, before any truth was compiled or compared
+
+**What changes.** The endpoint "accuracy against a source of independent
+provenance" on views B and C is **suspended**. No truth table is compiled and
+no accuracy is reported. What is kept is descriptive: coverage, the before/after
+comparison of the parser on the catalogue, the agreement with the curated round
+maps on the runs they can be compared on, and the specific cases whose
+correction is documented. No assignment without verification is counted as
+correct.
+
+**Why.** A feasibility review of view B, done before any truth was collected,
+showed that an independent reference is hard to find systematically:
+
+- B has 28 records and 679 runs.
+- In the 9 DDBJ records the round appears only in the library name, which the
+  parser reads; their sample description names the target, not the round.
+- In 14 of the other 19 records the sample description repeats the sample
+  title or the library name in every run, or is empty; it is a copy of what the
+  parser reads, not a second source.
+- 22 of the 28 records have no DOI or PMID in the catalogue metadata. This does
+  not show that no publication exists; it shows that finding one, and a
+  run-level mapping in it, would be a search per record.
+
+The accuracy that could be measured would therefore cover few records, and most
+runs would be "not verified". An interpretation reference (a person reading the
+depositors' label without the parser's output) was considered: it would measure
+a different endpoint, the interpretation of the labels rather than their
+correctness, and the difficult cases are already known from development, so it
+would not be a blind validation. It is not adopted now.
+
+**What was known when this was written.** The before/after catalogue snapshots
+of 2026-09-28 and 2026-09-30 (round per run, no truth); the development cases
+(`RV<n>` sample numbers in PRJEB51212, PRJEB51473 and PRJEB38961; titles with a
+protein name or replicate suffix read as round 1 in PRJEB76622 and PRJEB61115);
+the raw metadata of the 679 runs of B, extracted without the parser's rounds;
+and a classification of the catalogue with the code after the fix, run for view
+C and not examined.
+
+**What is reported instead**, for the released version (0.4.5), as in-sample
+and descriptive, with denominators:
+
+- coverage on every run of the 127 INSDC deposits: runs that receive a round
+  and runs left unassigned, without treating an assignment as correct;
+- agreement with the curated maps in `benchmarks/round_maps/`, counting only the
+  runs that receive a round, with the unassigned runs stated;
+- that every assignment keeps its source field, confidence and notes, and that a
+  user-supplied round map overrides it.
+
+The paper describes the released version, not how it was reached: the
+before/after comparison of the fix stays in `CHANGELOG.md`. The numbers are
+produced by a script run on the 0.4.5 tag together with Supplementary Data S2.
+None of this is an estimate of accuracy on deposits outside the catalogue.
