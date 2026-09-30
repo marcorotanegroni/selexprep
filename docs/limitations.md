@@ -10,7 +10,7 @@ supported:
 - **IUPAC ambiguous bases in primers.** Reported as unsupported in the `LibraryReport`; excluded from exact-recovery counts.
 - **Barcode inference.** Demultiplexing is sample-sheet driven only.
 - **DNA vs RNA classification from FASTQ.** RNA SELEX is sequenced as cDNA, so reads are A/C/G/T regardless. Assay type is read from SRA metadata when available; classification from FASTQ is not currently implemented.
-- **Clustering, motif discovery, binding-affinity prediction.** Handled by FASTAptameR, MEME / RaptGen-UI, RaptGen / DeepSELEX / AptaTrans respectively — `selexprep` outputs feed into these.
+- **Clustering, motif discovery, sequence–structure motif scoring, binding-affinity prediction.** Handled by FASTAptameR, MEME / RaptGen-UI, APTANI2, RaptGen / DeepSELEX / AptaTrans respectively — `selexprep` outputs feed into these. APTANI2 reads the raw FASTQ of one round rather than the extracted FASTA, with the flanking constants and read length that `detect` reports as parameters.
 - **Parquet bit-identical reproducibility across `pyarrow` versions.** Only FASTA/TSV/JSON hashes are guaranteed deterministic; Parquet hashes are version-pinned in the manifest as advisory.
 
 ## Benchmark (Tier 1 scorecard) — how to read the recovery numbers
