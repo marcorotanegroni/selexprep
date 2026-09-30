@@ -820,3 +820,31 @@ metrics and the oracle's, as in the test.
 Related evidence already in the test, not paired: M90 (the motif in the middle
 and latest rounds, all three provided) was complete and correct in 30 of 30,
 X3 (the same motif level, latest round only) wrong in 30 of 30.
+
+### Post-test results — 2026-09-30, commit 5f7fe78, SLURM jobs 147809 and 147810
+
+Clean tree, every pool matching its hash; 60 runs each, no pipeline error.
+Results in `runs/post-override/` and `runs/post-trajectory/`.
+
+**P1, as expected in all 60 runs.** The rebuilt C80 and X3 runs reproduced the
+test exactly (outcome, both calls and status identical in all 60), so the
+generator's new code path left the pre-registered configurations unchanged.
+Passing the configured constants as `--override-primer-5p/3p` gave, in every
+run, the oracle's precision, recall, recovery of N and lowest per-round yield
+exactly — on the 49 wrong runs, the 3 refused (the override cleared the
+refusal) and the 8 correct. Exact recovery of N with the overrides: median
+99.5%, lowest 96.7%.
+
+**P2, as expected.** With the earliest round provided (`G_full`), 30 of 30
+complete and correct, both calls exact, status HIGH. Without it (`G_late`), 9
+complete and correct, 4 refused and 17 wrong (all 17 with status HIGH),
+every donor but one wrong at least three times in six. Paired: the earliest
+round turned 21 of 30 runs from wrong or refused into complete and correct,
+and changed none the other way. Exact recovery of N, median: 99.5% with the
+earliest round, 0% without it (the oracle 99.5% in both).
+
+So on these donors and families an early round without the dominant sequence
+protected the call in every run, and the published constants passed as
+overrides recovered what the inference lost. These are the conditions tested,
+not a guarantee: an early round that carries sequence conserved next to the
+constant (as X3's motif) would not protect it in the same way.

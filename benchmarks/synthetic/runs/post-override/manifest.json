@@ -1,0 +1,10 @@
+{
+  "set": "test",
+  "commit": "5f7fe785b22bcc8bec404597617010a3a4217ffd",
+  "dirty": false,
+  "modified": [],
+  "modified_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "pools_sha256": "d86ca66af9c6cddd254483f7c8c4b71bef6c6bb9811e8c4540be09d0812fe8c7",
+  "python": "3.11.15",
+  "experiment": "override"
+}

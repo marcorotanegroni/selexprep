@@ -100,8 +100,19 @@ benchmark (`benchmarks/synthetic/`):
   enters the call (`status` `MEDIUM`, since one round caps it).
 
 A high extraction yield does not show that the boundary is right: a call a few
-bases into the random region still trims almost every read. The benchmark put
-the dominant sequence in every round; that an early, diverse round protects the
-call follows from how the boundary is found, but was not measured on its own.
-When the called constants matter, check them against the publication, and pass
-the published ones with `--override-primer-5p` / `--override-primer-3p`.
+bases into the random region still trims almost every read.
+
+Two remedies, each measured on the same simulated deposits:
+
+- **Provide an early round in which no sequence dominates.** With the dominant
+  sequence at 80% and 90% of the two later rounds, providing the donor's
+  earliest round gave a correct boundary in 30 of 30 runs; leaving it out, 9
+  correct, 4 refused and 17 wrong. An early round protects the call only if it
+  is diverse next to the constants: a motif conserved there is taken for
+  constant in the same way.
+- **Pass the published constants** with `--override-primer-5p` /
+  `--override-primer-3p`. On all 60 runs of the two conditions above (49 of
+  them wrong and 3 refused), this recovered the random region exactly as the
+  true constants do.
+
+When the called constants matter, check them against the publication.
