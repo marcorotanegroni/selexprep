@@ -121,3 +121,51 @@ def test_emit_scorecard_empty_metrics_still_writes_table(tmp_path: Path) -> None
     text = out.read_text(encoding="utf-8")
     assert "| Accession | Chemistry | Target | Arm | 5' | 3' | Note |" in text
     assert "REC1" in text  # descriptors still come from ground_truth
+
+
+def test_a_deposit_excluded_after_inference_is_not_in_the_main_table(tmp_path: Path) -> None:
+    """It is in no arm: never shown as a control's "correct refusal", only in the
+    sensitivity section, from its own block of metrics.json."""
+    from selexprep.benchmark.figure_a import sensitivity_lines
+    from selexprep.benchmark.metrics import BenchmarkRow
+
+    excluded = BenchmarkRow(
+        accession="PRJ_X",
+        library_kind="DNA",
+        target_kind="protein",
+        primer_5p_truth="ACGT",
+        primer_3p_truth="TTGG",
+        n_length_truth=16,
+        paper_doi="",
+        paper_pmid="",
+        round_map_source="auto",
+        round_map_path="",
+        verified=True,
+        notes="",
+        library_report=None,
+        read_state="excluded_after_inference",
+    )
+    rows = build_scorecard(_metrics(), [excluded])
+    assert rows == []
+
+    metrics = {
+        "excluded_after_inference": {
+            "accessions": ["PRJ_X"],
+            "recovery_denominator": 8,
+            "primer_recovery": {
+                "pairs": [
+                    {
+                        "accession": "PRJ_X",
+                        "status_5p": {"equivalence_kind": "MISSING"},
+                        "status_3p": {"equivalence_kind": "EXACT"},
+                    }
+                ]
+            },
+            "pair_recovery_by_status": {"counts": {"HIGH": {"pair_exact": 5, "pair_partial": 2}}},
+            "safe_failure_rate": {"safe_failure_accessions": ["PRJ_X"]},
+        }
+    }
+    text = "\n".join(sensitivity_lines(metrics))
+    assert "| PRJ_X | MISSING | EXACT | yes |" in text
+    assert "5 exact / 0 equivalent / 2 partial of 8 evaluable" in text
+    assert sensitivity_lines({}) == []

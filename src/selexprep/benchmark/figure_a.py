@@ -17,7 +17,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from selexprep.benchmark.metrics import load_ground_truth
+from selexprep.benchmark.metrics import EXCLUDED_AFTER_INFERENCE, load_ground_truth
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,9 @@ def build_scorecard(metrics: dict[str, Any], gt_rows: list[Any]) -> list[dict[st
 
     rows: list[dict[str, str]] = []
     for gt in gt_rows:
-        if not gt.verified:
+        # A deposit excluded after inference is in no arm: it is reported only
+        # in the sensitivity section, from its own block of metrics.json.
+        if not gt.verified or gt.read_state == EXCLUDED_AFTER_INFERENCE:
             continue
         arm = _ARM.get(gt.read_state, gt.read_state or "—")
         note = ""
@@ -114,6 +116,42 @@ def build_scorecard(metrics: dict[str, Any], gt_rows: list[Any]) -> list[dict[st
     return rows
 
 
+def sensitivity_lines(metrics: dict[str, Any]) -> list[str]:
+    """The deposits excluded after inference, and the recovery arm with them counted in.
+
+    Read from the ``excluded_after_inference`` block only; empty when there is none.
+    """
+    block = metrics.get("excluded_after_inference")
+    if not block:
+        return []
+    pairs = {p["accession"]: p for p in block.get("primer_recovery", {}).get("pairs", [])}
+    rec = _collapse_pair_counts(block.get("pair_recovery_by_status", {}).get("counts", {}))
+    safe = block.get("safe_failure_rate", {})
+    refused = set(safe.get("safe_failure_accessions", []))
+    lines = [
+        "## Sensitivity — deposits excluded after inference",
+        "",
+        "Out of every arm above (benchmarks/README.md); scored here with this version.",
+        "",
+        "| Accession | 5' | 3' | Refused |",
+        "|---|---|---|---|",
+    ]
+    for accession in block.get("accessions", []):
+        p = pairs.get(accession, {})
+        lines.append(
+            f"| {accession} | {_side(p.get('status_5p'))} | {_side(p.get('status_3p'))} | "
+            f"{'yes' if accession in refused else 'no'} |"
+        )
+    lines += [
+        "",
+        f"_Recovery arm with them counted in: {rec['exact']} exact / {rec['equivalent']} "
+        f"equivalent / {rec['partial']} partial of {int(block.get('recovery_denominator', 0))} "
+        "evaluable._",
+        "",
+    ]
+    return lines
+
+
 def emit_scorecard(metrics_json: Path, ground_truth: Path, outdir: Path) -> Path:
     """Write ``table_1.md`` — the per-deposit primer-recovery scorecard. Returns its path."""
     metrics = json.loads(metrics_json.read_text(encoding="utf-8"))
@@ -131,6 +169,7 @@ def emit_scorecard(metrics_json: Path, ground_truth: Path, outdir: Path) -> Path
     ]
     lines += ["| " + " | ".join(r[c] for c in _COLUMNS) + " |" for r in rows]
     lines.append("")
+    lines += sensitivity_lines(metrics)
 
     out_path = outdir / "table_1.md"
     out_path.write_text("\n".join(lines), encoding="utf-8")

@@ -6,7 +6,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.5] - 2026-09-30
+
 ### Added
+
+- **Benchmark: round-assignment coverage of the release**
+  (`benchmarks/round_validation/coverage.{py,sh}`). For every run of the 127
+  INSDC deposits in the catalogue it records the round `fetch` assigns, with its
+  confidence, source field and notes, and reports how many runs receive a round
+  and how many are left unassigned, and the agreement with the curated round
+  maps on the runs both cover. Descriptive and in-sample, as fixed in
+  `benchmarks/round_validation/PROTOCOL.md` (Amendment 1): an assignment is never
+  counted as correct.
+- **Benchmark: the deposit excluded after inference is scored as a sensitivity
+  analysis.** PRJNA1244358 was excluded from the recovery arm after `detect`
+  had refused it (v0.4.0), which `benchmarks/README.md` now discloses. It is back
+  in `ground_truth.tsv` with `read_state` `excluded_after_inference`: out of
+  every arm and every distribution, and scored only in a new
+  `excluded_after_inference` block of `metrics.json`, which recomputes the
+  recovery arm with it counted in, whatever its result with this version.
+  `table_1.md` shows it in a separate sensitivity section, never as a control.
 
 - **`detect` and `run` say what `status` means.** Whenever a status is shown
   next to inferred primers, a note says that it rates how well the reads
@@ -323,7 +342,10 @@ random regions — no manual primer entry required.
 - `kingfisher` (GPL-3.0) is an optional, runtime-detected subprocess backend —
   not a declared dependency — so the default install stays MIT-only.
 
-[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/marcorotanegroni/selexprep/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/marcorotanegroni/selexprep/compare/v0.4.1...v0.4.5
+[0.4.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/marcorotanegroni/selexprep/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/marcorotanegroni/selexprep/compare/v0.1.1...v0.2.0

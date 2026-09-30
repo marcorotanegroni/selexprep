@@ -233,6 +233,26 @@ documented barcodes). They are removed *before* analysis and documented — not
 silently dropped — so the recovery denominator is honest. The pre-detect
 screening decision for every candidate is recorded in `screening_log.tsv`.
 
+**One candidate was excluded after inference, and is reported here for that
+reason.** PRJNA1244358 (HT-SELEX of ASCL2 and HES2 variants, Nucleic Acids Res
+2025, doi:10.1093/nar/gkaf831) has both library constants in its publication
+(5′ `GTTCAGAGTTCTACAGTCCGACCTAA`, 3′ `TTAGGACTCGGACCTGGACTAGG`, N16), and an
+anchored presence test on one run (SRR32924589) found both. On 2026-08-10 it
+was added to the recovery arm on a development branch, and `detect` (v0.4.0)
+was run on its nine runs: the 3′ constant was recovered exactly, no 5′
+constant was called, and the deposit was refused. A decision rule was written
+only after that result: the deposit was excluded as outside the model
+`selexprep` assumes, one selection trajectory analysed across rounds. Its
+archive records show a shared 16-mer starting library (`16mer-SELEX-R0`) and
+eight parallel round-1 selections against different protein variants
+(`ASCL2_WT-SELEX-R1`, `HES2_K5R-SELEX-R1`, …). The modal 5′ offsets measured
+afterwards (7, 0 and 6 nt in SRR32924589, SRR32924596 and SRR32924594) are
+consistent with sample-specific sequence before the constant, but do not by
+themselves show the design. Because the exclusion was decided after
+`detect`'s result was known, it is not recorded in `excluded_datasets.tsv`; it
+is disclosed here, and the deposit is evaluated with the released version as a
+sensitivity analysis alongside the recovery arm (Table S1).
+
 ### Ground-truth schema
 
 ```

@@ -399,6 +399,27 @@ class BenchmarkMetricsReport:
     # entry point — populated by an out-of-band self-consistency
     # checker, NOT by aggregate_metrics in .
     count_correlation: CountCorrelationReport = field(default_factory=CountCorrelationReport)
+    # Sensitivity analysis: the recovery arm with the deposits excluded after
+    # inference counted in (None when there are none).
+    excluded_after_inference: ExcludedAfterInferenceReport | None = None
+
+
+# read_state of a deposit excluded after its inference was known
+# (benchmarks/README.md): out of every arm, scored only as a sensitivity analysis.
+EXCLUDED_AFTER_INFERENCE = "excluded_after_inference"
+
+
+@dataclass
+class ExcludedAfterInferenceReport:
+    """The recovery arm recomputed with the deposits excluded after inference."""
+
+    accessions: list[str] = field(default_factory=list)
+    recovery_denominator: int = 0
+    primer_recovery: PrimerRecoveryReport = field(default_factory=PrimerRecoveryReport)
+    pair_recovery_by_status: PairRecoveryByStatus = field(default_factory=PairRecoveryByStatus)
+    n_length_recovery: NLengthRecoveryReport = field(default_factory=NLengthRecoveryReport)
+    # On the excluded deposits alone: whether they were refused rather than miscalled.
+    safe_failure_rate: SafeFailureRate = field(default_factory=SafeFailureRate)
 
 
 # ---------------------------------------------------------------------------
@@ -1027,6 +1048,11 @@ def aggregate_metrics(
     ``metrics.json`` serialization).
     """
     verified, skipped = _filter_verified(rows)
+    # Deposits excluded after their inference was known are kept out of every
+    # arm and every distribution below, and scored only in the sensitivity
+    # block, so the main numbers are those of the arms as defined beforehand.
+    excluded = [r for r in verified if r.read_state == EXCLUDED_AFTER_INFERENCE]
+    verified = [r for r in verified if r.read_state != EXCLUDED_AFTER_INFERENCE]
     report = BenchmarkMetricsReport(
         n_verified=len(verified),
         n_unverified=len(skipped),
@@ -1054,6 +1080,21 @@ def aggregate_metrics(
     # single-round rows post-hoc; report them in a sub-arm.
     multi_round = [r for r in raw_standard if not r.mono_round]
     report.multi_round_sensitivity = compute_pair_recovery_by_status(multi_round)
+
+    # Sensitivity: the recovery arm with the deposits excluded after inference
+    # counted in, whatever their result (benchmarks/README.md).
+    if excluded:
+        with_excluded = raw_standard + excluded
+        report.excluded_after_inference = ExcludedAfterInferenceReport(
+            accessions=sorted(r.accession for r in excluded),
+            recovery_denominator=len(with_excluded),
+            primer_recovery=compute_primer_recovery(with_excluded),
+            pair_recovery_by_status=compute_pair_recovery_by_status(with_excluded),
+            n_length_recovery=compute_n_length_recovery(
+                with_excluded, tolerance=n_length_tolerance
+            ),
+            safe_failure_rate=compute_safe_failure_rate(excluded),
+        )
 
     # Specificity arm — no-false-call on pre_trimmed deposits.
     report.specificity = compute_specificity(verified)
@@ -1182,6 +1223,16 @@ def write_metrics_json(report: BenchmarkMetricsReport, path: Path) -> None:
         # by a separate self-consistency checker.
         "count_correlation": asdict(report.count_correlation),
     }
+    ex = report.excluded_after_inference
+    if ex is not None:
+        payload["excluded_after_inference"] = {
+            "accessions": ex.accessions,
+            "recovery_denominator": ex.recovery_denominator,
+            "primer_recovery": _primer_recovery_to_dict(ex.primer_recovery),
+            "pair_recovery_by_status": _pair_recovery_to_dict(ex.pair_recovery_by_status),
+            "n_length_recovery": asdict(ex.n_length_recovery),
+            "safe_failure_rate": _safe_failure_to_dict(ex.safe_failure_rate),
+        }
     text = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     path.write_text(text, encoding="utf-8")
 
