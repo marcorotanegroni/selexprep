@@ -760,3 +760,63 @@ does not use; that it would always suffice to place the boundary is not shown.
 
 From here the test set is development material (step 6 of "Freezing and
 changes"): a change prompted by it is validated on new data, not on these runs.
+
+## Post-test experiments — protocol, 2026-09-30, before any of their runs
+
+Two checks of the mitigations the limits above recommend to users. They come
+after the test run and answer questions it raised; they are not part of it,
+replace none of its results, and are reported apart. Donors, constant families
+and seeds are the test set's (now development material, "Freezing and
+changes", step 6). `detect` and `extract` are those of the test run; since then
+the command line only prints the status note. The generator gains the paired
+configurations of P2 on a separate code path; the configurations of the test
+build their reads as before, which P1 checks by comparing its calls and
+outcomes with the test's.
+
+### P1 — the published constants passed as overrides
+
+**Question.** On the runs where the inferred boundary was wrong or refused, does
+passing the published constants with `--override-primer-5p` /
+`--override-primer-3p` — the path the documentation recommends — recover the
+random region as the oracle does? The test measured only the oracle, a report
+built from the truth.
+
+**Runs.** Every C80 and X3 cell of the test set: 60 runs, regenerated from the
+same seeds (identical reads). Each runs `detect` and `extract` as in the test,
+then `extract` again on `detect`'s report with both constants as configured,
+in read orientation, passed as overrides.
+
+**Expected.** In all 60 runs the override extraction emits exactly the
+oracle's sequences, so its per-read metrics equal the oracle's: `extract`
+replaces the calls and cuts with the same command. On the refused runs the
+override also clears the refusal and sets status MEDIUM. Any difference from
+the oracle is reported as found.
+
+### P2 — an early round without the dominant sequence
+
+**Question.** C put the dominant sequence in every round, the earliest
+included. Does an early round without it protect the call when later rounds
+converge?
+
+**Design, paired.** One trajectory shape: the donor's earliest round as it is,
+the middle round with one donor read at 80% and the latest at 90% (shares
+set as in amendment 2, item 3). Two arms that differ only in whether the
+earliest round is provided: `G_full` (earliest, middle, latest) and `G_late`
+(middle, latest). The clone, the constants and every read of the shared rounds
+are identical in the two arms: the random draws are made per round from the
+cell and seed, not from the configuration, and this is checked by comparing
+the arms' FASTQs in a unit test. 5 test donors × 3 test families × 2 seeds × 2
+arms = 60 runs.
+
+| Arm | Desirable | Expected from the current version |
+|---|---|---|
+| `G_full` | complete, correct | complete, correct: the boundary is called on the earliest round, which carries no added clone; later rounds can only trim the constant's outer edge |
+| `G_late` | correct, or refused | as C80, since the earliest round provided holds the clone at 80%: wrong in most runs, some refused, some correct |
+
+**Reported.** Outcomes per arm and, per pair, whether the earliest round
+changed the outcome; the calls against the configured constants; per-read
+metrics and the oracle's, as in the test.
+
+Related evidence already in the test, not paired: M90 (the motif in the middle
+and latest rounds, all three provided) was complete and correct in 30 of 30,
+X3 (the same motif level, latest round only) wrong in 30 of 30.

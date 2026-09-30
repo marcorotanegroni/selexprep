@@ -76,6 +76,12 @@ class Spec:
     biological: bool = False
     reverse: bool = False
     negative: str | None = None  # "donor" | "clone"
+    # Post-test P2: a clone share per round (rounds not listed are left as the
+    # donor gave them), and a pair name. Arms of one pair draw every random
+    # number per round from the pair, not the configuration, so the rounds they
+    # share are identical read for read.
+    clone_by_role: tuple[tuple[str, float], ...] = ()
+    pair: str | None = None
 
 
 BASE = Spec()
@@ -124,6 +130,25 @@ SPECS: dict[str, Spec] = {
     "NC_clone": replace(BASE, negative="clone"),
 }
 
+# Post-test experiment P2 (DESIGN.md, "Post-test experiments"): kept apart from
+# SPECS, which is the pre-registered grid of configurations.tsv.
+_GROWTH = (("middle", 0.8), ("latest", 0.9))
+POST_SPECS: dict[str, Spec] = {
+    "G_full": replace(BASE, clone_by_role=_GROWTH, pair="G"),
+    "G_late": replace(BASE, rounds=("middle", "latest"), clone_by_role=_GROWTH, pair="G"),
+}
+
+
+def spec_of(config: str) -> Spec:
+    return SPECS[config] if config in SPECS else POST_SPECS[config]
+
+
+def clone_share(spec: Spec, role: str) -> float | None:
+    """The clone's share in a round, or None when the round is left as it is."""
+    if spec.clone_by_role:
+        return dict(spec.clone_by_role).get(role)
+    return spec.clone
+
 
 @dataclass(frozen=True)
 class Cell:
@@ -169,6 +194,31 @@ def cells(which: str) -> list[Cell]:
                 for seed in seeds:
                     out.append(Cell(row["config_id"], donor, family, seed))
     return out
+
+
+EXPERIMENTS = ("override", "trajectory")
+
+
+def post_test_cells(experiment: str) -> list[Cell]:
+    """The runs of a post-test experiment (DESIGN.md, "Post-test experiments").
+
+    ``override`` (P1): every C80 and X3 cell of the test set, rebuilt from the
+    same seeds. ``trajectory`` (P2): both arms of the paired trajectory for
+    every test donor, test family and test seed.
+    """
+    if experiment == "override":
+        return [c for c in cells("test") if c.config in ("C80", "X3")]
+    if experiment == "trajectory":
+        donors = sorted(d for d, v in load_donors().items() if v["set"] == "test")
+        families = sorted(r["family"] for r in _tsv("constants.tsv") if r["set"] == "test")
+        return [
+            Cell(config, donor, family, seed)
+            for donor in donors
+            for family in families
+            for seed in TEST_SEEDS
+            for config in POST_SPECS
+        ]
+    raise ValueError(f"unknown experiment {experiment!r}; one of {EXPERIMENTS}")
 
 
 # ---------------------------------------------------------------------------
@@ -295,8 +345,9 @@ def _edit_random_regions(
         motif = lib.record["motif"]
         for i in rng.sample(range(len(ns)), round(spec.motif * len(ns))):
             ns[i] = motif + ns[i][len(motif) :]
-    if clone is not None and spec.clone is not None:
-        ns, before = _set_clone_share(ns, clone, spec.clone, rng)
+    share = clone_share(spec, role)
+    if clone is not None and share is not None:
+        ns, before = _set_clone_share(ns, clone, share, rng)
         lib.record.setdefault("clone_share_before", {})[role] = round(before, 6)
     if spec.biological:
         order = list(range(len(ns)))
@@ -480,7 +531,7 @@ def _write_fastq(path: Path, reads: list[ReadTruth]) -> None:
 
 def generate(cell: Cell, pools: Path, outdir: Path) -> dict:
     """Write the cell's FASTQs, ``rounds.tsv`` and ``truth.json`` under ``outdir``."""
-    spec = SPECS[cell.config]
+    spec = spec_of(cell.config)
     donor = load_donors()[cell.donor]
     rng = _rng(cell.config, cell.donor, cell.family, cell.seed)
     lib = _constants(spec, cell.family, rng)
@@ -493,7 +544,11 @@ def generate(cell: Cell, pools: Path, outdir: Path) -> dict:
         pool_path(pools, cell.donor, "earliest", earliest_round, earliest_run, cell.seed)
     )
     clone = None
-    if spec.clone is not None or spec.negative == "clone":
+    if spec.pair is not None:
+        # Paired arms (P2) draw the clone from the pair, so both arms share it.
+        clone = _rng(spec.pair, cell.donor, cell.family, cell.seed, "clone").choice(earliest_pool)
+        lib.record["clone"] = clone
+    elif spec.clone is not None or spec.negative == "clone":
         clone = rng.choice(earliest_pool)
         lib.record["clone"] = clone
 
@@ -504,12 +559,18 @@ def generate(cell: Cell, pools: Path, outdir: Path) -> dict:
         ns = load_pool(pool_path(pools, cell.donor, role, round_number, run, cell.seed))
         if spec.negative == "clone":
             ns = [clone] * len(ns)  # type: ignore[list-item]
-        ns = _edit_random_regions(spec, role, ns, lib, clone, rng)
-        ns = _depth(spec, ns, rng)
-        if clone is not None and spec.clone is not None:
+        # The pre-registered configurations draw from one stream per cell;
+        # paired arms (P2) from one stream per round of the pair, so a round
+        # comes out the same whichever other rounds the arm provides.
+        round_rng = _rng(spec.pair, cell.donor, cell.family, cell.seed, role) if spec.pair else rng
+        ns = _edit_random_regions(spec, role, ns, lib, clone, round_rng)
+        ns = _depth(spec, ns, round_rng)
+        if clone is not None and clone_share(spec, role) is not None:
             share = sum(1 for s in ns if s == clone) / len(ns)
             lib.record.setdefault("clone_share", {})[role] = round(share, 6)
-        reads = [_build_read(spec, role, round_number, i, s, lib, rng) for i, s in enumerate(ns)]
+        reads = [
+            _build_read(spec, role, round_number, i, s, lib, round_rng) for i, s in enumerate(ns)
+        ]
         fastq = outdir / f"round_{round_number:02d}.fastq.gz"
         _write_fastq(fastq, reads)
         round_map.append((fastq.name, round_number))
