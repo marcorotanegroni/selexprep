@@ -1,0 +1,217 @@
+[
+  {
+    "accession": "PRJEB114397",
+    "extractor": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {"type": "paper", "id": "", "tier": "RECORD_ONLY"},
+      {"type": "deposit", "id": "PRJEB114397", "url": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397"}
+    ],
+    "fields": {
+      "study_type": {
+        "value": "aptamer_selection",
+        "rationale": "The ENA project is a SELEX-library-strategy sequencing deposit (16 candidate libraries subjected to 30 rounds of selection) reporting genuine aptamer-selection reads against a small-molecule target, not a transcription-factor motif study.",
+        "evidence_quote": "In this study, we selected 16 candidates for PFOA aptamers in order to find a selective and sensitive aptamer. After 30 rounds of selection, one candidate, Candidate 9, showed a measurable binding affinity with a kd of 2 µM",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      },
+      "target": {
+        "value": "perfluorooctanoic acid (PFOA)",
+        "evidence_quote": "This study identifies an aptamer that selectively binds to perfluorooctanoic acid (PFOA).",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "TITLE field"
+      },
+      "target_class": {
+        "value": "toxic, bioaccumulative chemical",
+        "evidence_quote": "Perfluorooctanoic acid (PFOA) is a toxic, bioaccumulative chemical that is present globally in water.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field, first sentence"
+      },
+      "chemistry": {"value": null, "status": "not_stated", "evidence_quote": "", "source": "", "location": ""},
+      "n_random": {"value": null, "status": "not_stated", "evidence_quote": "", "source": "", "location": ""},
+      "n_rounds": {
+        "value": "30 rounds of selection",
+        "evidence_quote": "After 30 rounds of selection, one candidate, Candidate 9, showed a measurable binding affinity with a kd of 2 µM",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      },
+      "selection_format": {
+        "value": "Aptamer SELEX",
+        "evidence_quote": "Aptamer SELEX for PFOA aptamer",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "NAME / CENTER_PROJECT_NAME field"
+      },
+      "counter_selection": {
+        "value": "present",
+        "note": "Counter-selection was performed against structurally similar PFAS/chemicals; hairpin-structure enrichment increased after its addition and the aptamer gave no signal with the counter-selection chemicals.",
+        "evidence_quote": "2D structure analysis demonstrated an enrichment of hairpin structure, especially after the addition of counter-selection... did not produce signal with other PFAS or chemicals used in counter-selection.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB114397",
+        "location": "STUDY_ABSTRACT/DESCRIPTION field"
+      }
+    }
+  },
+  {
+    "accession": "PRJEB88669",
+    "extractor": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {"type": "paper", "id": "", "tier": "RECORD_ONLY"},
+      {"type": "deposit", "id": "PRJEB88669", "url": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669"}
+    ],
+    "fields": {
+      "study_type": {
+        "value": "tf_ht_selex",
+        "rationale": "The deposit contains genuine iterative Helicase-SELEX selection-round reads (starting genomic libraries plus round-10 enriched libraries) used to map the natural sequence motif recognized by a regulatory protein (Rho transcription-termination factor), analogous to TF-HT-SELEX motif mapping rather than de novo aptamer-reagent discovery, even though the bound protein is an RNA-binding helicase rather than a classic DNA-binding transcription factor.",
+        "evidence_quote": "We have used a global screening approach called Helicase-SELEX...to identify Rho helicase substrate sequences (aka Rut sequences) within the genome of Mycobacterium tuberculosis...After 10 rounds of this iterative enrichment process, the activity of each library towards the Rho helicase became constant and its composition was determined by NGS.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "target": {
+        "value": "the full-length (FL) Rho helicase from M. tuberculosis or a truncated variant lacking the taxon-specific N-terminal insertion domain (DNID variant)",
+        "evidence_quote": "were immobilized on streptavidin-coated beads and then incubated, in the presence of ATP, with either the full-length (FL) Rho helicase from M. tuberculosis or a truncated variant lacking the taxon-specific N-terminal insertion domain (DNID variant).",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "target_class": {
+        "value": "helicase",
+        "evidence_quote": "Helicase-SELEX mapping of Mycobacterium tuberculosis transcription terminator Rho utilization (Rut) sites",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "TITLE field"
+      },
+      "chemistry": {
+        "value": "biotinylated RNA:DNA duplexes (ssRNA of genomic origin transcribed from a genomic dsDNA fragment library)",
+        "evidence_quote": "Each gDNA fragment library was converted into a library of biotinylated RNA:DNA duplexes (each containing a ~90 to ~130 nucleotide-long ssRNA sequence of genomic origin), which were immobilized on streptavidin-coated beads",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "n_random": {
+        "value": "~90 to ~130 bp genomic DNA fragments (not a synthetic randomized region)",
+        "evidence_quote": "The starting library consisted of randomly PCR-amplified gDNA fragments (~90 to ~130 bp) from the genome of M. tuberculosis reference strain H37Rv.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "n_rounds": {
+        "value": "10 rounds",
+        "evidence_quote": "After 10 rounds of this iterative enrichment process, the activity of each library towards the Rho helicase became constant and its composition was determined by NGS.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "selection_format": {
+        "value": "Helicase-SELEX",
+        "evidence_quote": "We have used a global screening approach called Helicase-SELEX (see Delaleau et al., 2022, PMID: 36095194) to identify Rho helicase substrate sequences (aka Rut sequences) within the genome of Mycobacterium tuberculosis.",
+        "source": "https://www.ebi.ac.uk/ena/browser/api/xml/PRJEB88669",
+        "location": "DESCRIPTION field"
+      },
+      "counter_selection": {"value": null, "status": "not_stated", "note": "", "evidence_quote": "", "source": "", "location": ""}
+    }
+  },
+  {
+    "accession": "PRJNA1481083",
+    "extractor": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {"type": "paper", "id": "", "tier": "RECORD_ONLY"},
+      {"type": "deposit", "id": "PRJNA1481083", "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1481083"}
+    ],
+    "fields": {
+      "study_type": {
+        "value": "aptamer_selection",
+        "rationale": "The deposit contains genuine SELEX enrichment-round sequencing reads (Round 5 preliminary screening plus Round 2 secondary screening) across 96 protein targets, i.e. real aptamer-selection data, even though the associated study frames itself as a scalable computational/inference framework rather than a single-aptamer discovery paper.",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets. Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets. After 5 rounds of preliminary screening, the Round 5 library was sequenced.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "target": {
+        "value": "96 protein targets",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "target_class": {
+        "value": "protein",
+        "evidence_quote": "aptamer screening against 96 protein targets",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "chemistry": {
+        "value": "random ssDNA libraries",
+        "evidence_quote": "Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "n_random": {"value": null, "status": "not_stated", "evidence_quote": "", "source": "", "location": ""},
+      "n_rounds": {
+        "value": "5 rounds of preliminary screening followed by 2 rounds of secondary screening",
+        "evidence_quote": "After 5 rounds of preliminary screening, the Round 5 library was sequenced. The top 3000 enriched sequences served as the starting material for 2 rounds of secondary screening. The Round 2 library of the secondary selection was then sequenced.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "selection_format": {
+        "value": "high-throughput automated SELEX",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "Series_overall_design"
+      },
+      "counter_selection": {"value": null, "status": "not_stated", "note": "", "evidence_quote": "", "source": "", "location": ""}
+    }
+  },
+  {
+    "accession": "PRJNA860038",
+    "extractor": "claude",
+    "model": "claude-sonnet-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {"type": "paper", "id": "10.1002/advs.202518591", "tier": "FULL_TEXT"},
+      {"type": "deposit", "id": "PRJNA860038", "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA860038"}
+    ],
+    "fields": {
+      "study_type": {
+        "value": "tf_ht_selex",
+        "rationale": "The paper performs a classic single-protein SELEX-seq (purified 6xHis-tagged effector protein incubated with a 16-nt random dsDNA library across 5 iterative selection rounds, sequenced, and MEME-analyzed for a consensus binding motif) to map the DNA sequence motif recognized by effector protein Hg4E02, which the paper shows acts as a transcriptional regulator on host gene promoters. This matches TF-motif-mapping HT-SELEX methodology rather than de novo aptamer-reagent discovery.",
+        "evidence_quote": "To identify the DNA elements recognized by Hg4E02, we performed systematic evolution of ligands by exponential enrichment coupled with next-generation sequencing (SELEX-seq). Purified 6×His-Hg4E02 was incubated with a double-stranded DNA (dsDNA) library containing 16 mers of random nucleotides flanked by adapters. The binders were amplified and used as the library for the next round of SELEX. After 5 rounds of selections, the dsDNA library was sequenced, and consensus motifs were identified using MEME.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 2.4 \"SCN Effector Hg4E02 Is a Transcriptional Regulator Targeting Multiple Soybean Circadian Clock Gene Promoters\", p.8"
+      },
+      "target": {
+        "value": "purified 6×His-Hg4E02 (recombinant SCN effector protein)",
+        "evidence_quote": "Purified 6×His-Hg4E02 was incubated with a double-stranded DNA (dsDNA) library containing 16 mers of random nucleotides flanked by adapters.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 2.4, p.8"
+      },
+      "target_class": {
+        "value": "SCN (nematode) effector protein / transcriptional regulator",
+        "evidence_quote": "SCN Effector Hg4E02 Is a Transcriptional Regulator Targeting Multiple Soybean Circadian Clock Gene Promoters ... Since Hg4E02 is a small protein (7.5 kDa) and could activate or inhibit gene expression, Hg4E02 probably functions with a transcriptional activator or repressor to regulate gene expression.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 2.4 heading, p.8; Discussion, p.14"
+      },
+      "chemistry": {
+        "value": "72-nt single-stranded DNA library synthesized with a 16-nt degenerate (random) region and Illumina-compatible adapters, converted to double-stranded DNA for the binding/selection steps",
+        "evidence_quote": "The 72-nt single-strand DNA library was synthesized with a 16-nt degenerate sequence, and short sequence adapters were added to be compatible with the Illumina platform... The initial library was used as the template to generate the dsDNA library.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 4.14 \"SELEX-seq and Motif Discovery\" (Methods), p.16"
+      },
+      "n_random": {
+        "value": "16-nt degenerate (random) region",
+        "evidence_quote": "The 72-nt single-strand DNA library was synthesized with a 16-nt degenerate sequence, and short sequence adapters were added to be compatible with the Illumina platform.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 4.14 (Methods), p.16"
+      },
+      "n_rounds": {
+        "value": "5 rounds of selection",
+        "evidence_quote": "After 5 rounds of selections, the dsDNA library was sequenced, and consensus motifs were identified using MEME... The screening processes were repeated another four times.",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 2.4, p.8; Section 4.14 (Methods), p.16"
+      },
+      "selection_format": {
+        "value": "SELEX-seq",
+        "evidence_quote": "we performed systematic evolution of ligands by exponential enrichment coupled with next-generation sequencing (SELEX-seq).",
+        "source": "10.1002/advs.202518591",
+        "location": "Section 2.4, p.8"
+      },
+      "counter_selection": {"value": null, "status": "not_stated", "note": "The full-text Methods (Section 4.14) describe only a single positive-selection scheme (bead-immobilized 6xHis-Hg4E02 incubated with the dsDNA library, washed, eluted, PCR-amplified for 5 total rounds); no counter-selection or negative-selection step (e.g., pre-clearing against beads alone or an unrelated protein) is described anywhere in the SELEX-seq protocol.", "evidence_quote": "", "source": "", "location": ""}
+    }
+  }
+]

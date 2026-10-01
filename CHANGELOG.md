@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- **Catalogue: PRJEB114397 `target_class` is `small molecule`.** The layer held
+  the source's descriptive phrase ("toxic, bioaccumulative chemical") instead of
+  a class. Both extractions agree in substance (Claude quoted the phrase, Codex
+  read "chemical"); PFOA is a small molecule, the class the layer uses for
+  chemical targets. The cell stays concordant and carries a note; no count in
+  the layer changes.
+- **Catalogue provenance: both raw arms for the two deposits added in 0.2.1.**
+  PRJEB114397 and PRJNA1481083 were extracted by both arms on 2026-07-03, but the
+  raw outputs were not in the repository and their 12 concordant cells lacked
+  `codex_concurs`. The outputs are now in `benchmarks/dual_extraction/`
+  (`*_extractions_new4.json`, unchanged), and the 12 cells carry the value the
+  second arm read; every concordant cell now has it.
+
 ## [0.4.5] - 2026-09-30
 
 ### Added
