@@ -1,0 +1,267 @@
+[
+  {
+    "accession": "PRJEB114397",
+    "extractor": "codex",
+    "model": "gpt-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {
+        "type": "paper",
+        "id": "",
+        "tier": "RECORD_ONLY"
+      },
+      {
+        "type": "deposit",
+        "id": "PRJEB114397",
+        "url": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397"
+      }
+    ],
+    "fields": {
+      "study_type": {
+        "value": "aptamer_selection",
+        "rationale": "The deposit describes an aptamer SELEX experiment with selection reads from the final selection round.",
+        "evidence_quote": "Aptamer SELEX for PFOA aptamer",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project NAME"
+      },
+      "target": {
+        "value": "perfluorooctanoic acid (PFOA)",
+        "evidence_quote": "This study identifies an aptamer that selectively binds to perfluorooctanoic acid (PFOA).",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project TITLE"
+      },
+      "target_class": {
+        "value": "chemical",
+        "evidence_quote": "Perfluorooctanoic acid (PFOA) is a toxic, bioaccumulative chemical that is present globally in water.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project DESCRIPTION"
+      },
+      "chemistry": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_random": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_rounds": {
+        "value": "30 rounds",
+        "evidence_quote": "After 30 rounds of selection, one candidate, Candidate 9, showed a measurable binding affinity with a kd of 2 \u00b5M and demonstrated no binding to other chemicals that are similar in terms of structure to PFOA.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project DESCRIPTION"
+      },
+      "selection_format": {
+        "value": "Aptamer SELEX",
+        "evidence_quote": "Aptamer SELEX for PFOA aptamer",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project NAME"
+      },
+      "counter_selection": {
+        "value": "present",
+        "note": "The deposit states that counter-selection was added and refers to chemicals used in counter-selection.",
+        "evidence_quote": "2D structure analysis demonstrated an enrichment of hairpin structure, especially after the addition of counter-selection.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB114397",
+        "location": "ENA project DESCRIPTION"
+      }
+    }
+  },
+  {
+    "accession": "PRJEB88669",
+    "extractor": "codex",
+    "model": "gpt-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {
+        "type": "paper",
+        "id": "10.1073/pnas.2209608119",
+        "tier": "FULL_TEXT"
+      },
+      {
+        "type": "deposit",
+        "id": "PRJEB88669",
+        "url": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669"
+      }
+    ],
+    "fields": {
+      "study_type": {
+        "value": "method_or_other",
+        "rationale": "The deposit contains Helicase-SELEX substrate-enrichment reads rather than a standard aptamer-selection read set.",
+        "evidence_quote": "We have used a global screening approach called Helicase-SELEX (see Delaleau et al., 2022, PMID: 36095194) to identify Rho helicase substrate sequences (aka Rut sequences) within the genome of Mycobacterium tuberculosis.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "target": {
+        "value": "Rho helicase",
+        "evidence_quote": "In this way, only duplexes containing suitable substrate sequences were unwound by the FL or DNID Rho helicase and released in the supernatant.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "target_class": {
+        "value": "helicase",
+        "evidence_quote": "Helicase-SELEX mapping of Mycobacterium tuberculosis transcription terminator Rho utilization (Rut) sites",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project TITLE"
+      },
+      "chemistry": {
+        "value": "RNA:DNA duplexes",
+        "evidence_quote": "Each gDNA fragment library was converted into a library of biotinylated RNA:DNA duplexes (each containing  a ~90 to ~130 nucleotide-long ssRNA sequence of genomic origin), which were immobilized on streptavidin-coated beads and then incubated, in the presence of ATP, with either the full-length (FL) Rho helicase from M. tuberculosis or a truncated variant lacking the taxon-specific N-terminal insertion domain (DNID variant).",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "n_random": {
+        "value": "~90 to ~130 bp",
+        "evidence_quote": "The starting library consisted of randomly PCR-amplified gDNA fragments (~90 to ~130 bp) from the genome of M. tuberculosis reference strain H37Rv.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "n_rounds": {
+        "value": "10 rounds",
+        "evidence_quote": "After 10 rounds of this iterative enrichment process, the activity of each library towards the Rho helicase became constant and its composition was determined by NGS.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "selection_format": {
+        "value": "Helicase-SELEX",
+        "evidence_quote": "We have used a global screening approach called Helicase-SELEX (see Delaleau et al., 2022, PMID: 36095194) to identify Rho helicase substrate sequences (aka Rut sequences) within the genome of Mycobacterium tuberculosis.",
+        "source": "https://www.ebi.ac.uk/ena/browser/view/PRJEB88669",
+        "location": "ENA project DESCRIPTION"
+      },
+      "counter_selection": {
+        "value": null,
+        "status": "not_stated"
+      }
+    }
+  },
+  {
+    "accession": "PRJNA1481083",
+    "extractor": "codex",
+    "model": "gpt-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {
+        "type": "paper",
+        "id": "",
+        "tier": "RECORD_ONLY"
+      },
+      {
+        "type": "deposit",
+        "id": "PRJNA1481083",
+        "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA1481083"
+      }
+    ],
+    "fields": {
+      "study_type": {
+        "value": "aptamer_selection",
+        "rationale": "The linked GEO record describes high-throughput automated SELEX for aptamer screening against protein targets and release of enriched-library sequencing data.",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "target": {
+        "value": "96 protein targets",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "target_class": {
+        "value": "protein targets",
+        "evidence_quote": "Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "chemistry": {
+        "value": "ssDNA",
+        "evidence_quote": "Four random ssDNA libraries (lib10, lib13, lib18, lib25) were each applied to 24 targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "n_random": {
+        "value": null,
+        "status": "not_stated"
+      },
+      "n_rounds": {
+        "value": "5 rounds of preliminary screening; 2 rounds of secondary screening",
+        "evidence_quote": "After 5 rounds of preliminary screening, the Round 5 library was sequenced. The top 3000 enriched sequences served as the starting material for 2 rounds of secondary screening.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "selection_format": {
+        "value": "high-throughput automated SELEX",
+        "evidence_quote": "Sequencing data were obtained from high-throughput automated SELEX for aptamer screening against 96 protein targets.",
+        "source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE336208",
+        "location": "GEO Series GSE336208, Overall design"
+      },
+      "counter_selection": {
+        "value": null,
+        "status": "not_stated"
+      }
+    }
+  },
+  {
+    "accession": "PRJNA860038",
+    "extractor": "codex",
+    "model": "gpt-5",
+    "prompt_version": "extract-v1.4",
+    "source_documents": [
+      {
+        "type": "paper",
+        "id": "10.1002/advs.202518591",
+        "tier": "FULL_TEXT"
+      },
+      {
+        "type": "deposit",
+        "id": "PRJNA860038",
+        "url": "https://www.ncbi.nlm.nih.gov/bioproject/PRJNA860038"
+      }
+    ],
+    "fields": {
+      "study_type": {
+        "value": "tf_ht_selex",
+        "rationale": "The full text identifies Hg4E02 as a transcriptional regulator and describes SELEX-seq to identify its DNA binding motifs.",
+        "evidence_quote": "we identify Hg4E02\u2014an evolutionarily conserved effector in plant-parasitic nematodes\u2014as  a transcriptional regulator that directly binds to the promoters of multiple clock genes via novel cis-elements",
+        "source": "10.1002/advs.202518591",
+        "location": "Abstract"
+      },
+      "target": {
+        "value": "6 \u00d7His-Hg4E02",
+        "evidence_quote": "Purified 6 \u00d7His-Hg4E02 was incubated with a double-stranded DNA (dsDNA) library containing 16 mers of random nucleotides flanked by adapters.",
+        "source": "10.1002/advs.202518591",
+        "location": "Results, Hg4E02 directly binds to the promoters of GmCCA1 and other clock genes"
+      },
+      "target_class": {
+        "value": "transcriptional regulator",
+        "evidence_quote": "we identify Hg4E02\u2014an evolutionarily conserved effector in plant-parasitic nematodes\u2014as  a transcriptional regulator that directly binds to the promoters of multiple clock genes via novel cis-elements",
+        "source": "10.1002/advs.202518591",
+        "location": "Abstract"
+      },
+      "chemistry": {
+        "value": "double-stranded DNA (dsDNA) library",
+        "evidence_quote": "Purified 6 \u00d7His-Hg4E02 was incubated with a double-stranded DNA (dsDNA) library containing 16 mers of random nucleotides flanked by adapters.",
+        "source": "10.1002/advs.202518591",
+        "location": "Results, Hg4E02 directly binds to the promoters of GmCCA1 and other clock genes"
+      },
+      "n_random": {
+        "value": "16 mers of random nucleotides",
+        "evidence_quote": "Purified 6 \u00d7His-Hg4E02 was incubated with a double-stranded DNA (dsDNA) library containing 16 mers of random nucleotides flanked by adapters.",
+        "source": "10.1002/advs.202518591",
+        "location": "Results, Hg4E02 directly binds to the promoters of GmCCA1 and other clock genes"
+      },
+      "n_rounds": {
+        "value": "5 rounds of selections",
+        "evidence_quote": "After 5 rounds of selections, the dsDNA library was sequenced, and consensus motifs were identified using MEME",
+        "source": "10.1002/advs.202518591",
+        "location": "Results, Hg4E02 directly binds to the promoters of GmCCA1 and other clock genes"
+      },
+      "selection_format": {
+        "value": "SELEX-seq",
+        "evidence_quote": "we performed systematic evolution of ligands by exponential enrichment coupled with next-generation sequencing (SELEX-seq)",
+        "source": "10.1002/advs.202518591",
+        "location": "Results, Hg4E02 directly binds to the promoters of GmCCA1 and other clock genes"
+      },
+      "counter_selection": {
+        "value": null,
+        "status": "not_stated"
+      }
+    }
+  }
+]

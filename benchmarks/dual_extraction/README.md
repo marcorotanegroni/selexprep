@@ -151,6 +151,10 @@ source was read; a paper-only field may be `not_stated` only when the tier expla
 ## Files
 - `PROMPT_v1.md` — the identical extraction contract (`extract-v1.4`): a batch of accessions in, a JSON array out
 - `accessions_pilot.txt` / `accessions_full.txt` — the 11 benchmark deposits / all 238
+- `claude_extractions.json` / `codex_extractions.json` — the two raw arms for the 238
+- `accessions_new4.txt`, `claude_extractions_new4.json` / `codex_extractions_new4.json` — the
+  two raw arms for the four deposits added on 2026-07-03 (PRJEB114397 and PRJNA1481083 kept,
+  PRJEB88669 and PRJNA860038 out of scope), copied unchanged from the extraction folders
 - `normalization.yaml` — controlled vocabularies + verbatim→canonical mappings (versioned)
 - `normalize.py` — deterministic normalizer used by the comparison scripts
 - `compute_agreement.py` — per-field inter-extractor agreement + adjudication worklist
