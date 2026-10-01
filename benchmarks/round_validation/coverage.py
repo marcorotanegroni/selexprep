@@ -143,14 +143,26 @@ def run_rows(accession: str) -> list[dict]:
     return rows
 
 
-def agreement(rows: list[dict], maps: dict[str, dict[str, int]]) -> list[dict]:
-    """One row per run a curated map covers: agree, disagree, or unassigned."""
+def agreement(
+    rows: list[dict], maps: dict[str, dict[str, int]], covered: set[str] | None = None
+) -> list[dict]:
+    """One row per run a curated map covers: agree, disagree, or unassigned.
+
+    ``covered`` holds the deposits whose archive records were read. Some curated
+    maps belong to Tier-1 deposits outside the catalogue (adapter controls, some
+    specificity deposits): their runs were never looked up, which is not the
+    same as a run missing from its archive record.
+    """
     by_run = {(r["accession"], r["run"]): r for r in rows}
+    if covered is None:
+        covered = {r["accession"] for r in rows}
     out = []
     for accession, runs in sorted(maps.items()):
         for run, curated in sorted(runs.items()):
             row = by_run.get((accession, run))
-            if row is None:
+            if accession not in covered:
+                result, parsed = "deposit not in the catalogue", ""
+            elif row is None:
                 result, parsed = "run not in the archive record", ""
             elif row["assigned"] == "no":
                 result, parsed = "unassigned", ""
@@ -194,7 +206,15 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--maps", type=Path, default=REPO / "benchmarks" / "round_maps")
+    p.add_argument(
+        "--agreement-only",
+        action="store_true",
+        help="redo only the comparison with the curated maps, from <out>/runs.tsv (no network)",
+    )
     args = p.parse_args(argv)
+    if args.agreement_only:
+        print(json.dumps(recompute_agreement(args.out, args.maps)["curated_maps"], indent=2))
+        return 0
     args.out.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict] = []
@@ -221,21 +241,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(f"{accession}: {n_assigned}/{len(these)} runs assigned", file=sys.stderr)
 
-    agree = agreement(rows, curated_maps(args.maps))
+    covered = {d["accession"] for d in deposits if not d["error"]}
+    agree = agreement(rows, curated_maps(args.maps), covered)
     _write(args.out / "runs.tsv", rows, RUN_COLUMNS)
     _write(
         args.out / "deposits.tsv",
         deposits,
         ["accession", "runs", "assigned", "unassigned", "error"],
     )
-    _write(
-        args.out / "curated_agreement.tsv",
-        agree,
-        ["accession", "run", "curated_round", "parsed_round", "result"],
-    )
-    counts: dict[str, int] = {}
-    for a in agree:
-        counts[a["result"]] = counts.get(a["result"], 0) + 1
+    _write(args.out / "curated_agreement.tsv", agree, AGREEMENT_COLUMNS)
     n_assigned = sum(r["assigned"] == "yes" for r in rows)
     summary = {
         **commit(),
@@ -254,15 +268,49 @@ def main(argv: list[str] | None = None) -> int:
             c: sum(1 for r in rows if r["assigned"] == "yes" and r["confidence"] == c)
             for c in ("HIGH", "MEDIUM", "LOW")
         },
-        "curated_maps": {
-            "deposits": len({a["accession"] for a in agree}),
-            "runs": len(agree),
-            **counts,
-        },
+        "curated_maps": curated_summary(agree),
     }
     (args.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary, indent=2))
     return 1 if failed else 0
+
+
+AGREEMENT_COLUMNS = ["accession", "run", "curated_round", "parsed_round", "result"]
+OUTSIDE = "deposit not in the catalogue"
+
+
+def curated_summary(agree: list[dict]) -> dict:
+    """Counts over the maps of catalogue deposits; the others are listed apart."""
+    inside = [a for a in agree if a["result"] != OUTSIDE]
+    counts: dict[str, int] = {}
+    for a in inside:
+        counts[a["result"]] = counts.get(a["result"], 0) + 1
+    return {
+        "deposits": len({a["accession"] for a in inside}),
+        "runs": len(inside),
+        **counts,
+        "outside_the_catalogue": sorted({a["accession"] for a in agree if a["result"] == OUTSIDE}),
+    }
+
+
+def recompute_agreement(out: Path, maps: Path) -> dict:
+    """Rebuild the agreement from a finished run's ``runs.tsv``, without the network.
+
+    The runs and their rounds stay those of the run that wrote them; only the
+    comparison with the curated maps is redone, and ``summary.json`` records
+    the commit that redid it.
+    """
+    with (out / "runs.tsv").open() as fh:
+        rows = list(csv.DictReader(fh, delimiter="\t"))
+    with (out / "deposits.tsv").open() as fh:
+        covered = {d["accession"] for d in csv.DictReader(fh, delimiter="\t") if not d["error"]}
+    agree = agreement(rows, curated_maps(maps), covered)
+    _write(out / "curated_agreement.tsv", agree, AGREEMENT_COLUMNS)
+    summary = json.loads((out / "summary.json").read_text())
+    summary["curated_maps"] = curated_summary(agree)
+    summary["curated_maps_recomputed_at"] = commit()
+    (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    return summary
 
 
 if __name__ == "__main__":

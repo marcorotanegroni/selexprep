@@ -56,6 +56,233 @@
     "top_k": 100,
     "top_k_pearson": null
   },
+  "excluded_after_inference": {
+    "accessions": [
+      "PRJNA1244358"
+    ],
+    "n_length_recovery": {
+      "n_in_tolerance": 7,
+      "n_out_of_tolerance": 0,
+      "n_unmeasurable": 1,
+      "per_row": [
+        {
+          "accession": "PRJDB9110",
+          "bucket": "in_tolerance",
+          "observed": 30,
+          "truth": 30
+        },
+        {
+          "accession": "PRJDB9111",
+          "bucket": "in_tolerance",
+          "observed": 40,
+          "truth": 40
+        },
+        {
+          "accession": "PRJNA615076",
+          "bucket": "in_tolerance",
+          "observed": 40,
+          "truth": 40
+        },
+        {
+          "accession": "PRJNA809588",
+          "bucket": "in_tolerance",
+          "observed": 40,
+          "truth": 40
+        },
+        {
+          "accession": "PRJNA1395820",
+          "bucket": "unmeasurable",
+          "observed": null,
+          "reason": "extraction_mode=PAIRED_END_SPLIT_PRIMERS",
+          "truth": 40
+        },
+        {
+          "accession": "PRJEB62495",
+          "bucket": "in_tolerance",
+          "observed": 40,
+          "truth": 40
+        },
+        {
+          "accession": "PRJDB19098",
+          "bucket": "in_tolerance",
+          "observed": 35,
+          "truth": 35
+        },
+        {
+          "accession": "PRJNA1244358",
+          "bucket": "in_tolerance",
+          "observed": 16,
+          "truth": 16
+        }
+      ],
+      "tolerance": 2
+    },
+    "pair_recovery_by_status": {
+      "counts": {
+        "HIGH": {
+          "pair_exact": 4,
+          "pair_partial": 2
+        },
+        "MEDIUM": {
+          "pair_exact": 1,
+          "pair_partial": 1
+        }
+      },
+      "n_evaluated": 8
+    },
+    "primer_recovery": {
+      "counts_3p": {
+        "EXACT": 7,
+        "PARTIAL_5P": 1
+      },
+      "counts_5p": {
+        "EXACT": 6,
+        "PARTIAL_3P": 2
+      },
+      "counts_by_status_3p": {
+        "HIGH": {
+          "EXACT": 5,
+          "PARTIAL_5P": 1
+        },
+        "MEDIUM": {
+          "EXACT": 2
+        }
+      },
+      "counts_by_status_5p": {
+        "HIGH": {
+          "EXACT": 5,
+          "PARTIAL_3P": 1
+        },
+        "MEDIUM": {
+          "EXACT": 1,
+          "PARTIAL_3P": 1
+        }
+      },
+      "n_evaluated": 8,
+      "pairs": [
+        {
+          "accession": "PRJDB19098",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJDB9110",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJDB9111",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJEB62495",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "PARTIAL_5P",
+            "matched": false,
+            "notes": "observed and truth share a 5' prefix but are not equal"
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJNA1244358",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "PARTIAL_3P",
+            "matched": false,
+            "notes": "observed and truth share a 3' suffix but are not equal"
+          }
+        },
+        {
+          "accession": "PRJNA1395820",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJNA615076",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          }
+        },
+        {
+          "accession": "PRJNA809588",
+          "score_3p": true,
+          "status_3p": {
+            "equivalence_kind": "EXACT",
+            "matched": true,
+            "notes": ""
+          },
+          "status_5p": {
+            "equivalence_kind": "PARTIAL_3P",
+            "matched": false,
+            "notes": "observed and truth share a 3' suffix but are not equal"
+          }
+        }
+      ]
+    },
+    "recovery_denominator": 8,
+    "safe_failure_rate": {
+      "by_reason": {},
+      "n_evaluated": 1,
+      "n_safe_failures": 0,
+      "rate": 0.0,
+      "safe_failure_accessions": []
+    }
+  },
   "extraction_mode_distribution": {
     "counts": {
       "BOTH_PRIMERS_SINGLE_READ": 6,
@@ -84,12 +311,12 @@
     },
     "PRJDB7022": {
       "accession": "PRJDB7022",
-      "fetch_available_runs": 3,
+      "fetch_available_runs": 4,
       "fetch_expected_runs": 4,
-      "fetch_missing_runs": 1,
-      "partial_fetch": true,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
       "runs_with_no_fastq_url": 0,
-      "unassigned_missing_or_skipped": 1
+      "unassigned_missing_or_skipped": 0
     },
     "PRJDB9110": {
       "accession": "PRJDB9110",
@@ -138,12 +365,12 @@
     },
     "PRJEB47428": {
       "accession": "PRJEB47428",
-      "fetch_available_runs": 88,
+      "fetch_available_runs": 92,
       "fetch_expected_runs": 92,
-      "fetch_missing_runs": 4,
-      "partial_fetch": true,
+      "fetch_missing_runs": 0,
+      "partial_fetch": false,
       "runs_with_no_fastq_url": 0,
-      "unassigned_missing_or_skipped": 4
+      "unassigned_missing_or_skipped": 0
     },
     "PRJEB49150": {
       "accession": "PRJEB49150",
@@ -314,7 +541,7 @@
     ],
     "tolerance": 2
   },
-  "n_total": 22,
+  "n_total": 23,
   "n_unverified": 1,
   "n_verified": 21,
   "pair_recovery_by_status": {
