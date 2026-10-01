@@ -54,6 +54,21 @@ motivate it. Two later changes to how reads are anchored on the constant's core
 the full benchmark: calls, metrics and per-run yields are identical to the
 post-fix run.
 
+**Release 0.4.5 (tag `v0.4.5`, rerun from scratch 2026-09-30, jobs 147833 and
+147895).** Every arm's metrics and every per-run yield are identical to the
+post-fix run. `detect` and `extract` did not change; `fetch` did (rounds read from
+the archive's sample attributes), and it now downloads 4 runs of PRJEB47428 and
+1 of PRJDB7022 that it previously left without a round, which changes no call.
+In the first job two downloads failed for reasons on the archive's side (an md5
+mismatch for SRR18110626, an empty FASTQ link for ERR2764569, both available
+again within hours); those two deposits were rerun on the same tag and every
+run came through. The sensitivity analysis with the deposit excluded after
+inference (below) is measured with this version: PRJNA1244358 is no longer
+refused, its 3′ constant is called exactly and its 5′ call is the inner part of
+the published constant (PARTIAL_3P), with the random region at its 16 nt. With
+it counted in, the recovery arm is 5 exact and 3 partial of 8, and no call is
+wrong.
+
 *v0.4.1 (pre-specified):* on 7 recovery deposits selexprep reproduced both
 paper-reported primer strings exactly on 4 and partially on 3; in every one of
 the 6 where a single-read extraction is possible it recovered the random region
@@ -289,6 +304,26 @@ are constant across rounds, so recovery is robust to the exact numbering).
 `fastqs.r2.manifest`). R1 / single-end inputs go positionally to `detect`; R2
 mates go via `--paired-r2`, so paired split-primer datasets are not forced into
 R1-only partial recovery. Read merging is a v0.2 item.
+
+## Round-assignment coverage
+
+Descriptive and in-sample, as fixed in `round_validation/PROTOCOL.md`
+(Amendment 1): how often `fetch` assigns a round, never whether the assignment
+is right. Run on the tag `v0.4.5` (job 147832) over every run of the 127 INSDC
+deposits in the catalogue, from archive metadata only; results in
+`round_validation/results/`.
+
+- 25,435 runs: 17,693 receive a round (17,169 HIGH, 524 MEDIUM), 7,742 are left
+  unassigned. 55 deposits have every run assigned, 55 none, 17 some.
+- Curated round maps, on the 4 catalogue deposits that have one: of 31 runs, 9
+  receive the same round, none a different one, and 22 none. Six other maps
+  belong to Tier-1 deposits outside the catalogue and are listed apart.
+- The run's `summary.json` reads `dirty: true`: the only tracked files that
+  differed from the tag were `results/metrics.json` and
+  `results/extraction_yield.tsv`, moved aside for the Tier-1 rerun; no code
+  differed. The comparison with the curated maps was redone afterwards from the
+  same `runs.tsv` (`--agreement-only`), to label the six maps outside the
+  catalogue correctly; the commit that redid it is recorded in `summary.json`.
 
 ## Tier 2 — corpus audit
 

@@ -99,3 +99,17 @@ def test_a_transient_failure_then_success_is_retried(cov, monkeypatch):
     monkeypatch.setattr(cov, "build_fetch_plan", flaky)
     monkeypatch.setattr(cov.time, "sleep", lambda s: None)
     assert cov.fetch_plan("PRJEB1") == "plan" and state["n"] == 2
+
+
+def test_maps_of_deposits_outside_the_catalogue_are_counted_apart(cov):
+    """Tier-1 maps of adapter controls were never looked up: not a missing run."""
+    rows = [_row("PRJEB1", "ERR1", 0)]
+    maps = {"PRJEB1": {"ERR1": 0}, "PRJNA9": {"SRR5": 1}}
+    agree = cov.agreement(rows, maps, covered={"PRJEB1"})
+    assert {a["run"]: a["result"] for a in agree} == {
+        "ERR1": "agree",
+        "SRR5": "deposit not in the catalogue",
+    }
+    summary = cov.curated_summary(agree)
+    assert summary["deposits"] == 1 and summary["runs"] == 1 and summary["agree"] == 1
+    assert summary["outside_the_catalogue"] == ["PRJNA9"]

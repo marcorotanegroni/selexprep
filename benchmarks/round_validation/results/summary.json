@@ -1,0 +1,38 @@
+{
+  "commit": "3f2365d453dad5687dd9ca237ebe8314a07b3ded",
+  "tag": "v0.4.5",
+  "dirty": true,
+  "selexprep_version": "0.4.5",
+  "deposits": 127,
+  "deposits_unreadable": [],
+  "runs": 25435,
+  "runs_assigned": 17693,
+  "runs_unassigned": 7742,
+  "deposits_all_assigned": 55,
+  "deposits_none_assigned": 55,
+  "assigned_by_confidence": {
+    "HIGH": 17169,
+    "MEDIUM": 524,
+    "LOW": 0
+  },
+  "curated_maps": {
+    "deposits": 4,
+    "runs": 31,
+    "unassigned": 22,
+    "agree": 9,
+    "outside_the_catalogue": [
+      "PRJDB2183",
+      "PRJDB7022",
+      "PRJEB50674",
+      "PRJNA591605",
+      "PRJNA678231",
+      "PRJNA746278"
+    ]
+  },
+  "curated_maps_recomputed_at": {
+    "commit": "3f2365d453dad5687dd9ca237ebe8314a07b3ded",
+    "tag": "v0.4.5",
+    "dirty": true,
+    "selexprep_version": "0.4.5"
+  }
+}
