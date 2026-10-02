@@ -1,4 +1,4 @@
-# Parameters of `detect` and `extract` (selexprep 0.4.5)
+# Parameters of `detect` and `extract` (selexprep 0.4.6)
 
 Values read from the installed package by `benchmarks/parameters/parameter_table.py`.
 

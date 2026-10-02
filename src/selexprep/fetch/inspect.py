@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -68,13 +69,61 @@ def query_ena_filereport(
         "fields": fields,
         "format": "json",
     }
-    logger.info("query_ena_filereport: GET %s params=%s", ENA_FILEREPORT_URL, params)
-    response = requests.get(ENA_FILEREPORT_URL, params=params, timeout=timeout_s)
-    response.raise_for_status()
-    rows = response.json() or []
+    rows = get_ena_filereport(params, timeout_s=timeout_s, as_json=True) or []
     if not rows:
         raise ValueError(f"ENA returned no records for accession {accession!r}")
     return rows
+
+
+# ENA's filereport service sometimes answers HTTP 200 with this message in place
+# of (part of) the records, intermittently for the same query: the run's files
+# exist, the service failed. Read as data, a TSV answer looks like a run without
+# FASTQ and a JSON answer does not parse.
+ENA_ERROR_MARKER = "ERROR occurred"
+FILEREPORT_ATTEMPTS = 4
+
+
+class EnaServiceError(ValueError):
+    """ENA's filereport service answered with an error on every attempt."""
+
+
+def get_ena_filereport(
+    params: dict[str, str],
+    *,
+    timeout_s: int,
+    as_json: bool,
+    attempts: int = FILEREPORT_ATTEMPTS,
+):
+    """GET the filereport service, retrying when it answers with an error.
+
+    Returns the parsed JSON (``as_json``) or the text. Raises
+    ``requests.HTTPError`` on a non-2xx status, and ``EnaServiceError`` when
+    every attempt carried ENA's error message or, for JSON, did not parse.
+    """
+    for attempt in range(1, attempts + 1):
+        logger.info("ENA filereport: GET %s params=%s", ENA_FILEREPORT_URL, params)
+        response = requests.get(ENA_FILEREPORT_URL, params=params, timeout=timeout_s)
+        response.raise_for_status()
+        text = response.text if isinstance(response.text, str) else ""
+        if ENA_ERROR_MARKER not in text:
+            if not as_json:
+                return text
+            try:
+                return response.json()
+            except ValueError:
+                pass
+        logger.warning(
+            "ENA filereport answered with an error for %s (attempt %d/%d)",
+            params.get("accession"),
+            attempt,
+            attempts,
+        )
+        if attempt < attempts:
+            time.sleep(2 ** (attempt - 1))
+    raise EnaServiceError(
+        f"ENA's filereport service answered with an error {attempts} times for "
+        f"{params.get('accession')!r}; this is the archive's service, not the data: retry later"
+    )
 
 
 ENA_BROWSER_XML_URL = "https://www.ebi.ac.uk/ena/browser/api/xml/"

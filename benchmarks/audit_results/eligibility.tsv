@@ -25,21 +25,21 @@ PRJEB25907	NO_ROUND_STRUCTURE	526	0	[]	"[""SELEX""]"	526	0	0	only 0 compatible r
 PRJEB28303	NO_ROUND_STRUCTURE	4	0	[]	"[""SELEX""]"	4	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB28411	NO_ROUND_STRUCTURE	12	0	[]	"[""SELEX""]"	12	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB29730	MIXED_PROJECT_NEEDS_GROUPING	973	973	[1, 2, 3, 4, 5, 6, 7]	"[""SELEX""]"	973	0	123	123 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
-PRJEB38961	MIXED_PROJECT_NEEDS_GROUPING	42	42	[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]	"[""AMPLICON""]"	42	0	2	2 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
+PRJEB38961	MIXED_PROJECT_NEEDS_GROUPING	42	42	[0, 1, 3, 6]	"[""AMPLICON""]"	42	0	2	2 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB46967	NO_ROUND_STRUCTURE	1	0	[]	"[""SELEX""]"	1	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB47428	MIXED_PROJECT_NEEDS_GROUPING	92	92	[1, 2, 3, 4]	"[""SELEX""]"	92	0	23	23 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
-PRJEB48966	MIXED_PROJECT_NEEDS_GROUPING	13	12	[1, 2, 3]	"[""SELEX""]"	13	0	3	3 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
-PRJEB49150	NO_ROUND_STRUCTURE	9	0	[]	"[""SELEX""]"	9	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJEB48966	MIXED_PROJECT_NEEDS_GROUPING	13	13	[0, 1, 2, 3]	"[""SELEX""]"	13	0	3	3 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
+PRJEB49150	MIXED_PROJECT_NEEDS_GROUPING	9	9	[1, 2, 3]	"[""SELEX""]"	9	0	3	3 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB50172	NO_ROUND_STRUCTURE	2	0	[]	"[""SELEX""]"	2	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
-PRJEB51212	ELIGIBLE_HT_SELEX_ROUNDS	39	39	[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]	"[""AMPLICON""]"	39	0	1	39 distinct rounds across 39 runs, single trajectory, all library_strategy values SELEX-compatible
-PRJEB51473	ELIGIBLE_HT_SELEX_ROUNDS	39	39	[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]	"[""AMPLICON""]"	39	0	1	39 distinct rounds across 39 runs, single trajectory, all library_strategy values SELEX-compatible
+PRJEB51212	ELIGIBLE_HT_SELEX_ROUNDS	39	39	[0, 1, 3, 6]	"[""AMPLICON""]"	39	0	1	4 distinct rounds across 39 runs, single trajectory, all library_strategy values SELEX-compatible
+PRJEB51473	ELIGIBLE_HT_SELEX_ROUNDS	39	39	[0, 1, 3, 6]	"[""AMPLICON""]"	39	0	1	4 distinct rounds across 39 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJEB61115	MIXED_PROJECT_NEEDS_GROUPING	5957	5957	[0, 1, 2, 3, 4]	"[""SELEX""]"	5957	0	2410	2410 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB62495	MIXED_PROJECT_NEEDS_GROUPING	12	12	[4, 5, 6, 7, 8, 9, 10, 11, 12]	"[""SELEX""]"	12	0	2	2 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB62756	MIXED_PROJECT_NEEDS_GROUPING	25	25	[0, 1, 2, 3, 4, 5, 6]	"[""SELEX""]"	25	0	4	4 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB65950	NO_ROUND_STRUCTURE	50	0	[]	"[""SELEX""]"	50	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB66722	NO_ROUND_STRUCTURE	2526	0	[]	"[""SELEX""]"	2526	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJEB70964	ELIGIBLE_HT_SELEX_ROUNDS	27	27	[1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]	"[""SELEX""]"	27	0	1	14 distinct rounds across 27 runs, single trajectory, all library_strategy values SELEX-compatible
-PRJEB75580	MIXED_PROJECT_NEEDS_GROUPING	12	12	[1, 2, 3]	"[""SELEX""]"	12	0	2	2 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
+PRJEB75580	FETCH_DEAD	0	0	[]	[]	0	0	0	ENA fetch failed: JSONDecodeError: Expecting ',' delimiter: line 3 column 1 (char 230)
 PRJEB76622	MIXED_PROJECT_NEEDS_GROUPING	5694	5693	[1, 2, 3, 4]	"[""SELEX""]"	5694	0	2319	2319 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB79572	MIXED_PROJECT_NEEDS_GROUPING	25	10	[1, 2, 3, 4, 5, 6, 7]	"[""OTHER"", ""SELEX""]"	25	0	7	7 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJEB88389	NO_ROUND_STRUCTURE	6	0	[]	"[""SELEX""]"	6	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
@@ -58,7 +58,7 @@ PRJNA1091700	NO_ROUND_STRUCTURE	7	0	[]	"[""AMPLICON"", ""SELEX""]"	7	0	0	only 0 
 PRJNA1113703	MIXED_PROJECT_NEEDS_GROUPING	9	9	[0, 1, 2, 3, 4]	"[""SELEX""]"	9	0	3	3 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJNA1119072	NO_ROUND_STRUCTURE	1	1	[6]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA1121376	NO_ROUND_STRUCTURE	86	0	[]	"[""AMPLICON"", ""OTHER""]"	86	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
-PRJNA1122221	NO_ROUND_STRUCTURE	12	0	[]	"[""SELEX""]"	12	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJNA1122221	ELIGIBLE_HT_SELEX_ROUNDS	12	12	[3, 8, 12]	"[""SELEX""]"	12	0	1	3 distinct rounds across 12 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJNA1151868	NO_ROUND_STRUCTURE	40	0	[]	"[""SELEX""]"	40	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA1159731	NO_ROUND_STRUCTURE	3	0	[]	"[""AMPLICON""]"	3	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA1176306	NO_ROUND_STRUCTURE	1	1	[8]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
@@ -86,10 +86,10 @@ PRJNA360902	MIXED_PROJECT_NEEDS_GROUPING	14	14	[1, 2, 3, 4, 5, 6, 7]	"[""AMPLICO
 PRJNA379022	NO_ROUND_STRUCTURE	16	16	[0]	"[""AMPLICON""]"	16	0	0	only 1 distinct round parsed across 16 runs (round=0); cross-round persistence needs ≥ 2 distinct rounds
 PRJNA385825	NO_ROUND_STRUCTURE	1	1	[7]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA450989	ELIGIBLE_HT_SELEX_ROUNDS	4	4	[1, 6, 10, 11]	"[""SELEX""]"	4	0	1	4 distinct rounds across 4 runs, single trajectory, all library_strategy values SELEX-compatible
-PRJNA474677	NO_ROUND_STRUCTURE	2	0	[]	"[""SELEX""]"	2	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJNA474677	MIXED_PROJECT_NEEDS_GROUPING	2	2	[1, 2]	"[""SELEX""]"	2	0	2	2 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJNA480721	MIXED_PROJECT_NEEDS_GROUPING	148	144	[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]	"[""SELEX""]"	148	0	29	29 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJNA491840	NO_ROUND_STRUCTURE	10	0	[]	"[""SELEX""]"	10	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
-PRJNA529538	NO_ROUND_STRUCTURE	6	0	[]	"[""SELEX""]"	6	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJNA529538	FETCH_DEAD	0	0	[]	[]	0	0	0	ENA fetch failed: JSONDecodeError: Expecting ',' delimiter: line 3 column 1 (char 232)
 PRJNA531690	MIXED_PROJECT_NEEDS_GROUPING	36	9	[1, 2, 3, 4, 5]	"[""SELEX""]"	36	0	5	5 distinct sub-trajectories detected from normalized library_name (e.g. multiple sub-libraries x rounds — needs per-group extraction logic beyond v0.1 scope)
 PRJNA547810	NO_ROUND_STRUCTURE	35	2	[4]	"[""SELEX""]"	35	0	0	only 1 distinct round parsed across 2 runs (round=4); cross-round persistence needs ≥ 2 distinct rounds
 PRJNA564266	NO_ROUND_STRUCTURE	3	0	[]	"[""OTHER""]"	3	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
@@ -121,8 +121,8 @@ PRJNA911774	NO_ROUND_STRUCTURE	6	0	[]	"[""SELEX""]"	6	0	0	only 0 compatible run(
 PRJNA916521	NO_ROUND_STRUCTURE	25	0	[]	"[""ATAC-seq"", ""OTHER""]"	19	6	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA932049	NO_ROUND_STRUCTURE	1	0	[]	"[""SELEX""]"	1	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA935703	NO_ROUND_STRUCTURE	1	0	[]	"[""OTHER""]"	1	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
-PRJNA947642	NO_ROUND_STRUCTURE	20	20	[1]	"[""SELEX""]"	20	0	0	only 1 distinct round parsed across 20 runs (round=1); cross-round persistence needs ≥ 2 distinct rounds
-PRJNA952942	NO_ROUND_STRUCTURE	2	0	[]	"[""SELEX""]"	2	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
-PRJNA957781	NO_ROUND_STRUCTURE	2	1	[0]	"[""OTHER""]"	2	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
+PRJNA947642	FETCH_DEAD	0	0	[]	[]	0	0	0	ENA fetch failed: JSONDecodeError: Expecting ',' delimiter: line 3 column 1 (char 232)
+PRJNA952942	FETCH_DEAD	0	0	[]	[]	0	0	0	ENA fetch failed: JSONDecodeError: Expecting ',' delimiter: line 3 column 1 (char 232)
+PRJNA957781	ELIGIBLE_HT_SELEX_ROUNDS	2	2	[0, 4]	"[""OTHER""]"	2	0	1	2 distinct rounds across 2 runs, single trajectory, all library_strategy values SELEX-compatible
 PRJNA975735	NO_ROUND_STRUCTURE	5	0	[]	"[""SELEX""]"	5	0	0	only 0 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely
 PRJNA990511	NO_ROUND_STRUCTURE	1	1	[7]	"[""SELEX""]"	1	0	0	only 1 compatible run(s) have a parseable round number; cross-round persistence needs ≥ 2 to infer primers safely

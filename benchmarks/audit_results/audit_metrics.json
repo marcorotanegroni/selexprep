@@ -1,62 +1,53 @@
 {
   "catalog_classification_distribution": {
-    "ELIGIBLE_HT_SELEX_ROUNDS": 28,
-    "MIXED_PROJECT_NEEDS_GROUPING": 26,
-    "NO_ROUND_STRUCTURE": 73
+    "ELIGIBLE_HT_SELEX_ROUNDS": 30,
+    "FETCH_DEAD": 4,
+    "MIXED_PROJECT_NEEDS_GROUPING": 27,
+    "NO_ROUND_STRUCTURE": 66
   },
   "catalog_version": "v0.2.1-snapshot-2026-07-03",
   "caveats": {
     "NO_ROUND_STRUCTURE": "The NO_ROUND_STRUCTURE bucket may include single-FASTQ inline-barcoded multiplexed SELEX deposits that selexprep v0.1 cannot detect without a user-supplied sample sheet (multiplex auto-detection is a v0.2 deferral). Visible v0.1 signals are: few runs + library_strategy=SELEX + 0 parseable rounds. Single-run deposits with n_runs_with_round=1 are genuinely single-round and correctly classified."
   },
   "extraction_mode_distribution": {
-    "BOTH_PRIMERS_SINGLE_READ": 6,
-    "FIVE_PRIME_ONLY": 2,
+    "BOTH_PRIMERS_SINGLE_READ": 4,
+    "FIVE_PRIME_ONLY": 3,
     "THREE_PRIME_ONLY": 3,
-    "UNABLE_TO_EXTRACT": 8
+    "UNABLE_TO_EXTRACT": 10
   },
   "fetch_outcome_distribution": {
-    "EXTRACT_REFUSED": 8,
+    "EXTRACT_REFUSED": 10,
     "FETCH_FAILED": 3,
-    "OK": 11
+    "OK": 10
   },
   "flags_raised_histogram": {
     "0": 2,
-    "1": 4,
+    "1": 3,
     "2": 4,
     "3": 1
   },
   "inference_safe_failure_by_reason": {
-    "extraction_mode_UNABLE_TO_EXTRACT": 8,
-    "required_action_MANUAL_PRIMERS_REQUIRED": 8,
-    "status_UNABLE_TO_INFER": 8
+    "extraction_mode_UNABLE_TO_EXTRACT": 10,
+    "required_action_MANUAL_PRIMERS_REQUIRED": 10,
+    "status_UNABLE_TO_INFER": 10
   },
-  "inference_safe_failure_rate": 0.421053,
+  "inference_safe_failure_rate": 0.5,
   "library_report_status_distribution": {
-    "HIGH": 6,
-    "LOW": 1,
-    "MEDIUM": 4,
-    "UNABLE_TO_INFER": 8
+    "HIGH": 4,
+    "MEDIUM": 6,
+    "UNABLE_TO_INFER": 10
   },
   "n_catalog_classified": 127,
-  "n_catalog_eligible": 28,
+  "n_catalog_eligible": 30,
   "n_catalog_non_insdc_passthrough": 113,
   "n_catalog_total": 240,
-  "n_fetchable": 19,
+  "n_fetchable": 20,
   "n_in_ground_truth_overlap": 0,
-  "n_inference_safe_failures": 8,
-  "n_sampled": 22,
-  "n_with_library_report": 19,
-  "n_with_qc_run": 11,
+  "n_inference_safe_failures": 10,
+  "n_sampled": 23,
+  "n_with_library_report": 20,
+  "n_with_qc_run": 10,
   "per_accession": [
-    {
-      "accession": "PRJDB19098",
-      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
-      "flags_raised": "1",
-      "is_in_ground_truth": false,
-      "library_report_status": "HIGH",
-      "required_action": "NONE",
-      "status": "OK"
-    },
     {
       "accession": "PRJDB19138",
       "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
@@ -104,12 +95,12 @@
     },
     {
       "accession": "PRJDB40017",
-      "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
-      "flags_raised": "1",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
       "is_in_ground_truth": false,
-      "library_report_status": "HIGH",
-      "required_action": "NONE",
-      "status": "OK"
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
     },
     {
       "accession": "PRJEB111361",
@@ -152,7 +143,7 @@
       "extraction_mode": "THREE_PRIME_ONLY",
       "flags_raised": "3",
       "is_in_ground_truth": false,
-      "library_report_status": "LOW",
+      "library_report_status": "MEDIUM",
       "required_action": "NONE",
       "status": "OK"
     },
@@ -166,6 +157,15 @@
       "status": "OK"
     },
     {
+      "accession": "PRJNA1122221",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
+    },
+    {
       "accession": "PRJNA1206477",
       "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
       "flags_raised": "1",
@@ -176,12 +176,12 @@
     },
     {
       "accession": "PRJNA1244796",
-      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "extraction_mode": "",
       "flags_raised": "",
       "is_in_ground_truth": false,
-      "library_report_status": "UNABLE_TO_INFER",
-      "required_action": "MANUAL_PRIMERS_REQUIRED",
-      "status": "EXTRACT_REFUSED"
+      "library_report_status": "",
+      "required_action": "",
+      "status": "FETCH_FAILED"
     },
     {
       "accession": "PRJNA1376488",
@@ -203,21 +203,21 @@
     },
     {
       "accession": "PRJNA1481083",
-      "extraction_mode": "",
-      "flags_raised": "",
-      "is_in_ground_truth": false,
-      "library_report_status": "",
-      "required_action": "",
-      "status": "FETCH_FAILED"
-    },
-    {
-      "accession": "PRJNA450989",
       "extraction_mode": "UNABLE_TO_EXTRACT",
       "flags_raised": "",
       "is_in_ground_truth": false,
       "library_report_status": "UNABLE_TO_INFER",
       "required_action": "MANUAL_PRIMERS_REQUIRED",
       "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA450989",
+      "extraction_mode": "FIVE_PRIME_ONLY",
+      "flags_raised": "1",
+      "is_in_ground_truth": false,
+      "library_report_status": "MEDIUM",
+      "required_action": "NONE",
+      "status": "OK"
     },
     {
       "accession": "PRJNA633039",
@@ -245,12 +245,21 @@
       "library_report_status": "UNABLE_TO_INFER",
       "required_action": "MANUAL_PRIMERS_REQUIRED",
       "status": "EXTRACT_REFUSED"
+    },
+    {
+      "accession": "PRJNA957781",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
+      "flags_raised": "",
+      "is_in_ground_truth": false,
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
     }
   ],
   "required_action_distribution": {
-    "MANUAL_PRIMERS_REQUIRED": 8,
-    "NONE": 11
+    "MANUAL_PRIMERS_REQUIRED": 10,
+    "NONE": 10
   },
-  "sample_accessions_sha256": "980c99af747ec4691eed4f90db08853ac69a230ea76256348bd7a3ca799ca9b0",
+  "sample_accessions_sha256": "3e12486984493fd34a281c19c9e6373e3062a3e8afe6aef04fc2536ccf0c31ca",
   "sample_seed": 42
 }
