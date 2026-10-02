@@ -13,11 +13,11 @@
     "BOTH_PRIMERS_SINGLE_READ": 4,
     "FIVE_PRIME_ONLY": 3,
     "THREE_PRIME_ONLY": 3,
-    "UNABLE_TO_EXTRACT": 10
+    "UNABLE_TO_EXTRACT": 11
   },
   "fetch_outcome_distribution": {
-    "EXTRACT_REFUSED": 10,
-    "FETCH_FAILED": 3,
+    "EXTRACT_REFUSED": 11,
+    "FETCH_FAILED": 2,
     "OK": 10
   },
   "flags_raised_histogram": {
@@ -27,25 +27,25 @@
     "3": 1
   },
   "inference_safe_failure_by_reason": {
-    "extraction_mode_UNABLE_TO_EXTRACT": 10,
-    "required_action_MANUAL_PRIMERS_REQUIRED": 10,
-    "status_UNABLE_TO_INFER": 10
+    "extraction_mode_UNABLE_TO_EXTRACT": 11,
+    "required_action_MANUAL_PRIMERS_REQUIRED": 11,
+    "status_UNABLE_TO_INFER": 11
   },
-  "inference_safe_failure_rate": 0.5,
+  "inference_safe_failure_rate": 0.52381,
   "library_report_status_distribution": {
     "HIGH": 4,
     "MEDIUM": 6,
-    "UNABLE_TO_INFER": 10
+    "UNABLE_TO_INFER": 11
   },
   "n_catalog_classified": 127,
   "n_catalog_eligible": 30,
   "n_catalog_non_insdc_passthrough": 113,
   "n_catalog_total": 240,
-  "n_fetchable": 20,
+  "n_fetchable": 21,
   "n_in_ground_truth_overlap": 0,
-  "n_inference_safe_failures": 10,
+  "n_inference_safe_failures": 11,
   "n_sampled": 23,
-  "n_with_library_report": 20,
+  "n_with_library_report": 21,
   "n_with_qc_run": 10,
   "per_accession": [
     {
@@ -176,12 +176,12 @@
     },
     {
       "accession": "PRJNA1244796",
-      "extraction_mode": "",
+      "extraction_mode": "UNABLE_TO_EXTRACT",
       "flags_raised": "",
       "is_in_ground_truth": false,
-      "library_report_status": "",
-      "required_action": "",
-      "status": "FETCH_FAILED"
+      "library_report_status": "UNABLE_TO_INFER",
+      "required_action": "MANUAL_PRIMERS_REQUIRED",
+      "status": "EXTRACT_REFUSED"
     },
     {
       "accession": "PRJNA1376488",
@@ -257,7 +257,7 @@
     }
   ],
   "required_action_distribution": {
-    "MANUAL_PRIMERS_REQUIRED": 10,
+    "MANUAL_PRIMERS_REQUIRED": 11,
     "NONE": 10
   },
   "sample_accessions_sha256": "3e12486984493fd34a281c19c9e6373e3062a3e8afe6aef04fc2536ccf0c31ca",
