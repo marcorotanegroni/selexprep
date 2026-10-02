@@ -715,7 +715,7 @@ unchanged (`git diff d8a702b v0.4.5 -- src/selexprep/library
 src/selexprep/extract` is empty). The other source changes are the version
 string, the status note that `detect` and `run` print, and the Tier-1
 benchmark modules (`benchmark/metrics.py`, `benchmark/figure_a.py`), none of
-which the synthetic runs use.
+which the synthetic runs use. The same holds for release 0.4.6, which changes only `selexprep.fetch` and catalogue data.
 
 **Totals.** 1,500 runs, no pipeline error. Of the 1,480 runs with constants:
 1,058 complete and correct, 160 partial, correct and declared, 213 refused, 49

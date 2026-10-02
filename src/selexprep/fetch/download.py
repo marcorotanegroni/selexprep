@@ -36,6 +36,7 @@ from typing import Any, Literal
 import requests
 
 from selexprep._common import iter_srr_files
+from selexprep.fetch.inspect import EnaServiceError, get_ena_filereport
 
 logger = logging.getLogger(__name__)
 
@@ -308,19 +309,22 @@ def download_srr_ena_direct(srr: str, output_dir: Path, dry_run: bool = False) -
     if dry_run:
         return True
 
-    api_url = (
-        "https://www.ebi.ac.uk/ena/portal/api/filereport"
-        f"?accession={srr}&result=read_run"
-        "&fields=fastq_ftp,fastq_md5,fastq_bytes&format=tsv"
-    )
+    params = {
+        "accession": srr,
+        "result": "read_run",
+        "fields": "fastq_ftp,fastq_md5,fastq_bytes",
+        "format": "tsv",
+    }
     try:
-        resp = requests.get(api_url, timeout=60)
-        resp.raise_for_status()
+        text = get_ena_filereport(params, timeout_s=60, as_json=False)
+    except EnaServiceError as e:
+        logger.error("  ena-direct: %s", e)
+        return False
     except requests.RequestException as e:
         logger.error("  ena-direct: filereport API failed for %s: %s", srr, e)
         return False
 
-    lines = [ln for ln in resp.text.strip().splitlines() if ln]
+    lines = [ln for ln in text.strip().splitlines() if ln]
     if len(lines) < 2:
         logger.error("  ena-direct: filereport returned no rows for %s", srr)
         return False

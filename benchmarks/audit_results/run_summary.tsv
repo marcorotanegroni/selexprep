@@ -1,0 +1,24 @@
+accession	status	last_stage_completed	library_report_status	extraction_mode	required_action	confidence	flags_raised	notes
+PRJDB19138	OK	qc	HIGH	BOTH_PRIMERS_SINGLE_READ	NONE	0.9431	0	
+PRJDB19139	OK	qc	HIGH	BOTH_PRIMERS_SINGLE_READ	NONE	0.9130	2	
+PRJDB19140	OK	qc	MEDIUM	FIVE_PRIME_ONLY	NONE	0.6959	2	
+PRJDB19141	OK	qc	MEDIUM	FIVE_PRIME_ONLY	NONE	0.6959	2	
+PRJDB40016	OK	qc	HIGH	BOTH_PRIMERS_SINGLE_READ	NONE	0.9718	0	
+PRJDB40017	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.6376		LibraryReport status is UNABLE_TO_INFER (reason: Only 5' primer detected but N-length confidence (0.46) ≤ threshold (0.80)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJEB111361	OK	qc	MEDIUM	THREE_PRIME_ONLY	NONE	0.6523	1	
+PRJEB51212	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJEB51473	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJEB9897	FETCH_FAILED	fetch						failed SRRs: ERR964809, ERR964810, ERR964811, ERR964812, ERR964813, ERR964814, ERR965438, ERR965439
+PRJNA1066781	OK	qc	MEDIUM	THREE_PRIME_ONLY	NONE	0.6584	3	
+PRJNA1067620	OK	qc	MEDIUM	THREE_PRIME_ONLY	NONE	0.6613	2	
+PRJNA1122221	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA1206477	OK	qc	HIGH	BOTH_PRIMERS_SINGLE_READ	NONE	0.9357	1	
+PRJNA1244796	FETCH_FAILED	fetch						failed SRRs: SRR32942035
+PRJNA1376488	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.0608		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA1406499	FETCH_FAILED	fetch						JSONDecodeError: Expecting ',' delimiter: line 3 column 1 (char 234)
+PRJNA1481083	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1000		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA450989	OK	qc	MEDIUM	FIVE_PRIME_ONLY	NONE	0.6833	1	
+PRJNA633039	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA741127	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1200		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA862494	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.
+PRJNA957781	EXTRACT_REFUSED	detect	UNABLE_TO_INFER	UNABLE_TO_EXTRACT	MANUAL_PRIMERS_REQUIRED	0.1500		LibraryReport status is UNABLE_TO_INFER (reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00)). Pass --override-primer-5p / --override-primer-3p (and the runner will promote extraction_mode + status), or hand-edit the LibraryReport JSON to proceed.

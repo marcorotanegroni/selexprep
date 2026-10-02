@@ -6,7 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.6] - 2026-10-02
+
 ### Fixed
+
+- **`fetch` retries when ENA's filereport service answers with an error.** The
+  service sometimes answers HTTP 200 with "ERROR occurred. Not all results may
+  have been written" in place of the records, intermittently for the same
+  query. `fetch` read that answer as a run without FASTQ (TSV) or failed on the
+  malformed JSON, and gave up after one try; in the 0.4.5 corpus audit this
+  failed PRJNA1244796 three times on one run whose files are intact. Both
+  queries now go through `get_ena_filereport`, which retries up to four times
+  with growing waits and then raises `EnaServiceError`, whose message names the
+  archive's service, not the data.
 
 - **Catalogue: PRJEB114397 `target_class` is `small molecule`.** The layer held
   the source's descriptive phrase ("toxic, bioaccumulative chemical") instead of
