@@ -1,6 +1,6 @@
 {
   "primer_5p": "GGCTTCTGGACTACCTATGC",
-  "primer_3p": "CGTGGTTACAGTCAGAGGACAGATT",
+  "primer_3p": "CGTGGTTACAGTCAGAGGA",
   "variants_5p": [
     [
       "GGCTTCTGGACTACCTATGC",
@@ -17,24 +17,24 @@
   ],
   "variants_3p": [
     [
-      "CGTGGTTACAGTCAGAGGACTGATT",
-      74297
+      "CGTGGTTACAGTCAGAGGA",
+      244877
     ],
     [
-      "CGTGGTTACAGTCAGAGGACAGATT",
-      62180
+      "CGTCGTTACAGTCAGAGGA",
+      57186
     ],
     [
-      "CGTCGTTACAGTCAGAGGACTGATT",
-      51270
+      "GTGGTTACAGTCAGAGGAG",
+      13269
     ]
   ],
   "known_adapter_hits": {
     "NEXTERA": 0,
     "TRUSEQ_R1": 410
   },
-  "extraction_mode": "FIVE_PRIME_ONLY",
-  "full_insert_recovered": false,
+  "extraction_mode": "BOTH_PRIMERS_SINGLE_READ",
+  "full_insert_recovered": true,
   "read_source": "R1",
   "required_action": "NONE",
   "orientation": "FORWARD",
@@ -44,12 +44,12 @@
   },
   "n_length_confidence": 1.0,
   "match_rate_5p": 0.9730360686354617,
-  "match_rate_3p": 0.5349081521576846,
+  "match_rate_3p": 0.9103944014485004,
   "position_consistency_5p": 0.9730333540546336,
-  "position_consistency_3p": 0.5348565751219525,
+  "position_consistency_3p": 0.907989282834891,
   "read_fraction_used_for_inference": 1.0,
   "sampling_seed": 42,
-  "confidence": 0.7980020779744842,
-  "status": "MEDIUM",
+  "confidence": 0.951565051206285,
+  "status": "HIGH",
   "failure_reason": null
 }

@@ -35,5 +35,5 @@ it fetches from ENA, so it needs network.
 [`02_library_report_interpretation.ipynb`](02_library_report_interpretation.ipynb)
 walks through the `LibraryReport` fields (status, extraction_mode,
 required_action, …) on cached real outputs under `data/` — high-confidence,
-partial, and safe-failure cases. Read this once and the JSON in your own `out/`
+paired-end split, and safe-failure cases (`regenerate_reports.sh` rebuilds them). Read this once and the JSON in your own `out/`
 folders stops being opaque.
