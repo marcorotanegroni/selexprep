@@ -1,7 +1,7 @@
 # Batch processing
 
 `selexprep run` processes many accessions in one pass — emitting per-dataset
-outputs plus corpus-level QC — and is resumable.
+outputs plus a corpus-level summary — and is resumable.
 
 ## Input: an accessions TSV
 
@@ -28,8 +28,8 @@ run restarts where it left off.
 
 - `out/<accession>/` — per-dataset `library_report.json`, extracted FASTA(s),
   per-round counts, `selexprep_manifest.json`, and a `qc/` folder.
-- Corpus-level QC (e.g. a last-round uniques histogram across datasets) in the
-  batch root.
+- `out/run_summary.tsv` — one row per accession: status, last stage completed,
+  `LibraryReport` status, extraction mode, required action and QC flags raised.
 
 Each dataset carries its own `LibraryReport`, so a `HIGH` dataset and an
 `UNABLE_TO_INFER` one can sit side by side in the same batch — the latter is

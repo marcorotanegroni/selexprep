@@ -46,4 +46,4 @@ local `--round-map` contract, see the [CLI reference](cli.md).
 
 If `detect` returns `status: UNABLE_TO_INFER`, `extract` refuses rather than
 guessing — supply `--override-primer-5p` / `--override-primer-3p` to proceed.
-See [Limitations](limitations.md) for what v0.1 does and does not do.
+See [Limitations](limitations.md) for what `selexprep` does and does not do.

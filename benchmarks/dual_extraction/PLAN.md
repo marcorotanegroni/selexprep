@@ -1,5 +1,10 @@
 # Dual-extraction → published metadata — PLAN
 
+> **Working log, kept as a record.** Written during the extraction; local paths,
+> unchecked items and intermediate counts are as they were then. The released
+> values and counts are in `src/selexprep/catalog/data/` and in `README.md`
+> (status terms at the top of it).
+
 Contract: `extract-v1.4` — SHA256 `c069d2dfb5a9a19d8a7aa26cc0beac68f5a19d0e14f8f0baeb7273de2a87631f`
 Two independent arms: **Claude** (`~/Estrazione_claude_batch`, 01–16) + **Codex**
 (**canonical = `~/Estrazione_codex_batch`**, one json per batch; `~/Estrazione_codex_batch_2`

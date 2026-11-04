@@ -4,7 +4,7 @@
 
 > `selexprep` is not another aptamer-analysis suite. It is the missing accession-to-clean-library preprocessing layer, with primer inference, uncertainty reporting, random-region extraction, and reproducible outputs.
 
-!!! note "v0.1"
+!!! note "Install"
     Install with `pip install selexprep`. Source and issues on [GitHub](https://github.com/marcorotanegroni/selexprep).
 
 ## Sections
@@ -15,5 +15,5 @@
 - [CLI reference](cli.md) — all eight `selexprep` subcommands
 - [API reference](api.md) — `LibraryReport` + manifest schemas
 - [Examples](examples.md) — runnable notebooks (toy + cached-real)
-- [Limitations](limitations.md) — what v0.1 does NOT do; honest constraints
-- [v0.2 roadmap](roadmap.md) — deferred features (read merging, AnnData, HTML report, …)
+- [Limitations](limitations.md) — what `selexprep` does not do; known constraints
+- [Roadmap](roadmap.md) — features not yet implemented (read merging, AnnData, HTML report, …)

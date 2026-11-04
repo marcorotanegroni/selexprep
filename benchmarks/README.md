@@ -2,16 +2,17 @@
 
 This directory holds selexprep's benchmark: two tiers plus a standalone
 catalog-completeness audit. Each tier emits deterministic, sorted-key JSON —
-`metrics.json` (Tier 1) and `audit_metrics.json` (Tier 2) — which the paper
-presents as a per-deposit **scorecard table** and a corpus-audit **summary table**.
+`metrics.json` (Tier 1) and `audit_metrics.json` (Tier 2) — presented in the
+paper's supplementary data as a per-deposit **scorecard** (S1) and a corpus-audit
+**summary** (S2).
 
 - **Tier 1 — primer recovery** (`Snakefile` + `ground_truth.tsv`): per-deposit
   recovery of paper-reported primers from accession-derived reads, on 21
   source-verified deposits in three arms (7 recovery, 8 specificity,
-  6 adapter-control). Produces the scorecard (paper **Table 1**).
+  6 adapter-control). Produces the scorecard (Supplementary Data S1).
 - **Tier 2 — corpus audit** (`audit.smk` + the bundled catalog): a descriptive
   utility audit over a deterministic sample of audit-eligible INSDC accessions.
-  Distributional metrics only — no per-row ground truth. Paper **supplement**.
+  Distributional metrics only — no per-row ground truth (Supplementary Data S2).
 - **Catalog-completeness audit** (`catalog_completeness_audit.py`): diffs
   `bioprojects.csv` against ENA's `library_strategy="SELEX"` set.
 
@@ -33,7 +34,7 @@ this question by construction.
   paper-reported primers as input, so a head-to-head on count tables reduces to
   "does selexprep's trimming subprocess match another tool given the same
   primers?" — a trimming sanity check, not a scientific comparison.
-- **Downstream count correlation.** The honest version is self-consistency:
+- **Downstream count correlation.** The meaningful version is self-consistency:
   do inferred-primer counts match `--override-primer`-driven counts of the same
   dataset? The `CountCorrelationReport` + `compute_count_correlation` scaffolding
   stays in `metrics.py` as a future entry point; `aggregate_metrics` does not
@@ -141,8 +142,8 @@ read merging rather than forcing an R1-only call).
 PRJNA883192 was **withdrawn from the scored set** (`verified=false`) because its
 3′ constant could only be resolved from the deposited reads themselves: scoring
 an inferred call against a read-derived truth is circular, and keeping it would
-have inflated the recovery denominator with a case the benchmark cannot honestly
-adjudicate. It stays in `ground_truth.tsv` with the full reasoning.
+have inflated the recovery denominator with a case the benchmark cannot fairly
+score. It stays in `ground_truth.tsv` with the full reasoning.
 
 ### Extraction yield per run
 
@@ -307,7 +308,7 @@ are constant across rounds, so recovery is robust to the exact numbering).
 `rule fetch` writes separate primary/R2 manifests (`fastqs.manifest`,
 `fastqs.r2.manifest`). R1 / single-end inputs go positionally to `detect`; R2
 mates go via `--paired-r2`, so paired split-primer datasets are not forced into
-R1-only partial recovery. Read merging is a v0.2 item.
+R1-only partial recovery. Read merging is not yet implemented.
 
 ## Round-assignment coverage
 

@@ -183,9 +183,9 @@ selexprep extract round_*.fastq.gz \
 
 You can also edit `library_report.json` by hand and re-run without overrides.
 
-> **Multiplexed deposit** (several samples or targets pooled in one FASTQ)? v0.1
-> doesn't auto-split them — pass a `--sample-sheet` to `extract` in place of
-> `--round-map`. Auto-demultiplexing is not yet implemented.
+> **Multiplexed deposit** (several samples or targets pooled in one FASTQ)?
+> `selexprep` doesn't split them automatically — pass a `--sample-sheet` to
+> `extract` in place of `--round-map`.
 
 ## CLI reference
 
@@ -291,17 +291,17 @@ BibTeX auto-citation · library-type classification.
 ## Curated metadata layer
 
 **Curated metadata layer** (`selexprep.catalog.load_metadata` /
-`load_metadata_records`) — each of the 240 catalog deposits now ships with curated
+`load_metadata_records`) — each of the 240 catalog deposits ships with curated
 experimental metadata: `study_type`, `target`, `target_class`, `chemistry`,
 `n_random`, `n_rounds`, `selection_format`, `counter_selection` (240 × 8 = 1920
-cells, 1491 populated — up from ~4 experimental-field cells in v0.1). Built by **two
+cells, 1491 populated). Built by **two
 independent LLM extractions** (Claude + Codex/GPT), reconciled, with **every value
 source-cited** (evidence quote + DOI/URL + location); where the two extractions
-genuinely disagreed, both are kept. Bundled as `curated_metadata.json` (canonical,
+disagreed, both readings are kept. Bundled as `curated_metadata.json` (canonical,
 provenance-rich) + `curated_metadata.csv` (flat view) under `catalog/data/`, accessed
-via the API above. Spot-checked against the hand-curated benchmark
-ground truth (overlapping fields on 11 verified deposits) — no residual disagreements
-after adjudication. The extraction contract, both raw arms, and the reconciliation
+via the API above. Each value records whether the two extractions agreed, one
+found it, or a disagreement was resolved against the sources; agreement is
+recorded as concordance, not as verification. The extraction contract, both raw arms, and the reconciliation
 live under `benchmarks/dual_extraction/` in the source repository.
 
 ## What selexprep does *not* do
@@ -333,13 +333,19 @@ manifest pins `pyarrow_version` instead). PNG plots are **informational**
 
 ## Benchmarks
 
-Two-tier benchmark under [`benchmarks/`](https://github.com/marcorotanegroni/selexprep/blob/main/benchmarks/README.md):
+Benchmarks under [`benchmarks/`](https://github.com/marcorotanegroni/selexprep/blob/main/benchmarks/README.md):
 
 - **Tier 1 — primer-recovery scorecard** (`Snakefile` + `ground_truth.tsv`):
   curated primer-recovery validation against paper-reported primers (N=21
-  source-verified accessions, modality-diverse, balanced across three arms:
-  7 recovery, 7 pre-trimmed specificity controls, 7 adapter controls),
+  source-verified accessions, modality-diverse, in three arms: 7 recovery,
+  8 pre-trimmed specificity controls, 6 adapter controls),
   reported as a per-deposit table.
+- **Semi-synthetic benchmark** (`synthetic/`): real random regions placed
+  between the published constants of other libraries, so the true boundary is
+  known in every read. 52 conditions (constant length, sequencing errors,
+  run-specific tags, adapters, rounds provided, a dominant clone, depth, …);
+  the design and expectations were registered before any library was
+  generated, and the test set was run once at a frozen version.
 - **Tier 2 — corpus audit** (`audit.smk`): corpus utility audit over a random sample
   of audit-eligible INSDC catalog rows. Shipped artifacts under
   `benchmarks/audit_results/`; the reproducibility envelope (catalog version +

@@ -1,7 +1,7 @@
 # API reference
 
 `selexprep`'s primary interface is the [CLI](cli.md). For programmatic use,
-the two schemas below are the stable, documented public surface in v0.1: the
+the two schemas below are the stable, documented public surface within the 0.x series: the
 `LibraryReport` produced by primer inference, and the run provenance manifest.
 
 See the [LibraryReport reference](library-report.md) for a narrative,
