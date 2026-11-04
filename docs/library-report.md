@@ -28,7 +28,7 @@ real examples are in [`02_library_report_interpretation.ipynb`](examples.md).
 ### Workflow — `required_action`
 - `NONE` — proceed.
 - `MANUAL_PRIMERS_REQUIRED` — supply `--override-primer-*` (or hand-edit the report).
-- `READ_MERGING_RECOMMENDED` — paired split; full-insert recovery needs a merger (v0.2).
+- `READ_MERGING_RECOMMENDED` — paired split; full-insert recovery needs read merging, not yet implemented.
 
 ### File layout — `read_source`
 `R1` / `R2` / `R1_AND_R2` / `INTERLEAVED` / `UNKNOWN`.
@@ -43,6 +43,10 @@ used to discard reads.
   sits at its flank, measured where it actually is (a run-specific tag outside
   the constant shifts it away from the read edge).
 - `n_length_mode`, `n_length_distribution`, `n_length_confidence`.
+
+With `--override-primer-*`, the report in the manifest carries the evidence of
+the supplied primers: their match rates on the earliest round and, in
+single-read modes, the random-region lengths after trimming.
 
 ### Confidence + reproducibility
 - `confidence` (0–1) and `status`: `HIGH` / `MEDIUM` / `LOW` / `UNABLE_TO_INFER`.
@@ -72,11 +76,11 @@ does not.
 `extract` also warns when an input FASTQ keeps less than half of its reads, or
 less than half the yield of the best input (`trim_reports.json` holds every input's reads in and out): the
 primers fit that run's reads badly, for example because it carries a different
-construct.
+construct or its reads are in the opposite orientation.
 
 !!! note
     Single-round deposits cap `status` at `MEDIUM` (cross-round persistence is
-    unavailable). Below ~500 sequences in the earliest round, `detect` refuses
+    unavailable). Below 500 sequences in the earliest round, `detect` refuses
     outright.
 
 ## Known limits

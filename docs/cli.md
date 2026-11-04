@@ -78,7 +78,7 @@ selexprep run accessions.tsv --outdir OUT [--resume] [--stop-on-error] [--backen
 ```
 
 Runs the full chain per accession (TSV with an `accession` column), emitting
-`OUT/<accession>/…` plus corpus-level QC. `--resume` skips completed accessions;
+`OUT/<accession>/…` plus a corpus-level `run_summary.tsv`. `--resume` skips completed accessions;
 by default per-accession failures are logged and skipped (`--stop-on-error` to
 halt). See the [batch tutorial](batch.md).
 

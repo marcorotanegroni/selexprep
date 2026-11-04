@@ -1,5 +1,14 @@
 # Dual independent extraction — protocol (v1.4)
 
+> **Terms in the released catalogue.** Each released value carries one status:
+> `concordant` (the two extractions agree), `single_source` (one extraction
+> found it), `adjudicated` (they disagreed; resolved against the cited sources,
+> keeping both readings), `not_stated` (in no source consulted), or `verified`
+> (the 2 values checked against the benchmark constants). Agreement between the
+> two models is recorded as concordance, not as verification: where the
+> protocol below calls concordant and adjudicated values human-verified or
+> `curation_level = verified`, the released catalogue does not.
+
 Methodology for the per-deposit SELEX metadata that ships with `selexprep` and is
 described in the Application Note. Each text-derived field is extracted by **two
 independent LLMs** (Claude and Codex/GPT), then reconciled. Pre-registered here so
@@ -159,3 +168,12 @@ source was read; a paper-only field may be `not_stated` only when the tier expla
 - `normalize.py` — deterministic normalizer used by the comparison scripts
 - `compute_agreement.py` — per-field inter-extractor agreement + adjudication worklist
 - `compare_to_existing.py` — 3-way comparison vs the existing `project_metadata.json` curation
+- `genuine_disagreements.tsv` — the 49 cells where the arms still disagreed after the semantic
+  comparison: 47 adjudicated, 2 checked against the benchmark ground truth (`verified`)
+- `adjudication_worklist.tsv` — the per-cell trail of the 47 adjudications (both arms, rule, note)
+- `curated_metadata.json` / `curated_metadata.csv` here — the reconciled table **before**
+  adjudication (238 deposits, 47 `discordant` cells); the released values are in
+  `src/selexprep/catalog/data/`
+- `doi_recall_eval.py` / `doi_recall_eval.json` — internal evaluation of how many API-linked
+  paper DOIs the extractions recovered; not a catalogue field
+- `PLAN.md` — the working log of extraction and reconciliation, kept as a record

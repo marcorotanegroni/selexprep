@@ -1,6 +1,6 @@
-# v0.2 roadmap
+# Roadmap
 
-Deferred from v0.1 (paper mentions, doesn't ship):
+Not yet implemented:
 
 - **AnnData output** — `.h5ad` export for ML-pipeline consumers
 - **BibTeX auto-citation** — BioProject → PubMed E-utils → `citations.bib`

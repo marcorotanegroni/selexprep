@@ -4,7 +4,7 @@ All notable changes to `selexprep` are documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
-## [0.4.7] - 2026-11-03
+## [0.4.7] - 2026-11-04
 
 Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
 
@@ -35,6 +35,11 @@ Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
   neither has one, otherwise for example "5'=0.30, 3'=no candidate".
 - **The low-yield warning names reads in the opposite orientation** among the
   possible causes.
+
+### Documentation
+
+- The README lists the semi-synthetic benchmark; README and docs no longer
+  refer to the features of early versions (v0.1, v0.2).
 
 ## [0.4.6] - 2026-10-02
 
