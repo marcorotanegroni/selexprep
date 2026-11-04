@@ -1381,6 +1381,8 @@ def compute_library_report(
         status_high_cutoff=STATUS_HIGH_CUTOFF,
         status_medium_cutoff=STATUS_MEDIUM_CUTOFF,
         status_low_cutoff=STATUS_LOW_CUTOFF,
+        candidate_5p=primer_5p_seq is not None,
+        candidate_3p=primer_3p_lookup is not None,
     )
 
     # A library with no randomised region is not a library. When one sequence

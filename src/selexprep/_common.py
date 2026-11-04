@@ -9,6 +9,24 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Complement of nucleotide symbols, IUPAC ambiguity codes included: R/Y, K/M,
+# B/V and D/H pair up; S, W and N are their own complements; U maps to A.
+# Case is kept, and a symbol outside this alphabet is left as it is.
+IUPAC_COMPLEMENT = str.maketrans(
+    "ACGTUNRYKMSWBVDHacgtunrykmswbvdh",
+    "TGCAANYRMKSWVBHDtgcaanyrmkswvbhd",
+)
+
+
+def reverse_complement_iupac(seq: str) -> str:
+    """Reverse complement of a DNA or RNA sequence, keeping case and symbols.
+
+    IUPAC codes are complemented (``IUPAC_COMPLEMENT``), U/u becomes A/a, and
+    any other symbol is kept, so a read comes back in its own alphabet.
+    """
+    return seq.translate(IUPAC_COMPLEMENT)[::-1]
+
+
 # Canonical per-SRR FASTQ filename conventions produced by kingfisher /
 # sra-toolkit. Single-end runs produce `{srr}.fastq.gz`; paired-end runs
 # produce `{srr}_1.fastq.gz` and `{srr}_2.fastq.gz`. Match EXACTLY to avoid

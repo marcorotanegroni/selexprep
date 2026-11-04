@@ -6,6 +6,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
+
+### Fixed
+
+- **Primer overrides report the evidence of the supplied primers.** `extract`
+  with `--override-primer-5p/3p` kept the match rates and random-region lengths
+  that detection had reported for the primers it inferred (for example 150 nt
+  at confidence 1 when the real insert is 39 nt). The match rate of each
+  supplied primer is now measured on the earliest round, in the orientation
+  used for extraction, with the detection definition (the read contains the
+  primer with at most one substitution, fully inside it; reads shorter than the
+  primer are left out); in paired split mode the 3' primer is measured on R2 as
+  its reverse complement. Only overridden sides are measured. In single-read
+  modes the random-region mode, distribution and confidence are measured on the
+  earliest round's extracted reads.
+- **One IUPAC reverse complement.** `count`'s `reverse_complement` and the read
+  reorientation now complement IUPAC ambiguity codes (R/Y, K/M, B/V, D/H; S, W
+  and N unchanged), keep case, map U to A and keep any other symbol (the read
+  reorientation used to turn unknown symbols into N). The primer complement
+  accepts IUPAC codes instead of refusing them (a supplied primer may be
+  degenerate) and still rejects symbols that are not nucleotides. Counting
+  changes only for reads that carry IUPAC codes other than N.
+- **A side without a candidate flank is named as such.** When both match rates
+  fall below 0.40, the failure reason no longer prints 0.00 for a side that had
+  no candidate: "No candidate 5' or 3' flank found in the earliest round" when
+  neither has one, otherwise for example "5'=0.30, 3'=no candidate".
+- **The low-yield warning names reads in the opposite orientation** among the
+  possible causes.
+
 ## [0.4.6] - 2026-10-02
 
 ### Fixed

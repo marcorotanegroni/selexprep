@@ -18,6 +18,8 @@ data.
 
 from __future__ import annotations
 
+from selexprep._common import reverse_complement_iupac
+
 # CALIBRATION-TODO: the design ("TruSeq R1/R2, Nextera, etc.");
 # confirmed or extends to the full Illumina set.
 KNOWN_ADAPTERS: dict[str, str] = {
@@ -31,30 +33,27 @@ KNOWN_ADAPTERS: dict[str, str] = {
 }
 
 
-# Watson-Crick complement table.
-# U → A (RNA primers are reported as DNA per the design; see
-# `selexprep.library.detect._normalize_u_to_t`).
-# IUPAC ambiguous bases (N, R, Y, ...) are explicitly unsupported in v0.1
-# per the design ("IUPAC unsupported in v0.1").
-_COMPLEMENT = {"A": "T", "T": "A", "C": "G", "G": "C", "U": "A"}
+# Primer alphabet: A, C, G, T, U and the IUPAC ambiguity codes (a supplied
+# primer may be degenerate). U → A, as RNA primers are reported as DNA (see
+# `selexprep.library.detect._normalize_u_to_t`). The complement itself is the
+# shared ``IUPAC_COMPLEMENT``.
+_PRIMER_ALPHABET = frozenset("ACGTUNRYKMSWBVDH")
 
 
 def reverse_complement(seq: str) -> str:
-    """Return the reverse complement of an ACGTU sequence.
+    """Return the reverse complement of a primer, in uppercase.
 
-    Case-insensitive on input; returns uppercase. Raises ``ValueError`` on
-    any non-ACGTU base (including ``N`` and other IUPAC codes — v0.1 does
-    not support ambiguous bases).
+    Case-insensitive on input. IUPAC ambiguity codes are complemented (R/Y,
+    K/M, B/V, D/H; S, W and N are their own complements) and U becomes A.
+    Raises ``ValueError`` on a symbol that is not a nucleotide or IUPAC code.
     """
     upper = seq.upper()
-    try:
-        return "".join(_COMPLEMENT[b] for b in reversed(upper))
-    except KeyError as e:
-        bad = e.args[0]
+    bad = next((b for b in upper if b not in _PRIMER_ALPHABET), None)
+    if bad is not None:
         raise ValueError(
-            f"reverse_complement: non-ACGTU base {bad!r} in {seq!r}; "
-            "IUPAC ambiguity is unsupported in v0.1"
-        ) from None
+            f"reverse_complement: {bad!r} in {seq!r} is not a nucleotide or IUPAC code"
+        )
+    return reverse_complement_iupac(upper)
 
 
 # Pre-compute the reverse complements once at module load so every call to

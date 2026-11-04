@@ -33,11 +33,19 @@ def test_reverse_complement_treats_u_as_a_complement() -> None:
     assert reverse_complement("AUCG") == "CGAT"
 
 
-def test_reverse_complement_rejects_ambiguous_bases() -> None:
-    with pytest.raises(ValueError, match="non-ACGTU base 'N'"):
-        reverse_complement("ANCG")
-    with pytest.raises(ValueError, match="non-ACGTU base 'R'"):
-        reverse_complement("ARCG")
+def test_reverse_complement_complements_iupac_codes() -> None:
+    # A supplied primer may be degenerate: R/Y, K/M, B/V, D/H pair up; S, W and
+    # N are their own complements.
+    assert reverse_complement("ANCG") == "CGNT"
+    assert reverse_complement("RYKMSWBVDH") == "DHBVWSKMRY"
+    assert reverse_complement("ryk") == "MRY"
+
+
+def test_reverse_complement_rejects_symbols_that_are_not_nucleotides() -> None:
+    with pytest.raises(ValueError, match="'X' in 'AXCG' is not a nucleotide or IUPAC code"):
+        reverse_complement("AXCG")
+    with pytest.raises(ValueError, match="'-'"):
+        reverse_complement("AC-G")
 
 
 def test_reverse_complement_is_involutive_on_acgt() -> None:

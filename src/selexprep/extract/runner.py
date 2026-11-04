@@ -41,6 +41,7 @@ from selexprep.extract import strand as strand_module
 from selexprep.extract import trim as trim_module
 from selexprep.extract.demux import demux_sample_sheet
 from selexprep.library.adapters import matches_known_adapter_prefix, reverse_complement
+from selexprep.library.detect import _n_length_stats, _normalize_pool, _substring_match_rate
 from selexprep.library.report import LibraryReport
 from selexprep.manifest import (
     build_manifest_from_extract_result,
@@ -166,6 +167,72 @@ def _sample_sequences(fq: Path, max_reads: int) -> list[str]:
                 if len(seqs) >= max_reads:
                     break
     return seqs
+
+
+def _read_sequences(paths: list[Path]) -> list[str]:
+    """Every sequence of the FASTQ.gz or FASTA.gz files in ``paths``."""
+    seqs: list[str] = []
+    for path in paths:
+        with gzip.open(path, "rt", encoding="utf-8", errors="replace") as fh:
+            first = fh.readline()
+            if not first:
+                continue
+            if first.startswith(">"):
+                seqs.extend(line.strip() for line in fh if line and not line.startswith(">"))
+            else:
+                for i, line in enumerate(fh, start=1):
+                    if i % 4 == 1:
+                        seqs.append(line.strip())
+    return seqs
+
+
+def _override_match_rates(
+    library_report: LibraryReport,
+    *,
+    override_primer_5p: str | None,
+    override_primer_3p: str | None,
+    earliest_r1: list[Path],
+    earliest_r2: list[Path] | None,
+) -> dict[str, float]:
+    """Match rates of the supplied primers on the earliest round.
+
+    Same definition as detection (``_substring_match_rate``): the fraction of
+    reads that contain the primer with at most one substitution, fully inside
+    the read, reads shorter than the primer left out. Only overridden sides are
+    measured; the reads are in the orientation used for extraction. In paired
+    split mode the 3' primer is measured on R2 as its reverse complement.
+    """
+    updates: dict[str, float] = {}
+    reads = _normalize_pool(_read_sequences(earliest_r1))
+    if override_primer_5p is not None:
+        updates["match_rate_5p"] = _substring_match_rate(
+            reads, override_primer_5p.upper().replace("U", "T")
+        )
+    if override_primer_3p is not None:
+        primer_3p = override_primer_3p.upper().replace("U", "T")
+        if library_report.extraction_mode == "PAIRED_END_SPLIT_PRIMERS":
+            if earliest_r2:
+                mates = _normalize_pool(_read_sequences(earliest_r2))
+                updates["match_rate_3p"] = _substring_match_rate(
+                    mates, reverse_complement(primer_3p)
+                )
+        else:
+            updates["match_rate_3p"] = _substring_match_rate(reads, primer_3p)
+    return updates
+
+
+def _override_insert_lengths(earliest_extracted: Path) -> dict[str, object]:
+    """Random-region lengths of the earliest round after trimming the primers.
+
+    Read from that round's extracted reads, so they are the reads the
+    extraction kept, measured with the primers it used.
+    """
+    mode, distribution, confidence = _n_length_stats(_read_sequences([earliest_extracted]), 0, 0)
+    return {
+        "n_length_mode": mode,
+        "n_length_distribution": distribution,
+        "n_length_confidence": confidence,
+    }
 
 
 def _maybe_reorient(
@@ -619,6 +686,21 @@ def run_extract(
     reorient_dir = outdir / "reoriented"
     round_inputs = _maybe_reorient(round_inputs, reorient_dir, do_revcomp=do_revcomp)
 
+    # The supplied primers replace the inferred ones, so the evidence the report
+    # carries for them must be theirs: match rates measured on the earliest
+    # round, in the orientation used for extraction.
+    if has_override:
+        earliest = min(round_inputs)
+        library_report = library_report.model_copy(
+            update=_override_match_rates(
+                library_report,
+                override_primer_5p=override_primer_5p,
+                override_primer_3p=override_primer_3p,
+                earliest_r1=round_inputs[earliest],
+                earliest_r2=(paired_r2_inputs or {}).get(earliest),
+            )
+        )
+
     # Per-mode trim dispatch.
     extraction_mode = library_report.extraction_mode
     trim_reports: list[trim_module.TrimReport] = []
@@ -725,13 +807,22 @@ def run_extract(
         logger.warning(
             "extract: %d input(s) kept under half of their reads or under half "
             "the best input's yield; the primers may not fit their reads "
-            "(run-specific sequence outside the library constant, or a "
-            "different construct): %s",
+            "(run-specific sequence outside the library constant, a "
+            "different construct or reads in the opposite orientation): %s",
             len(low_yield),
             "; ".join(low_yield),
         )
 
     # Emit strand report (if applicable).
+    # ...and the random-region lengths, measured on the earliest round's reads
+    # as the extraction trimmed them (single-read modes only).
+    if has_override and extraction_mode in (
+        "BOTH_PRIMERS_SINGLE_READ",
+        "FIVE_PRIME_ONLY",
+        "THREE_PRIME_ONLY",
+    ):
+        library_report = library_report.model_copy(update=_override_insert_lengths(all_outputs[0]))
+
     strand_report_path: Path | None = None
     if strand_distributions:
         strand_report_path = outdir / "strand_report.tsv"

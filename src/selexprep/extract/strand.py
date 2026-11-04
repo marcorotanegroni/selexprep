@@ -27,6 +27,7 @@ import gzip
 import logging
 from pathlib import Path
 
+from selexprep._common import reverse_complement_iupac
 from selexprep._io import open_gzip_text_deterministic
 
 logger = logging.getLogger(__name__)
@@ -41,26 +42,15 @@ STRAND_REPORT_PER_READ = False
 # Watson-Crick complement that tolerates ``N`` in raw sequencer reads.
 # Distinct from the strict ``library.adapters.reverse_complement`` (which
 # rejects Ns by design, since it operates on curated primer strings).
-_READ_COMPLEMENT = {
-    "A": "T",
-    "T": "A",
-    "C": "G",
-    "G": "C",
-    "U": "A",
-    "N": "N",
-    "a": "t",
-    "t": "a",
-    "c": "g",
-    "g": "c",
-    "u": "a",
-    "n": "n",
-}
 
 
 def _revcomp_read(seq: str) -> str:
-    """Reverse-complement a read sequence. Tolerates N (N -> N)."""
-    # Use a translation table where possible for speed on long reads.
-    return "".join(_READ_COMPLEMENT.get(b, "N") for b in reversed(seq))
+    """Reverse-complement a read sequence (``reverse_complement_iupac``).
+
+    IUPAC codes are complemented and N stays N; case and any other symbol are
+    kept, rather than turned into N.
+    """
+    return reverse_complement_iupac(seq)
 
 
 def _hamming_le1(a: str, b: str) -> bool:
