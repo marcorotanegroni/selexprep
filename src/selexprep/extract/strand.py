@@ -39,9 +39,9 @@ logger = logging.getLogger(__name__)
 STRAND_REPORT_PER_READ = False
 
 
-# Watson-Crick complement that tolerates ``N`` in raw sequencer reads.
-# Distinct from the strict ``library.adapters.reverse_complement`` (which
-# rejects Ns by design, since it operates on curated primer strings).
+# Reverse complement of a raw read: IUPAC codes are complemented, case and any
+# other symbol are kept (``library.adapters.reverse_complement`` uses the same
+# table but rejects symbols that are not nucleotides, since it checks primers).
 
 
 def _revcomp_read(seq: str) -> str:

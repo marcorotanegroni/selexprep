@@ -29,6 +29,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from selexprep._common import reverse_complement_iupac
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,8 +46,7 @@ _MONOTONICITY_TOLERANCE = 1.1
 
 def canonical_kmer(kmer: str) -> str:
     """Return the lexicographically smaller of `kmer` and its reverse complement."""
-    complement = str.maketrans("ACGTN", "TGCAN")
-    rc = kmer.translate(complement)[::-1]
+    rc = reverse_complement_iupac(kmer)
     return kmer if kmer < rc else rc
 
 

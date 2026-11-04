@@ -813,9 +813,8 @@ def run_extract(
             "; ".join(low_yield),
         )
 
-    # Emit strand report (if applicable).
-    # ...and the random-region lengths, measured on the earliest round's reads
-    # as the extraction trimmed them (single-read modes only).
+    # With an override, the random-region lengths are measured on the earliest
+    # round's reads as the extraction trimmed them (single-read modes only).
     if has_override and extraction_mode in (
         "BOTH_PRIMERS_SINGLE_READ",
         "FIVE_PRIME_ONLY",
@@ -823,6 +822,7 @@ def run_extract(
     ):
         library_report = library_report.model_copy(update=_override_insert_lengths(all_outputs[0]))
 
+    # Emit strand report (if applicable).
     strand_report_path: Path | None = None
     if strand_distributions:
         strand_report_path = outdir / "strand_report.tsv"

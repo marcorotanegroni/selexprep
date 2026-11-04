@@ -1,0 +1,50 @@
+[fwd] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: f6c33209b0096e64a4b03ffa5327e7b58bace03545b6f148d6058efc3b1fa32f -> dc493865f788a0b6a27e272e2ac1114d571469d77c8d1f60fb9448a669cb2bcf
+[fwd_override_ok] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.library_report.n_length_confidence: 0.6715 -> 0.67125344008006
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.40: 2686 -> 2683
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: e5aaa9566bf19b38b70025f000e537d1f39c82cc43f4e029df8abb92e920b7a0 -> fe1da701085476edd90e9c8974e770bc83393cb518e52af27af5aad6c618a9a0
+[fwd_override_short5] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.library_report.match_rate_5p: 0.99325 -> 0.995
+  extract/overridden/selexprep_manifest.json.library_report.n_length_confidence: 0.6715 -> 0.671274189494848
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.39: 645 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.40: 2686 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.41: 669 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.43: <missing> -> 639
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.44: <missing> -> 2671
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.45: <missing> -> 669
+  extract/overridden/selexprep_manifest.json.library_report.n_length_mode: 40 -> 44
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: d2ac2838f110b705f71e77707595190752921deeca96fd88716b1b2131bb8670 -> 75dbf12d541eaf6e94d099485b8215917804fb33bc54b40d1273f06c22941364
+[fwd_override_degenerate] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.library_report.match_rate_5p: 0.99325 -> 0.88475
+  extract/overridden/selexprep_manifest.json.library_report.n_length_confidence: 0.6715 -> 0.67125344008006
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.40: 2686 -> 2683
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: c6613b5706dd65b9ab7c8145e3ba7eb3624f61add54082b27333d10402c37d9b -> 9e98c02daf49c476a1459f9ffdf095f15371f6fbd91dc54519978b5a9f813c65
+[rev] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 1c27c8eeee75f8e31ad4db7313579ec2cd2dff83f98cc82ff4f420f798c6ce03 -> cd931cc937d052d7181e8a1e9a3422a81baeaff7b9f0bc1d4b739547b222d085
+[rev_override] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.library_report.match_rate_5p: 0.991 -> 0.0
+  extract/overridden/selexprep_manifest.json.library_report.n_length_confidence: 0.6715 -> 0.0
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.39: 645 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.40: 2686 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_distribution.41: 669 -> <missing>
+  extract/overridden/selexprep_manifest.json.library_report.n_length_mode: 40 -> None
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 6083fe5e8860423cae824f13afed5e24781aef2d26ccd58d14ca765c8b72912f -> 45f7451b64173920ef7616111919865a348513e48340a3a111163ba29f9e840a
+[mixed] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 9f529c74bbb0deddaf53cee328a86868a18041a80b5c3b72bc139edc0a046034 -> b633ab655038808242f38407e2eff85f517664e47e74fecf1fd4df609974ac45
+[noisy] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: fd2e4601da1440bf6be30b6a649204e19273f660c127a0f3a5e91f7ee9cd8d87 -> ee4854e077aa3b91f6e6eeb72440361c003989c732d06c64ca0920566ca48cb8
+[paired] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: d3bd11800074d5aa75390aa867594b2604f07e000c343150b26a30304b9d54bd -> fbf9eb915118a0e76b57446d429f22afc4aadf95059148932d2111113e665824
+[paired_override] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 261ac7243cdbe466b995e59b9cbfc52620259d9251163c0fd9d7e34d83078c49 -> 13fb1b081abcb679c2bee97ed038be7903bdd6cdaf5768a92cc4ca972ef63f4b
+[paired_overlap] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 8d0e12bb6b37a97a2d5417fb1072ffefe9f10c9c11e70c8ef310e4824868592e -> 46b40c089bc5bebdf6722b42efb64a906f46c63e8a3ff7b3a776f104d3d73bbd
+[random] rc old={'detect': 0, 'extract': 2} new={'detect': 0, 'extract': 2}
+  detect/library_report.json.failure_reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00) -> No candidate 5' or 3' flank found in the earliest round
+[demo] rc old={'detect': 0, 'extract': 0, 'count_01': 0, 'count_03': 0} new={'detect': 0, 'extract': 0, 'count_01': 0, 'count_03': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 90b969c260b17d6b6a85e02d7a35611685617d5ea5ab47b4aa68c8895d67ce84 -> 34d4b039c2e9684ec8031af330e8c30698f735c71f163efd101f9f9cbc0a00e3
+[demo_override_detected] rc old={'extract': 0} new={'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: c5415c119657517a782df53c175c3b97a50c1bac287d32bfb6942994f4c53dfb -> be10943e643b0a96a682e38c35e307cc25c5ba5bef7cad2524d738e8b2789aba
+[cs] rc old={'detect': 0, 'extract': 2} new={'detect': 0, 'extract': 2}
+  detect/library_report.json.failure_reason: Both primer match rates below 0.40 (5'=0.00, 3'=0.00) -> No candidate 5' or 3' flank found in the earliest round

@@ -4,7 +4,7 @@ All notable changes to `selexprep` are documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [0.4.7] - 2026-11-03
 
 Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
 
@@ -21,9 +21,10 @@ Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
   its reverse complement. Only overridden sides are measured. In single-read
   modes the random-region mode, distribution and confidence are measured on the
   earliest round's extracted reads.
-- **One IUPAC reverse complement.** `count`'s `reverse_complement` and the read
-  reorientation now complement IUPAC ambiguity codes (R/Y, K/M, B/V, D/H; S, W
-  and N unchanged), keep case, map U to A and keep any other symbol (the read
+- **One IUPAC reverse complement.** `count`'s `reverse_complement`, the read
+  reorientation and the canonical k-mers of the QC consistency check now
+  complement IUPAC ambiguity codes (R/Y, K/M, B/V, D/H; S, W and N unchanged),
+  keep case, map U to A and keep any other symbol (the read
   reorientation used to turn unknown symbols into N). The primer complement
   accepts IUPAC codes instead of refusing them (a supplied primer may be
   degenerate) and still rejects symbols that are not nucleotides. Counting
