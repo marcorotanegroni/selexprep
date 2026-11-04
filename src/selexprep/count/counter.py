@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from selexprep._common import resolve_cutadapt
+from selexprep._common import resolve_cutadapt, reverse_complement_iupac
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +74,11 @@ def _iter_sequences(fastq_gz: Path) -> Iterator[str]:
 
 
 def reverse_complement(seq: str) -> str:
-    """Reverse complement of a DNA/RNA sequence (U/T-tolerant)."""
-    table = str.maketrans("ACGTUNacgtun", "TGCAANtgcaan")
-    return seq.translate(table)[::-1]
+    """Reverse complement of a DNA/RNA sequence; see ``reverse_complement_iupac``.
+
+    IUPAC ambiguity codes are complemented, case and other symbols are kept.
+    """
+    return reverse_complement_iupac(seq)
 
 
 def pair_sibling(r1: Path) -> Path | None:

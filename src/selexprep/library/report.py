@@ -134,6 +134,31 @@ class Classification(NamedTuple):
     failure_reason: str | None
 
 
+def _low_match_reason(
+    match_rate_5p: float,
+    match_rate_3p: float,
+    *,
+    candidate_5p: bool,
+    candidate_3p: bool,
+    threshold: float,
+) -> str:
+    """Failure reason when both match rates are under ``threshold``.
+
+    A side without a candidate flank has no measured rate, so it is named as
+    such instead of reported as 0.00.
+    """
+    if not candidate_5p and not candidate_3p:
+        return "No candidate 5' or 3' flank found in the earliest round"
+
+    def side(rate: float, candidate: bool) -> str:
+        return f"{rate:.2f}" if candidate else "no candidate"
+
+    return (
+        f"Both primer match rates below {threshold:.2f} "
+        f"(5'={side(match_rate_5p, candidate_5p)}, 3'={side(match_rate_3p, candidate_3p)})"
+    )
+
+
 def _classify(
     *,
     match_rate_5p: float,
@@ -149,6 +174,8 @@ def _classify(
     status_high_cutoff: float,
     status_medium_cutoff: float,
     status_low_cutoff: float,
+    candidate_5p: bool = True,
+    candidate_3p: bool = True,
 ) -> Classification:
     """Map detection signals to (extraction_mode, full_insert_recovered, required_action, status).
 
@@ -167,9 +194,12 @@ def _classify(
             full_insert_recovered=False,
             required_action="MANUAL_PRIMERS_REQUIRED",
             status="UNABLE_TO_INFER",
-            failure_reason=(
-                f"Both primer match rates below {unable_to_extract_threshold:.2f} "
-                f"(5'={match_rate_5p:.2f}, 3'={match_rate_3p:.2f})"
+            failure_reason=_low_match_reason(
+                match_rate_5p,
+                match_rate_3p,
+                candidate_5p=candidate_5p,
+                candidate_3p=candidate_3p,
+                threshold=unable_to_extract_threshold,
             ),
         )
 
