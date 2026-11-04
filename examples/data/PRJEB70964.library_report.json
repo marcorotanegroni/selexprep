@@ -29,5 +29,5 @@
   "sampling_seed": 42,
   "confidence": 0.14004936049621702,
   "status": "UNABLE_TO_INFER",
-  "failure_reason": "Both primer match rates below 0.40 (5'=0.00, 3'=0.00)"
+  "failure_reason": "No candidate 5' or 3' flank found in the earliest round"
 }

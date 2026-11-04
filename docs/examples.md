@@ -13,10 +13,12 @@ planted, it is **not** evidence about inference accuracy on real reads.
 
 ### [`02_library_report_interpretation.ipynb`](https://github.com/marcorotanegroni/selexprep/blob/main/examples/02_library_report_interpretation.ipynb) — interpreting real `LibraryReport`s
 
-Walks through **cached real `detect` outputs** on three public deposits spanning
-the outcome range: a `HIGH` clean recovery, a `MEDIUM` partial / `FIVE_PRIME_ONLY`
-case, and an `UNABLE_TO_INFER` safe failure (adapter collision). No network
-needed — the reports are bundled under `examples/data/`.
+Walks through **cached real `detect` outputs** (0.4.7) on four public deposits
+spanning the outcome range: a `HIGH` clean recovery, a `HIGH` call whose 3′
+constant is shorter than the published one, a `MEDIUM` one-round paired-end
+deposit with the constants on different mates, and an `UNABLE_TO_INFER` safe
+failure on pre-trimmed reads. No network needed — the reports are bundled under
+`examples/data/` and `examples/regenerate_reports.sh` regenerates them.
 
 !!! note
     Neither notebook is a performance benchmark. Recovery performance on

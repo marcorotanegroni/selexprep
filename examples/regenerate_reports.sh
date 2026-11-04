@@ -22,7 +22,7 @@ cd "${SLURM_SUBMIT_DIR:-$(pwd)}"
 SP="python3 -m uv run --frozen selexprep"
 $SP --version
 
-for acc in PRJNA615076 PRJEB62495 PRJEB70964 PRJNA1395820 PRJNA809588; do
+for acc in PRJNA615076 PRJEB62495 PRJNA1395820 PRJEB70964; do
     src="benchmarks/results/$acc"
     if [ ! -s "$src/rounds.tsv" ]; then
         echo "== $acc: fetching"

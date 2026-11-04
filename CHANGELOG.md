@@ -40,6 +40,9 @@ Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
 
 - The README lists the semi-synthetic benchmark; README and docs no longer
   refer to the features of early versions (v0.1, v0.2).
+- The `LibraryReport` notebook reads reports produced by 0.4.7 on four deposits
+  (`examples/regenerate_reports.sh`); its PRJEB62495 example had been produced
+  before the shared-constant rule and no longer matched the scorecard.
 
 ## [0.4.6] - 2026-10-02
 
