@@ -196,6 +196,13 @@ def test_read_complement_keeps_unknown_symbols_instead_of_n():
     assert _revcomp_read("A.C") == "G.T"
 
 
+def test_qc_kmer_complement_uses_the_same_table():
+    from selexprep.qc.consistency import canonical_kmer
+
+    assert canonical_kmer("TYAA") == canonical_kmer("TTRA") == "TTRA"
+    assert canonical_kmer("ACGTN") == "ACGTN"
+
+
 def test_primer_complement_agrees_on_uppercase_iupac():
     assert primer_revcomp("ACGTRYKMSWBVDHN") == count_revcomp("ACGTRYKMSWBVDHN")
 

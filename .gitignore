@@ -99,3 +99,6 @@ benchmarks/synthetic/fastq_cache/
 benchmarks/synthetic/pools/
 # Semi-synthetic benchmark: per-run directories stay on the HPC (results.tsv and manifest.json are committed)
 benchmarks/synthetic/runs/*/runs/
+
+# Codex context file (local paths to private plans)
+AGENTS.md

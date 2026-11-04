@@ -54,6 +54,8 @@ motivate it. Two later changes to how reads are anchored on the constant's core
 the full benchmark: calls, metrics and per-run yields are identical to the
 post-fix run.
 
+**Release 0.4.7.** The results below hold for 0.4.7 unchanged. Between `v0.4.6` and `v0.4.7` `selexprep.library` and `selexprep.extract` changed (ported from selexprepR): with a primer override the manifest reports the match rates and random-region lengths of the supplied primers; one IUPAC reverse complement is shared by reads, counting, primers and QC k-mers; a refusal names a side without a candidate flank; the low-yield warning names reads in the opposite orientation. No status, call or extracted read changes: `benchmarks/release_checks/compare_releases.py` ran `detect`, `extract` and `count` with both releases on the demo, on real DL-SELEX subsets and on synthetic libraries (orientations, errors, paired split, random reads, primer overrides), and the extracted reads and count tables are identical (`benchmarks/release_checks/v0.4.6_vs_0.4.7.txt`). The refusal reasons recorded in `audit_results/` are the text of 0.4.6.
+
 **Release 0.4.6.** The results below hold for 0.4.6 unchanged: between `v0.4.5` and `v0.4.6` only `selexprep.fetch` (a retry when ENA's filereport service answers with an error) and one catalogue value changed, and `selexprep.library` and `selexprep.extract` are identical (`git diff v0.4.5 v0.4.6 -- src/selexprep/library src/selexprep/extract` is empty). Every deposit downloaded completely on 0.4.5, so the retry changes no input.
 
 **Release 0.4.5 (tag `v0.4.5`, rerun from scratch 2026-09-30, jobs 147833 and
