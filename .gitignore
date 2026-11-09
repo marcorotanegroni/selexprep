@@ -22,7 +22,7 @@ coverage.xml
 .mypy_cache/
 .ruff_cache/
 
-# Snakemake (created by --dry-run too — both repo-root and benchmarks/)
+# Snakemake
 .snakemake/
 
 # Virtual environments
@@ -49,7 +49,7 @@ Thumbs.db
 *.swp
 *.swo
 
-# R session junk (created when R is opened in the repo directory)
+# R
 .Rhistory
 .RData
 .Rproj.user
@@ -59,38 +59,31 @@ scratch/
 tmp/
 *.log
 
-# Benchmark candidate-curation: local-only tools + scratch (not package content;
-# the curation decisions they produced are captured in the committed evidence
-# files: ground_truth.tsv / read_state_evidence.tsv / screening_log.tsv)
+# Benchmark curation scratch (decisions are in the committed evidence files)
 benchmarks/screen_read_state.py
 benchmarks/*_screen.tsv
 
-# Project-metadata builder API caches (regenerable from OpenAlex / figshare / Zenodo)
+# API caches
 benchmarks/.oa_cache.json
 benchmarks/.discovery_doi_cache.json
 
-# Dual-extraction raw agreement scaffold — regenerable via compute_agreement.py from the
-# two arms, and misleading on its own (747 string-match flags, mostly wording). The genuine
-# disagreements (47) live in curated_metadata.json + genuine_disagreements.tsv.
+# Dual-extraction intermediate output (regenerable with compute_agreement.py)
 benchmarks/dual_extraction/out/
 
-# Example run artifacts — notebooks self-generate demo/, run_public_accession.sh writes demo_public/
+# Example run outputs
 examples/**/demo*/
 .ipynb_checkpoints/
 
-# Transient HPC run-result tarballs + their unpacked import dirs (scp'd back for
-# analysis, not repo content — the committed artifacts they refresh live under
-# benchmarks/audit_results/)
+# HPC result archives
 full_list_*.tar.gz
 audit_*.tar.gz
 tier1_*.tar.gz
 _hpc_import*/
 
-# Manuscript working dir (Application Note) — local-only, not shipped
+# Manuscript (not part of the repository)
 paper/
 
-# Semi-synthetic benchmark: downloaded donor FASTQs and sampled pools stay on the HPC
+# Semi-synthetic benchmark: FASTQs, pools and per-run directories stay on the HPC
 benchmarks/synthetic/fastq_cache/
 benchmarks/synthetic/pools/
-# Semi-synthetic benchmark: per-run directories stay on the HPC (results.tsv and manifest.json are committed)
 benchmarks/synthetic/runs/*/runs/
