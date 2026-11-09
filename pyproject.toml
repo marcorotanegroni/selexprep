@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "selexprep"
 version = "0.4.7"
-description = "Accession-first preprocessing for public HT-SELEX with primer auto-inference"
+description = "Accession-first preprocessing for public HT-SELEX with constant-region inference"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -39,27 +39,9 @@ dependencies = [
 [project.optional-dependencies]
 ncbi = ["biopython >= 1.82", "pysradb >= 2.2"]
 fast = ["pyfastx >= 2.0"]
-# benchmark scaffolding. Snakemake is the only opt-in dep;
-# Pearson/Spearman are computed via pandas (no SciPy).
-#
-# Pin rationale:
-# - ``snakemake >= 7.0, < 8`` — floor keeps Python 3.10 compatible (the
-#   project's minimum); ceiling prevents a future ``uv sync`` from
-#   silently pulling Snakemake 8 (which requires Python 3.11+ and would
-#   drop one CI-matrix Python version).
-# - ``pulp < 2.8`` — Snakemake 7 calls ``pulp.list_solvers()`` at import
-#   time; PuLP 2.8 removed the snake_case alias (only ``listSolvers``
-#   remains) and Snakemake 7 hasn't been backported. Without this pin,
-#   ``uv sync --extra bench`` on a fresh HPC venv resolves PuLP 3.x and
-#   ``snakemake --version`` crashes with AttributeError. Surfaced during
-#   the HPC audit attempt.
-#
-# HPC build gotcha (not a pin): Snakemake 7 pulls the C-extension ``datrie``,
-# whose sdist needs Python dev headers (``Python.h``) to compile. On an HPC node
-# without ``python3-dev`` a fresh ``uv sync --extra bench`` fails to build
-# datrie. Workarounds: reuse an already-built venv (don't re-sync), or install
-# snakemake via conda/bioconda (ships a prebuilt datrie), or provide the headers
-# (``module load python``). Surfaced on the 2026-07 audit re-run.
+# Benchmarks only. snakemake < 8 keeps Python 3.10 support; pulp < 2.8 because
+# Snakemake 7 calls pulp.list_solvers(), removed in PuLP 2.8. On nodes without
+# Python headers, install snakemake from bioconda (datrie needs to compile).
 bench = [
   "snakemake >= 7.0, < 8",
   "pulp < 2.8",
@@ -74,8 +56,7 @@ dev = [
   "twine",
   "types-pyyaml",
   "types-requests",
-  # Notebook re-execution check (not needed for the docs build or package runtime):
-  #   uv run --extra dev jupyter nbconvert --to notebook --execute examples/*.ipynb
+  # re-run the example notebooks: jupyter nbconvert --to notebook --execute examples/*.ipynb
   "nbconvert",
   "ipykernel",
 ]
@@ -93,7 +74,7 @@ selexprep = "selexprep.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/selexprep"]
 
-# Ensure the bundled discovery catalog + curated metadata layer ship inside the wheel.
+# Ship the bundled catalogue inside the wheel.
 [tool.hatch.build.targets.wheel.force-include]
 "src/selexprep/catalog/data/bioprojects.csv" = "selexprep/catalog/data/bioprojects.csv"
 "src/selexprep/catalog/data/curated_metadata.json" = "selexprep/catalog/data/curated_metadata.json"
@@ -110,35 +91,30 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B011"]
-# Typer's documented idiom calls typer.Option/typer.Argument as defaults;
-# B008 is a false positive for Typer-style CLI definitions.
+# Typer uses typer.Option/typer.Argument as defaults (B008 false positive).
 "src/selexprep/cli.py" = ["B008"]
 "src/selexprep/catalog/cli.py" = ["B008"]
 
 [tool.mypy]
 python_version = "3.10"
-# pydantic.mypy is required so strict-mypy resolves `BaseModel` field types in
-# `selexprep.library.report` (without it, fields decay to `Any` under strict).
-# Ships with pydantic >= 2; no separate install.
 plugins = ["pydantic.mypy"]
 ignore_missing_imports = true
-# Permissive by default for v0.1 ports (focus is on functional correctness +
-# tests, not strict typing). The centerpiece `library.report` is
-# strict — that's where type-precision matters for the LibraryReport schema.
+# Permissive by default; the LibraryReport schema and the benchmark equivalence
+# rules are checked strictly (overrides below).
 disable_error_code = [
-  "type-arg",          # bare `dict`/`list` annotations are fine in v0.1 utility code
-  "union-attr",        # .get() on parsed JSON returning dict|list — acceptable
-  "no-any-return",     # `requests.json()` returns Any — acceptable
-  "unused-ignore",     # cross-Python-version `# type: ignore` may be unused
-  "no-untyped-call",   # ports from selex_corpus include untyped helpers
-  "no-untyped-def",    # same
-  "var-annotated",     # Counter()/dict() inits without explicit args — pragma
-  "type-var",          # `max(c, key=c.get)` on Counter is a fine pattern
-  "operator",          # arithmetic on values pulled from dict[str, Any]
-  "arg-type",          # **kwargs unpacking + narrowed types are routine
-  "assignment",        # int|None → int after a guard; acceptable in v0.1
-  "attr-defined",      # downstream of the above; cascading
-  "name-defined",      # `pq.lib.Table` works at runtime; pyarrow stubs lag
+  "type-arg",
+  "union-attr",
+  "no-any-return",
+  "unused-ignore",
+  "no-untyped-call",
+  "no-untyped-def",
+  "var-annotated",
+  "type-var",
+  "operator",
+  "arg-type",
+  "assignment",
+  "attr-defined",
+  "name-defined",
 ]
 
 [[tool.mypy.overrides]]
@@ -146,21 +122,12 @@ module = "selexprep.library.report"
 strict = true
 
 [[tool.mypy.overrides]]
-# equivalence rules are pure functions with a typed
-# EquivalenceResult contract — type precision matters for the metric
-# aggregator that consumes them, same rationale as library.report.
 module = "selexprep.benchmark.equivalence"
 strict = true
 
 [[tool.mypy.overrides]]
-# numpy 2.x ships PEP 695 `type` statements in its bundled stubs, which mypy
-# rejects under `python_version = "3.10"` (kept for 3.10 compat) with a fatal
-# "Type statement is only supported in Python 3.12+" parse error (seen on the
-# 3.12 CI job, which resolves a newer numpy). Skip following numpy's stubs — the
-# public API exposes pandas / JSON types, not numpy types.
-# `follow_imports = "skip"` alone is NOT enough: mypy ignores it for stub
-# (`.pyi`) files unless `follow_imports_for_stubs` is also set, and the offending
-# `type` statement lives in numpy's bundled `__init__.pyi`.
+# numpy 2 stubs use Python 3.12 `type` statements, which mypy rejects with
+# python_version = "3.10"; skip them (stubs need follow_imports_for_stubs too).
 module = ["numpy", "numpy.*"]
 follow_imports = "skip"
 follow_imports_for_stubs = true
