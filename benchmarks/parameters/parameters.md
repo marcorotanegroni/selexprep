@@ -26,7 +26,7 @@ Values read from the installed package by `benchmarks/parameters/parameter_table
 | detect: classification | `UNABLE_TO_EXTRACT_MATCH_RATE` | 0.4 | Match rate below which, on both sides, extraction is refused. |
 | detect: classification | `N_LENGTH_CONFIDENT_FRACTION` | 0.8 | Share of reads at the modal random-region length for a one-sided extraction to be allowed. |
 | detect: classification | `POSITION_CONSISTENCY_TOLERANCE` | 3 | Offset of a flank, in nt, still counted as the same position. |
-| detect: status | `STATUS_HIGH_CUTOFF` | 0.85 | Composite confidence for HIGH. Rates support for the inferred primers, not a verified boundary. |
+| detect: status | `STATUS_HIGH_CUTOFF` | 0.85 | Composite confidence for HIGH. Rates support for the inferred constants, not a verified boundary. |
 | detect: status | `STATUS_MEDIUM_CUTOFF` | 0.6 | Composite confidence for MEDIUM; a single round caps the status at MEDIUM. |
 | detect: status | `STATUS_LOW_CUTOFF` | 0.3 | Composite confidence for LOW; below it, UNABLE_TO_INFER. |
 | detect: status | `COMPOSITE_WEIGHTS` | match_5p 0.15, match_3p 0.15, pos_5p 0.15, pos_3p 0.15, persistence 0.25, n_len 0.1, adapter_clean 0.05 | Weights of the signals in the composite confidence, with a round map. |
@@ -35,8 +35,8 @@ Values read from the installed package by `benchmarks/parameters/parameter_table
 | detect: orientation | `ORIENTATION_REVERSED_REVERSE_MIN` | 0.95 | Share of reverse reads above which it is REVERSE (between the two: MIXED). |
 | detect: report | `VARIANTS_TOP_K` | 3 | Flank variants listed in the report, per side. |
 | detect: adapters | `ADAPTER_PROBE_K` | 13 | Leading bases of a known adapter that mark a call or a read as adapter (nt). |
-| detect: adapters | `KNOWN_ADAPTERS` | NEXTERA, TRUSEQ_R1 | Sequencing adapters excluded from primer candidates (names listed). |
+| detect: adapters | `KNOWN_ADAPTERS` | NEXTERA, TRUSEQ_R1 | Sequencing adapters excluded from constant candidates (names listed). |
 | extract: yield warning | `LOW_YIELD_RATIO` | 0.5 | An input keeping less than this fraction of the best input's yield is reported. |
 | extract: yield warning | `LOW_YIELD_FLOOR` | 0.5 | An input keeping less than this fraction of its own reads is reported. |
-| extract: cutadapt | `--error-rate` | 0.1 | Maximum error rate in a primer match (cutadapt default). |
-| extract: cutadapt | `--overlap` | 3 | Shortest primer overlap at a read end (cutadapt default). |
+| extract: cutadapt | `--error-rate` | 0.1 | Maximum error rate in a constant match (cutadapt default). |
+| extract: cutadapt | `--overlap` | 3 | Shortest constant overlap at a read end (cutadapt default). |

@@ -1,5 +1,5 @@
-"""Supplementary Data S1, generated from the benchmark's data
-(benchmarks/supplementary/s1_scorecard.py)."""
+"""Supplementary Data S4, generated from the benchmark's data
+(benchmarks/supplementary/s4_scorecard.py)."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "benchmarks" / "supplementary" / "s1_scorecard.py"
+SCRIPT = ROOT / "benchmarks" / "supplementary" / "s4_scorecard.py"
 
 
 @pytest.fixture(scope="module")
 def s1():
-    spec = importlib.util.spec_from_file_location("s1_scorecard", SCRIPT)
+    spec = importlib.util.spec_from_file_location("s4_scorecard", SCRIPT)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -70,7 +70,7 @@ def test_the_totals_are_those_of_the_metrics(text):
     assert "with it counted in:* 5 with both constants exact, 3 partial, 0 missed, of 8" in text
 
 
-def test_s1_shows_one_version_only(text):
+def test_s4_shows_one_version_only(text):
     assert "→" not in text and "v0.4" not in text and "0.4.5" not in text
 
 

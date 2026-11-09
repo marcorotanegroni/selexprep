@@ -1,16 +1,16 @@
 # The generated document uses typographic primes and en dashes on purpose.
 # ruff: noqa: RUF001
-"""Supplementary Data S1: the Tier-1 scorecard, generated from the benchmark's data.
+"""Supplementary Data S4: the Tier-1 scorecard, generated from the benchmark's data.
 
 Every outcome, length, yield and total is read from the benchmark's metrics and
 per-run yields (``results/metrics.json``, ``results/extraction_yield.tsv``) and
-from ``ground_truth.tsv``, so S1 cannot fall behind the data it reports. S1
+from ``ground_truth.tsv``, so S4 cannot fall behind the data it reports. S4
 describes the released version only; earlier scored runs stay in ``results/``. The
 only text written by hand, the legend and the per-deposit notes, belongs to the
 manuscript and lives with it, outside the repository (``paper/`` is ignored);
 without them the table is generated with no legend and no notes.
 
-    python benchmarks/supplementary/s1_scorecard.py --out paper/supplementary/Supplementary_S1_scorecard.md
+    python benchmarks/supplementary/s4_scorecard.py --out paper/supplementary/Supplementary_S4_scorecard.md
 """
 
 from __future__ import annotations
@@ -94,8 +94,8 @@ def recovery_totals(pairs: dict[str, tuple[str, str]], accessions: list[str]) ->
 def build(
     results: Path = RESULTS,
     bench: Path = BENCH,
-    legend: Path = PAPER_SUPP / "s1_legend.md",
-    notes_tsv: Path = PAPER_SUPP / "s1_notes.tsv",
+    legend: Path = PAPER_SUPP / "s4_legend.md",
+    notes_tsv: Path = PAPER_SUPP / "s4_notes.tsv",
 ) -> str:
     new = json.loads((results / "metrics.json").read_text())
     gt = {r["accession"]: r for r in _tsv(bench / "ground_truth.tsv")}
@@ -155,7 +155,7 @@ def build(
         )
 
     out = [
-        "# Supplementary Data S1 — Tier-1 benchmark: per-deposit primer-inference scorecard",
+        "# Supplementary Data S4 — public benchmark: per-deposit scorecard of constant inference",
         "",
         legend.read_text().strip() if legend.is_file() else "",
         "",
@@ -224,15 +224,15 @@ def build(
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--out", type=Path, required=True)
-    p.add_argument("--legend", type=Path, default=PAPER_SUPP / "s1_legend.md")
-    p.add_argument("--notes", type=Path, default=PAPER_SUPP / "s1_notes.tsv")
+    p.add_argument("--legend", type=Path, default=PAPER_SUPP / "s4_legend.md")
+    p.add_argument("--notes", type=Path, default=PAPER_SUPP / "s4_notes.tsv")
     args = p.parse_args(argv)
     for label, path in (("legend", args.legend), ("notes", args.notes)):
         if not path.is_file():
             print(f"no {label} at {path}: the table is generated without it")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(build(legend=args.legend, notes_tsv=args.notes))
-    print(f"S1 -> {args.out}")
+    print(f"S4 -> {args.out}")
     return 0
 
 
