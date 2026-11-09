@@ -54,11 +54,6 @@ Thumbs.db
 .RData
 .Rproj.user
 
-# Local Claude Code dev context — kept on disk (Claude reads these from the
-# filesystem regardless of git tracking) but not shipped in the public repo
-CLAUDE.md
-.claudeignore
-
 # Local data / scratch
 scratch/
 tmp/
@@ -99,6 +94,3 @@ benchmarks/synthetic/fastq_cache/
 benchmarks/synthetic/pools/
 # Semi-synthetic benchmark: per-run directories stay on the HPC (results.tsv and manifest.json are committed)
 benchmarks/synthetic/runs/*/runs/
-
-# Codex context file (local paths to private plans)
-AGENTS.md
