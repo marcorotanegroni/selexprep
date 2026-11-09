@@ -65,13 +65,13 @@ def test_every_scored_deposit_is_in_the_table_once(text):
 
 
 def test_the_totals_are_those_of_the_metrics(text):
-    assert "*v0.4.1, pre-specified:* 4 with both constants exact, 3 partial, 0 missed, of 7" in text
-    assert "*0.4.5, after the fix (in-sample):* 5 with both constants exact, 2 partial" in text
+    assert "*Constants:* 5 with both constants exact, 2 partial, 0 missed, of 7" in text
     assert "Specificity: 0 calls in 8 deposits. Adapter control: 0 calls in 6 deposits." in text
-    assert (
-        "with it counted in (0.4.5):* 5 with both constants exact, 3 partial, 0 missed, of 8"
-        in text
-    )
+    assert "with it counted in:* 5 with both constants exact, 3 partial, 0 missed, of 8" in text
+
+
+def test_s1_shows_one_version_only(text):
+    assert "→" not in text and "v0.4" not in text and "0.4.5" not in text
 
 
 def test_excluded_and_unscored_deposits_are_listed_apart(text):
