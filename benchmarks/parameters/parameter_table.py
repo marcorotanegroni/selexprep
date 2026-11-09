@@ -175,7 +175,7 @@ PARAMETERS: list[tuple[str, str, str, str]] = [
         "detect: status",
         "selexprep.library.detect",
         "STATUS_HIGH_CUTOFF",
-        "Composite confidence for HIGH. Rates support for the inferred primers, not a verified "
+        "Composite confidence for HIGH. Rates support for the inferred constants, not a verified "
         "boundary.",
     ),
     (
@@ -231,7 +231,7 @@ PARAMETERS: list[tuple[str, str, str, str]] = [
         "detect: adapters",
         "selexprep.library.adapters",
         "KNOWN_ADAPTERS",
-        "Sequencing adapters excluded from primer candidates (names listed).",
+        "Sequencing adapters excluded from constant candidates (names listed).",
     ),
     # --- Extraction
     (
@@ -255,8 +255,8 @@ EXCLUDED = {
 
 # extract passes no error rate or overlap to cutadapt: its defaults apply.
 CUTADAPT_DEFAULTS = [
-    ("--error-rate", "0.1", "Maximum error rate in a primer match (cutadapt default)."),
-    ("--overlap", "3", "Shortest primer overlap at a read end (cutadapt default)."),
+    ("--error-rate", "0.1", "Maximum error rate in a constant match (cutadapt default)."),
+    ("--overlap", "3", "Shortest constant overlap at a read end (cutadapt default)."),
 ]
 
 

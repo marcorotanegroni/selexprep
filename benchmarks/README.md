@@ -3,16 +3,16 @@
 This directory holds selexprep's benchmark: two tiers plus a standalone
 catalog-completeness audit. Each tier emits deterministic, sorted-key JSON —
 `metrics.json` (Tier 1) and `audit_metrics.json` (Tier 2) — presented in the
-paper's supplementary data as a per-deposit **scorecard** (S1) and a corpus-audit
-**summary** (S2).
+paper's supplementary data as a per-deposit **scorecard** (S4) and a corpus-audit
+**summary** (S6).
 
 - **Tier 1 — primer recovery** (`Snakefile` + `ground_truth.tsv`): per-deposit
   recovery of paper-reported primers from accession-derived reads, on 21
   source-verified deposits in three arms (7 recovery, 8 specificity,
-  6 adapter-control). Produces the scorecard (Supplementary Data S1).
+  6 adapter-control). Produces the scorecard (Supplementary Data S4).
 - **Tier 2 — corpus audit** (`audit.smk` + the bundled catalog): a descriptive
   utility audit over a deterministic sample of audit-eligible INSDC accessions.
-  Distributional metrics only — no per-row ground truth (Supplementary Data S2).
+  Distributional metrics only — no per-row ground truth (Supplementary Data S6).
 - **Catalog-completeness audit** (`catalog_completeness_audit.py`): diffs
   `bioprojects.csv` against ENA's `library_strategy="SELEX"` set.
 
@@ -271,7 +271,7 @@ consistent with sample-specific sequence before the constant, but do not by
 themselves show the design. Because the exclusion was decided after
 `detect`'s result was known, it is not recorded in `excluded_datasets.tsv`; it
 is disclosed here, and the deposit is evaluated with the released version as a
-sensitivity analysis alongside the recovery arm (Table S1).
+sensitivity analysis alongside the recovery arm (Table S4).
 
 ### Ground-truth schema
 
