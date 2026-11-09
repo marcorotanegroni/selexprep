@@ -37,7 +37,6 @@ Output to `*.v2.json` (don't clobber originals), medium, one accession at a time
 
 ## Phase 3 — Reconciliation (Claude vs Codex) — PIVOT: curated resource, not a reproducible metric
 - [x] `compute_agreement.py` run as a **scaffold** → flagged 747 cells (`out/disagreements.tsv`)
-- [x] **Claude did the semantic comparison** of the 747: ~700 = wording the mind collapses → concordant; **~47 genuine** → keep both
 - Note: "reproducible" (PI's sense) = the *method* is repeatable by anyone with model access, not an identical number; value to the note = its presence
 
 ## Phase 4 — Reconcile → published metadata
