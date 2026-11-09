@@ -8,6 +8,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+from selexprep._common import resolve_cutadapt
 from selexprep.cli import app
 from selexprep.library.adapters import reverse_complement
 
@@ -678,9 +679,7 @@ def test_extract_without_round_map_or_sample_sheet_errors(tmp_path: Path) -> Non
 
 def test_extract_override_primer_writes_overridden_subtree(tmp_path: Path) -> None:
     """--override-primer-5p without --rebuild writes to outdir/overridden/."""
-    import shutil as _shutil
-
-    if _shutil.which("cutadapt") is None:
+    if resolve_cutadapt() is None:
         return  # cutadapt not available; this test needs a real trim run
 
     primer_5p = "GGTAATACGACTCACTATAGGG"
@@ -748,9 +747,7 @@ def test_extract_refuses_unable_library_report(tmp_path: Path) -> None:
 
 def test_extract_end_to_end_both_primers(tmp_path: Path) -> None:
     """Smoke test: real cutadapt run via the CLI -> deterministic FASTA on disk."""
-    import shutil as _shutil
-
-    if _shutil.which("cutadapt") is None:
+    if resolve_cutadapt() is None:
         return  # silently skip — covered by @pytest.mark.skipif in trim/runner tests
 
     fq = tmp_path / "r0.fastq.gz"
