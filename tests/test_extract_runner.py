@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import gzip
 import json
-import shutil
 from pathlib import Path
 
 import pytest
 
+from selexprep._common import resolve_cutadapt
 from selexprep.extract.runner import run_extract
 from selexprep.library.adapters import reverse_complement
 from selexprep.library.report import LibraryReport
@@ -17,7 +17,7 @@ PRIMER_5P = "GGTAATACGACTCACTATAGGG"  # T7, 22 nt
 PRIMER_3P = "CCATGCATGCATGCATGCAT"  # 20 nt
 
 
-pytestmark = pytest.mark.skipif(shutil.which("cutadapt") is None, reason="cutadapt not on PATH")
+pytestmark = pytest.mark.skipif(resolve_cutadapt() is None, reason="cutadapt not available")
 
 
 # ---------------------------------------------------------------------------

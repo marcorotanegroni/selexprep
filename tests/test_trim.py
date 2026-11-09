@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import gzip
-import shutil
 from pathlib import Path
 
 import pytest
 
+from selexprep._common import resolve_cutadapt
 from selexprep._io import sha256_file
 from selexprep.extract.trim import (
     TrimReport,
@@ -21,7 +21,7 @@ PRIMER_5P = "GGTAATACGACTCACTATAGGG"  # T7 promoter, 22 nt
 PRIMER_3P = "CCATGCATGCATGCATGCAT"  # 20 nt
 
 
-pytestmark = pytest.mark.skipif(shutil.which("cutadapt") is None, reason="cutadapt not on PATH")
+pytestmark = pytest.mark.skipif(resolve_cutadapt() is None, reason="cutadapt not available")
 
 
 def _synthetic_fastq(

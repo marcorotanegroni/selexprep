@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import gzip
 import logging
-import shutil
 from pathlib import Path
 
 import pytest
 
-from selexprep._common import reverse_complement_iupac
+from selexprep._common import resolve_cutadapt, reverse_complement_iupac
 from selexprep.count.counter import reverse_complement as count_revcomp
 from selexprep.extract import runner
 from selexprep.extract.strand import _revcomp_read
@@ -27,7 +26,7 @@ from selexprep.library.report import LibraryReport, _classify, _low_match_reason
 PRIMER_5P = "GGTAATACGACTCACTATAGGG"
 PRIMER_3P = "CCATGCATGCATGCATGCAT"
 N39 = "ACGTTGCAAGGCTTACGGATCCATGCAAGTCAGTCAGTA"
-needs_cutadapt = pytest.mark.skipif(shutil.which("cutadapt") is None, reason="cutadapt not on PATH")
+needs_cutadapt = pytest.mark.skipif(resolve_cutadapt() is None, reason="cutadapt not available")
 
 
 def _fastq(path: Path, seqs: list[str]) -> Path:

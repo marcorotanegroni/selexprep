@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import gzip
 import random
-import shutil
 
 import pytest
 
+from selexprep._common import resolve_cutadapt
 from selexprep.library.detect import (
     CONSTANT_CORE_LEN,
     _shared_library_constant,
@@ -251,7 +251,7 @@ class TestCopyInsideTheRandomRegionOfLaterRounds:
         assert report.n_length_mode == N
 
 
-@pytest.mark.skipif(shutil.which("cutadapt") is None, reason="cutadapt not on PATH")
+@pytest.mark.skipif(resolve_cutadapt() is None, reason="cutadapt not available")
 def test_every_extracted_read_is_its_true_random_region(tmp_path):
     """End to end: tags per run and core copies inside N of later rounds, then
     ``extract`` with the inferred constants. Every emitted sequence must be the

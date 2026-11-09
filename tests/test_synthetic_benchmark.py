@@ -13,11 +13,12 @@ import importlib.util
 import json
 import math
 import random
-import shutil
 import sys
 from pathlib import Path
 
 import pytest
+
+from selexprep._common import resolve_cutadapt
 
 SYN = Path(__file__).resolve().parent.parent / "benchmarks" / "synthetic"
 DONOR = "PRJNA360902"  # dev donor, N20
@@ -431,7 +432,7 @@ def test_a_reversed_read_is_evaluated_in_the_frame_extract_uses():
 
 
 @pytest.mark.skipif(
-    shutil.which("cutadapt") is None and not (Path(sys.executable).parent / "cutadapt").exists(),
+    resolve_cutadapt() is None,
     reason="cutadapt not available",
 )
 def test_one_baseline_run_end_to_end(tmp_path):
@@ -545,7 +546,7 @@ def test_experiments_run_only_on_the_test_set(tmp_path):
 
 
 @pytest.mark.skipif(
-    shutil.which("cutadapt") is None and not (Path(sys.executable).parent / "cutadapt").exists(),
+    resolve_cutadapt() is None,
     reason="cutadapt not available",
 )
 def test_override_run_end_to_end_matches_the_oracle(tmp_path):
