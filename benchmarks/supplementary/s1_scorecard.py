@@ -2,9 +2,10 @@
 # ruff: noqa: RUF001
 """Supplementary Data S1: the Tier-1 scorecard, generated from the benchmark's data.
 
-Every outcome, length, yield and total is read from the metrics and yields of
-the two scored versions (the pre-specified v0.4.1 and the released 0.4.5) and
-from ``ground_truth.tsv``, so S1 cannot fall behind the data it reports. The
+Every outcome, length, yield and total is read from the benchmark's metrics and
+per-run yields (``results/metrics.json``, ``results/extraction_yield.tsv``) and
+from ``ground_truth.tsv``, so S1 cannot fall behind the data it reports. S1
+describes the released version only; earlier scored runs stay in ``results/``. The
 only text written by hand, the legend and the per-deposit notes, belongs to the
 manuscript and lives with it, outside the repository (``paper/`` is ignored);
 without them the table is generated with no legend and no notes.
@@ -97,13 +98,11 @@ def build(
     notes_tsv: Path = PAPER_SUPP / "s1_notes.tsv",
 ) -> str:
     new = json.loads((results / "metrics.json").read_text())
-    old = json.loads((results / "metrics_v0.4.1.json").read_text())
     gt = {r["accession"]: r for r in _tsv(bench / "ground_truth.tsv")}
     notes = {r["accession"]: r["note"] for r in _tsv(notes_tsv)} if notes_tsv.is_file() else {}
-    new_pairs, old_pairs = _pairs(new), _pairs(old)
+    new_pairs = _pairs(new)
     new_n = _n_lengths(new)
     new_yield = lowest_yield(results / "extraction_yield.tsv")
-    old_yield = lowest_yield(results / "extraction_yield_v0.4.1.tsv")
 
     controls = {}
     for block in ("specificity", "adapter_control"):
@@ -116,10 +115,6 @@ def build(
         if r["verified"].strip().lower() == "true" and r["read_state"] in ARMS
     ]
     scored.sort(key=lambda r: (ARM_ORDER.index(ARMS[r["read_state"]]), r["accession"]))
-
-    def changed(before: str, after: str) -> str:
-        """One cell for two versions: the value, or 'v0.4.1 → 0.4.5' where they differ."""
-        return after if before == after else f"{before} → {after}"
 
     def library(r: dict[str, str]) -> str:
         return f"{r['library_kind']}; {r['target_kind']}"
@@ -139,14 +134,8 @@ def build(
         for r in rows:
             acc, note = r["accession"], notes.get(r["accession"], "")
             if arm == "recovery":
-                (o5, o3), (n5, n3) = old_pairs[acc], new_pairs[acc]
-                cells = [
-                    changed(o5, n5),
-                    changed(o3, n3),
-                    changed(outcome(o5, o3), outcome(n5, n3)),
-                    new_n.get(acc, "–"),
-                    changed(_pct(old_yield.get(acc)), _pct(new_yield.get(acc))),
-                ]
+                n5, n3 = new_pairs[acc]
+                cells = [n5, n3, outcome(n5, n3), new_n.get(acc, "–"), _pct(new_yield.get(acc))]
             else:
                 c = controls[acc]
                 call = c["primer_5p"] is not None or c["primer_3p"] is not None
@@ -154,7 +143,7 @@ def build(
             lines.append("| " + " | ".join([acc, library(r), *cells, note]) + " |")
 
     recovery = [r["accession"] for r in scored if ARMS[r["read_state"]] == "recovery"]
-    t_old, t_new = recovery_totals(old_pairs, recovery), recovery_totals(new_pairs, recovery)
+    t_new = recovery_totals(new_pairs, recovery)
     nl = new["n_length_recovery"]
     spec, adapt = new["specificity"], new["adapter_control"]
 
@@ -174,17 +163,16 @@ def build(
         "",
         "**Totals, recovery arm.**",
         "",
-        "- " + totals_line("v0.4.1, pre-specified", t_old),
-        "- " + totals_line("0.4.5, after the fix (in-sample)", t_new),
+        "- " + totals_line("Constants", t_new),
         (
-            f"- Random-region length (0.4.5): {nl['n_in_tolerance']} of "
+            f"- Random-region length: {nl['n_in_tolerance']} of "
             f"{nl['n_in_tolerance'] + nl['n_out_of_tolerance']} measurable deposits at the "
             f"published length, {nl['n_out_of_tolerance']} outside the tolerance, "
             f"{nl['n_unmeasurable']} not measurable."
         ),
         "",
         (
-            f"**Totals, controls (0.4.5).** Specificity: {spec['n_false_positive']} calls in "
+            f"**Totals, controls.** Specificity: {spec['n_false_positive']} calls in "
             f"{spec['n_evaluated']} deposits. Adapter control: {adapt['n_false_positive']} calls "
             f"in {adapt['n_evaluated']} deposits."
         ),
@@ -198,7 +186,7 @@ def build(
         refused = set(ex["safe_failure_rate"]["safe_failure_accessions"])
         t_ex = recovery_totals(ex_pairs, sorted(ex_pairs))
         out += [
-            "**Sensitivity analysis: the deposit excluded after inference (0.4.5).**",
+            "**Sensitivity analysis: the deposit excluded after inference.**",
             "",
             "| Accession | 5′ | 3′ | Refused | *N* obs / truth | Note |",
             "|---|---|---|---|---|---|",
@@ -211,10 +199,7 @@ def build(
             )
         out += [
             "",
-            "- "
-            + totals_line("Recovery arm with it counted in", t_ex).replace(
-                "*Recovery arm with it counted in:*", "*Recovery arm with it counted in (0.4.5):*"
-            ),
+            "- " + totals_line("Recovery arm with it counted in", t_ex),
             "",
         ]
 
