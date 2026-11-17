@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use selexprep, please cite it as below."
+title: "selexprep: accession-based preprocessing of public HT-SELEX data with constant-region inference"
+type: software
+authors:
+  - family-names: "Rota Negroni"
+    given-names: "Marco"
+version: "0.4.7"
+date-released: "2026-11-04"
+doi: "10.5281/zenodo.23964802"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21240947"
+    description: "Concept DOI: all versions"
+  - type: doi
+    value: "10.5281/zenodo.23964802"
+    description: "Version 0.4.7"
+repository-code: "https://github.com/marcorotanegroni/selexprep"
+license: MIT
+keywords:
+  - SELEX
+  - HT-SELEX
+  - aptamer
+  - preprocessing

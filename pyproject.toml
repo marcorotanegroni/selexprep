@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-authors = [{name = "Marco Rotanegroni", email = "marco.rotanegroni@studenti.unipd.it"}]
+authors = [{name = "Marco Rota Negroni", email = "marco.rotanegroni@studenti.unipd.it"}]
 keywords = ["SELEX", "aptamer", "HT-SELEX", "bioinformatics", "primer", "FASTQ"]
 classifiers = [
   "Development Status :: 4 - Beta",

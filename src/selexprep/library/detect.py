@@ -1,31 +1,18 @@
-"""Empirical primer / constant-region inference from FASTQ-derived sequences.
+"""Constant-region inference from FASTQ-derived sequences.
 
-Scans the consensus prefix/suffix of the top-N most abundant sequences in
-the **earliest** available SELEX round (round_00 preferred).
+Works on the **earliest** available SELEX round: early pools have the most
+diverse random regions, so what the reads share at the flanks is the library
+constant. In late rounds the random region has converged on a few winners,
+which would be taken for constant.
 
-**Why earliest:** naive pools have maximally diverse random regions, so
-everything the reads share at the flanks IS the primer by construction. In
-late rounds the random region has collapsed to winners, making primer
-detection unreliable — you'd "detect" the winning aptamer.
+Walking inward from each read edge, it computes the consensus base and its
+support at every position. The flank ends at a sustained drop in support after
+a conserved stretch (the support cliff). ``library/report.py`` builds the full
+``LibraryReport`` on top of this: the constant shared by every round, adapter
+matches, persistence across rounds, extraction mode and status.
 
-**Algorithm:**
-  Walk inward from each read boundary and compute the positional consensus
-  base + support. The flank boundary is the support cliff: high-support
-  constant-region positions followed by a sustained drop into the random
-  region. This avoids both old failure modes: hard-capping long T7-bearing
-  constants at 30 nt, and over-extending by one random base when a longer
-  candidate still passes Hamming ≤ 1 globally.
-
-**Phase-1 caveat:** this module is the algorithm port. wraps it in
-``library/report.py`` to emit a full ``LibraryReport`` with adapter
-blacklisting, cross-round persistence, extraction_mode classification, and
-sampling-seed reproducibility. The bare detection result here is the
-algorithmic core that the LibraryReport composer consumes.
-
-**Ordering caveat:** if the earliest round was multiplexed and has not yet
-been demuxed, this routine will detect the 5' barcode as the primer.
-Callers must run demultiplexing first; ``selexprep`` will enforce this in
-the CLI dispatcher.
+Multiplexed rounds must be demultiplexed first; otherwise the 5' barcode is
+taken for the constant.
 """
 
 from __future__ import annotations

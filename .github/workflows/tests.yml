@@ -39,6 +39,12 @@ jobs:
       - name: Run pytest with coverage
         run: pytest --cov=selexprep --cov-report=term-missing --cov-report=xml
 
+      - name: Run the example notebooks
+        if: matrix.python-version == '3.12'
+        run: |
+          jupyter nbconvert --to notebook --execute --output-dir "$RUNNER_TEMP/notebooks" \
+            examples/01_offline_toy_pipeline.ipynb examples/02_library_report_interpretation.ipynb
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4

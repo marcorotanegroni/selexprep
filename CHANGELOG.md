@@ -4,6 +4,29 @@ All notable changes to `selexprep` are documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **`detect` and `extract` refuse R1/R2 files that do not pair one to one.**
+  `--paired-r2` takes one file per flag; written as `--paired-r2 A B`, `B` was
+  read as another R1 file, which lowered the confidence of `detect` and made
+  `extract` keep no reads from it. The mismatch now stops both commands with a
+  message that shows the right syntax.
+- **Documentation matches the code.** The paired-end example in the README
+  repeats `--paired-r2` and lists the R2 files in the round map; the README
+  describes inference as in the paper (boundary from positional conservation in
+  the earliest round, checked across rounds); `inspect` and `fetch` help and
+  docs say what the commands do; `catalog show` uses an accession that exists;
+  the README says when `extract_diff.tsv` is written and that the hash of
+  `trim_reports.json` depends on the output path. `fetch` labels its skipped
+  runs as skipped.
+
+### Added
+
+- `CITATION.cff` and a Citation section in the README with the Zenodo DOIs.
+- CI executes the two example notebooks.
+
 ## [0.4.7] - 2026-11-04
 
 Ported from selexprepR (commits 820e5d9 and c640797), with the same behaviour.
