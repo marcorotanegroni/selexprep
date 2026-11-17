@@ -6,6 +6,7 @@ import gzip
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from selexprep._common import resolve_cutadapt
@@ -680,7 +681,7 @@ def test_extract_without_round_map_or_sample_sheet_errors(tmp_path: Path) -> Non
 def test_extract_override_primer_writes_overridden_subtree(tmp_path: Path) -> None:
     """--override-primer-5p without --rebuild writes to outdir/overridden/."""
     if resolve_cutadapt() is None:
-        return  # cutadapt not available; this test needs a real trim run
+        pytest.skip("cutadapt not available")
 
     primer_5p = "GGTAATACGACTCACTATAGGG"
     primer_3p = "CCATGCATGCATGCATGCAT"
@@ -748,7 +749,7 @@ def test_extract_refuses_unable_library_report(tmp_path: Path) -> None:
 def test_extract_end_to_end_both_primers(tmp_path: Path) -> None:
     """Smoke test: real cutadapt run via the CLI -> deterministic FASTA on disk."""
     if resolve_cutadapt() is None:
-        return  # silently skip — covered by @pytest.mark.skipif in trim/runner tests
+        pytest.skip("cutadapt not available")
 
     fq = tmp_path / "r0.fastq.gz"
     _write_fastq_gz(fq, _synthetic_pool("GGTAATACGACTCACTATAGGG", "CCATGCATGCATGCATGCAT"))
@@ -774,3 +775,23 @@ def test_extract_end_to_end_both_primers(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert (outdir / "round_00" / "extracted.fasta.gz").exists()
     assert (outdir / "trim_reports.json").exists()
+
+
+def test_paired_r2_must_pair_one_to_one(tmp_path: Path) -> None:
+    """`--paired-r2 A B` makes B a second R1; the R1/R2 count mismatch is refused."""
+    rounds = tmp_path / "rounds.tsv"
+    rounds.write_text("file\tround_number\nr0_R1.fastq.gz\t0\n")
+    detect_args = ["detect", "r0_R1.fastq.gz", "r1_R2.fastq.gz"]
+    detect_args += ["--paired-r2", "r0_R2.fastq.gz", "--round-map", str(rounds)]
+    detect_args += ["--outdir", str(tmp_path / "out")]
+    result = runner.invoke(app, detect_args)
+    assert result.exit_code == 2
+    assert "one R2 per R1" in result.output
+
+    extract_args = ["extract", "r0_R1.fastq.gz", "r1_R2.fastq.gz"]
+    extract_args += ["--paired-r2", "r0_R2.fastq.gz", "--round-map", str(rounds)]
+    extract_args += ["--library-report", str(tmp_path / "lr.json")]
+    extract_args += ["--outdir", str(tmp_path / "out")]
+    result = runner.invoke(app, extract_args)
+    assert result.exit_code == 2
+    assert "one R2 per R1" in result.output

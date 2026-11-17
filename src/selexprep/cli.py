@@ -1,9 +1,6 @@
-"""Typer CLI dispatcher for selexprep.
+"""Typer command-line interface for selexprep.
 
-scaffold + progressive wiring: subcommands not yet implemented exit
-with code 2. ``catalog`` and ``detect`` are live;
-``inspect``/``fetch``/``extract``/``count``/``qc``/``run`` arrive in later
-phases.
+Subcommands: inspect, fetch, detect, extract, count, qc, run, and catalog.
 """
 
 from __future__ import annotations
@@ -48,15 +45,6 @@ app = typer.Typer(
 app.add_typer(catalog_app, name="catalog")
 
 
-def _not_implemented(name: str) -> None:
-    typer.secho(
-        f"selexprep {name}: not yet implemented.",
-        fg=typer.colors.YELLOW,
-        err=True,
-    )
-    raise typer.Exit(code=2)
-
-
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"selexprep {__version__}")
@@ -85,7 +73,7 @@ def inspect(
     ),
     timeout_s: int = typer.Option(30, "--timeout-s", help="HTTP timeout (seconds)."),
 ) -> None:
-    """Preview accession metadata (round count, library_strategy, files) without downloading."""
+    """Preview accession metadata (runs, library_strategy, file sizes) without downloading."""
     from selexprep.fetch.inspect import inspect_accession, write_inspect_json
 
     try:
@@ -145,9 +133,9 @@ def fetch(
 
     Emits ``outdir/rounds.tsv`` (the trusted-assignments contract for
     detect/extract), per-round FASTQs under ``round_NN/``, plus
-    ``fetch_metadata.json`` as the audit trail. Refuses upfront if any
-    run has a NONE-confidence round assignment unless
-    ``--allow-manual-review`` is passed.
+    ``fetch_metadata.json`` as the audit trail. Runs without a round
+    assignment are skipped; the download is refused only when no run has
+    one. ``--allow-manual-review`` downloads them into ``round_unknown/``.
     """
     from selexprep.fetch import run_fetch as run_fetch_fn
 
@@ -182,7 +170,9 @@ def fetch(
     typer.echo(f"Study title:      {result.plan.study_title or '-'}")
     typer.echo(f"Runs:             {len(result.plan.runs)}")
     typer.echo(f"  downloaded:     {len(result.downloaded_srrs)}")
-    typer.echo(f"  already-present:{len(result.skipped_srrs)}")
+    typer.echo(
+        f"  skipped:        {len(result.skipped_srrs)}  (already present, unassigned or dry run)"
+    )
     typer.echo(f"  failed:         {len(result.failed_srrs)}")
     typer.echo(f"  manual-review:  {len(result.manual_review_srrs)}")
     if result.rounds_tsv is not None:
@@ -198,6 +188,23 @@ def fetch(
             err=True,
         )
         raise typer.Exit(code=1)
+
+
+def _check_paired_r2(cmd: str, fastq: list[Path], paired_r2: list[Path] | None) -> None:
+    """Refuse when the R2 files do not pair one-to-one with the R1 files.
+
+    ``--paired-r2`` takes one file per flag. Written as ``--paired-r2 A B``,
+    ``B`` would be read as another R1, so a count mismatch is the usual sign.
+    """
+    if paired_r2 and len(paired_r2) != len(fastq):
+        typer.secho(
+            f"{cmd}: {len(fastq)} R1 file(s) but {len(paired_r2)} --paired-r2 file(s); "
+            "give one R2 per R1 and repeat the flag for each file "
+            "(--paired-r2 r0_R2.fastq.gz --paired-r2 r1_R2.fastq.gz).",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
 
 
 def _load_round_map(path: Path) -> dict[str, int]:
@@ -241,7 +248,7 @@ def detect(
     paired_r2: list[Path] | None = typer.Option(
         None,
         "--paired-r2",
-        help="R2 FASTQ files (one or more); enables paired split-primer detection.",
+        help="R2 FASTQ file, one per R1 (repeat the flag); enables paired split-primer detection.",
     ),
     outdir: Path = typer.Option(..., "--outdir", help="Output directory."),
     sampling_seed: int = typer.Option(
@@ -256,13 +263,14 @@ def detect(
     """Auto-infer primers + library structure from FASTQ; emit LibraryReport JSON."""
     if round_map is None:
         typer.secho(
-            "detect: --round-map is required for local FASTQs (cross-round "
-            "persistence is a core inference signal).",
+            "detect: --round-map is required for local FASTQs (the boundary is "
+            "inferred on the earliest round and checked on the others).",
             fg=typer.colors.RED,
             err=True,
         )
         raise typer.Exit(code=2)
 
+    _check_paired_r2("detect", fastq, paired_r2)
     all_input_paths: list[Path] = list(fastq) + list(paired_r2 or [])
     all_basenames = [p.name for p in all_input_paths]
     if len(set(all_basenames)) != len(all_basenames):
@@ -346,7 +354,7 @@ def extract(
     paired_r2: list[Path] | None = typer.Option(
         None,
         "--paired-r2",
-        help="R2 FASTQ files (one per R1 in --fastq); required for PAIRED_END_SPLIT_PRIMERS.",
+        help="R2 FASTQ file, one per R1 (repeat the flag); required for PAIRED_END_SPLIT_PRIMERS.",
     ),
     override_primer_5p: str | None = typer.Option(None, "--override-primer-5p"),
     override_primer_3p: str | None = typer.Option(None, "--override-primer-3p"),
@@ -366,6 +374,7 @@ def extract(
     # basename-keyed, so two input FASTQs with the same name in different
     # directories would silently overwrite each other in the lookup dict.
     # Refuse early with a clear error rather than producing a wrong result.
+    _check_paired_r2("extract", fastq, paired_r2)
     all_input_paths: list[Path] = list(fastq) + list(paired_r2 or [])
     all_basenames = [p.name for p in all_input_paths]
     if len(set(all_basenames)) != len(all_basenames):

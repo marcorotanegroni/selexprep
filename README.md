@@ -13,6 +13,10 @@ random-region FASTAs + count tables — with an explicit confidence level and a
 reproducible manifest. When it can't infer the library with confidence, it
 **says so and refuses to guess** rather than emitting fabricated primers.
 
+In the commands, options and output fields (`--override-primer-5p`,
+`primer_5p`, ...), *primer* means the library constant flanking the random
+region, which usually contains the primer-binding site.
+
 It's the step *before* the existing SELEX toolchain. Tools like FASTAptameR,
 AptaSUITE, RaptGen, and AptaTrans assume you already have trimmed reads and
 already know your primers. `selexprep` produces exactly those inputs, starting
@@ -89,7 +93,7 @@ Browse the bundled catalog of public SELEX deposits, then feed the hits to `run`
 
 ```bash
 selexprep catalog list --target IL-10RA --insdc-only
-selexprep catalog show PRJEB12345
+selexprep catalog show PRJNA315881
 ```
 
 INSDC accessions are fetchable; figshare/zenodo rows are discovery-only pointers
@@ -103,7 +107,7 @@ This is also how you inspect an intermediate or re-extract with corrected
 primers:
 
 ```bash
-# detect needs a round map — cross-round persistence is the key primer signal
+# detect needs a round map: it infers the boundary on the earliest round and checks it on the others
 printf 'file\tround_number\nround_00.fastq.gz\t0\nround_01.fastq.gz\t1\nround_02.fastq.gz\t2\n' > rounds.tsv
 
 selexprep detect round_00.fastq.gz round_01.fastq.gz round_02.fastq.gz \
@@ -127,18 +131,19 @@ every flag and the `--round-map` contract are in the [CLI reference](https://git
 
 Common for modern Illumina SELEX — and **handled for you from an accession**:
 `run` detects the paired layout at fetch time and threads R2 through with no
-extra flags. By hand on local files, list the **R1** files in the round map and
-the matching **R2** files via `--paired-r2`, in the same order, one R2 per R1:
+extra flags. By hand on local files, list **both** R1 and R2 files in the round
+map, pass the R1 files as arguments and each R2 file with its own `--paired-r2`,
+one R2 per R1:
 
 ```bash
-printf 'file\tround_number\nr0_R1.fastq.gz\t0\nr1_R1.fastq.gz\t1\n' > rounds.tsv
+printf 'file\tround_number\nr0_R1.fastq.gz\t0\nr0_R2.fastq.gz\t0\nr1_R1.fastq.gz\t1\nr1_R2.fastq.gz\t1\n' > rounds.tsv
 
 selexprep detect r0_R1.fastq.gz r1_R1.fastq.gz \
-    --paired-r2 r0_R2.fastq.gz r1_R2.fastq.gz \
+    --paired-r2 r0_R2.fastq.gz --paired-r2 r1_R2.fastq.gz \
     --round-map rounds.tsv --outdir ./out
 
 selexprep extract r0_R1.fastq.gz r1_R1.fastq.gz \
-    --paired-r2 r0_R2.fastq.gz r1_R2.fastq.gz \
+    --paired-r2 r0_R2.fastq.gz --paired-r2 r1_R2.fastq.gz \
     --library-report ./out/library_report.json --round-map rounds.tsv --outdir ./out
 ```
 
@@ -178,7 +183,9 @@ selexprep extract round_*.fastq.gz \
     --override-primer-5p GGTAATACGACTCACTATAGGG \
     --override-primer-3p CCATGCATGCATGCATGCAT \
     --rebuild --outdir ./out
-# --rebuild emits extract_diff.tsv comparing baseline vs override per round.
+# With --rebuild the outputs go to ./out; without it, to ./out/overridden/ so an
+# earlier extraction is kept. If ./out already holds an extraction, --rebuild also
+# writes extract_diff.tsv comparing it with the new one, round by round.
 ```
 
 You can also edit `library_report.json` by hand and re-run without overrides.
@@ -195,7 +202,7 @@ batches it and `catalog` browses the discovery catalog. Every command supports
 
 | Command | What it does |
 |---|---|
-| `selexprep inspect <ACC>` | ENA metadata preview — round count, `library_strategy` (SRA verbatim), file sizes + MD5s. No download. |
+| `selexprep inspect <ACC>` | ENA metadata preview — runs with read and base counts, `library_strategy` (SRA verbatim), file sizes (MD5s in `inspect.json`). No download. |
 | `selexprep fetch <ACC> --outdir OUT` | Download FASTQ + auto-populate `rounds.tsv`. Unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
 | `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | Auto-infer primers + library structure → `library_report.json`. |
 | `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT` | Cutadapt trim + strand reorient + per-round FASTA + manifest. Accepts `--paired-r2`, `--sample-sheet`, `--override-primer-{5p,3p}`, `--rebuild`. |
@@ -249,12 +256,15 @@ manifest **without requiring the user to supply primers**.
 | EasyDIVER+ (2025) | ✗ | ✗ — paired-end with known primers | ✗ |
 | ht-selex-demo | ✗ | ✗ — Illumina adapters only (a trap `selexprep` guards against via `known_adapter_hits`) | ✗ |
 | nf-core | ✗ (no SELEX pipelines exist) | — | — |
-| **`selexprep`** | ✓ — INSDC (figshare/Zenodo deferred) | ✓ — cross-round persistence + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
+| **`selexprep`** | ✓ — INSDC (figshare/Zenodo deferred) | ✓ — positional conservation, checked across rounds + adapter blacklist | ✓ — explicit `LibraryReport.status` ∈ {HIGH, MEDIUM, LOW, UNABLE_TO_INFER} |
 
-The core inference idea: **a true primer appears at a similar rate across all
-rounds; late-round-enriched aptamer motifs do not.** `detect` exploits this
-cross-round persistence to separate constants from binders, and reports its
-confidence in a typed `LibraryReport` (pydantic, strict-mypy) with explicit
+The core inference idea: **the constants are conserved at a fixed position in
+every read, while the random region is still diverse in the earliest round.**
+`detect` places the boundary where positional conservation falls in the earliest
+round provided, keeps only the part of the constant that every round shares, and
+scores the call by its consistency, persistence across rounds, match rate and
+adapter matches. It reports its confidence in a typed `LibraryReport` (pydantic,
+strict-mypy) with explicit
 `extraction_mode`, `read_source`, `required_action`, `full_insert_recovered`,
 and `status`. `status` rates how well the reads support the inferred primers, not
 a verified boundary: sequence conserved inside the random region itself can be
@@ -324,7 +334,8 @@ All `.fasta.gz`, `.tsv`, and `.json` outputs are **byte-deterministic** given
 the same `--sampling-seed`: gzip headers use `mtime=0`, JSON keys are sorted
 (int keys in numeric order), TSV rows are sorted. Two runs with identical inputs
 + seed produce identical SHA256s; the manifest's `output_sha256` is the audit
-anchor.
+anchor. The one exception is `trim_reports.json`, which records the cutadapt
+command with its file paths, so its hash also depends on the output directory.
 
 Parquet hashes are **advisory** (not guaranteed across pyarrow versions — the
 manifest pins `pyarrow_version` instead). PNG plots are **informational**
@@ -365,6 +376,13 @@ uv run mypy src/                     # strict on library.report
 ```
 
 CI matrix: Python 3.10 / 3.11 / 3.12.
+
+## Citation
+
+If you use selexprep, cite the archived release: version 0.4.7 is
+[doi:10.5281/zenodo.23964802](https://doi.org/10.5281/zenodo.23964802), and
+[doi:10.5281/zenodo.21240947](https://doi.org/10.5281/zenodo.21240947) resolves to
+the latest version. Citation metadata is in [`CITATION.cff`](https://github.com/marcorotanegroni/selexprep/blob/main/CITATION.cff).
 
 ## License
 
