@@ -35,14 +35,15 @@ import json
 import logging
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+from typing import get_args
 
-from selexprep._io import open_gzip_text_deterministic
+from selexprep._io import open_fastx_text, open_gzip_text_deterministic
 from selexprep.extract import strand as strand_module
 from selexprep.extract import trim as trim_module
 from selexprep.extract.demux import demux_sample_sheet
 from selexprep.library.adapters import matches_known_adapter_prefix, reverse_complement
 from selexprep.library.detect import _n_length_stats, _normalize_pool, _substring_match_rate
-from selexprep.library.report import LibraryReport
+from selexprep.library.report import ExtractionMode, LibraryReport
 from selexprep.manifest import (
     build_manifest_from_extract_result,
     read_manifest_json,
@@ -67,6 +68,17 @@ LOW_YIELD_RATIO = 0.5
 # An input that keeps less than this fraction of its own reads is reported too,
 # so a collapse shared by every input is not hidden by the relative test.
 LOW_YIELD_FLOOR = 0.5
+# The modes ``extract`` can run: the ``extraction_mode`` enumeration without
+# ``UNABLE_TO_EXTRACT``. Derived from it, so it is not a parameter of its own.
+_EXTRACTABLE_MODES: tuple[str, ...] = tuple(
+    mode for mode in get_args(ExtractionMode) if mode != "UNABLE_TO_EXTRACT"
+)
+
+# A primer supplied with ``--override-primer-*`` that is found in less than this
+# fraction of the earliest round's reads is reported: it does not fit the reads
+# as typed. It only words a warning and changes no output, so it is private and
+# stays out of the parameter table of the method (benchmarks/parameters).
+_SUPPLIED_PRIMER_ABSENT_BELOW = 0.05
 
 
 # ---------------------------------------------------------------------------
@@ -158,9 +170,9 @@ def _check_no_clobber(targets: list[Path], rebuild: bool) -> None:
 
 
 def _sample_sequences(fq: Path, max_reads: int) -> list[str]:
-    """Read up to ``max_reads`` sequences from a FASTQ.gz."""
+    """Read up to ``max_reads`` sequences from a FASTQ, gzip-compressed or not."""
     seqs: list[str] = []
-    with gzip.open(fq, "rt", encoding="utf-8", errors="replace") as fh:
+    with open_fastx_text(fq) as fh:
         for i, line in enumerate(fh):
             if i % 4 == 1:
                 seqs.append(line.strip())
@@ -170,10 +182,10 @@ def _sample_sequences(fq: Path, max_reads: int) -> list[str]:
 
 
 def _read_sequences(paths: list[Path]) -> list[str]:
-    """Every sequence of the FASTQ.gz or FASTA.gz files in ``paths``."""
+    """Every sequence of the FASTQ or FASTA files in ``paths``, gzip-compressed or not."""
     seqs: list[str] = []
     for path in paths:
-        with gzip.open(path, "rt", encoding="utf-8", errors="replace") as fh:
+        with open_fastx_text(path) as fh:
             first = fh.readline()
             if not first:
                 continue
@@ -205,9 +217,9 @@ def _override_match_rates(
     updates: dict[str, float] = {}
     reads = _normalize_pool(_read_sequences(earliest_r1))
     if override_primer_5p is not None:
-        updates["match_rate_5p"] = _substring_match_rate(
-            reads, override_primer_5p.upper().replace("U", "T")
-        )
+        primer_5p = override_primer_5p.upper().replace("U", "T")
+        updates["match_rate_5p"] = _substring_match_rate(reads, primer_5p)
+        _warn_if_primer_absent("5'", primer_5p, updates["match_rate_5p"], reads)
     if override_primer_3p is not None:
         primer_3p = override_primer_3p.upper().replace("U", "T")
         if library_report.extraction_mode == "PAIRED_END_SPLIT_PRIMERS":
@@ -218,7 +230,37 @@ def _override_match_rates(
                 )
         else:
             updates["match_rate_3p"] = _substring_match_rate(reads, primer_3p)
+            _warn_if_primer_absent("3'", primer_3p, updates["match_rate_3p"], reads)
     return updates
+
+
+def _warn_if_primer_absent(side: str, primer: str, rate: float, reads: list[str]) -> None:
+    """Warn when a supplied primer is in almost none of the earliest round's reads.
+
+    The usual cause is a primer typed as on the oligo order sheet: the reverse
+    primer is the reverse complement of what the reads show. When that reverse
+    complement is in the reads, the warning says so.
+    """
+    if rate >= _SUPPLIED_PRIMER_ABSENT_BELOW:
+        return
+    flipped = reverse_complement(primer)
+    flipped_rate = _substring_match_rate(reads, flipped)
+    hint = (
+        f" Its reverse complement, {flipped}, is in {flipped_rate:.1%} of them: "
+        "if that is your primer, pass it in that form."
+        if flipped_rate >= _SUPPLIED_PRIMER_ABSENT_BELOW
+        else ""
+    )
+    logger.warning(
+        "extract: the supplied %s primer %s is in %.1f%% of the earliest round's reads. "
+        "Primers are matched as they read in the FASTQ, left to right, so a reverse "
+        "primer must be given as it appears at the 3' end of the reads, not as "
+        "ordered.%s",
+        side,
+        primer,
+        100 * rate,
+        hint,
+    )
 
 
 def _override_insert_lengths(earliest_extracted: Path) -> dict[str, object]:
@@ -512,6 +554,7 @@ def run_extract(
     paired_r2_inputs: dict[int, list[Path]] | None = None,
     override_primer_5p: str | None = None,
     override_primer_3p: str | None = None,
+    extraction_mode: str | None = None,
     accession: str | None = None,
     bioproject_id: str | None = None,
     runs: list[str] | None = None,
@@ -540,6 +583,11 @@ def run_extract(
         paired_r2_inputs: optional ``{round: [r2_fastq, ...]}``.
         override_primer_5p / override_primer_3p: optional primer
             overrides applied via ``LibraryReport.model_copy``.
+        extraction_mode: optional mode to extract in, in place of the
+            report's (any value of the enumeration but
+            ``UNABLE_TO_EXTRACT``). An override like the
+            primers: it routes the outputs the same way. Raises
+            ``ValueError`` on any other value.
         accession / bioproject_id / runs / parameters: provenance fields
             captured into the emitted ``selexprep_manifest.json``.
     """
@@ -552,7 +600,15 @@ def run_extract(
     # classification fields the refusal check inspects (status,
     # extraction_mode), otherwise the override is a no-op for the cases it
     # was designed to handle.
-    has_override = override_primer_5p is not None or override_primer_3p is not None
+    if extraction_mode is not None and extraction_mode not in _EXTRACTABLE_MODES:
+        raise ValueError(
+            f"extraction_mode {extraction_mode!r} is not one of {', '.join(_EXTRACTABLE_MODES)}"
+        )
+    has_override = (
+        override_primer_5p is not None
+        or override_primer_3p is not None
+        or extraction_mode is not None
+    )
     if has_override:
         updates: dict[str, object] = {}
         if override_primer_5p is not None:
@@ -595,6 +651,18 @@ def run_extract(
             # else: no primers at all even after override — UNABLE stays,
             # refusal will fire below with the hand-edit-LR hint.
 
+        # A mode named by the user replaces the report's (and any promotion
+        # above), with the two fields that follow from it. The per-mode
+        # dispatch below refuses when the mode needs a primer that is not set.
+        if extraction_mode is not None:
+            updates["extraction_mode"] = extraction_mode
+            updates["full_insert_recovered"] = extraction_mode == "BOTH_PRIMERS_SINGLE_READ"
+            updates["required_action"] = (
+                "READ_MERGING_RECOMMENDED"
+                if extraction_mode == "PAIRED_END_SPLIT_PRIMERS"
+                else "NONE"
+            )
+
         # Manual override = MEDIUM confidence by convention; the user must
         # hand-edit the LibraryReport JSON to claim HIGH.
         if library_report.status == "UNABLE_TO_INFER":
@@ -603,12 +671,29 @@ def run_extract(
 
         library_report = library_report.model_copy(update=updates)
         logger.info(
-            "Applied primer overrides: 5p=%r 3p=%r -> mode=%s status=%s",
+            "Applied overrides: 5p=%r 3p=%r mode=%r -> mode=%s status=%s",
             override_primer_5p,
             override_primer_3p,
+            extraction_mode,
             library_report.extraction_mode,
             library_report.status,
         )
+
+        # A primer override replaces a primer but keeps the report's
+        # extraction_mode. With both primers now set and a one-sided mode that
+        # the user did not ask for, only one of them is trimmed and the output
+        # keeps the other constant: say so.
+        one_sided = {"FIVE_PRIME_ONLY": "5'", "THREE_PRIME_ONLY": "3'"}
+        trimmed_side = one_sided.get(library_report.extraction_mode)
+        if extraction_mode is None and trimmed_side is not None and has_5p_after and has_3p_after:
+            logger.warning(
+                "extract: both primers are set, but the LibraryReport's extraction_mode "
+                "is %s, so only the %s primer is trimmed and every output sequence keeps "
+                "the other constant. To trim both primers, add "
+                "--extraction-mode BOTH_PRIMERS_SINGLE_READ.",
+                library_report.extraction_mode,
+                trimmed_side,
+            )
 
     # Refusal check happens AFTER override so the user's explicit escape
     # hatch can clear the UNABLE state.

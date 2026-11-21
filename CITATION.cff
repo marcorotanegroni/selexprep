@@ -5,16 +5,13 @@ type: software
 authors:
   - family-names: "Rota Negroni"
     given-names: "Marco"
-version: "0.4.7"
-date-released: "2026-11-04"
-doi: "10.5281/zenodo.23964802"
+version: "0.4.8"
+date-released: "2026-11-21"
+doi: "10.5281/zenodo.21240947"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.21240947"
     description: "Concept DOI: all versions"
-  - type: doi
-    value: "10.5281/zenodo.23964802"
-    description: "Version 0.4.7"
 repository-code: "https://github.com/marcorotanegroni/selexprep"
 license: MIT
 keywords:

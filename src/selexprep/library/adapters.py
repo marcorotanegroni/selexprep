@@ -92,6 +92,25 @@ def matches_known_adapter_prefix(
     )
 
 
+def known_adapter_within(primer: str | None, k: int = ADAPTER_PROBE_K) -> str | None:
+    """Name of a known adapter whose ``k``-base probe lies anywhere in ``primer``.
+
+    :func:`matches_known_adapter_prefix` only looks at the start of a
+    candidate. When reads run past the construct into the adapter, the called
+    constant can instead end in the adapter, or be the adapter after a base or
+    two of the real constant; neither starts with it. This scan finds those
+    calls so ``detect`` can warn about them. Returns ``None`` when no probe
+    (forward or reverse complement) is in ``primer``.
+    """
+    if not primer:
+        return None
+    upper = primer.upper()
+    for name, adapter in KNOWN_ADAPTERS.items():
+        if adapter[:k] in upper or KNOWN_ADAPTERS_RC[name][:k] in upper:
+            return name
+    return None
+
+
 def count_adapter_hits(seqs: list[str], k: int = ADAPTER_PROBE_K) -> dict[str, int]:
     """Count sequences containing each known adapter (forward or RC) as a substring.
 

@@ -127,6 +127,91 @@ The runnable, annotated version of exactly this path is
 [`examples/01_offline_toy_pipeline.ipynb`](https://github.com/marcorotanegroni/selexprep/blob/main/examples/01_offline_toy_pipeline.ipynb);
 every flag and the `--round-map` contract are in the [CLI reference](https://github.com/marcorotanegroni/selexprep/blob/main/docs/cli.md).
 
+Input FASTQ files can be gzip-compressed or not. Files that share a
+`round_number` are pooled into one `round_NN/`; to keep replicates apart, run
+`extract` and `count` once per replicate, each with its own round map and
+`--outdir`, reusing the same `library_report.json`.
+
+### Using your own reads: what to check
+
+`detect` infers the primers from the reads alone, so look at what it called
+before counting anything:
+
+```bash
+python -c "import json; r = json.load(open('out/library_report.json')); print({k: r[k] for k in ('status', 'extraction_mode', 'orientation', 'primer_5p', 'primer_3p', 'n_length_mode')})"
+```
+
+`primer_5p`, `primer_3p` and `n_length_mode` (the most common random-region
+length) should match your library design. Three situations are common on real
+runs.
+
+**Reads longer than the construct.** If the read length exceeds 5' constant +
+random region + 3' constant, the reads run into the sequencing adapter.
+`detect` can then call the adapter as the 3' primer, or report a one-sided
+`extraction_mode` (`FIVE_PRIME_ONLY`, `THREE_PRIME_ONLY`), whose
+`partial_*_extracted.fasta.gz` output keeps the other constant and the adapter.
+It prints a warning in both cases. Give your own primers:
+
+```bash
+selexprep extract round_*.fastq.gz \
+    --library-report ./out/library_report.json --round-map rounds.tsv \
+    --override-primer-5p ATCCAGAGTGACGCAGCATTGC \
+    --override-primer-3p TGGACACGGTGGCTTAGTCAA \
+    --extraction-mode BOTH_PRIMERS_SINGLE_READ \
+    --outdir ./out
+```
+
+- Write both primers as they read in the FASTQ, left to right. The 3' primer is
+  what follows the random region in the read; a reverse primer as ordered is its
+  reverse complement. `extract` warns when a supplied primer is in under 5% of
+  the reads, and says so if its reverse complement is there instead.
+- A primer override replaces a primer but keeps the report's `extraction_mode`.
+  If `detect` reported a one-sided mode, `extract` would still trim one side
+  only (it warns): `--extraction-mode BOTH_PRIMERS_SINGLE_READ` makes it trim
+  both. The other values are `FIVE_PRIME_ONLY`, `THREE_PRIME_ONLY` and
+  `PAIRED_END_SPLIT_PRIMERS`.
+
+**Reads in both orientations.** Ligation-based preps sequence each molecule
+from either end. With `orientation: MIXED`, `extract` keeps the reads in the
+forward orientation and drops the others: `strand_report.tsv` counts both, and
+`qc` raises `strand_mix`. With an even mix and no early round to anchor on,
+`detect` returns `UNABLE_TO_INFER`. To keep both orientations, trim with
+cutadapt directly and count the result:
+
+```bash
+cutadapt --revcomp -g "ATCCAGAGTGACGCAGCATTGC...TGGACACGGTGGCTTAGTCAA" \
+    --discard-untrimmed -o round_00.trimmed.fastq.gz round_00.fastq.gz
+selexprep count round_00.trimmed.fastq.gz --from-pretrimmed-fastq --round 0 --outdir ./out
+```
+
+**After counting.** Each `round_NN/counts.parquet` has one row per unique
+sequence (`sequence`, `reads`, `rank`, `rpm`). To follow sequences across
+rounds:
+
+```python
+import pandas as pd
+
+rounds = (0, 3, 6)
+rpm = pd.DataFrame(
+    {r: pd.read_parquet(f"out/round_{r:02d}/counts.parquet").set_index("sequence")["rpm"] for r in rounds}
+).fillna(0)
+rpm["enrichment"] = (rpm[rounds[-1]] + 1) / (rpm[rounds[0]] + 1)
+rpm.sort_values("enrichment", ascending=False).head(20).to_csv("top_enriched.tsv", sep="\t")
+```
+
+`qc/flags.yaml` lists what `qc` found suspicious:
+
+| Flag | Raised when |
+|---|---|
+| `low_total_reads` | a round has fewer than 10,000 reads |
+| `low_primer_match` | the primers are found in too few reads |
+| `adapter_contamination_high` | a known sequencing adapter is in more than 5% of the reads |
+| `strand_mix` | more than 20% of a round's reads are in the reverse orientation |
+| `n_length_variation_across_rounds` | the rounds have more than two different most-common random-region lengths |
+| `unexpected_rarefied_diversity_increase` | diversity at equal depth goes up in a later round |
+| `extraction_mode_changed_across_rounds` | datasets of one project were extracted in different modes |
+| `requires_read_merging_for_full_insert` | the primers are split between R1 and R2 |
+
 ### "My reads are paired-end (R1 + R2)"
 
 Common for modern Illumina SELEX — and **handled for you from an accession**:
@@ -205,7 +290,7 @@ batches it and `catalog` browses the discovery catalog. Every command supports
 | `selexprep inspect <ACC>` | ENA metadata preview — runs with read and base counts, `library_strategy` (SRA verbatim), file sizes (MD5s in `inspect.json`). No download. |
 | `selexprep fetch <ACC> --outdir OUT` | Download FASTQ + auto-populate `rounds.tsv`. Unassigned runs go to `round_unknown/` only with `--allow-manual-review`. |
 | `selexprep detect <fastq...> --round-map rounds.tsv --outdir OUT` | Auto-infer primers + library structure → `library_report.json`. |
-| `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT` | Cutadapt trim + strand reorient + per-round FASTA + manifest. Accepts `--paired-r2`, `--sample-sheet`, `--override-primer-{5p,3p}`, `--rebuild`. |
+| `selexprep extract <fastq...> --library-report LR.json --round-map rounds.tsv --outdir OUT` | Cutadapt trim + per-round FASTA + manifest; reads of a library sequenced on the reverse strand (`orientation: REVERSE`) are reverse-complemented first. Accepts `--paired-r2`, `--sample-sheet`, `--override-primer-{5p,3p}`, `--extraction-mode`, `--rebuild`. |
 | `selexprep count <extracted.fasta.gz> --round R0 --outdir OUT` | FASTA → `counts.parquet` (sequence, reads, rank, RPM). |
 | `selexprep qc <manifest> --outdir OUT` | Depth-aware suspicion flags (YAML) + 4 PNG plots. |
 | `selexprep run <accessions.tsv> --outdir OUT [--resume]` | Batch driver across many accessions; emits `run_summary.tsv` + per-accession outputs. |
@@ -379,10 +464,10 @@ CI matrix: Python 3.10 / 3.11 / 3.12.
 
 ## Citation
 
-If you use selexprep, cite the archived release: version 0.4.7 is
-[doi:10.5281/zenodo.23964802](https://doi.org/10.5281/zenodo.23964802), and
+If you use selexprep, cite the archived release you ran:
 [doi:10.5281/zenodo.21240947](https://doi.org/10.5281/zenodo.21240947) resolves to
-the latest version. Citation metadata is in [`CITATION.cff`](https://github.com/marcorotanegroni/selexprep/blob/main/CITATION.cff).
+the latest version and lists the DOI of every release (0.4.7 is
+[doi:10.5281/zenodo.23964802](https://doi.org/10.5281/zenodo.23964802)). Citation metadata is in [`CITATION.cff`](https://github.com/marcorotanegroni/selexprep/blob/main/CITATION.cff).
 
 ## License
 

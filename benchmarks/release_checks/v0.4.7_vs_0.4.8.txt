@@ -1,0 +1,30 @@
+[fwd] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: d189661927948c1b976ef7fdcdb1fa368e736c1804c284ca890eb7c219c162ae -> 565222ac5417b8d3adfd7686bd8a34333a361205d36875a5bf4cd9cd3fb77ff8
+[fwd_override_ok] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 04118cdde31d2c59db7daad2f548efff8b7fe6f898c5b2059e276c0871b50649 -> d71e4a55cae5252db24f6305269dd0bf334d8f52543e2423db8ec5ec8e0660bf
+[fwd_override_short5] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 40e9b4a9f895636c25677dbe2c844e62aa1417df8071137535618b691fade316 -> f638882ab6723e5cc87d1441fdfbf7bfeeb3127fd58e1e5027b15b1d5747077e
+[fwd_override_degenerate] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: e3a941bce3a7c7826016227ceb7f8805317b617d36b1a7d24524e0c6e3cd5efb -> a84c7f85f6f1782864bf3357e868714361ca391e9ae80cefa4e5674ff9fb57c3
+[rev] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 55691a0f9b5c3584f1c0e2653ebd9230b58af37b81e7cf29fc3babbcbf6168b4 -> 467a97385d440801c4f91ee203bd7c8158b7f647ba26efb61741222879d09979
+[rev_override] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 0fae804890ed3b3e2f348422a7e760b647a84c9795796178894abf2cf6e26da7 -> 1ddfd3e575dd4fc52188b4b51ededc55abe014349c86d8a99221ca30c34ee4cb
+[mixed] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0, 'count_02': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: d545c4b7a025276324c2f3b3c9ff7279c756d4ef881788af52289ca0d21598a2 -> f050c96cd18c3b08ae80268ca4406061724debf68a633b678544a068d0606c16
+[noisy] rc old={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0} new={'detect': 0, 'extract': 0, 'count_00': 0, 'count_01': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 8556a87b3ca0d09bb14a928cb8c3de795935e358ccbf82d682566aca0cb97cde -> 0e82b2ab3f6d2d9c9ea2a59ff6ac1429f0f483d4ec4f8dc84a37a48cda4449b7
+[paired] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: cc21f68d9cc0a6ce40c999bb7d0794c0dc92d92e9c8aa192e95432be297419f1 -> 1c6694503c4ee80af9ea39784c8fef70e4b9dbb301ab092317638dcfeefddbb6
+[paired_override] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: cacc5820495f0e251141deeb1f95302dca11ee4ddc60c7972c6b7650968186ad -> 4af49f2013cfbd121e1ef4574e5a8f24be0718362db9faea39cdef46c636dd97
+[paired_overlap] rc old={'detect': 0, 'extract': 0} new={'detect': 0, 'extract': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 482edc227ab48d64b7d260b976916b40f75387d776213ce3c8b11695bf6e5d81 -> 496766719f37311f98590a55a5d27e018d8b59e5f765a3523f290f83d7596021
+[random] rc old={'detect': 0, 'extract': 2} new={'detect': 0, 'extract': 2}
+  identical
+[demo] rc old={'detect': 0, 'extract': 0, 'count_01': 0, 'count_03': 0} new={'detect': 0, 'extract': 0, 'count_01': 0, 'count_03': 0}
+  extract/selexprep_manifest.json.output_sha256.trim_reports.json: 2538e189c71cc03aad2754299fc31db90316bdf947d07ea4ee75a2a71c39404a -> 2013fe25023038d24dd61e747e5768349318927edcbd1fa5f8e4784f92e131a8
+[demo_override_detected] rc old={'extract': 0} new={'extract': 0}
+  extract/overridden/selexprep_manifest.json.output_sha256.trim_reports.json: 84e25cb41edbf4e65c6f6f67f04416365abbe394c146b62f58f15e7cad64d84f -> 9161c6c68ef355d5f716f0b295f68307ae6ce7a05b60f6da1de1402c1a15dd91
+[cs] rc old={'detect': 0, 'extract': 2} new={'detect': 0, 'extract': 2}
+  identical

@@ -44,7 +44,7 @@ round map too. See the [LibraryReport reference](library-report.md).
 ## `extract` — trim constants + extract the random region
 
 ```bash
-selexprep extract FASTQ... --library-report report.json --round-map rounds.tsv --outdir OUT [--paired-r2 R2]... [--override-primer-5p SEQ] [--override-primer-3p SEQ] [--rebuild]
+selexprep extract FASTQ... --library-report report.json --round-map rounds.tsv --outdir OUT [--paired-r2 R2]... [--override-primer-5p SEQ] [--override-primer-3p SEQ] [--extraction-mode MODE] [--rebuild]
 ```
 
 Trims via `cutadapt` and writes `round_NN/extracted.fasta.gz` (full inserts) or
@@ -54,6 +54,14 @@ refuses unless you supply `--override-primer-*`. With overrides, outputs go to
 `OUT/overridden/` unless `--rebuild` is given; `--rebuild` writes them to `OUT`
 and, when `OUT` already holds an extraction, also writes `extract_diff.tsv`
 comparing the two.
+
+Primers are written as they read in the FASTQ, left to right: the 3' primer is
+what follows the random region in the read. A primer override keeps the report's
+`extraction_mode`; `--extraction-mode` sets it (`BOTH_PRIMERS_SINGLE_READ`,
+`FIVE_PRIME_ONLY`, `THREE_PRIME_ONLY`, `PAIRED_END_SPLIT_PRIMERS`). Use
+`BOTH_PRIMERS_SINGLE_READ` when you give both primers and `detect` reported a
+one-sided mode, which is common when the reads run past the construct into the
+adapter. Input FASTQ files can be gzip-compressed or not.
 
 ## `count` — per-round unique sequences
 

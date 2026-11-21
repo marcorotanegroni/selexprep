@@ -6,8 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-11-21
+
+On correct inputs the outputs are the same as in 0.4.7
+(`benchmarks/release_checks/v0.4.7_vs_0.4.8.txt`). This release is about running
+selexprep on your own FASTQ files: it fixes two failures and adds warnings where
+a result could be wrong without a message.
+
 ### Fixed
 
+- **Primer overrides work on uncompressed FASTQ.** `extract` with
+  `--override-primer-5p/3p` stopped with `BadGzipFile` on a `.fastq` file that
+  `detect` and plain `extract` accepted. Every reader of the extract path now
+  takes gzip-compressed and uncompressed files, decided by the file's content.
+- **A truncated or corrupt gzip is named.** `detect` printed only `Aborted.`;
+  it now exits with the file name and the `gzip -t` check to run. `extract`
+  reports a cutadapt failure in one line with the file name, without a traceback.
 - **`detect` and `extract` refuse R1/R2 files that do not pair one to one.**
   `--paired-r2` takes one file per flag; written as `--paired-r2 A B`, `B` was
   read as another R1 file, which lowered the confidence of `detect` and made
@@ -24,8 +38,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ### Added
 
+- **`detect` warns when a called primer contains a sequencing adapter.** When
+  the reads are longer than the construct they run into the adapter, and the
+  call can be the adapter after a base or two of constant, or the constant with
+  adapter appended. The report is unchanged; the warning says to check the call
+  against the library design.
+- **`detect` says what a one-sided mode leaves in the output.** With
+  `FIVE_PRIME_ONLY` or `THREE_PRIME_ONLY` it notes that the
+  `partial_*_extracted.fasta.gz` sequences keep the other side of the read.
+- **`extract --extraction-mode`.** Sets the mode to extract in, in place of the
+  report's (`BOTH_PRIMERS_SINGLE_READ`, `FIVE_PRIME_ONLY`, `THREE_PRIME_ONLY`,
+  `PAIRED_END_SPLIT_PRIMERS`), as the `extraction_mode` argument of selexprepR
+  does. Until now the only way was to edit `library_report.json` by hand. It is
+  an override like the primers: outputs go to `overridden/` unless `--rebuild`.
+- **`extract` warns when both primers are set but only one is trimmed.** A
+  primer override replaces a primer and keeps the report's `extraction_mode`;
+  with a one-sided mode the second primer was ignored for trimming without a
+  message. The warning names the option to add.
+- **`extract` warns when a supplied primer is not in the reads.** A supplied
+  primer found in under 5% of the earliest round's reads is reported, and when
+  its reverse complement is there (a reverse primer typed as ordered) the
+  warning says so.
+- README section "Using your own reads: what to check": reads longer than the
+  construct, how to write the primers, reads in both orientations, replicates,
+  reading `counts.parquet` across rounds, and what each QC flag means.
+  `--override-primer-5p/3p` have help text.
 - `CITATION.cff` and a Citation section in the README with the Zenodo DOIs.
 - CI executes the two example notebooks.
+
+### Changed
+
+- `docs/library-report.md` no longer says an adapter is never called as a
+  primer: a candidate that starts with a known adapter is dropped, one that
+  contains it further in is called and now warned about.
+- The package author's e-mail address in `pyproject.toml`.
 
 ## [0.4.7] - 2026-11-04
 

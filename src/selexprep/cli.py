@@ -5,7 +5,6 @@ Subcommands: inspect, fetch, detect, extract, count, qc, run, and catalog.
 
 from __future__ import annotations
 
-import gzip
 import logging
 from pathlib import Path
 
@@ -13,14 +12,18 @@ import pandas as pd
 import typer
 
 from selexprep import __version__
+from selexprep._io import InputReadError, open_fastx_text
 from selexprep.catalog.cli import app as catalog_app
 from selexprep.count.counter import count_fasta, count_fastq_pretrimmed
 from selexprep.extract import run_extract
+from selexprep.extract.runner import _EXTRACTABLE_MODES
 from selexprep.library import (
     compute_library_report,
     read_library_report_json,
     write_library_report_json,
 )
+from selexprep.library.adapters import known_adapter_within
+from selexprep.library.report import LibraryReport
 from selexprep.qc.runner import run_qc
 
 logger = logging.getLogger(__name__)
@@ -228,13 +231,57 @@ def _load_round_map(path: Path) -> dict[str, int]:
 
 def _read_fastq_sequences(path: Path) -> list[str]:
     """Read sequence lines (every 4th line, offset 1) from a FASTQ(.gz)."""
-    opener = gzip.open if path.suffix == ".gz" else open
     seqs: list[str] = []
-    with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
+    with open_fastx_text(path) as fh:
         for i, line in enumerate(fh):
             if i % 4 == 1:
                 seqs.append(line.strip())
     return seqs
+
+
+def _warn(message: str) -> None:
+    typer.secho(message, fg=typer.colors.YELLOW, err=True)
+
+
+def _warn_about_inferred_library(report: LibraryReport) -> None:
+    """Say what a first-time user cannot see in the report's status alone.
+
+    Two calls are valid for the reads but easy to misuse: a constant that
+    contains a sequencing adapter (the reads run past the construct), and a
+    one-sided extraction mode (the output keeps everything on the other side
+    of the random region).
+    """
+    for side, primer in (("5'", report.primer_5p), ("3'", report.primer_3p)):
+        adapter = known_adapter_within(primer)
+        if adapter is not None:
+            _warn(
+                f"detect: warning: the inferred {side} primer ({primer}) contains the "
+                f"{adapter} sequencing adapter. The reads run past the library construct "
+                "into the adapter, so this call may be the adapter, or your constant with "
+                "adapter appended. Check it against your library design; if it is not your "
+                "constant, give your own primers to `extract` with --override-primer-5p / "
+                "--override-primer-3p (README: Using your own reads)."
+            )
+    one_sided = {
+        "FIVE_PRIME_ONLY": (
+            "5'",
+            "partial_5p_extracted.fasta.gz",
+            "after the random region in the read (the 3' constant, any adapter)",
+        ),
+        "THREE_PRIME_ONLY": (
+            "3'",
+            "partial_3p_extracted.fasta.gz",
+            "before the random region in the read (the 5' constant)",
+        ),
+    }
+    if report.extraction_mode in one_sided:
+        side, name, kept = one_sided[report.extraction_mode]
+        _warn(
+            f"detect: note: only the {side} constant was found, so `extract` trims that "
+            f"side only. {name} keeps whatever lies {kept}, so its sequences are longer "
+            "than the random region. If you know both primers, see README: Using your "
+            "own reads."
+        )
 
 
 @app.command()
@@ -287,32 +334,36 @@ def detect(
 
     round_by_basename = _load_round_map(round_map)
     sequences_by_round: dict[int, list[str]] = {}
-    for fq in fastq:
-        r = round_by_basename.get(fq.name)
-        if r is None:
-            typer.secho(
-                f"detect: FASTQ {fq.name!r} not in round map {round_map}",
-                fg=typer.colors.RED,
-                err=True,
-            )
-            raise typer.Exit(code=2)
-        sequences_by_round.setdefault(r, []).extend(_read_fastq_sequences(fq))
-
     paired_mate_streams: dict[int, list[str]] | None = None
     read_source = "R1"
-    if paired_r2:
-        paired_mate_streams = {}
-        read_source = "R1_AND_R2"
-        for fq in paired_r2:
+    try:
+        for fq in fastq:
             r = round_by_basename.get(fq.name)
             if r is None:
                 typer.secho(
-                    f"detect: R2 FASTQ {fq.name!r} not in round map {round_map}",
+                    f"detect: FASTQ {fq.name!r} not in round map {round_map}",
                     fg=typer.colors.RED,
                     err=True,
                 )
                 raise typer.Exit(code=2)
-            paired_mate_streams.setdefault(r, []).extend(_read_fastq_sequences(fq))
+            sequences_by_round.setdefault(r, []).extend(_read_fastq_sequences(fq))
+
+        if paired_r2:
+            paired_mate_streams = {}
+            read_source = "R1_AND_R2"
+            for fq in paired_r2:
+                r = round_by_basename.get(fq.name)
+                if r is None:
+                    typer.secho(
+                        f"detect: R2 FASTQ {fq.name!r} not in round map {round_map}",
+                        fg=typer.colors.RED,
+                        err=True,
+                    )
+                    raise typer.Exit(code=2)
+                paired_mate_streams.setdefault(r, []).extend(_read_fastq_sequences(fq))
+    except InputReadError as e:
+        typer.secho(f"detect: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from e
 
     report = compute_library_report(
         sequences_by_round,
@@ -335,6 +386,7 @@ def detect(
         typer.echo(f"  failure_reason:  {report.failure_reason}")
     if report.status != "UNABLE_TO_INFER" and (report.primer_5p or report.primer_3p):
         typer.echo(STATUS_NOTE)
+        _warn_about_inferred_library(report)
 
 
 @app.command()
@@ -356,8 +408,26 @@ def extract(
         "--paired-r2",
         help="R2 FASTQ file, one per R1 (repeat the flag); required for PAIRED_END_SPLIT_PRIMERS.",
     ),
-    override_primer_5p: str | None = typer.Option(None, "--override-primer-5p"),
-    override_primer_3p: str | None = typer.Option(None, "--override-primer-3p"),
+    override_primer_5p: str | None = typer.Option(
+        None,
+        "--override-primer-5p",
+        help="5' constant to trim in place of the inferred one, written as it reads "
+        "at the start of the reads.",
+    ),
+    override_primer_3p: str | None = typer.Option(
+        None,
+        "--override-primer-3p",
+        help="3' constant to trim in place of the inferred one, written as it reads "
+        "at the end of the reads (a reverse primer as ordered is its reverse complement).",
+    ),
+    extraction_mode: str | None = typer.Option(
+        None,
+        "--extraction-mode",
+        help="Extraction mode to use in place of the report's: "
+        + ", ".join(_EXTRACTABLE_MODES)
+        + ". With both primers given and a one-sided report, "
+        "BOTH_PRIMERS_SINGLE_READ trims both.",
+    ),
     rebuild: bool = typer.Option(
         False, "--rebuild", help="Force re-extraction; overwrite existing outputs."
     ),
@@ -365,11 +435,20 @@ def extract(
 ) -> None:
     """Trim primers + extract random region per round.
 
-    ``--override-primer-{5p,3p}`` now applies primer overrides
-    via ``LibraryReport.model_copy``. Pair with ``--rebuild`` to overwrite
-    the baseline outputs in place AND emit ``extract_diff.tsv`` comparing
-    baseline vs override per-round read counts.
+    ``--override-primer-5p`` / ``--override-primer-3p`` replace the inferred
+    primers, ``--extraction-mode`` the inferred mode; with any of them the
+    outputs go to ``<outdir>/overridden/``. Add ``--rebuild`` to overwrite the
+    baseline outputs in place and write ``extract_diff.tsv``, which compares
+    per-round read counts before and after.
     """
+    if extraction_mode is not None and extraction_mode not in _EXTRACTABLE_MODES:
+        typer.secho(
+            f"extract: --extraction-mode {extraction_mode!r} is not one of "
+            f"{', '.join(_EXTRACTABLE_MODES)}.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=2)
     # Basename collision check: the round-map lookup is
     # basename-keyed, so two input FASTQs with the same name in different
     # directories would silently overwrite each other in the lookup dict.
@@ -449,19 +528,30 @@ def extract(
         "rebuild": str(rebuild),
         "outdir": str(outdir),
     }
+    # Recorded only when given, so a manifest written without the option is the
+    # same as before the option existed.
+    if extraction_mode is not None:
+        parameters["extraction_mode"] = extraction_mode
 
-    result = run_extract(
-        lr,
-        fastq,
-        outdir,
-        round_map=rm,
-        sample_sheet=sample_sheet,
-        rebuild=rebuild,
-        paired_r2_inputs=paired_r2_inputs,
-        override_primer_5p=override_primer_5p,
-        override_primer_3p=override_primer_3p,
-        parameters=parameters,
-    )
+    try:
+        result = run_extract(
+            lr,
+            fastq,
+            outdir,
+            round_map=rm,
+            sample_sheet=sample_sheet,
+            rebuild=rebuild,
+            paired_r2_inputs=paired_r2_inputs,
+            override_primer_5p=override_primer_5p,
+            override_primer_3p=override_primer_3p,
+            extraction_mode=extraction_mode,
+            parameters=parameters,
+        )
+    except (InputReadError, RuntimeError) as e:
+        # An unreadable input, or cutadapt stopping on one: one line naming the
+        # file, not a traceback.
+        typer.secho(f"extract: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from e
 
     if result.skipped:
         typer.secho(f"extract: skipped - {result.skipped_reason}", fg=typer.colors.YELLOW, err=True)

@@ -34,9 +34,11 @@ real examples are in [`02_library_report_interpretation.ipynb`](examples.md).
 `R1` / `R2` / `R1_AND_R2` / `INTERLEAVED` / `UNKNOWN`.
 
 ### Adapters — `known_adapter_hits`
-Sequencing adapters seen (TruSeq, Nextera, …), recorded as counts and
-**excluded from primer candidates** — never silently called as a primer, never
-used to discard reads.
+Sequencing adapters seen (TruSeq, Nextera, …), recorded as counts and never
+used to discard reads. A primer candidate that **starts with** a known adapter
+is dropped. When the reads run past the construct, a called constant can still
+end in the adapter, or be the adapter after a base or two of the real constant;
+`detect` prints a warning when a called primer contains one.
 
 ### Quality + N-region
 - `match_rate_5p/3p`, `position_consistency_5p/3p` — how cleanly each constant

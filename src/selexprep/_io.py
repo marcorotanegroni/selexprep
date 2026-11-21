@@ -15,10 +15,43 @@ from __future__ import annotations
 import gzip
 import hashlib
 import io
+import zlib
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
+
+_GZIP_MAGIC = b"\x1f\x8b"
+
+
+class InputReadError(ValueError):
+    """An input file exists but cannot be read to the end."""
+
+
+@contextmanager
+def open_fastx_text(path: Path) -> Iterator[IO[str]]:
+    """Open a FASTA/FASTQ file for reading, gzip-compressed or not.
+
+    Compression is decided by the file's first two bytes, not by its name, so
+    ``reads.fastq`` and ``reads.fastq.gz`` are both read as they are. A gzip
+    stream that ends early or is corrupt raises :class:`InputReadError` naming
+    the file, in place of the bare ``EOFError`` that Click reports as
+    ``Aborted.``
+    """
+    with open(path, "rb") as probe:
+        is_gzip = probe.read(2) == _GZIP_MAGIC
+    try:
+        if is_gzip:
+            with gzip.open(path, "rt", encoding="utf-8", errors="replace") as fh:
+                yield fh
+        else:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                yield fh
+    except (EOFError, gzip.BadGzipFile, zlib.error) as e:
+        raise InputReadError(
+            f"{path}: the gzip stream is truncated or corrupt ({e}). "
+            f"Check it with `gzip -t {path}` and copy or download the file again."
+        ) from e
 
 
 def open_gzip_text_deterministic(

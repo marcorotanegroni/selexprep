@@ -25,7 +25,6 @@ downstream paired-mode trimming works.
 from __future__ import annotations
 
 import csv
-import gzip
 import json
 import logging
 from collections import Counter
@@ -33,7 +32,7 @@ from collections.abc import Iterator
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from selexprep._io import open_gzip_text_deterministic
+from selexprep._io import open_fastx_text, open_gzip_text_deterministic
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +121,8 @@ def validate_barcodes(barcodes: dict[str, int], max_mismatches: int) -> None:
 
 
 def _iter_fastq(fq_path: Path) -> Iterator[tuple[str, str, str, str]]:
-    """Yield (header, seq, plus, qual) tuples (newline-terminated) from a FASTQ.gz."""
-    with gzip.open(fq_path, "rt", encoding="utf-8", errors="replace") as fh:
+    """Yield (header, seq, plus, qual) tuples (newline-terminated) from a FASTQ(.gz)."""
+    with open_fastx_text(fq_path) as fh:
         while True:
             header = fh.readline()
             if not header:
@@ -144,8 +143,8 @@ def _iter_fastq_pair(
     Raises if R1 and R2 diverge in record count (would corrupt pair sync).
     """
     with (
-        gzip.open(r1_path, "rt", encoding="utf-8", errors="replace") as f1,
-        gzip.open(r2_path, "rt", encoding="utf-8", errors="replace") as f2,
+        open_fastx_text(r1_path) as f1,
+        open_fastx_text(r2_path) as f2,
     ):
         while True:
             r1 = (f1.readline(), f1.readline(), f1.readline(), f1.readline())

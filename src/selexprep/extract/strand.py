@@ -23,12 +23,11 @@ Public API:
 
 from __future__ import annotations
 
-import gzip
 import logging
 from pathlib import Path
 
 from selexprep._common import reverse_complement_iupac
-from selexprep._io import open_gzip_text_deterministic
+from selexprep._io import open_fastx_text, open_gzip_text_deterministic
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +108,7 @@ def detect_strand_distribution(
 
 
 def reorient_fastq_gz(input_path: Path, output_path: Path) -> int:
-    """Read ``input_path`` (FASTQ.gz); revcomp every record; write
+    """Read ``input_path`` (FASTQ, gzip-compressed or not); revcomp every record; write
     ``output_path`` (deterministic FASTQ.gz with ``mtime=0`` header).
 
     Quality strings are reversed (the per-base quality of position N becomes
@@ -121,7 +120,7 @@ def reorient_fastq_gz(input_path: Path, output_path: Path) -> int:
     """
     n_records = 0
     with (
-        gzip.open(input_path, "rt", encoding="utf-8", errors="replace") as fh,
+        open_fastx_text(input_path) as fh,
         open_gzip_text_deterministic(output_path) as out,
     ):
         while True:

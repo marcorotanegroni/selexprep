@@ -76,6 +76,14 @@ def input_fastq_name(cutadapt_cmd: list[str]) -> str:
 # ---------------------------------------------------------------------------
 
 
+# What cutadapt's stderr says when an input gzip stream ends early or is damaged.
+_CORRUPT_GZIP_SIGNS = (
+    "Compressed file ended before the end-of-stream marker",
+    "CRC check failed",
+    "Error -3 while decompressing",
+)
+
+
 def _run_cutadapt(argv: list[str], json_report_path: Path) -> tuple[int, dict]:
     """Run cutadapt; return (return_code, parsed_json_report).
 
@@ -99,8 +107,12 @@ def _run_cutadapt(argv: list[str], json_report_path: Path) -> tuple[int, dict]:
         subprocess.run(full, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as e:
         tail = (e.stderr or "")[-500:]
-        logger.error("cutadapt failed (exit %d):\n%s", e.returncode, tail)
-        raise RuntimeError(f"cutadapt failed: {tail}") from e
+        name = input_fastq_name(argv)
+        logger.error("cutadapt failed on %s (exit %d):\n%s", name, e.returncode, tail)
+        hint = ""
+        if any(sign in tail for sign in _CORRUPT_GZIP_SIGNS):
+            hint = " (its gzip stream looks truncated or corrupt; check it with `gzip -t`)"
+        raise RuntimeError(f"cutadapt failed on {name}{hint}: {tail}") from e
 
     report: dict = json.loads(json_report_path.read_text(encoding="utf-8"))
     return 0, report

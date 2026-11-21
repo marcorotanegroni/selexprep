@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "selexprep"
-version = "0.4.7"
+version = "0.4.8"
 description = "Accession-first preprocessing for public HT-SELEX with constant-region inference"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICEN[CS]E*"]
-authors = [{name = "Marco Rota Negroni", email = "marco.rotanegroni@studenti.unipd.it"}]
+authors = [{name = "Marco Rota Negroni", email = "marco.rotanegroni@phd.unipd.it"}]
 keywords = ["SELEX", "aptamer", "HT-SELEX", "bioinformatics", "primer", "FASTQ"]
 classifiers = [
   "Development Status :: 4 - Beta",
