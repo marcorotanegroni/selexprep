@@ -466,8 +466,8 @@ CI matrix: Python 3.10 / 3.11 / 3.12.
 
 If you use selexprep, cite the archived release you ran:
 [doi:10.5281/zenodo.21240947](https://doi.org/10.5281/zenodo.21240947) resolves to
-the latest version and lists the DOI of every release (0.4.7 is
-[doi:10.5281/zenodo.23964802](https://doi.org/10.5281/zenodo.23964802)). Citation metadata is in [`CITATION.cff`](https://github.com/marcorotanegroni/selexprep/blob/main/CITATION.cff).
+the latest version and lists the DOI of every release (0.4.8 is
+[doi:10.5281/zenodo.24427025](https://doi.org/10.5281/zenodo.24427025)). Citation metadata is in [`CITATION.cff`](https://github.com/marcorotanegroni/selexprep/blob/main/CITATION.cff).
 
 ## License
 

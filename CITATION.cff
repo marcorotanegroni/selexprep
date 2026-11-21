@@ -12,6 +12,9 @@ identifiers:
   - type: doi
     value: "10.5281/zenodo.21240947"
     description: "Concept DOI: all versions"
+  - type: doi
+    value: "10.5281/zenodo.24427025"
+    description: "Version 0.4.8"
 repository-code: "https://github.com/marcorotanegroni/selexprep"
 license: MIT
 keywords:
