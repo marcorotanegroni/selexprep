@@ -313,6 +313,30 @@ def test_reverse_primer_typed_as_ordered_is_named_in_the_warning(
     assert f"reverse complement, {PRIMER_3P}, is in 100.0%" in hits[0]
 
 
+@needs_cutadapt
+@pytest.mark.parametrize(
+    "degenerate_5p",
+    ["ATCCAGRGTGACGCAGCATTGC", "ATCCAGRGTGACGCAGCATYGC", "ATCCNGRGTGACGCAGCATYGC"],
+    ids=["one_code", "two_codes", "three_codes"],
+)
+def test_degenerate_primer_that_fits_the_reads_does_not_warn(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, degenerate_5p: str
+) -> None:
+    """Was (0.4.8): two or more IUPAC codes gave "is in 0.0% of the reads"."""
+    seqs = [PRIMER_5P + ins + PRIMER_3P for ins in _inserts(50)]
+    fq = _write_fastq(tmp_path / "round_00.fastq.gz", seqs)
+    with caplog.at_level(logging.WARNING):
+        result = run_extract(
+            _report(),
+            [fq],
+            tmp_path / "out",
+            round_map={fq.name: 0},
+            override_primer_5p=degenerate_5p,
+        )
+    assert [r.n_out for r in result.trim_reports] == [50]
+    assert _warnings(caplog, "of the earliest round's reads") == []
+
+
 # ---------------------------------------------------------------------------
 # --extraction-mode
 # ---------------------------------------------------------------------------

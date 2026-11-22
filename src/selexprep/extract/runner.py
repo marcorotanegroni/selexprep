@@ -240,8 +240,12 @@ def _warn_if_primer_absent(side: str, primer: str, rate: float, reads: list[str]
     The usual cause is a primer typed as on the oligo order sheet: the reverse
     primer is the reverse complement of what the reads show. When that reverse
     complement is in the reads, the warning says so.
+
+    A primer with IUPAC ambiguity codes is left alone. The match rate compares
+    letters, so each code counts as a mismatch and a degenerate primer that
+    cutadapt trims in every read can still score near zero.
     """
-    if rate >= _SUPPLIED_PRIMER_ABSENT_BELOW:
+    if rate >= _SUPPLIED_PRIMER_ABSENT_BELOW or set(primer) - set("ACGT"):
         return
     flipped = reverse_complement(primer)
     flipped_rate = _substring_match_rate(reads, flipped)

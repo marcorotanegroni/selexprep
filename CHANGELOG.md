@@ -6,6 +6,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [S
 
 ## [Unreleased]
 
+### Fixed
+
+- **No false "primer is not in the reads" warning for degenerate primers.**
+  In 0.4.8 `extract` warned that a supplied primer with two or more IUPAC
+  ambiguity codes was in 0% of the reads, while cutadapt trimmed it in every
+  read: the rate behind the warning compares letters, so each code counts as a
+  mismatch. The warning now skips primers that carry ambiguity codes. Outputs
+  are unchanged.
+
 ## [0.4.8] - 2026-11-21
 
 On correct inputs the outputs are the same as in 0.4.7
